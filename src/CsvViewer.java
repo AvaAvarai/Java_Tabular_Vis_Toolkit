@@ -1,4 +1,5 @@
 package src;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -41,10 +42,12 @@ public class CsvViewer extends JFrame {
         statsTextArea.setEditable(false);
         statsTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane statsScrollPane = new JScrollPane(statsTextArea);
-        add(statsScrollPane, BorderLayout.SOUTH);
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane, BorderLayout.CENTER);
+        JScrollPane tableScrollPane = new JScrollPane(table);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScrollPane, statsScrollPane);
+        splitPane.setResizeWeight(0.8); // 80% of space for table, 20% for stats initially
+        add(splitPane, BorderLayout.CENTER);
     }
 
     private JPanel createButtonPanel() {
