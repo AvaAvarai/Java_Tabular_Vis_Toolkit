@@ -128,7 +128,7 @@ public class CsvDataHandler {
     public void updateStats(DefaultTableModel tableModel, JTextArea statsTextArea) {
         int caseCount = tableModel.getRowCount();
         Set<String> classSet = new HashSet<>();
-        int classColumnIndex = tableModel.findColumn("Class"); // Adjust column name as needed
+        int classColumnIndex = tableModel.findColumn("class");  // TODO: make an option
         for (int row = 0; row < caseCount; row++) {
             if (classColumnIndex >= 0 && classColumnIndex < tableModel.getColumnCount()) {
                 classSet.add(tableModel.getValueAt(row, classColumnIndex).toString());
