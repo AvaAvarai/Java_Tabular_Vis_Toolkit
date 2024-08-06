@@ -9,17 +9,22 @@ import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ParallelCoordinatesPlot extends JFrame {
 
-    public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames) {
+    private Map<String, Color> classColors;
+
+    public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, int classColumnIndex) {
         setTitle("Parallel Coordinates Plot");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        DefaultCategoryDataset dataset = createDataset(data, columnNames);
+        classColors = assignColorsToClasses(data, classColumnIndex);
+        DefaultCategoryDataset dataset = createDataset(data, columnNames, classColumnIndex);
         JFreeChart chart = createChart(dataset, columnNames);
 
         ChartPanel chartPanel = new ChartPanel(chart);
@@ -27,17 +32,20 @@ public class ParallelCoordinatesPlot extends JFrame {
         setContentPane(chartPanel);
     }
 
-    private DefaultCategoryDataset createDataset(List<String[]> data, String[] columnNames) {
+    private DefaultCategoryDataset createDataset(List<String[]> data, String[] columnNames, int classColumnIndex) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
         for (int i = 0; i < data.size(); i++) {
             String[] row = data.get(i);
+            String className = row[classColumnIndex];
             for (int j = 0; j < row.length; j++) {
-                try {
-                    double value = Double.parseDouble(row[j]);
-                    dataset.addValue(value, "Row " + i, columnNames[j]);
-                } catch (NumberFormatException e) {
-                    // Handle non-numeric data
+                if (j != classColumnIndex) {
+                    try {
+                        double value = Double.parseDouble(row[j]);
+                        dataset.addValue(value, className + " - Row " + i, columnNames[j]);
+                    } catch (NumberFormatException e) {
+                        // Handle non-numeric data
+                    }
                 }
             }
         }
@@ -56,9 +64,32 @@ public class ParallelCoordinatesPlot extends JFrame {
         plot.setDomainAxis(new CategoryAxis());
         plot.setRangeAxis(new NumberAxis());
 
-        LineAndShapeRenderer renderer = new LineAndShapeRenderer();
+        LineAndShapeRenderer renderer = new LineAndShapeRenderer() {
+            @Override
+            public Paint getItemPaint(int row, int column) {
+                String seriesKey = (String) getPlot().getDataset().getRowKey(row);
+                String className = seriesKey.split(" - ")[0];
+                return classColors.get(className);
+            }
+        };
         plot.setRenderer(renderer);
 
         return chart;
+    }
+
+    private Map<String, Color> assignColorsToClasses(List<String[]> data, int classColumnIndex) {
+        Map<String, Color> colorMap = new HashMap<>();
+        String[] colors = {"#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF", "#000000"};
+
+        int colorIndex = 0;
+        for (String[] row : data) {
+            String className = row[classColumnIndex];
+            if (!colorMap.containsKey(className)) {
+                colorMap.put(className, Color.decode(colors[colorIndex % colors.length]));
+                colorIndex++;
+            }
+        }
+
+        return colorMap;
     }
 }

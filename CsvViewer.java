@@ -289,7 +289,7 @@ public class CsvViewer extends JFrame {
         }
 
         List<String[]> data = dataHandler.isDataEmpty() ? dataHandler.getOriginalData() : (isNormalized ? dataHandler.getNormalizedData() : dataHandler.getOriginalData());
-        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames);
+        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, tableModel.getColumnCount() - 1);
         plot.setVisible(true);
     }
 
