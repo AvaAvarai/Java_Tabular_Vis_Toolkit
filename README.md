@@ -5,11 +5,11 @@
 ## Features
 
 - **Load CSV Data**: Load and display CSV data in a tabular format.
-- **Normalize Data**: Normalize numerical columns in the dataset.
-- **Highlight Blanks**: Highlight cells with missing data.
-- **Heatmap Visualization**: Display data as a heatmap for easy visual analysis.
-- **Parallel Coordinates Visualization**: Display data as a Parallel coordinates plot.
-- **Row Manipulation**: Insert and delete rows, and reorder rows using drag and drop.
+- **Normalize Data**: Toggle normalization of numerical columns in the dataset.
+- **Highlight Blanks**: Toggle highlight of cell backgrounds with missing data.
+- **Heatmap Visualization**: Toggle highlighting data rows backgrounds as a heatmap.
+- **Parallel Coordinates Visualization**: Display a new window with data shown in a Parallel coordinates plot, normalization (or not) and augmentation carries over.
+- **Row Manipulation**: Insert, delete, and augment (change value) rows, and visually reorder rows using drag and drop.
 - **Font Color Customization**: Customize the font color of the table cells.
 - **Data Export**: Export the modified data back to a CSV file.
 
