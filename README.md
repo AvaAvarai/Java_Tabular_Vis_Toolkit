@@ -26,13 +26,13 @@ git clone git@github.com:AvaAvarai/jtabviz.git
 2; Compile the project:
 
 ```sh
-javac -cp ".;libs/*" CsvViewer.java
+javac -cp ".;libs/*" src/CsvViewer.java
 ```
 
 3; Execute the compiled project:
 
 ```sh
-java -cp ".;libs/*" CsvViewer
+java -cp ".;libs/*" src/CsvViewer
 ```
 
 ## License
