@@ -21,6 +21,16 @@ Fisher Iris data X4 petal.width case overlap exploration.
 
 To run this project you need to compile to project along with the contained library in `libs\`. To do so there is three steps:
 
+With our Pre-Compiled Jar:
+
+1; Run from jar
+
+```sh
+java -cp ".;libs/*;JTabViz.jar" src.CsvViewer
+```
+
+Stand-alone:
+
 1; Clone the project to your computer:
 
 ```sh
@@ -39,13 +49,15 @@ javac -cp ".;libs/*" src/CsvViewer.java
 java -cp ".;libs/*" src/CsvViewer
 ```
 
-4 (optional); Compile a jar
+With a Jar:
+
+1; Compile a jar
 
 ```sh
-jar cfm JTabViz.jar MANIFEST.MF -C src .
+jar cfm JTabViz.jar MANIFEST.MF -C out .
 ```
 
-5 (optional); Run from jar
+2; Run from jar
 
 ```sh
 java -cp ".;libs/*;JTabViz.jar" src.CsvViewer
