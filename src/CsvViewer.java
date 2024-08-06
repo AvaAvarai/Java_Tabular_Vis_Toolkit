@@ -6,7 +6,9 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class CsvViewer extends JFrame {
     private JTable table;
@@ -14,9 +16,11 @@ public class CsvViewer extends JFrame {
     private CsvDataHandler dataHandler;
     private boolean isNormalized = false;
     private boolean isHeatmapEnabled = false;
+    private boolean isClassColorEnabled = false; // New flag for class column coloring
     private Color cellTextColor = Color.BLACK; // Default cell text color
     private JTextArea statsTextArea;
     private JButton toggleButton;
+    private Map<String, Color> classColors = new HashMap<>(); // Store class colors
 
     public CsvViewer() {
         setTitle("CSV Viewer");
@@ -63,6 +67,7 @@ public class CsvViewer extends JFrame {
         JButton deleteRowButton = createButton("-", "Delete Row");
         JButton exportButton = createButton("E", "Export CSV");
         JButton parallelPlotButton = createButton("P", "Parallel Coordinates");
+        JButton classColorButton = createButton("C", "Toggle Class Colors"); // New button for class coloring
 
         loadButton.addActionListener(e -> loadCsvFile());
         toggleButton.addActionListener(e -> toggleDataView());
@@ -73,6 +78,7 @@ public class CsvViewer extends JFrame {
         deleteRowButton.addActionListener(e -> deleteRow());
         exportButton.addActionListener(e -> exportCsvFile());
         parallelPlotButton.addActionListener(e -> showParallelCoordinatesPlot());
+        classColorButton.addActionListener(e -> toggleClassColors()); // New action listener for class coloring
 
         buttonPanel.add(loadButton);
         buttonPanel.add(toggleButton);
@@ -83,6 +89,7 @@ public class CsvViewer extends JFrame {
         buttonPanel.add(deleteRowButton);
         buttonPanel.add(exportButton);
         buttonPanel.add(parallelPlotButton);
+        buttonPanel.add(classColorButton); // Add new button to panel
 
         return buttonPanel;
     }
@@ -104,7 +111,9 @@ public class CsvViewer extends JFrame {
             dataHandler.loadCsvData(filePath, tableModel, statsTextArea);
             isNormalized = false;
             isHeatmapEnabled = false; // Reset heatmap state when new CSV is loaded
+            isClassColorEnabled = false; // Reset class color state when new CSV is loaded
             updateTableData(dataHandler.getOriginalData());
+            generateClassColors(); // Generate class colors based on the loaded data
         }
     }
 
@@ -135,6 +144,8 @@ public class CsvViewer extends JFrame {
         }
         if (isHeatmapEnabled) {
             applyHeatmap();
+        } else if (isClassColorEnabled) {
+            applyClassColorRenderer();
         } else {
             applyDefaultRenderer();
         }
@@ -231,6 +242,50 @@ public class CsvViewer extends JFrame {
         table.repaint();
     }
 
+    private void generateClassColors() {
+        int classColumnIndex = tableModel.getColumnCount() - 1; // Assuming class column is the last one
+        Map<String, Integer> classMap = new HashMap<>();
+        int colorIndex = 0;
+
+        // Assign colors to each class
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            String className = (String) tableModel.getValueAt(row, classColumnIndex);
+            if (!classMap.containsKey(className)) {
+                classMap.put(className, colorIndex++);
+            }
+        }
+
+        // Create distinct colors for each class
+        for (Map.Entry<String, Integer> entry : classMap.entrySet()) {
+            int value = entry.getValue();
+            Color color = new Color(Color.HSBtoRGB(value / (float) classMap.size(), 1.0f, 1.0f));
+            classColors.put(entry.getKey(), color);
+        }
+    }
+
+    private void applyClassColorRenderer() {
+        int classColumnIndex = tableModel.getColumnCount() - 1; // Assuming class column is the last one
+        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (column == classColumnIndex) {
+                    String className = (String) value;
+                    if (classColors.containsKey(className)) {
+                        c.setBackground(classColors.get(className));
+                    } else {
+                        c.setBackground(Color.WHITE);
+                    }
+                } else {
+                    c.setBackground(Color.WHITE);
+                }
+                c.setForeground(cellTextColor);
+                return c;
+            }
+        });
+        table.repaint();
+    }
+
     private void applyDefaultRenderer() {
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
@@ -250,6 +305,8 @@ public class CsvViewer extends JFrame {
             cellTextColor = newColor;
             if (isHeatmapEnabled) {
                 applyHeatmap();
+            } else if (isClassColorEnabled) {
+                applyClassColorRenderer();
             } else {
                 applyDefaultRenderer();
             }
@@ -293,8 +350,18 @@ public class CsvViewer extends JFrame {
         }
 
         List<String[]> data = dataHandler.isDataEmpty() ? dataHandler.getOriginalData() : (isNormalized ? dataHandler.getNormalizedData() : dataHandler.getOriginalData());
-        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, tableModel.getColumnCount() - 1);
+        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, tableModel.getColumnCount() - 1);
         plot.setVisible(true);
+    }
+
+    private void toggleClassColors() {
+        isClassColorEnabled = !isClassColorEnabled;
+        if (isClassColorEnabled) {
+            applyClassColorRenderer();
+        } else {
+            applyDefaultRenderer();
+        }
+        dataHandler.updateStats(tableModel, statsTextArea);
     }
 
     public static void main(String[] args) {

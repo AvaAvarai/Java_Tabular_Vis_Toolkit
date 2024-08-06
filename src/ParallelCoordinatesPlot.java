@@ -1,4 +1,5 @@
 package src;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -10,7 +11,6 @@ import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,13 +18,13 @@ public class ParallelCoordinatesPlot extends JFrame {
 
     private Map<String, Color> classColors;
 
-    public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, int classColumnIndex) {
+    public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex) {
         setTitle("Parallel Coordinates Plot");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        classColors = assignColorsToClasses(data, classColumnIndex);
+        this.classColors = classColors;
         DefaultCategoryDataset dataset = createDataset(data, columnNames, classColumnIndex);
         JFreeChart chart = createChart(dataset, columnNames);
 
@@ -76,21 +76,5 @@ public class ParallelCoordinatesPlot extends JFrame {
         plot.setRenderer(renderer);
 
         return chart;
-    }
-
-    private Map<String, Color> assignColorsToClasses(List<String[]> data, int classColumnIndex) {
-        Map<String, Color> colorMap = new HashMap<>();
-        String[] colors = {"#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF", "#000000"};
-
-        int colorIndex = 0;
-        for (String[] row : data) {
-            String className = row[classColumnIndex];
-            if (!colorMap.containsKey(className)) {
-                colorMap.put(className, Color.decode(colors[colorIndex % colors.length]));
-                colorIndex++;
-            }
-        }
-
-        return colorMap;
     }
 }
