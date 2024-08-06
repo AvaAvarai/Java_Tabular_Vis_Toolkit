@@ -15,9 +15,25 @@
 
 ## Getting Started
 
-Compile: `javac -cp ".;libs/*" CsvViewer.java`
+To run this project you need to compile to project along with the contained library in `libs\`. To do so there is three steps:
 
-Execute: `java -cp ".;libs/*" CsvViewer`
+1; Clone the project to your computer:
+
+```sh
+git clone git@github.com:AvaAvarai/jtabviz.git
+```
+
+2; Compile the project:
+
+```sh
+javac -cp ".;libs/*" CsvViewer.java
+```
+
+3; Execute the compiled project:
+
+```sh
+java -cp ".;libs/*" CsvViewer
+```
 
 ## License
 
