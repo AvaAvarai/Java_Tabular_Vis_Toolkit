@@ -39,6 +39,18 @@ javac -cp ".;libs/*" src/CsvViewer.java
 java -cp ".;libs/*" src/CsvViewer
 ```
 
+4 (optional); Compile a jar
+
+```sh
+jar cfm JTabViz.jar MANIFEST.MF -C src .
+```
+
+5 (optional); Run from jar
+
+```sh
+java -cp ".;libs/*;JTabViz.jar" src.CsvViewer
+```
+
 ## License
 
 The software is freely available under the MIT license see `LICENSE` for full details.
