@@ -2,8 +2,11 @@
 
 **JTabViz** is a Java-based application for loading, viewing, and augmenting tabular data from CSV files. The application provides various functionalities including normalization, heatmap visualization, row manipulation, and data export. We are exploring to see if we can add custom visualization techniques with the utilized libraries (Java Swing, JFreeChart).
 
-Fisher Iris data X4 petal.width case overlap exploration.
+Fisher Iris Data Exploration Demo.
 ![Demo screenshot](screenshots/Iris_Demo_1.png)
+
+Rules Tester Demo.
+![Rules Tester Demo screenshot](screenshots/Rules_Test_Demo_1.png)
 
 ## Features
 

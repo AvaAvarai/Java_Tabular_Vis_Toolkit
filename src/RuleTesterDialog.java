@@ -5,9 +5,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class RuleTesterDialog extends JDialog {
 
@@ -21,7 +19,7 @@ public class RuleTesterDialog extends JDialog {
         super(parent, "Rule Tester", true);
         this.tableModel = tableModel;
         columnNames = getColumnNames();
-        classComboBox = new JComboBox<>(getUniqueClassNames()); // Initialize here
+        classComboBox = new JComboBox<>(getUniqueClassNames());
         rulesPanel = new JPanel();
         rulesPanel.setLayout(new BoxLayout(rulesPanel, BoxLayout.Y_AXIS));
         initUI();
@@ -94,7 +92,7 @@ public class RuleTesterDialog extends JDialog {
         List<Integer> trueNegatives = new ArrayList<>();
         List<Integer> falsePositives = new ArrayList<>();
         List<Integer> falseNegatives = new ArrayList<>();
-    
+
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             boolean match = true;
             for (RulePanel rulePanel : rulePanels) {
@@ -104,21 +102,21 @@ public class RuleTesterDialog extends JDialog {
                 String value1 = rulePanel.getValue1();
                 String value2 = rulePanel.getValue2();
                 String conjunction = rulePanel.getConjunction();
-    
+
                 int columnIndex = tableModel.findColumn(attribute);
                 double cellValue = Double.parseDouble(tableModel.getValueAt(row, columnIndex).toString());
-    
+
                 boolean ruleMatch = evaluateRule(cellValue, relation1, value1, relation2, value2);
-    
-                if (conjunction.equals("AND")) {
+
+                if ("AND".equals(conjunction)) {
                     match = match && ruleMatch;
-                } else if (conjunction.equals("OR")) {
+                } else if ("OR".equals(conjunction)) {
                     match = match || ruleMatch;
                 } else {
                     match = ruleMatch;
                 }
             }
-    
+
             String actualClass = (String) tableModel.getValueAt(row, tableModel.getColumnCount() - 1);
             if (match && actualClass.equals(selectedClass)) {
                 truePositives.add(row);
@@ -130,16 +128,23 @@ public class RuleTesterDialog extends JDialog {
                 trueNegatives.add(row);
             }
         }
-    
-        showConfusionMatrix(truePositives.size(), falsePositives.size(), falseNegatives.size(), trueNegatives.size());
+
+        int tp = truePositives.size();
+        int fp = falsePositives.size();
+        int fn = falseNegatives.size();
+        int tn = trueNegatives.size();
+        int total = tp + fp + fn + tn;
+        double accuracy = (double) (tp + tn) / total * 100;
+
+        showConfusionMatrix(tp, fp, fn, tn, accuracy);
     }
-    
+
     private boolean evaluateRule(double cellValue, String relation1, String value1, String relation2, String value2) {
         boolean match1 = evaluateCondition1(cellValue, relation1, Double.parseDouble(value1));
         boolean match2 = value2.isEmpty() || evaluateCondition2(cellValue, relation2, Double.parseDouble(value2));
         return match1 && match2;
     }
-    
+
     private boolean evaluateCondition1(double cellValue, String relation, double value) {
         switch (relation) {
             case "<":
@@ -178,10 +183,10 @@ public class RuleTesterDialog extends JDialog {
         }
     }
 
-    private void showConfusionMatrix(int tp, int fp, int fn, int tn) {
+    private void showConfusionMatrix(int tp, int fp, int fn, int tn, double accuracy) {
         JOptionPane.showMessageDialog(this, String.format(
-                "Confusion Matrix:\n\nTrue Positives: %d\nFalse Positives: %d\nFalse Negatives: %d\nTrue Negatives: %d",
-                tp, fp, fn, tn), "Confusion Matrix", JOptionPane.INFORMATION_MESSAGE);
+                "Confusion Matrix:\n\nTrue Positives: %d\nFalse Positives: %d\nFalse Negatives: %d\nTrue Negatives: %d\n\nAccuracy: %.2f%%",
+                tp, fp, fn, tn, accuracy), "Confusion Matrix", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private static class RulePanel extends JPanel {
