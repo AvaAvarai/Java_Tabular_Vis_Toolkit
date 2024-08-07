@@ -7,12 +7,18 @@ import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
+import org.jfree.chart.LegendItem;
+import org.jfree.chart.LegendItemCollection;
+import org.jfree.chart.plot.Plot;
+import org.jfree.chart.title.LegendTitle;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class ParallelCoordinatesPlot extends JFrame {
 
@@ -28,6 +34,21 @@ public class ParallelCoordinatesPlot extends JFrame {
         DefaultCategoryDataset dataset = createDataset(data, columnNames, classColumnIndex);
         JFreeChart chart = createChart(dataset, columnNames);
 
+        // Manually create a custom legend
+        LegendItemCollection legendItems = new LegendItemCollection();
+        Set<String> addedClasses = new HashSet<>();
+
+        for (String className : classColors.keySet()) {
+            if (!addedClasses.contains(className)) {
+                LegendItem item = new LegendItem(className, classColors.get(className));
+                legendItems.add(item);
+                addedClasses.add(className);
+            }
+        }
+
+        CategoryPlot plot = (CategoryPlot) chart.getPlot();
+        plot.setFixedLegendItems(legendItems);
+
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new Dimension(800, 600));
         setContentPane(chartPanel);
@@ -39,11 +60,13 @@ public class ParallelCoordinatesPlot extends JFrame {
         for (int i = 0; i < data.size(); i++) {
             String[] row = data.get(i);
             String className = row[classColumnIndex];
+            String seriesName = className + " - Row " + i;
+
             for (int j = 0; j < row.length; j++) {
                 if (j != classColumnIndex) {
                     try {
                         double value = Double.parseDouble(row[j]);
-                        dataset.addValue(value, className + " - Row " + i, columnNames[j]);
+                        dataset.addValue(value, seriesName, columnNames[j]);
                     } catch (NumberFormatException e) {
                         // Handle non-numeric data
                     }
@@ -69,8 +92,8 @@ public class ParallelCoordinatesPlot extends JFrame {
             @Override
             public Paint getItemPaint(int row, int column) {
                 String seriesKey = (String) getPlot().getDataset().getRowKey(row);
-                String className = seriesKey.split(" - ")[0];
-                return classColors.get(className);
+                String className = seriesKey.contains(" - ") ? seriesKey.split(" - ")[0] : seriesKey;
+                return classColors.getOrDefault(className, Color.BLACK);
             }
         };
         plot.setRenderer(renderer);
