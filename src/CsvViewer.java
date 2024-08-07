@@ -7,8 +7,10 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class CsvViewer extends JFrame {
     private JTable table;
@@ -67,7 +69,8 @@ public class CsvViewer extends JFrame {
         JButton deleteRowButton = createButton("-", "Delete Row");
         JButton exportButton = createButton("E", "Export CSV");
         JButton parallelPlotButton = createButton("P", "Parallel Coordinates");
-        JButton classColorButton = createButton("C", "Toggle Class Colors"); // New button for class coloring
+        JButton classColorButton = createButton("C", "Toggle Class Colors");
+        JButton setClassColorsButton = createButton("S", "Set Class Colors"); // New button for setting class colors
 
         loadButton.addActionListener(e -> loadCsvFile());
         toggleButton.addActionListener(e -> toggleDataView());
@@ -79,6 +82,7 @@ public class CsvViewer extends JFrame {
         exportButton.addActionListener(e -> exportCsvFile());
         parallelPlotButton.addActionListener(e -> showParallelCoordinatesPlot());
         classColorButton.addActionListener(e -> toggleClassColors()); // New action listener for class coloring
+        setClassColorsButton.addActionListener(e -> showColorPickerDialog()); // New action listener for setting class colors
 
         buttonPanel.add(loadButton);
         buttonPanel.add(toggleButton);
@@ -90,6 +94,7 @@ public class CsvViewer extends JFrame {
         buttonPanel.add(exportButton);
         buttonPanel.add(parallelPlotButton);
         buttonPanel.add(classColorButton); // Add new button to panel
+        buttonPanel.add(setClassColorsButton); // Add set class colors button to panel
 
         return buttonPanel;
     }
@@ -294,6 +299,28 @@ public class CsvViewer extends JFrame {
                 applyDefaultRenderer();
             }
             dataHandler.updateStats(tableModel, statsTextArea);
+        }
+    }
+
+    private void showColorPickerDialog() {
+        int classColumnIndex = tableModel.getColumnCount() - 1; // Assuming class column is the last one
+        Set<String> uniqueClassNames = new HashSet<>();
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            uniqueClassNames.add((String) tableModel.getValueAt(i, classColumnIndex));
+        }
+        String[] classNames = uniqueClassNames.toArray(new String[0]);
+        JComboBox<String> classComboBox = new JComboBox<>(classNames);
+
+        int result = JOptionPane.showConfirmDialog(this, classComboBox, "Select Class", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+            String selectedClass = (String) classComboBox.getSelectedItem();
+            Color color = JColorChooser.showDialog(this, "Choose color for " + selectedClass, classColors.getOrDefault(selectedClass, Color.WHITE));
+            if (color != null) {
+                classColors.put(selectedClass, color);
+                if (isClassColorEnabled) {
+                    applyCombinedRenderer();
+                }
+            }
         }
     }
 
