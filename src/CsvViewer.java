@@ -397,7 +397,6 @@ public class CsvViewer extends JFrame {
             columnNames[i] = columnModel.getColumn(i).getHeaderValue().toString();
             columnOrder[i] = table.convertColumnIndexToModel(i);
         }
-    
         // Get the data
         List<String[]> data = dataHandler.isDataEmpty() ? dataHandler.getOriginalData() : (isNormalized ? dataHandler.getNormalizedData() : dataHandler.getOriginalData());
     

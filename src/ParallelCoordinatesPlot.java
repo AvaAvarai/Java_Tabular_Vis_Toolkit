@@ -32,14 +32,8 @@ public class ParallelCoordinatesPlot extends JFrame {
         this.classColors = classColors;
         this.classShapes = createClassShapes();
 
-        // Reorder the column names based on the column order
-        String[] reorderedColumnNames = new String[columnNames.length];
-        for (int i = 0; i < columnNames.length; i++) {
-            reorderedColumnNames[i] = columnNames[columnOrder[i]];
-        }
-
-        DefaultCategoryDataset dataset = createDataset(data, reorderedColumnNames, classColumnIndex, columnOrder);
-        JFreeChart chart = createChart(dataset, reorderedColumnNames);
+        DefaultCategoryDataset dataset = createDataset(data, columnNames, classColumnIndex, columnOrder);
+        JFreeChart chart = createChart(dataset, columnNames);
 
         CategoryPlot plot = (CategoryPlot) chart.getPlot();
         LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
