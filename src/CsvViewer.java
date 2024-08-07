@@ -1,12 +1,13 @@
 package src;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableRowSorter;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,6 +26,7 @@ public class CsvViewer extends JFrame {
     private JTextArea statsTextArea;
     private JButton toggleButton;
     private Map<String, Color> classColors = new HashMap<>(); // Store class colors
+    private JLabel selectedRowsLabel; // Label to display the number of selected rows
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -40,20 +42,34 @@ public class CsvViewer extends JFrame {
         table.setFillsViewportHeight(true);
         table.setTransferHandler(new TableRowTransferHandler(table));
         table.setAutoCreateRowSorter(true);
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION); // Allow multiple row selection
+        table.getTableHeader().setReorderingAllowed(true);
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                updateSelectedRowsLabel();
+            }
+        });
+
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
         table.setRowSorter(sorter);
 
         JPanel buttonPanel = createButtonPanel();
         add(buttonPanel, BorderLayout.NORTH);
 
-        statsTextArea = new JTextArea(3, 0); // Small height
+        statsTextArea = new JTextArea(3, 0);
         statsTextArea.setEditable(false);
         statsTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane statsScrollPane = new JScrollPane(statsTextArea);
 
         JScrollPane tableScrollPane = new JScrollPane(table);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScrollPane, statsScrollPane);
+        selectedRowsLabel = new JLabel("Selected rows: 0");
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(selectedRowsLabel, BorderLayout.SOUTH);
+        bottomPanel.add(statsScrollPane, BorderLayout.CENTER);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScrollPane, bottomPanel);
         splitPane.setResizeWeight(0.8); // 80% of space for table, 20% for stats initially
         add(splitPane, BorderLayout.CENTER);
     }
@@ -153,6 +169,7 @@ public class CsvViewer extends JFrame {
             isClassColorEnabled = false; // Reset class color state when new CSV is loaded
             updateTableData(dataHandler.getOriginalData());
             generateClassColors(); // Generate class colors based on the loaded data
+            updateSelectedRowsLabel(); // Reset the selected rows label
         }
     }
 
@@ -187,6 +204,7 @@ public class CsvViewer extends JFrame {
             applyDefaultRenderer();
         }
         dataHandler.updateStats(tableModel, statsTextArea);
+        updateSelectedRowsLabel(); // Update the selected rows label
     }
 
     private void highlightBlanks() {
@@ -408,6 +426,11 @@ public class CsvViewer extends JFrame {
     private void showRuleTesterDialog() {
         RuleTesterDialog ruleTesterDialog = new RuleTesterDialog(this, tableModel);
         ruleTesterDialog.setVisible(true);
+    }
+
+    private void updateSelectedRowsLabel() {
+        int selectedRowCount = table.getSelectedRowCount();
+        selectedRowsLabel.setText("Selected rows: " + selectedRowCount);
     }
 
     public static void main(String[] args) {
