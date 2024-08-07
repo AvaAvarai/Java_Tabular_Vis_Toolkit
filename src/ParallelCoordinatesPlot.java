@@ -9,12 +9,13 @@ import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.chart.LegendItem;
 import org.jfree.chart.LegendItemCollection;
-import org.jfree.chart.plot.Plot;
-import org.jfree.chart.title.LegendTitle;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import java.util.Set;
 public class ParallelCoordinatesPlot extends JFrame {
 
     private Map<String, Color> classColors;
+    private Map<String, Shape> classShapes;
 
     public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex) {
         setTitle("Parallel Coordinates Plot");
@@ -31,8 +33,13 @@ public class ParallelCoordinatesPlot extends JFrame {
         setLocationRelativeTo(null);
 
         this.classColors = classColors;
+        this.classShapes = createClassShapes();
+
         DefaultCategoryDataset dataset = createDataset(data, columnNames, classColumnIndex);
         JFreeChart chart = createChart(dataset, columnNames);
+
+        CategoryPlot plot = (CategoryPlot) chart.getPlot();
+        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
 
         // Manually create a custom legend
         LegendItemCollection legendItems = new LegendItemCollection();
@@ -40,18 +47,36 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         for (String className : classColors.keySet()) {
             if (!addedClasses.contains(className)) {
-                LegendItem item = new LegendItem(className, classColors.get(className));
+                Shape shape = classShapes.get(className);
+                Paint paint = classColors.get(className);
+                LegendItem item = new LegendItem(className, "", "", "", shape, paint, new BasicStroke(), paint);
                 legendItems.add(item);
                 addedClasses.add(className);
             }
         }
 
-        CategoryPlot plot = (CategoryPlot) chart.getPlot();
         plot.setFixedLegendItems(legendItems);
 
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new Dimension(800, 600));
         setContentPane(chartPanel);
+    }
+
+    private Map<String, Shape> createClassShapes() {
+        Map<String, Shape> shapes = new HashMap<>();
+        Shape[] availableShapes = {
+            new Ellipse2D.Double(-3, -3, 6, 6),
+            new Rectangle2D.Double(-3, -3, 6, 6),
+            new Polygon(new int[]{-3, 3, 0}, new int[]{-3, -3, 3}, 3)
+        };
+
+        int i = 0;
+        for (String className : classColors.keySet()) {
+            shapes.put(className, availableShapes[i % availableShapes.length]);
+            i++;
+        }
+
+        return shapes;
     }
 
     private DefaultCategoryDataset createDataset(List<String[]> data, String[] columnNames, int classColumnIndex) {
@@ -95,7 +120,15 @@ public class ParallelCoordinatesPlot extends JFrame {
                 String className = seriesKey.contains(" - ") ? seriesKey.split(" - ")[0] : seriesKey;
                 return classColors.getOrDefault(className, Color.BLACK);
             }
+
+            @Override
+            public Shape getItemShape(int row, int column) {
+                String seriesKey = (String) getPlot().getDataset().getRowKey(row);
+                String className = seriesKey.contains(" - ") ? seriesKey.split(" - ")[0] : seriesKey;
+                return classShapes.getOrDefault(className, new Ellipse2D.Double(-3, -3, 6, 6));
+            }
         };
+        renderer.setDefaultShapesVisible(true);
         plot.setRenderer(renderer);
 
         return chart;
