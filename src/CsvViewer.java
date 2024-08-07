@@ -5,11 +5,14 @@ import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class CsvViewer extends JFrame {
     private JTable table;
@@ -385,15 +388,23 @@ public class CsvViewer extends JFrame {
     }
 
     private void showParallelCoordinatesPlot() {
-        String[] columnNames = new String[tableModel.getColumnCount()];
-        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            columnNames[i] = tableModel.getColumnName(i);
+        // Get the reordered column names
+        TableColumnModel columnModel = table.getColumnModel();
+        int columnCount = columnModel.getColumnCount();
+        String[] columnNames = new String[columnCount];
+        int[] columnOrder = new int[columnCount]; 
+        for (int i = 0; i < columnCount; i++) {
+            columnNames[i] = columnModel.getColumn(i).getHeaderValue().toString();
+            columnOrder[i] = table.convertColumnIndexToModel(i);
         }
-
+    
+        // Get the data
         List<String[]> data = dataHandler.isDataEmpty() ? dataHandler.getOriginalData() : (isNormalized ? dataHandler.getNormalizedData() : dataHandler.getOriginalData());
-        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, tableModel.getColumnCount() - 1);
+    
+        // Create and show the plot
+        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, tableModel.getColumnCount() - 1, columnOrder);
         plot.setVisible(true);
-    }
+    }    
 
     private void showRuleTesterDialog() {
         RuleTesterDialog ruleTesterDialog = new RuleTesterDialog(this, tableModel);

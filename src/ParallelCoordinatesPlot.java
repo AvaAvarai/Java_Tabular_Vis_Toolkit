@@ -15,18 +15,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class ParallelCoordinatesPlot extends JFrame {
 
     private Map<String, Color> classColors;
     private Map<String, Shape> classShapes;
 
-    public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex) {
+    public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex, int[] columnOrder) {
         setTitle("Parallel Coordinates Plot");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -35,8 +32,14 @@ public class ParallelCoordinatesPlot extends JFrame {
         this.classColors = classColors;
         this.classShapes = createClassShapes();
 
-        DefaultCategoryDataset dataset = createDataset(data, columnNames, classColumnIndex);
-        JFreeChart chart = createChart(dataset, columnNames);
+        // Reorder the column names based on the column order
+        String[] reorderedColumnNames = new String[columnNames.length];
+        for (int i = 0; i < columnNames.length; i++) {
+            reorderedColumnNames[i] = columnNames[columnOrder[i]];
+        }
+
+        DefaultCategoryDataset dataset = createDataset(data, reorderedColumnNames, classColumnIndex, columnOrder);
+        JFreeChart chart = createChart(dataset, reorderedColumnNames);
 
         CategoryPlot plot = (CategoryPlot) chart.getPlot();
         LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
@@ -79,7 +82,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         return shapes;
     }
 
-    private DefaultCategoryDataset createDataset(List<String[]> data, String[] columnNames, int classColumnIndex) {
+    private DefaultCategoryDataset createDataset(List<String[]> data, String[] columnNames, int classColumnIndex, int[] columnOrder) {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
         for (int i = 0; i < data.size(); i++) {
@@ -87,10 +90,10 @@ public class ParallelCoordinatesPlot extends JFrame {
             String className = row[classColumnIndex];
             String seriesName = className + " - Row " + i;
 
-            for (int j = 0; j < row.length; j++) {
-                if (j != classColumnIndex) {
+            for (int j = 0; j < columnOrder.length; j++) {
+                if (columnOrder[j] != classColumnIndex) {
                     try {
-                        double value = Double.parseDouble(row[j]);
+                        double value = Double.parseDouble(row[columnOrder[j]]);
                         dataset.addValue(value, seriesName, columnNames[j]);
                     } catch (NumberFormatException e) {
                         // Handle non-numeric data
