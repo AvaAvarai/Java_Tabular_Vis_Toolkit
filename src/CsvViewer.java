@@ -7,11 +7,9 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class CsvViewer extends JFrame {
     private JTable table;
@@ -72,6 +70,7 @@ public class CsvViewer extends JFrame {
         JButton parallelPlotButton = createButton("icons/parallel.png", "Parallel Coordinates");
         JButton classColorButton = createButton("icons/classcolor.png", "Toggle Class Colors");
         JButton setClassColorsButton = createButton("icons/setcolor.png", "Set Class Colors"); // New button for setting class colors
+        JButton ruleTesterButton = createButton("icons/rule_tester.png", "Rule Tester"); // New button for rule tester
 
         loadButton.addActionListener(e -> loadCsvFile());
         toggleButton.addActionListener(e -> toggleDataView());
@@ -84,6 +83,7 @@ public class CsvViewer extends JFrame {
         parallelPlotButton.addActionListener(e -> showParallelCoordinatesPlot());
         classColorButton.addActionListener(e -> toggleClassColors()); // New action listener for class coloring
         setClassColorsButton.addActionListener(e -> showColorPickerDialog()); // New action listener for setting class colors
+        ruleTesterButton.addActionListener(e -> showRuleTesterDialog()); // New action listener for rule tester
 
         buttonPanel.add(loadButton);
         buttonPanel.add(toggleButton);
@@ -96,6 +96,7 @@ public class CsvViewer extends JFrame {
         buttonPanel.add(parallelPlotButton);
         buttonPanel.add(classColorButton); // Add new button to panel
         buttonPanel.add(setClassColorsButton); // Add set class colors button to panel
+        buttonPanel.add(ruleTesterButton); // Add rule tester button to panel
 
         return buttonPanel;
     }
@@ -392,6 +393,11 @@ public class CsvViewer extends JFrame {
         List<String[]> data = dataHandler.isDataEmpty() ? dataHandler.getOriginalData() : (isNormalized ? dataHandler.getNormalizedData() : dataHandler.getOriginalData());
         ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, tableModel.getColumnCount() - 1);
         plot.setVisible(true);
+    }
+
+    private void showRuleTesterDialog() {
+        RuleTesterDialog ruleTesterDialog = new RuleTesterDialog(this, tableModel);
+        ruleTesterDialog.setVisible(true);
     }
 
     public static void main(String[] args) {
