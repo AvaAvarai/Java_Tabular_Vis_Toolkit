@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,6 +84,13 @@ public class RuleTesterDialog extends JDialog {
         RulePanel rulePanel = new RulePanel(columnNames, conjunction);
         rulePanels.add(rulePanel);
         rulesPanel.add(rulePanel);
+        rulesPanel.revalidate();
+        rulesPanel.repaint();
+    }
+
+    private void removeRulePanel(RulePanel rulePanel) {
+        rulesPanel.remove(rulePanel);
+        rulePanels.remove(rulePanel);
         rulesPanel.revalidate();
         rulesPanel.repaint();
     }
@@ -189,13 +198,14 @@ public class RuleTesterDialog extends JDialog {
                 tp, fp, fn, tn, accuracy), "Confusion Matrix", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    private static class RulePanel extends JPanel {
+    private class RulePanel extends JPanel {
         private final JComboBox<String> attributeBox;
         private final JComboBox<String> relationBox1;
         private final JComboBox<String> relationBox2;
         private final JTextField valueField1;
         private final JTextField valueField2;
         private final JComboBox<String> conjunctionBox;
+        private final JButton removeButton;
 
         public RulePanel(String[] attributes, String conjunction) {
             setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
@@ -205,6 +215,15 @@ public class RuleTesterDialog extends JDialog {
             valueField1 = new JTextField(5);
             valueField2 = new JTextField(5);
 
+            removeButton = new JButton("x");
+            removeButton.setMargin(new Insets(0, 5, 0, 5));
+            removeButton.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    removeRulePanel(RulePanel.this);
+                }
+            });
+
             if (conjunction != null) {
                 conjunctionBox = new JComboBox<>(new String[]{"AND", "OR"});
                 conjunctionBox.setSelectedItem(conjunction);
@@ -212,12 +231,12 @@ public class RuleTesterDialog extends JDialog {
             } else {
                 conjunctionBox = null;
             }
-
             add(valueField1);
             add(relationBox1);
             add(attributeBox);
             add(relationBox2);
             add(valueField2);
+            add(removeButton);
         }
 
         public String getConjunction() {
