@@ -1,6 +1,7 @@
 package src;
 
 import javax.swing.*;
+import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
@@ -25,7 +26,7 @@ public class CsvViewer extends JFrame {
     private Map<String, Color> classColors = new HashMap<>(); // Store class colors
 
     public CsvViewer() {
-        setTitle("CSV Viewer");
+        setTitle("JTabViz: Java Tabular Visualization Toolkit");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -60,17 +61,17 @@ public class CsvViewer extends JFrame {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
-        JButton loadButton = createButton("L", "Load CSV");
-        toggleButton = createButton("N", "Normalize");
-        JButton highlightBlanksButton = createButton("H", "Highlight Blanks");
-        JButton heatmapButton = createButton("M", "Show Heatmap");
-        JButton fontColorButton = createButton("F", "Font Color");
-        JButton insertRowButton = createButton("+", "Insert Row");
-        JButton deleteRowButton = createButton("-", "Delete Row");
-        JButton exportButton = createButton("E", "Export CSV");
-        JButton parallelPlotButton = createButton("P", "Parallel Coordinates");
-        JButton classColorButton = createButton("C", "Toggle Class Colors");
-        JButton setClassColorsButton = createButton("S", "Set Class Colors"); // New button for setting class colors
+        JButton loadButton = createButton("icons/load.png", "Load CSV");
+        toggleButton = createButton("icons/normalize.png", "Normalize");
+        JButton highlightBlanksButton = createButton("icons/highlight.png", "Highlight Blanks");
+        JButton heatmapButton = createButton("icons/heatmap.png", "Show Heatmap");
+        JButton fontColorButton = createButton("icons/fontcolor.png", "Font Color");
+        JButton insertRowButton = createButton("icons/insert.png", "Insert Row");
+        JButton deleteRowButton = createButton("icons/delete.png", "Delete Row");
+        JButton exportButton = createButton("icons/export.png", "Export CSV");
+        JButton parallelPlotButton = createButton("icons/parallel.png", "Parallel Coordinates");
+        JButton classColorButton = createButton("icons/classcolor.png", "Toggle Class Colors");
+        JButton setClassColorsButton = createButton("icons/setcolor.png", "Set Class Colors"); // New button for setting class colors
 
         loadButton.addActionListener(e -> loadCsvFile());
         toggleButton.addActionListener(e -> toggleDataView());
@@ -99,11 +100,40 @@ public class CsvViewer extends JFrame {
         return buttonPanel;
     }
 
-    private JButton createButton(String text, String toolTip) {
-        JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(50, 50)); // Set preferred size to make the button square
+    private JButton createButton(String iconPath, String toolTip) {
+        JButton button = new JButton();
+        button.setPreferredSize(new Dimension(40, 40)); // Set preferred size
+        button.setBackground(new Color(60, 63, 65)); // Set background color
+        button.setFocusPainted(false); // Remove focus border
+        button.setBorderPainted(false); // Remove border
+        button.setContentAreaFilled(false); // Remove background
         button.setToolTipText(toolTip); // Set tool tip for hover text
+
+        if (iconPath != null && !iconPath.isEmpty()) {
+            ImageIcon icon = loadIcon(iconPath, 40, 40); // Load 40x40 pixel icon to fit button
+            if (icon != null) {
+                button.setIcon(icon);
+            }
+        }
+
         return button;
+    }
+
+    private ImageIcon loadIcon(String path, int width, int height) {
+        File iconFile = new File(path);
+        if (!iconFile.exists()) {
+            iconFile = new File("icons/missing.png"); // Load missing icon if file doesn't exist
+        }
+
+        if (iconFile.exists()) {
+            ImageIcon icon = new ImageIcon(iconFile.getAbsolutePath());
+            Image image = icon.getImage(); // Transform it
+            Image newimg = image.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH); // Scale it
+            return new ImageIcon(newimg); // Transform it back
+        } else {
+            System.err.println("Couldn't find file: " + path);
+            return null;
+        }
     }
 
     private void loadCsvFile() {
@@ -131,13 +161,13 @@ public class CsvViewer extends JFrame {
         if (isNormalized) {
             updateTableData(dataHandler.getOriginalData());
             isNormalized = false;
-            toggleButton.setText("N");
+            toggleButton.setIcon(loadIcon("icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
         } else {
             dataHandler.normalizeData();
             updateTableData(dataHandler.getNormalizedData());
             isNormalized = true;
-            toggleButton.setText("D");
+            toggleButton.setIcon(loadIcon("icons/default.png", 40, 40));
             toggleButton.setToolTipText("Default");
         }
     }

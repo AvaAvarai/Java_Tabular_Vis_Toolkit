@@ -14,7 +14,7 @@ Fisher Iris data X4 petal.width case overlap exploration.
 - **Parallel Coordinates Visualization**: Display a new window with data shown in a Parallel coordinates plot, normalization (or not) and augmentation carries over.
 - **Row Manipulation**: Insert, delete, and augment (change value) rows, and visually reorder rows using drag and drop.
 - **Font Color Customization**: Customize the font color of the table cells.
-- **Tabular Class Field Highlight**: Toggle tabular class fields drawn with class color for background.
+- **Tabular Class Field Highlight**: Toggle tabular class fields drawn with class color for background with class color selection.
 - **Data Export**: Export the modified data back to a CSV file.
 
 ## Getting Started
@@ -62,6 +62,10 @@ jar cfm JTabViz.jar MANIFEST.MF -C out .
 ```sh
 java -cp ".;libs/*;JTabViz.jar" src.CsvViewer
 ```
+
+## Aknowledgements
+
+The user interface icons used are source from Font Awesme.
 
 ## License
 
