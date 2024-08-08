@@ -92,17 +92,83 @@ public class CsvViewer extends JFrame {
         JButton ruleTesterButton = createButton("icons/rule_tester.png", "Rule Tester"); // New button for rule tester
 
         loadButton.addActionListener(e -> loadCsvFile());
-        toggleButton.addActionListener(e -> toggleDataView());
-        highlightBlanksButton.addActionListener(e -> highlightBlanks());
-        heatmapButton.addActionListener(e -> toggleHeatmap());
-        fontColorButton.addActionListener(e -> chooseFontColor());
-        insertRowButton.addActionListener(e -> insertRow());
-        deleteRowButton.addActionListener(e -> deleteRow());
-        exportButton.addActionListener(e -> exportCsvFile());
-        parallelPlotButton.addActionListener(e -> showParallelCoordinatesPlot());
-        classColorButton.addActionListener(e -> toggleClassColors()); // New action listener for class coloring
-        setClassColorsButton.addActionListener(e -> showColorPickerDialog()); // New action listener for setting class colors
-        ruleTesterButton.addActionListener(e -> showRuleTesterDialog()); // New action listener for rule tester
+        toggleButton.addActionListener(e -> {
+            if (dataHandler.isDataEmpty()) {
+                noDataLoadedError();
+            } else {
+                toggleDataView();
+            }
+        });
+        highlightBlanksButton.addActionListener(e -> {
+            if (dataHandler.isDataEmpty()) {
+                noDataLoadedError();
+            } else {
+                highlightBlanks();
+            }
+        });
+        heatmapButton.addActionListener(e -> {
+            if (dataHandler.isDataEmpty()) {
+                noDataLoadedError();
+            } else {
+                toggleHeatmap();
+            }
+        });
+        fontColorButton.addActionListener(e -> {
+            if (dataHandler.isDataEmpty()) {
+                noDataLoadedError();
+            } else {
+                chooseFontColor();
+            }
+        });
+        insertRowButton.addActionListener(e -> {
+            if (dataHandler.isDataEmpty()) {
+                noDataLoadedError();
+            } else {
+                insertRow();
+            }
+        });
+        deleteRowButton.addActionListener(e -> {
+            if (dataHandler.isDataEmpty()) {
+                noDataLoadedError();
+            } else {
+                deleteRow();
+            }
+        });
+        exportButton.addActionListener(e -> {
+            if (dataHandler.isDataEmpty()) {
+                noDataLoadedError();
+            } else {
+                exportCsvFile();
+            }
+        });
+        parallelPlotButton.addActionListener(e -> {
+            if (dataHandler.isDataEmpty()) {
+                noDataLoadedError();
+            } else {
+                showParallelCoordinatesPlot();
+            }
+        });
+        classColorButton.addActionListener(e -> {
+            if (dataHandler.isDataEmpty()) {
+                noDataLoadedError();
+            } else {
+                toggleClassColors();
+            }
+        });
+        setClassColorsButton.addActionListener(e -> {
+            if (dataHandler.isDataEmpty()) {
+                noDataLoadedError();
+            } else {
+                showColorPickerDialog();
+            }
+        });
+        ruleTesterButton.addActionListener(e -> {
+            if (dataHandler.isDataEmpty()) {
+                noDataLoadedError();
+            } else {
+                showRuleTesterDialog();
+            }
+        });
 
         buttonPanel.add(loadButton);
         buttonPanel.add(toggleButton);
@@ -156,6 +222,10 @@ public class CsvViewer extends JFrame {
         }
     }
 
+    private void noDataLoadedError() {
+        JOptionPane.showMessageDialog(this, "No data loaded", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
     private void loadCsvFile() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new File("datasets"));
@@ -174,11 +244,6 @@ public class CsvViewer extends JFrame {
     }
 
     private void toggleDataView() {
-        if (dataHandler.isDataEmpty()) {
-            JOptionPane.showMessageDialog(this, "No data to toggle", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
         if (isNormalized) {
             updateTableData(dataHandler.getOriginalData());
             isNormalized = false;
