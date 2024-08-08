@@ -17,6 +17,7 @@ Rules Tester Demo.
 - **Highlight Blanks**: Toggle highlight of cell backgrounds with missing data.
 - **Heatmap Visualization**: Toggle highlighting data rows backgrounds as a heatmap.
 - **Parallel Coordinates Visualization**: Display a new window with data shown in a Parallel coordinates plot, normalization (or not) and augmentation carries over.
+- **Shifted Paired Coordinates Visualization**: Display a new window with data shown in a Shifted Paired coordinates plot, normalization (or not) and augmentation carries over.
 - **Row Manipulation**: Insert, delete, and augment (change value) rows, and visually reorder rows using drag and drop.
 - **Font Color Customization**: Customize the font color of the table cells.
 - **Tabular Class Field Highlight**: Toggle tabular class fields drawn with class color for background with class color selection.
