@@ -38,7 +38,7 @@ public class ShiftedPairedCoordinates extends JFrame {
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            int plotWidth = getWidth() / numPlots;
+            int plotWidth = getWidth() / numPlots - 10;
             int plotHeight = getHeight() - 70; // leave space for labels and title
 
             // Draw the title
@@ -71,7 +71,7 @@ public class ShiftedPairedCoordinates extends JFrame {
                         attrIndex2 = attrIndex1;
                     }
 
-                    int plotX1 = i * plotWidth + 20;
+                    int plotX1 = i * plotWidth + 40;
                     int plotY1 = titleHeight + 10;
                     int plotSize = Math.min(plotWidth, plotHeight) - 40;
 
@@ -89,7 +89,7 @@ public class ShiftedPairedCoordinates extends JFrame {
                         nextAttrIndex2 = nextAttrIndex1;
                     }
 
-                    int plotX2 = (i + 1) * plotWidth + 20;
+                    int plotX2 = (i + 1) * plotWidth + 40;
                     int plotY2 = titleHeight + 10;
 
                     double normX2 = (data.get(nextAttrIndex1).get(row) - getMin(data.get(nextAttrIndex1))) / (getMax(data.get(nextAttrIndex1)) - getMin(data.get(nextAttrIndex1)));
@@ -105,7 +105,7 @@ public class ShiftedPairedCoordinates extends JFrame {
 
         private void drawScatterPlot(Graphics2D g2, List<Double> xData, List<Double> yData, int x, int y, int width, int height, String xLabel, String yLabel) {
             int plotSize = Math.min(width, height) - 40;
-            int plotX = x + 20;
+            int plotX = x + 40;
             int plotY = y + 20;
 
             // Draw axes
