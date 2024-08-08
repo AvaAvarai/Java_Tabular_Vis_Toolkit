@@ -258,15 +258,44 @@ public class CsvViewer extends JFrame {
         table.repaint();
     }
 
-    public void chooseFontColor() {
-        Color newColor = JColorChooser.showDialog(this, "Choose Font Color", cellTextColor);
-        if (newColor != null) {
-            cellTextColor = newColor;
+    public void showFontSettingsDialog() {
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+
+        // Font Color Picker
+        JLabel colorLabel = new JLabel("Font Color:");
+        panel.add(colorLabel);
+        JButton colorButton = new JButton("Choose Color");
+        colorButton.addActionListener(e -> {
+            Color newColor = JColorChooser.showDialog(this, "Choose Font Color", cellTextColor);
+            if (newColor != null) {
+                cellTextColor = newColor;
+            }
+        });
+        panel.add(colorButton);
+
+        // Font Size Selector
+        JLabel sizeLabel = new JLabel("Font Size:");
+        panel.add(sizeLabel);
+        JSpinner sizeSpinner = new JSpinner(new SpinnerNumberModel(12, 8, 72, 1)); // Default size: 12
+        sizeSpinner.setValue(statsTextArea.getFont().getSize());
+        panel.add(sizeSpinner);
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Font Settings", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            int fontSize = (int) sizeSpinner.getValue();
+            Font newFont = statsTextArea.getFont().deriveFont((float) fontSize);
+            statsTextArea.setFont(newFont);
+
+            // Apply to other components if needed
+            table.setFont(newFont);
+            table.getTableHeader().setFont(newFont);
+
             if (isHeatmapEnabled || isClassColorEnabled) {
                 applyCombinedRenderer();
             } else {
                 applyDefaultRenderer();
             }
+
             dataHandler.updateStats(tableModel, statsTextArea);
         }
     }

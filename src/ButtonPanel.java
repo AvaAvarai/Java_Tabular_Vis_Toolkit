@@ -31,11 +31,11 @@ public class ButtonPanel {
                 csvViewer.toggleHeatmap();
             }
         });
-        JButton fontColorButton = UIHelper.createButton("icons/fontcolor.png", "Font Color", e -> {
+        JButton fontSettingsButton = UIHelper.createButton("icons/fontcolor.png", "Font Color", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
-                csvViewer.chooseFontColor();
+                csvViewer.showFontSettingsDialog();
             }
         });
         JButton insertRowButton = UIHelper.createButton("icons/insert.png", "Insert Row", e -> {
@@ -99,7 +99,7 @@ public class ButtonPanel {
         buttonPanel.add(csvViewer.toggleButton);
         buttonPanel.add(highlightBlanksButton);
         buttonPanel.add(heatmapButton);
-        buttonPanel.add(fontColorButton);
+        buttonPanel.add(fontSettingsButton);
         buttonPanel.add(insertRowButton);
         buttonPanel.add(deleteRowButton);
         buttonPanel.add(exportButton);
