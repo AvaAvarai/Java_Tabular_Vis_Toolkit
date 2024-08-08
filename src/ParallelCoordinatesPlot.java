@@ -5,15 +5,19 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
 import org.jfree.chart.axis.NumberAxis;
+import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.renderer.category.CategoryItemRendererState;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.chart.LegendItem;
 import org.jfree.chart.LegendItemCollection;
+import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.*;
 import java.util.List;
@@ -36,7 +40,44 @@ public class ParallelCoordinatesPlot extends JFrame {
         JFreeChart chart = createChart(dataset, columnNames);
 
         CategoryPlot plot = (CategoryPlot) chart.getPlot();
-        LineAndShapeRenderer renderer = (LineAndShapeRenderer) plot.getRenderer();
+        LineAndShapeRenderer renderer = new LineAndShapeRenderer() {
+            @Override
+            public void drawDomainGridline(Graphics2D g2, CategoryPlot plot, Rectangle2D dataArea, double value) {
+                // No need to draw default gridlines
+            }
+
+            @Override
+            public void drawItem(Graphics2D g2, CategoryItemRendererState state, Rectangle2D dataArea, CategoryPlot plot, CategoryAxis domainAxis, ValueAxis rangeAxis, CategoryDataset dataset, int row, int column, int pass) {
+                super.drawItem(g2, state, dataArea, plot, domainAxis, rangeAxis, dataset, row, column, pass);
+
+                if (row == 0 && column == 0) {
+                    // Draw the parallel lines (axes) manually
+                    for (int i = 0; i < dataset.getColumnCount(); i++) {
+                        double x = domainAxis.getCategoryMiddle(i, getColumnCount(), dataArea, plot.getDomainAxisEdge());
+                        g2.setPaint(Color.BLACK);
+                        g2.setStroke(new BasicStroke(1.0f)); // Use 1.0f for a thin line
+                        Line2D line = new Line2D.Double(x, dataArea.getMinY(), x, dataArea.getMaxY());
+                        g2.draw(line);
+                    }
+                }
+            }
+
+            @Override
+            public Paint getItemPaint(int row, int column) {
+                String seriesKey = (String) getPlot().getDataset().getRowKey(row);
+                String className = seriesKey.contains(" - ") ? seriesKey.split(" - ")[0] : seriesKey;
+                return classColors.getOrDefault(className, Color.BLACK);
+            }
+
+            @Override
+            public Shape getItemShape(int row, int column) {
+                String seriesKey = (String) getPlot().getDataset().getRowKey(row);
+                String className = seriesKey.contains(" - ") ? seriesKey.split(" - ")[0] : seriesKey;
+                return classShapes.getOrDefault(className, new Ellipse2D.Double(-3, -3, 6, 6));
+            }
+        };
+        renderer.setDefaultShapesVisible(true);
+        plot.setRenderer(renderer);
 
         // Manually create a custom legend
         LegendItemCollection legendItems = new LegendItemCollection();
@@ -109,24 +150,6 @@ public class ParallelCoordinatesPlot extends JFrame {
         CategoryPlot plot = (CategoryPlot) chart.getPlot();
         plot.setDomainAxis(new CategoryAxis());
         plot.setRangeAxis(new NumberAxis());
-
-        LineAndShapeRenderer renderer = new LineAndShapeRenderer() {
-            @Override
-            public Paint getItemPaint(int row, int column) {
-                String seriesKey = (String) getPlot().getDataset().getRowKey(row);
-                String className = seriesKey.contains(" - ") ? seriesKey.split(" - ")[0] : seriesKey;
-                return classColors.getOrDefault(className, Color.BLACK);
-            }
-
-            @Override
-            public Shape getItemShape(int row, int column) {
-                String seriesKey = (String) getPlot().getDataset().getRowKey(row);
-                String className = seriesKey.contains(" - ") ? seriesKey.split(" - ")[0] : seriesKey;
-                return classShapes.getOrDefault(className, new Ellipse2D.Double(-3, -3, 6, 6));
-            }
-        };
-        renderer.setDefaultShapesVisible(true);
-        plot.setRenderer(renderer);
 
         return chart;
     }
