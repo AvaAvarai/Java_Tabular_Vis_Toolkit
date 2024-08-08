@@ -8,7 +8,6 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,17 +15,17 @@ import java.util.Map;
 import java.util.Set;
 
 public class CsvViewer extends JFrame {
-    private JTable table;
-    private ReorderableTableModel tableModel;
-    private CsvDataHandler dataHandler;
-    private boolean isNormalized = false;
-    private boolean isHeatmapEnabled = false;
-    private boolean isClassColorEnabled = false; // New flag for class column coloring
-    private Color cellTextColor = Color.BLACK; // Default cell text color
-    private JTextArea statsTextArea;
-    private JButton toggleButton;
-    private Map<String, Color> classColors = new HashMap<>(); // Store class colors
-    private JLabel selectedRowsLabel; // Label to display the number of selected rows
+    public JTable table;
+    public ReorderableTableModel tableModel;
+    public CsvDataHandler dataHandler;
+    public boolean isNormalized = false;
+    public boolean isHeatmapEnabled = false;
+    public boolean isClassColorEnabled = false; // New flag for class column coloring
+    public Color cellTextColor = Color.BLACK; // Default cell text color
+    public JTextArea statsTextArea;
+    public JButton toggleButton;
+    public Map<String, Color> classColors = new HashMap<>(); // Store class colors
+    public JLabel selectedRowsLabel; // Label to display the number of selected rows
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -36,30 +35,16 @@ public class CsvViewer extends JFrame {
 
         dataHandler = new CsvDataHandler();
         tableModel = new ReorderableTableModel();
-        table = new JTable(tableModel);
-        table.setDragEnabled(true);
-        table.setDropMode(DropMode.INSERT_ROWS);
-        table.setFillsViewportHeight(true);
-        table.setTransferHandler(new TableRowTransferHandler(table));
-        table.setAutoCreateRowSorter(true);
-        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION); // Allow multiple row selection
-        table.getTableHeader().setReorderingAllowed(true);
-        table.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                updateSelectedRowsLabel();
-            }
-        });
+        table = TableSetup.createTable(tableModel);
+        table.addMouseListener(new TableMouseListener(this));
 
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
         table.setRowSorter(sorter);
 
-        JPanel buttonPanel = createButtonPanel();
+        JPanel buttonPanel = ButtonPanel.createButtonPanel(this);
         add(buttonPanel, BorderLayout.NORTH);
 
-        statsTextArea = new JTextArea(3, 0);
-        statsTextArea.setEditable(false);
-        statsTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        statsTextArea = UIHelper.createTextArea(3, 0);
         JScrollPane statsScrollPane = new JScrollPane(statsTextArea);
 
         JScrollPane tableScrollPane = new JScrollPane(table);
@@ -74,161 +59,13 @@ public class CsvViewer extends JFrame {
         add(splitPane, BorderLayout.CENTER);
     }
 
-    private JPanel createButtonPanel() {
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-
-        JButton loadButton = createButton("icons/load.png", "Load CSV");
-        toggleButton = createButton("icons/normalize.png", "Normalize");
-        JButton highlightBlanksButton = createButton("icons/highlight.png", "Highlight Blanks");
-        JButton heatmapButton = createButton("icons/heatmap.png", "Show Heatmap");
-        JButton fontColorButton = createButton("icons/fontcolor.png", "Font Color");
-        JButton insertRowButton = createButton("icons/insert.png", "Insert Row");
-        JButton deleteRowButton = createButton("icons/delete.png", "Delete Row");
-        JButton exportButton = createButton("icons/export.png", "Export CSV");
-        JButton parallelPlotButton = createButton("icons/parallel.png", "Parallel Coordinates");
-        JButton classColorButton = createButton("icons/classcolor.png", "Toggle Class Colors");
-        JButton setClassColorsButton = createButton("icons/setcolor.png", "Set Class Colors"); // New button for setting class colors
-        JButton ruleTesterButton = createButton("icons/rule_tester.png", "Rule Tester"); // New button for rule tester
-
-        loadButton.addActionListener(e -> loadCsvFile());
-        toggleButton.addActionListener(e -> {
-            if (dataHandler.isDataEmpty()) {
-                noDataLoadedError();
-            } else {
-                toggleDataView();
-            }
-        });
-        highlightBlanksButton.addActionListener(e -> {
-            if (dataHandler.isDataEmpty()) {
-                noDataLoadedError();
-            } else {
-                highlightBlanks();
-            }
-        });
-        heatmapButton.addActionListener(e -> {
-            if (dataHandler.isDataEmpty()) {
-                noDataLoadedError();
-            } else {
-                toggleHeatmap();
-            }
-        });
-        fontColorButton.addActionListener(e -> {
-            if (dataHandler.isDataEmpty()) {
-                noDataLoadedError();
-            } else {
-                chooseFontColor();
-            }
-        });
-        insertRowButton.addActionListener(e -> {
-            if (dataHandler.isDataEmpty()) {
-                noDataLoadedError();
-            } else {
-                insertRow();
-            }
-        });
-        deleteRowButton.addActionListener(e -> {
-            if (dataHandler.isDataEmpty()) {
-                noDataLoadedError();
-            } else {
-                deleteRow();
-            }
-        });
-        exportButton.addActionListener(e -> {
-            if (dataHandler.isDataEmpty()) {
-                noDataLoadedError();
-            } else {
-                exportCsvFile();
-            }
-        });
-        parallelPlotButton.addActionListener(e -> {
-            if (dataHandler.isDataEmpty()) {
-                noDataLoadedError();
-            } else {
-                showParallelCoordinatesPlot();
-            }
-        });
-        classColorButton.addActionListener(e -> {
-            if (dataHandler.isDataEmpty()) {
-                noDataLoadedError();
-            } else {
-                toggleClassColors();
-            }
-        });
-        setClassColorsButton.addActionListener(e -> {
-            if (dataHandler.isDataEmpty()) {
-                noDataLoadedError();
-            } else {
-                showColorPickerDialog();
-            }
-        });
-        ruleTesterButton.addActionListener(e -> {
-            if (dataHandler.isDataEmpty()) {
-                noDataLoadedError();
-            } else {
-                showRuleTesterDialog();
-            }
-        });
-
-        buttonPanel.add(loadButton);
-        buttonPanel.add(toggleButton);
-        buttonPanel.add(highlightBlanksButton);
-        buttonPanel.add(heatmapButton);
-        buttonPanel.add(fontColorButton);
-        buttonPanel.add(insertRowButton);
-        buttonPanel.add(deleteRowButton);
-        buttonPanel.add(exportButton);
-        buttonPanel.add(parallelPlotButton);
-        buttonPanel.add(classColorButton); // Add new button to panel
-        buttonPanel.add(setClassColorsButton); // Add set class colors button to panel
-        buttonPanel.add(ruleTesterButton); // Add rule tester button to panel
-
-        return buttonPanel;
-    }
-
-    private JButton createButton(String iconPath, String toolTip) {
-        JButton button = new JButton();
-        button.setPreferredSize(new Dimension(40, 40)); // Set preferred size
-        button.setBackground(new Color(60, 63, 65)); // Set background color
-        button.setFocusPainted(false); // Remove focus border
-        button.setBorderPainted(false); // Remove border
-        button.setContentAreaFilled(false); // Remove background
-        button.setToolTipText(toolTip); // Set tool tip for hover text
-
-        if (iconPath != null && !iconPath.isEmpty()) {
-            ImageIcon icon = loadIcon(iconPath, 40, 40); // Load 40x40 pixel icon to fit button
-            if (icon != null) {
-                button.setIcon(icon);
-            }
-        }
-
-        return button;
-    }
-
-    private ImageIcon loadIcon(String path, int width, int height) {
-        File iconFile = new File(path);
-        if (!iconFile.exists()) {
-            iconFile = new File("icons/missing.png"); // Load missing icon if file doesn't exist
-        }
-
-        if (iconFile.exists()) {
-            ImageIcon icon = new ImageIcon(iconFile.getAbsolutePath());
-            Image image = icon.getImage(); // Transform it
-            Image newimg = image.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH); // Scale it
-            return new ImageIcon(newimg); // Transform it back
-        } else {
-            System.err.println("Couldn't find file: " + path);
-            return null;
-        }
-    }
-
-    private void noDataLoadedError() {
+    public void noDataLoadedError() {
         JOptionPane.showMessageDialog(this, "No data loaded", "Error", JOptionPane.ERROR_MESSAGE);
     }
 
-    private void loadCsvFile() {
+    public void loadCsvFile() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File("datasets"));
+        fileChooser.setCurrentDirectory(new java.io.File("datasets"));
         int result = fileChooser.showOpenDialog(this);
 
         if (result == JFileChooser.APPROVE_OPTION) {
@@ -247,22 +84,22 @@ public class CsvViewer extends JFrame {
         }
     }
 
-    private void toggleDataView() {
+    public void toggleDataView() {
         if (isNormalized) {
             updateTableData(dataHandler.getOriginalData());
             isNormalized = false;
-            toggleButton.setIcon(loadIcon("icons/normalize.png", 40, 40));
+            toggleButton.setIcon(UIHelper.loadIcon("icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
         } else {
             dataHandler.normalizeData();
             updateTableData(dataHandler.getNormalizedData());
             isNormalized = true;
-            toggleButton.setIcon(loadIcon("icons/denormalize.png", 40, 40));
+            toggleButton.setIcon(UIHelper.loadIcon("icons/denormalize.png", 40, 40));
             toggleButton.setToolTipText("Default");
         }
     }
 
-    private void updateTableData(List<String[]> data) {
+    public void updateTableData(List<String[]> data) {
         tableModel.setRowCount(0); // Clear existing data
         for (String[] row : data) {
             tableModel.addRow(row);
@@ -276,7 +113,7 @@ public class CsvViewer extends JFrame {
         updateSelectedRowsLabel(); // Update the selected rows label
     }
 
-    private void highlightBlanks() {
+    public void highlightBlanks() {
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -293,13 +130,13 @@ public class CsvViewer extends JFrame {
         table.repaint();
     }
 
-    private void toggleHeatmap() {
+    public void toggleHeatmap() {
         isHeatmapEnabled = !isHeatmapEnabled;
         applyCombinedRenderer();
         dataHandler.updateStats(tableModel, statsTextArea);
     }
 
-    private void generateClassColors() {
+    public void generateClassColors() {
         int classColumnIndex = getClassColumnIndex(); // Find the class column index
         if (classColumnIndex == -1) {
             return; // If no class column is found, return early
@@ -323,7 +160,7 @@ public class CsvViewer extends JFrame {
         }
     }
 
-    private int getClassColumnIndex() {
+    public int getClassColumnIndex() {
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
             if (tableModel.getColumnName(i).equalsIgnoreCase("class")) {
                 return i;
@@ -332,7 +169,7 @@ public class CsvViewer extends JFrame {
         return -1; // Return -1 if no class column is found
     }
 
-    private void applyCombinedRenderer() {
+    public void applyCombinedRenderer() {
         int numColumns = tableModel.getColumnCount();
         double[] minValues = new double[numColumns];
         double[] maxValues = new double[numColumns];
@@ -403,13 +240,13 @@ public class CsvViewer extends JFrame {
         table.repaint();
     }
 
-    private void toggleClassColors() {
+    public void toggleClassColors() {
         isClassColorEnabled = !isClassColorEnabled;
         applyCombinedRenderer();
         dataHandler.updateStats(tableModel, statsTextArea);
     }
 
-    private void applyDefaultRenderer() {
+    public void applyDefaultRenderer() {
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -422,7 +259,7 @@ public class CsvViewer extends JFrame {
         table.repaint();
     }
 
-    private void chooseFontColor() {
+    public void chooseFontColor() {
         Color newColor = JColorChooser.showDialog(this, "Choose Font Color", cellTextColor);
         if (newColor != null) {
             cellTextColor = newColor;
@@ -435,7 +272,7 @@ public class CsvViewer extends JFrame {
         }
     }
 
-    private void showColorPickerDialog() {
+    public void showColorPickerDialog() {
         int classColumnIndex = getClassColumnIndex(); // Find the class column index
         if (classColumnIndex == -1) {
             return; // If no class column is found, return early
@@ -460,14 +297,14 @@ public class CsvViewer extends JFrame {
         }
     }
 
-    private void insertRow() {
+    public void insertRow() {
         int numColumns = tableModel.getColumnCount();
         String[] emptyRow = new String[numColumns];
         tableModel.addRow(emptyRow);
         dataHandler.updateStats(tableModel, statsTextArea);
     }
 
-    private void deleteRow() {
+    public void deleteRow() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow != -1) {
             tableModel.removeRow(selectedRow);
@@ -477,9 +314,9 @@ public class CsvViewer extends JFrame {
         }
     }
 
-    private void exportCsvFile() {
+    public void exportCsvFile() {
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new File("datasets"));
+        fileChooser.setCurrentDirectory(new java.io.File("datasets"));
         fileChooser.setDialogTitle("Save CSV File");
         int result = fileChooser.showSaveDialog(this);
 
@@ -489,7 +326,7 @@ public class CsvViewer extends JFrame {
         }
     }
 
-    private void showParallelCoordinatesPlot() {
+    public void showParallelCoordinatesPlot() {
         // Get the reordered column names
         TableColumnModel columnModel = table.getColumnModel();
         int columnCount = columnModel.getColumnCount();
@@ -507,12 +344,12 @@ public class CsvViewer extends JFrame {
         plot.setVisible(true);
     }    
 
-    private void showRuleTesterDialog() {
+    public void showRuleTesterDialog() {
         RuleTesterDialog ruleTesterDialog = new RuleTesterDialog(this, tableModel);
         ruleTesterDialog.setVisible(true);
     }
 
-    private void updateSelectedRowsLabel() {
+    public void updateSelectedRowsLabel() {
         int selectedRowCount = table.getSelectedRowCount();
         selectedRowsLabel.setText("Selected rows: " + selectedRowCount);
     }
