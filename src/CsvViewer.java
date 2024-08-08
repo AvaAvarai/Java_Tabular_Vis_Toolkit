@@ -300,7 +300,10 @@ public class CsvViewer extends JFrame {
     }
 
     private void generateClassColors() {
-        int classColumnIndex = tableModel.getColumnCount() - 1; // Assuming class column is the last one
+        int classColumnIndex = getClassColumnIndex(); // Find the class column index
+        if (classColumnIndex == -1) {
+            return; // If no class column is found, return early
+        }
         Map<String, Integer> classMap = new HashMap<>();
         int colorIndex = 0;
 
@@ -320,12 +323,21 @@ public class CsvViewer extends JFrame {
         }
     }
 
+    private int getClassColumnIndex() {
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            if (tableModel.getColumnName(i).equalsIgnoreCase("class")) {
+                return i;
+            }
+        }
+        return -1; // Return -1 if no class column is found
+    }
+
     private void applyCombinedRenderer() {
         int numColumns = tableModel.getColumnCount();
         double[] minValues = new double[numColumns];
         double[] maxValues = new double[numColumns];
         boolean[] isNumerical = new boolean[numColumns];
-        int classColumnIndex = tableModel.getColumnCount() - 1; // Assuming class column is the last one
+        int classColumnIndex = getClassColumnIndex(); // Find the class column index
 
         // Initialize min and max values
         for (int i = 0; i < numColumns; i++) {
@@ -354,7 +366,7 @@ public class CsvViewer extends JFrame {
                 int modelColumn = table.convertColumnIndexToModel(column); // Get the model index of the column
 
                 // Apply class colors
-                if (isClassColorEnabled && column == classColumnIndex) {
+                if (isClassColorEnabled && modelColumn == classColumnIndex) {
                     String className = (String) value;
                     if (classColors.containsKey(className)) {
                         c.setBackground(classColors.get(className));
@@ -424,7 +436,10 @@ public class CsvViewer extends JFrame {
     }
 
     private void showColorPickerDialog() {
-        int classColumnIndex = tableModel.getColumnCount() - 1; // Assuming class column is the last one
+        int classColumnIndex = getClassColumnIndex(); // Find the class column index
+        if (classColumnIndex == -1) {
+            return; // If no class column is found, return early
+        }
         Set<String> uniqueClassNames = new HashSet<>();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             uniqueClassNames.add((String) tableModel.getValueAt(i, classColumnIndex));
@@ -488,7 +503,7 @@ public class CsvViewer extends JFrame {
         List<String[]> data = dataHandler.isDataEmpty() ? dataHandler.getOriginalData() : (isNormalized ? dataHandler.getNormalizedData() : dataHandler.getOriginalData());
     
         // Create and show the plot
-        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, tableModel.getColumnCount() - 1, columnOrder);
+        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder);
         plot.setVisible(true);
     }    
 

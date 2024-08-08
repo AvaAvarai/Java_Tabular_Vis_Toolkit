@@ -70,6 +70,10 @@ jar cfm JTabViz.jar MANIFEST.MF -C out .
 java -cp ".;libs/*;JTabViz.jar" src.CsvViewer
 ```
 
+## Data Format
+
+Data used should be stored in a .csv file, ideally numerical, however, this software should accept blank fields. The label column should be titled `class`, case-insensitive.
+
 ## Aknowledgements
 
 The user interface icons used are source from Font Awesme.
