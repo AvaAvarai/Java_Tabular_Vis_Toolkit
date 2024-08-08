@@ -6,8 +6,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -342,6 +341,47 @@ public class CsvViewer extends JFrame {
         // Create and show the plot
         ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder);
         plot.setVisible(true);
+    }
+
+    public void showShiftedPairedCoordinates() {
+        List<List<Double>> data = new ArrayList<>();
+        List<String> attributeNames = new ArrayList<>();
+        List<String> classLabels = new ArrayList<>();
+    
+        // Get the reordered column names
+        TableColumnModel columnModel = table.getColumnModel();
+        int columnCount = columnModel.getColumnCount();
+        int[] columnOrder = new int[columnCount];
+        for (int i = 0; i < columnCount; i++) {
+            columnOrder[i] = table.convertColumnIndexToModel(i);
+        }
+    
+        for (int col = 0; col < columnOrder.length; col++) {
+            boolean isNumeric = true;
+            List<Double> columnData = new ArrayList<>();
+            for (int row = 0; row < tableModel.getRowCount(); row++) {
+                try {
+                    columnData.add(Double.parseDouble(tableModel.getValueAt(row, columnOrder[col]).toString()));
+                } catch (NumberFormatException e) {
+                    isNumeric = false;
+                    break;
+                }
+            }
+            if (isNumeric) {
+                data.add(columnData);
+                attributeNames.add(tableModel.getColumnName(columnOrder[col]));
+            }
+        }
+    
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            classLabels.add((String) tableModel.getValueAt(row, getClassColumnIndex()));
+        }
+    
+        // Calculate the number of plots needed
+        int numPlots = (attributeNames.size() + 1) / 2;
+    
+        ShiftedPairedCoordinates shiftedPairedCoordinates = new ShiftedPairedCoordinates(data, attributeNames, classColors, classLabels, numPlots);
+        shiftedPairedCoordinates.setVisible(true);
     }    
 
     public void showRuleTesterDialog() {

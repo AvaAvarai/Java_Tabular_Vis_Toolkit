@@ -66,6 +66,13 @@ public class ButtonPanel {
                 csvViewer.showParallelCoordinatesPlot();
             }
         });
+        JButton shiftedPairedButton = UIHelper.createButton("icons/shiftedpaired.png", "Shifted Paired", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showShiftedPairedCoordinates();
+            }
+        });
         JButton classColorButton = UIHelper.createButton("icons/classcolor.png", "Toggle Class Colors", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
@@ -97,6 +104,7 @@ public class ButtonPanel {
         buttonPanel.add(deleteRowButton);
         buttonPanel.add(exportButton);
         buttonPanel.add(parallelPlotButton);
+        buttonPanel.add(shiftedPairedButton); // Added the button for shifted paired coordinates
         buttonPanel.add(classColorButton);
         buttonPanel.add(setClassColorsButton);
         buttonPanel.add(ruleTesterButton);
