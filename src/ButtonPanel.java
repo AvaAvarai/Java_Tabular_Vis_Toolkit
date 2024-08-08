@@ -104,7 +104,7 @@ public class ButtonPanel {
         buttonPanel.add(deleteRowButton);
         buttonPanel.add(exportButton);
         buttonPanel.add(parallelPlotButton);
-        buttonPanel.add(shiftedPairedButton); // Added the button for shifted paired coordinates
+        buttonPanel.add(shiftedPairedButton);
         buttonPanel.add(classColorButton);
         buttonPanel.add(setClassColorsButton);
         buttonPanel.add(ruleTesterButton);

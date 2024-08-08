@@ -5,7 +5,10 @@
 We are exploring to see if we can add custom visualization techniques with the utilized libraries (Java Swing, JFreeChart).
 
 Fisher Iris Data Exploration Demo.
-![Demo screenshot](screenshots/Iris_Demo_1.png)
+![Demo screenshot 1](screenshots/Iris_Demo_1.png)
+
+Shifted Paired Coordinates Demo.
+![Demo screenshot 2](screenshots/Iris_Demo_2.png)
 
 Rules Tester Demo.
 ![Rules Tester Demo screenshot](screenshots/Rules_Test_Demo_1.png)
@@ -16,13 +19,14 @@ Rules Tester Demo.
 - **Normalize Data**: Toggle normalization of numerical columns in the dataset.
 - **Highlight Blanks**: Toggle highlight of cell backgrounds with missing data.
 - **Heatmap Visualization**: Toggle highlighting data rows backgrounds as a heatmap.
-- **Parallel Coordinates Visualization**: Display a new window with data shown in a Parallel coordinates plot, normalization (or not) and augmentation carries over.
-- **Shifted Paired Coordinates Visualization**: Display a new window with data shown in a Shifted Paired coordinates plot, normalization (or not) and augmentation carries over.
+- **Parallel Coordinates Visualization**: Display a new window with data shown in a Parallel coordinates plot, normalization (or not), column ordering, and augmentation carries over.
+- **Shifted Paired Coordinates Visualization**: Display a new window with data shown in a Shifted Paired coordinates plot, column ordering and augmentation carries over.
 - **Row Manipulation**: Insert, delete, and augment (change value) rows, and visually reorder rows using drag and drop.
 - **Font Color Customization**: Customize the font color of the table cells.
 - **Tabular Class Field Highlight**: Toggle tabular class fields drawn with class color for background with class color selection.
 - **Data Export**: Export the modified data back to a CSV file.
 - **Rules Tester**: Tool window to test classification rules of the form: val1 R1 att R2 val2 i.e. 0.0 < petal.length < 2.0 rules can be chained in succession with conjunction (and) or disjunction (or) clauses, and effect one class.
+- **Rules Save**: Rules serialize and save locally for reloading when the window is reopened for convenience when retesting rules.
 - **Multi-row select and drag reorder**: Press shift and left click to select from the current row to the clicked row (total rows highlighted displayed in footer), can drag and reorder rows including entire shift-click selections.
 
 ## Getting Started
