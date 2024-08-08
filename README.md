@@ -22,6 +22,7 @@ Rules Tester Demo.
 - **Tabular Class Field Highlight**: Toggle tabular class fields drawn with class color for background with class color selection.
 - **Data Export**: Export the modified data back to a CSV file.
 - **Rules Tester**: Tool window to test classification rules of the form: val1 R1 att R2 val2 i.e. 0.0 < petal.length < 2.0 rules can be chained in succession with conjunction (and) or disjunction (or) clauses, and effect one class.
+- **Multi-row select and drag reorder**: Press shift and left click to select from the current row to the clicked row (total rows highlighted displayed in footer), can drag and reorder rows including entire shift-click selections.
 
 ## Getting Started
 
