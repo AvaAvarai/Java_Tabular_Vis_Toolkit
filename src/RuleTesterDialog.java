@@ -4,11 +4,15 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.*;
 import java.util.*;
 import java.util.List;
 
 public class RuleTesterDialog extends JDialog {
 
+    private static final String RULES_FILE = "rules.ser";
     private final DefaultTableModel tableModel;
     private final JPanel rulesPanel;
     private final List<RulePanel> rulePanels = new ArrayList<>();
@@ -21,6 +25,13 @@ public class RuleTesterDialog extends JDialog {
         rulesPanel = new JPanel();
         rulesPanel.setLayout(new BoxLayout(rulesPanel, BoxLayout.Y_AXIS));
         initUI();
+        loadRules();
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                saveRules();
+            }
+        });
     }
 
     private String[] getColumnNames() {
@@ -36,9 +47,6 @@ public class RuleTesterDialog extends JDialog {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        // Add initial rule panel
-        addNewRulePanel();
 
         JButton addRuleButton = new JButton("Add Rule");
         addRuleButton.addActionListener(e -> addNewRulePanel());
@@ -78,7 +86,6 @@ public class RuleTesterDialog extends JDialog {
         Map<String, Map<String, Integer>> confusionMatrix = new HashMap<>();
         String[] uniqueClassNames = getUniqueClassNames();
 
-        // Initialize the confusion matrix with all class combinations including "None"
         for (String actualClass : uniqueClassNames) {
             confusionMatrix.put(actualClass, new HashMap<>());
             for (String predictedClass : uniqueClassNames) {
@@ -218,7 +225,68 @@ public class RuleTesterDialog extends JDialog {
         return uniqueClasses.toArray(new String[0]);
     }
 
-    private class RulePanel extends JPanel {
+    private void saveRules() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(RULES_FILE))) {
+            oos.writeObject(rulePanels.size());
+            for (RulePanel rulePanel : rulePanels) {
+                oos.writeObject(rulePanel.getSelectedClass());
+                oos.writeObject(rulePanel.getClausePanels().size());
+                for (ClausePanel clausePanel : rulePanel.getClausePanels()) {
+                    oos.writeObject(clausePanel.getAttribute());
+                    oos.writeObject(clausePanel.getRelation1());
+                    oos.writeObject(clausePanel.getRelation2());
+                    oos.writeObject(clausePanel.getValue1());
+                    oos.writeObject(clausePanel.getValue2());
+                    oos.writeObject(clausePanel.getAndOr());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadRules() {
+        if (!new File(RULES_FILE).exists()) {
+            return;
+        }
+
+        // Clear existing rules
+        rulesPanel.removeAll();
+        rulePanels.clear();
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(RULES_FILE))) {
+            int rulePanelCount = (Integer) ois.readObject();
+            for (int i = 0; i < rulePanelCount; i++) {
+                RulePanel rulePanel = new RulePanel(columnNames, getUniqueClassNames());
+                rulePanel.classBox.setSelectedItem((String) ois.readObject());
+                int clausePanelCount = (Integer) ois.readObject();
+                for (int j = 0; j < clausePanelCount; j++) {
+                    ClausePanel clausePanel = new ClausePanel(columnNames, j != 0);
+                    clausePanel.attributeBox.setSelectedItem((String) ois.readObject());
+                    clausePanel.relationBox1.setSelectedItem((String) ois.readObject());
+                    clausePanel.relationBox2.setSelectedItem((String) ois.readObject());
+                    clausePanel.valueField1.setText((String) ois.readObject());
+                    clausePanel.valueField2.setText((String) ois.readObject());
+                    if (clausePanel.andOrBox != null) {
+                        clausePanel.andOrBox.setSelectedItem((String) ois.readObject());
+                    } else {
+                        ois.readObject(); // Skip the value if andOrBox is null
+                    }
+                    rulePanel.clausePanels.add(clausePanel);
+                    rulePanel.add(clausePanel, rulePanel.getComponentCount() - 2); // Add before addClauseButton and removeButton
+                }
+                rulePanels.add(rulePanel);
+                rulesPanel.add(rulePanel);
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        rulesPanel.revalidate();
+        rulesPanel.repaint();
+    }
+
+    private class RulePanel extends JPanel implements Serializable {
         private final JComboBox<String> classBox;
         private final JButton removeButton;
         private final JButton addClauseButton;
@@ -232,10 +300,6 @@ public class RuleTesterDialog extends JDialog {
             classPanel.add(new JLabel("Class:"));
             classPanel.add(classBox);
             add(classPanel);
-
-            ClausePanel initialClausePanel = new ClausePanel(attributes, false);
-            clausePanels.add(initialClausePanel);
-            add(initialClausePanel);
 
             addClauseButton = new JButton("Add Clause");
             addClauseButton.addActionListener(e -> addClause(attributes));
@@ -255,7 +319,7 @@ public class RuleTesterDialog extends JDialog {
         }
 
         private void addClause(String[] attributes) {
-            ClausePanel clausePanel = new ClausePanel(attributes, true);
+            ClausePanel clausePanel = new ClausePanel(attributes, !clausePanels.isEmpty());
             clausePanels.add(clausePanel);
             add(clausePanel, getComponentCount() - 2); // Add before addClauseButton and removeButton
             revalidate();
@@ -263,7 +327,7 @@ public class RuleTesterDialog extends JDialog {
         }
     }
 
-    private class ClausePanel extends JPanel {
+    private class ClausePanel extends JPanel implements Serializable {
         private final JComboBox<String> attributeBox;
         private final JComboBox<String> relationBox1;
         private final JComboBox<String> relationBox2;
