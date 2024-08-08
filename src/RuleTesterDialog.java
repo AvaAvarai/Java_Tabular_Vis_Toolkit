@@ -4,8 +4,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,7 +11,6 @@ public class RuleTesterDialog extends JDialog {
 
     private final DefaultTableModel tableModel;
     private final JPanel rulesPanel;
-    private final JComboBox<String> classComboBox;
     private final List<RulePanel> rulePanels = new ArrayList<>();
     private String[] columnNames;
 
@@ -21,7 +18,6 @@ public class RuleTesterDialog extends JDialog {
         super(parent, "Rule Tester", true);
         this.tableModel = tableModel;
         columnNames = getColumnNames();
-        classComboBox = new JComboBox<>(getUniqueClassNames());
         rulesPanel = new JPanel();
         rulesPanel.setLayout(new BoxLayout(rulesPanel, BoxLayout.Y_AXIS));
         initUI();
@@ -42,20 +38,15 @@ public class RuleTesterDialog extends JDialog {
         mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
         // Add initial rule panel
-        addNewRulePanel(null);
+        addNewRulePanel();
 
         JButton addRuleButton = new JButton("Add Rule");
-        addRuleButton.addActionListener(e -> addNewRulePanel("AND/OR"));
+        addRuleButton.addActionListener(e -> addNewRulePanel());
 
         JScrollPane scrollPane = new JScrollPane(rulesPanel);
         scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         mainPanel.add(addRuleButton, BorderLayout.SOUTH);
-
-        JPanel classPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        classPanel.add(new JLabel("Class:"));
-        classPanel.add(classComboBox);
-        mainPanel.add(classPanel, BorderLayout.NORTH);
 
         JButton testButton = new JButton("Test Rule");
         testButton.addActionListener(e -> testRule());
@@ -68,20 +59,8 @@ public class RuleTesterDialog extends JDialog {
         setLocationRelativeTo(getParent());
     }
 
-    private String[] getUniqueClassNames() {
-        int classColumnIndex = tableModel.getColumnCount() - 1;
-        List<String> uniqueClasses = new ArrayList<>();
-        for (int i = 0; i < tableModel.getRowCount(); i++) {
-            String className = (String) tableModel.getValueAt(i, classColumnIndex);
-            if (!uniqueClasses.contains(className)) {
-                uniqueClasses.add(className);
-            }
-        }
-        return uniqueClasses.toArray(new String[0]);
-    }
-
-    private void addNewRulePanel(String conjunction) {
-        RulePanel rulePanel = new RulePanel(columnNames, conjunction);
+    private void addNewRulePanel() {
+        RulePanel rulePanel = new RulePanel(columnNames, getUniqueClassNames());
         rulePanels.add(rulePanel);
         rulesPanel.add(rulePanel);
         rulesPanel.revalidate();
@@ -96,45 +75,35 @@ public class RuleTesterDialog extends JDialog {
     }
 
     private void testRule() {
-        String selectedClass = (String) classComboBox.getSelectedItem();
         List<Integer> truePositives = new ArrayList<>();
         List<Integer> trueNegatives = new ArrayList<>();
         List<Integer> falsePositives = new ArrayList<>();
         List<Integer> falseNegatives = new ArrayList<>();
 
         for (int row = 0; row < tableModel.getRowCount(); row++) {
-            boolean match = true;
             for (RulePanel rulePanel : rulePanels) {
                 String attribute = rulePanel.getAttribute();
                 String relation1 = rulePanel.getRelation1();
                 String relation2 = rulePanel.getRelation2();
                 String value1 = rulePanel.getValue1();
                 String value2 = rulePanel.getValue2();
-                String conjunction = rulePanel.getConjunction();
+                String selectedClass = rulePanel.getSelectedClass();
 
                 int columnIndex = tableModel.findColumn(attribute);
                 double cellValue = Double.parseDouble(tableModel.getValueAt(row, columnIndex).toString());
 
                 boolean ruleMatch = evaluateRule(cellValue, relation1, value1, relation2, value2);
 
-                if ("AND".equals(conjunction)) {
-                    match = match && ruleMatch;
-                } else if ("OR".equals(conjunction)) {
-                    match = match || ruleMatch;
+                String actualClass = (String) tableModel.getValueAt(row, tableModel.getColumnCount() - 1);
+                if (ruleMatch && actualClass.equals(selectedClass)) {
+                    truePositives.add(row);
+                } else if (ruleMatch && !actualClass.equals(selectedClass)) {
+                    falsePositives.add(row);
+                } else if (!ruleMatch && actualClass.equals(selectedClass)) {
+                    falseNegatives.add(row);
                 } else {
-                    match = ruleMatch;
+                    trueNegatives.add(row);
                 }
-            }
-
-            String actualClass = (String) tableModel.getValueAt(row, tableModel.getColumnCount() - 1);
-            if (match && actualClass.equals(selectedClass)) {
-                truePositives.add(row);
-            } else if (match && !actualClass.equals(selectedClass)) {
-                falsePositives.add(row);
-            } else if (!match && actualClass.equals(selectedClass)) {
-                falseNegatives.add(row);
-            } else {
-                trueNegatives.add(row);
             }
         }
 
@@ -149,31 +118,21 @@ public class RuleTesterDialog extends JDialog {
     }
 
     private boolean evaluateRule(double cellValue, String relation1, String value1, String relation2, String value2) {
-        boolean match1 = evaluateCondition1(cellValue, relation1, Double.parseDouble(value1));
-        boolean match2 = value2.isEmpty() || evaluateCondition2(cellValue, relation2, Double.parseDouble(value2));
+        if (relation1.equals("<")) {
+                relation1 = ">";
+        } else if (relation1.equals("<=")) {
+                relation1 = ">=";
+        } else if (relation1.equals(">")) {
+                relation1 = "<";
+        } else if (relation1.equals(">=")) {
+                relation1 = "<=";
+        }
+        boolean match1 = evaluateCondition(cellValue, relation1, Double.parseDouble(value1));
+        boolean match2 = value2.isEmpty() || evaluateCondition(cellValue, relation2, Double.parseDouble(value2));
         return match1 && match2;
     }
 
-    private boolean evaluateCondition1(double cellValue, String relation, double value) {
-        switch (relation) {
-            case "<":
-                return cellValue > value;
-            case "<=":
-                return cellValue >= value;
-            case ">":
-                return cellValue < value;
-            case ">=":
-                return cellValue <= value;
-            case "==":
-                return cellValue == value;
-            case "!=":
-                return cellValue != value;
-            default:
-                return false;
-        }
-    }
-
-    private boolean evaluateCondition2(double cellValue, String relation, double value) {
+    private boolean evaluateCondition(double cellValue, String relation, double value) {
         switch (relation) {
             case "<":
                 return cellValue < value;
@@ -198,49 +157,48 @@ public class RuleTesterDialog extends JDialog {
                 tp, fp, fn, tn, accuracy), "Confusion Matrix", JOptionPane.INFORMATION_MESSAGE);
     }
 
+    private String[] getUniqueClassNames() {
+        int classColumnIndex = tableModel.getColumnCount() - 1;
+        List<String> uniqueClasses = new ArrayList<>();
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            String className = (String) tableModel.getValueAt(i, classColumnIndex);
+            if (!uniqueClasses.contains(className)) {
+                uniqueClasses.add(className);
+            }
+        }
+        return uniqueClasses.toArray(new String[0]);
+    }
+
     private class RulePanel extends JPanel {
         private final JComboBox<String> attributeBox;
         private final JComboBox<String> relationBox1;
         private final JComboBox<String> relationBox2;
         private final JTextField valueField1;
         private final JTextField valueField2;
-        private final JComboBox<String> conjunctionBox;
+        private final JComboBox<String> classBox;
         private final JButton removeButton;
 
-        public RulePanel(String[] attributes, String conjunction) {
+        public RulePanel(String[] attributes, String[] classNames) {
             setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
             attributeBox = new JComboBox<>(attributes);
             relationBox1 = new JComboBox<>(new String[]{"<", "<=", ">", ">=", "==", "!="});
             relationBox2 = new JComboBox<>(new String[]{"<", "<=", ">", ">=", "==", "!=", ""});
             valueField1 = new JTextField(5);
             valueField2 = new JTextField(5);
+            classBox = new JComboBox<>(classNames);
 
             removeButton = new JButton("x");
             removeButton.setMargin(new Insets(0, 5, 0, 5));
-            removeButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    removeRulePanel(RulePanel.this);
-                }
-            });
-
-            if (conjunction != null) {
-                conjunctionBox = new JComboBox<>(new String[]{"AND", "OR"});
-                conjunctionBox.setSelectedItem(conjunction);
-                add(conjunctionBox);
-            } else {
-                conjunctionBox = null;
-            }
+            removeButton.addActionListener(e -> removeRulePanel(RulePanel.this));
+            
             add(valueField1);
             add(relationBox1);
             add(attributeBox);
             add(relationBox2);
             add(valueField2);
+            add(new JLabel("Class:"));
+            add(classBox);
             add(removeButton);
-        }
-
-        public String getConjunction() {
-            return conjunctionBox != null ? (String) conjunctionBox.getSelectedItem() : "";
         }
 
         public String getAttribute() {
@@ -261,6 +219,10 @@ public class RuleTesterDialog extends JDialog {
 
         public String getValue2() {
             return valueField2.getText();
+        }
+
+        public String getSelectedClass() {
+            return (String) classBox.getSelectedItem();
         }
     }
 }
