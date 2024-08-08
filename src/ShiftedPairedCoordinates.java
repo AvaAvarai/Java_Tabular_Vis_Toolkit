@@ -39,7 +39,16 @@ public class ShiftedPairedCoordinates extends JFrame {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
             int plotWidth = getWidth() / numPlots;
-            int plotHeight = getHeight() - 50; // leave space for labels
+            int plotHeight = getHeight() - 70; // leave space for labels and title
+
+            // Draw the title
+            String title = "Shifted Paired Coordinates Plot";
+            Font titleFont = new Font("Serif", Font.BOLD, 16);
+            g2.setFont(titleFont);
+            FontMetrics fm = g2.getFontMetrics(titleFont);
+            int titleWidth = fm.stringWidth(title);
+            int titleHeight = fm.getHeight();
+            g2.drawString(title, (getWidth() - titleWidth) / 2, titleHeight);
 
             // Draw scatter plots
             for (int i = 0; i < numPlots; i++) {
@@ -50,12 +59,12 @@ public class ShiftedPairedCoordinates extends JFrame {
                     // If we are at the last plot and there's an odd number of attributes, duplicate the last attribute
                     attrIndex2 = attrIndex1;
                 }
-                drawScatterPlot(g2, data.get(attrIndex1), data.get(attrIndex2), x, 0, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2));
+                drawScatterPlot(g2, data.get(attrIndex1), data.get(attrIndex2), x, titleHeight + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2));
             }
 
             // Draw connecting lines between plots
             for (int row = 0; row < data.get(0).size(); row++) {
-                for (int i = 0; i < numPlots; i++) {
+                for (int i = 0; i < numPlots - 1; i++) {
                     int attrIndex1 = i * 2;
                     int attrIndex2 = (i * 2) + 1;
                     if (attrIndex2 >= data.size()) {
@@ -63,37 +72,33 @@ public class ShiftedPairedCoordinates extends JFrame {
                     }
 
                     int plotX1 = i * plotWidth + 20;
-                    int plotY1 = 20;
+                    int plotY1 = titleHeight + 10;
                     int plotSize = Math.min(plotWidth, plotHeight) - 40;
 
                     double normX1 = (data.get(attrIndex1).get(row) - getMin(data.get(attrIndex1))) / (getMax(data.get(attrIndex1)) - getMin(data.get(attrIndex1)));
                     double normY1 = (data.get(attrIndex2).get(row) - getMin(data.get(attrIndex2))) / (getMax(data.get(attrIndex2)) - getMin(data.get(attrIndex2)));
 
                     int x1 = plotX1 + (int) (plotSize * normX1);
-                    int y1 = plotY1 + plotSize - (int) (plotSize * normY1);
+                    int y1 = plotY1 + plotSize - (int) (plotSize * normY1) + 20;
 
                     g2.setColor(classColors.getOrDefault(classLabels.get(row), Color.BLACK));
 
-                    if (i < numPlots - 1) {
-                        int nextAttrIndex1 = (i + 1) * 2;
-                        int nextAttrIndex2 = (i + 1) * 2 + 1;
-                        if (nextAttrIndex2 >= data.size()) {
-                            nextAttrIndex2 = nextAttrIndex1;
-                        }
-
-                        int plotX2 = (i + 1) * plotWidth + 20;
-                        int plotY2 = 20;
-
-                        double normX2 = (data.get(nextAttrIndex1).get(row) - getMin(data.get(nextAttrIndex1))) / (getMax(data.get(nextAttrIndex1)) - getMin(data.get(nextAttrIndex1)));
-                        double normY2 = (data.get(nextAttrIndex2).get(row) - getMin(data.get(nextAttrIndex2))) / (getMax(data.get(nextAttrIndex2)) - getMin(data.get(nextAttrIndex2)));
-
-                        int x2 = plotX2 + (int) (plotSize * normX2);
-                        int y2 = plotY2 + plotSize - (int) (plotSize * normY2);
-
-                        g2.drawLine(x1, y1, x2, y2);
-                    } else {
-                        g2.fillOval(x1 - 3, y1 - 3, 6, 6); // Draw the final point
+                    int nextAttrIndex1 = (i + 1) * 2;
+                    int nextAttrIndex2 = (i + 1) * 2 + 1;
+                    if (nextAttrIndex2 >= data.size()) {
+                        nextAttrIndex2 = nextAttrIndex1;
                     }
+
+                    int plotX2 = (i + 1) * plotWidth + 20;
+                    int plotY2 = titleHeight + 10;
+
+                    double normX2 = (data.get(nextAttrIndex1).get(row) - getMin(data.get(nextAttrIndex1))) / (getMax(data.get(nextAttrIndex1)) - getMin(data.get(nextAttrIndex1)));
+                    double normY2 = (data.get(nextAttrIndex2).get(row) - getMin(data.get(nextAttrIndex2))) / (getMax(data.get(nextAttrIndex2)) - getMin(data.get(nextAttrIndex2)));
+
+                    int x2 = plotX2 + (int) (plotSize * normX2);
+                    int y2 = plotY2 + plotSize - (int) (plotSize * normY2) + 20;
+
+                    g2.drawLine(x1, y1, x2, y2);
                 }
             }
         }
@@ -104,12 +109,14 @@ public class ShiftedPairedCoordinates extends JFrame {
             int plotY = y + 20;
 
             // Draw axes
+            g2.setColor(Color.BLACK);
             g2.drawLine(plotX, plotY, plotX, plotY + plotSize);
             g2.drawLine(plotX, plotY + plotSize, plotX + plotSize, plotY + plotSize);
 
             // Draw labels
+            g2.setColor(Color.BLACK);
             g2.drawString(xLabel, plotX + plotSize / 2, plotY + plotSize + 20);
-            g2.drawString(yLabel, plotX - 20, plotY + plotSize / 2);
+            g2.drawString(yLabel, plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);
 
             // Draw data points
             for (int i = 0; i < xData.size(); i++) {
