@@ -188,7 +188,7 @@ public class CsvViewer extends JFrame {
             dataHandler.normalizeData();
             updateTableData(dataHandler.getNormalizedData());
             isNormalized = true;
-            toggleButton.setIcon(loadIcon("icons/default.png", 40, 40));
+            toggleButton.setIcon(loadIcon("icons/denormalize.png", 40, 40));
             toggleButton.setToolTipText("Default");
         }
     }

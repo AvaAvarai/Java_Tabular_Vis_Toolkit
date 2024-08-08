@@ -98,7 +98,6 @@ public class RuleTesterDialog extends JDialog {
 
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             totalInstances++;
-            boolean ruleMatched = false;
             String predictedClass = "None";
 
             for (RulePanel rulePanel : rulePanels) {
@@ -127,7 +126,6 @@ public class RuleTesterDialog extends JDialog {
                 }
 
                 if (match) {
-                    ruleMatched = true;
                     predictedClass = rulePanel.getSelectedClass();
                     break;
                 }
