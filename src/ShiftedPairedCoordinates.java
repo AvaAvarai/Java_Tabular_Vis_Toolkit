@@ -55,40 +55,45 @@ public class ShiftedPairedCoordinates extends JFrame {
 
             // Draw connecting lines between plots
             for (int row = 0; row < data.get(0).size(); row++) {
-                for (int i = 0; i < numPlots - 1; i++) {
+                for (int i = 0; i < numPlots; i++) {
                     int attrIndex1 = i * 2;
                     int attrIndex2 = (i * 2) + 1;
                     if (attrIndex2 >= data.size()) {
                         attrIndex2 = attrIndex1;
                     }
 
-                    int nextAttrIndex1 = attrIndex2;
-                    int nextAttrIndex2 = (i + 1) * 2;
-                    if (nextAttrIndex2 >= data.size()) {
-                        nextAttrIndex2 = nextAttrIndex1;
-                    }
-
                     int plotX1 = i * plotWidth + 20;
                     int plotY1 = 20;
                     int plotSize = Math.min(plotWidth, plotHeight) - 40;
 
-                    int plotX2 = (i + 1) * plotWidth + 20;
-                    int plotY2 = 20;
-
                     double normX1 = (data.get(attrIndex1).get(row) - getMin(data.get(attrIndex1))) / (getMax(data.get(attrIndex1)) - getMin(data.get(attrIndex1)));
                     double normY1 = (data.get(attrIndex2).get(row) - getMin(data.get(attrIndex2))) / (getMax(data.get(attrIndex2)) - getMin(data.get(attrIndex2)));
-
-                    double normX2 = (data.get(nextAttrIndex1).get(row) - getMin(data.get(nextAttrIndex1))) / (getMax(data.get(nextAttrIndex1)) - getMin(data.get(nextAttrIndex1)));
-                    double normY2 = (data.get(nextAttrIndex2).get(row) - getMin(data.get(nextAttrIndex2))) / (getMax(data.get(nextAttrIndex2)) - getMin(data.get(nextAttrIndex2)));
 
                     int x1 = plotX1 + (int) (plotSize * normX1);
                     int y1 = plotY1 + plotSize - (int) (plotSize * normY1);
 
-                    int x2 = plotX2 + (int) (plotSize * normX2);
-                    int y2 = plotY2 + plotSize - (int) (plotSize * normY2);
-
                     g2.setColor(classColors.getOrDefault(classLabels.get(row), Color.BLACK));
-                    g2.drawLine(x1, y1, x2, y2);
+
+                    if (i < numPlots - 1) {
+                        int nextAttrIndex1 = (i + 1) * 2;
+                        int nextAttrIndex2 = (i + 1) * 2 + 1;
+                        if (nextAttrIndex2 >= data.size()) {
+                            nextAttrIndex2 = nextAttrIndex1;
+                        }
+
+                        int plotX2 = (i + 1) * plotWidth + 20;
+                        int plotY2 = 20;
+
+                        double normX2 = (data.get(nextAttrIndex1).get(row) - getMin(data.get(nextAttrIndex1))) / (getMax(data.get(nextAttrIndex1)) - getMin(data.get(nextAttrIndex1)));
+                        double normY2 = (data.get(nextAttrIndex2).get(row) - getMin(data.get(nextAttrIndex2))) / (getMax(data.get(nextAttrIndex2)) - getMin(data.get(nextAttrIndex2)));
+
+                        int x2 = plotX2 + (int) (plotSize * normX2);
+                        int y2 = plotY2 + plotSize - (int) (plotSize * normY2);
+
+                        g2.drawLine(x1, y1, x2, y2);
+                    } else {
+                        g2.fillOval(x1 - 3, y1 - 3, 6, 6); // Draw the final point
+                    }
                 }
             }
         }
