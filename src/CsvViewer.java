@@ -233,6 +233,10 @@ public class CsvViewer extends JFrame {
 
         if (result == JFileChooser.APPROVE_OPTION) {
             String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+            tableModel.setRowCount(0); // Clear existing table rows
+            tableModel.setColumnCount(0); // Clear existing table columns
+            classColors.clear(); // Clear existing class colors
+            dataHandler.clearData(); // Clear existing data in data handler
             dataHandler.loadCsvData(filePath, tableModel, statsTextArea);
             isNormalized = false;
             isHeatmapEnabled = false; // Reset heatmap state when new CSV is loaded

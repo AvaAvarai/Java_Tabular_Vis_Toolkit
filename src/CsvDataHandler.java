@@ -163,4 +163,9 @@ public class CsvDataHandler {
 
         statsTextArea.setText(stats.toString());
     }
+
+    public void clearData() {
+        originalData.clear();
+        normalizedData.clear();
+    }
 }
