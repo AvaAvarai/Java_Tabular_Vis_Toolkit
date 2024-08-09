@@ -2,7 +2,7 @@
 
 **JTabViz** is a Java-based application for loading, viewing, augmenting, and classifying tabular machine learning data loaded from CSV files. The application provides features including normalization, heatmap visualization, row deleting, row insertion, field augmentation, Parallel Coordinates, rules testing, and data export.
 
-We are exploring to see if we can add custom visualization techniques with the utilized libraries (Java Swing, JFreeChart).
+We are now implementing additional custom visualization techniques with the utilized libraries (Java Swing, JFreeChart).
 
 Fisher Iris Data Exploration Demo.
 ![Demo screenshot 1](screenshots/Iris_Demo_1.png)
@@ -84,8 +84,8 @@ Data used should be stored in a .csv file, ideally numerical, however, this soft
 
 ## Aknowledgements
 
-The user interface icons used are source from Font Awesme.
+The user interface icons used are source from Font Awesome.
 
 ## License
 
-The software is freely available under the MIT license see `LICENSE` for full details.
+The software is freely available for personal and commerical use under the MIT license see `LICENSE` for full details.
