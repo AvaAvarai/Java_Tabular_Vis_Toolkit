@@ -95,6 +95,11 @@ public class ButtonPanel {
             }
         });
 
+        // New Toggle Stats button
+        csvViewer.toggleStatsButton = UIHelper.createButton("icons/togglestats.png", "Toggle Stats", e -> {
+            csvViewer.toggleStatsVisibility();
+        });
+
         buttonPanel.add(loadButton);
         buttonPanel.add(csvViewer.toggleButton);
         buttonPanel.add(highlightBlanksButton);
@@ -108,6 +113,7 @@ public class ButtonPanel {
         buttonPanel.add(classColorButton);
         buttonPanel.add(setClassColorsButton);
         buttonPanel.add(ruleTesterButton);
+        buttonPanel.add(csvViewer.toggleStatsButton); // Add the Toggle Stats button to the panel
 
         return buttonPanel;
     }

@@ -6,8 +6,6 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,18 +19,18 @@ public class CsvViewer extends JFrame {
     public CsvDataHandler dataHandler;
     public boolean isNormalized = false;
     public boolean isHeatmapEnabled = false;
-    public boolean isClassColorEnabled = false; // New flag for class column coloring
+    public boolean isClassColorEnabled = false; // Flag for class column coloring
     public Color cellTextColor = Color.BLACK; // Default cell text color
     public JTextArea statsTextArea;
     public JButton toggleButton;
-    public JButton toggleStatsButton; // New button to toggle stats visibility
+    public JButton toggleStatsButton;
     public Map<String, Color> classColors = new HashMap<>(); // Store class colors
     public JLabel selectedRowsLabel; // Label to display the number of selected rows
-    public JPanel bottomPanel; // Store the bottom panel for selected rows label
-    public JPanel statsPanel; // Store the panel for stats visibility toggling
-    public JScrollPane statsScrollPane; // Store the stats scroll pane to toggle its visibility
-    public JScrollPane tableScrollPane; // Store the table scroll pane for re-adding to split pane
-    public JSplitPane splitPane; // Store the split pane for adjusting layout
+    public JPanel bottomPanel; // Panel for the selected rows label
+    public JPanel statsPanel; // Panel for stats visibility toggling
+    public JScrollPane statsScrollPane; // Scroll pane for stats text area
+    public JScrollPane tableScrollPane; // Scroll pane for the table
+    public JSplitPane splitPane; // Split pane for table and stats
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -49,17 +47,6 @@ public class CsvViewer extends JFrame {
         table.setRowSorter(sorter);
 
         JPanel buttonPanel = ButtonPanel.createButtonPanel(this);
-
-        // Add a button to toggle the stats visibility
-        toggleStatsButton = new JButton("Toggle Stats");
-        toggleStatsButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                toggleStatsVisibility();
-            }
-        });
-        buttonPanel.add(toggleStatsButton); // Add the button to the button panel
-
         add(buttonPanel, BorderLayout.NORTH);
 
         statsTextArea = UIHelper.createTextArea(3, 0);
