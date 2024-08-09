@@ -379,12 +379,17 @@ public class CsvViewer extends JFrame {
         if (classColumnIndex == -1) {
             return; // If no class column is found, return early
         }
-        
+    
         Set<String> uniqueClassNames = new HashSet<>();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             uniqueClassNames.add((String) tableModel.getValueAt(i, classColumnIndex));
         }
         String[] classNames = uniqueClassNames.toArray(new String[0]);
+    
+        // Create the main panel for the dialog
+        JPanel mainPanel = new JPanel(new BorderLayout());
+    
+        // Create and add the JComboBox for class selection
         JComboBox<String> classComboBox = new JComboBox<>(classNames);
     
         // Custom renderer to show color swatches with spacing
@@ -413,8 +418,42 @@ public class CsvViewer extends JFrame {
             }
         });
     
-        int result = JOptionPane.showConfirmDialog(this, classComboBox, "Select Class", JOptionPane.OK_CANCEL_OPTION);
-        if (result == JOptionPane.OK_OPTION) {
+        mainPanel.add(classComboBox, BorderLayout.NORTH);
+    
+        // Create the legend panel
+        JPanel legendPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        legendPanel.setBorder(BorderFactory.createTitledBorder("Current Class Colors"));
+    
+        // Add each class color and label to the legend
+        for (String className : classNames) {
+            JPanel colorLabelPanel = new JPanel();
+            colorLabelPanel.setLayout(new BorderLayout());
+    
+            // Create a small colored box
+            JLabel colorBox = new JLabel();
+            colorBox.setOpaque(true);
+            colorBox.setBackground(classColors.getOrDefault(className, Color.WHITE));
+            colorBox.setPreferredSize(new Dimension(20, 20));
+    
+            // Add the class label
+            JLabel label = new JLabel(className);
+            label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10)); // Add some space between color box and label
+    
+            colorLabelPanel.add(colorBox, BorderLayout.WEST);
+            colorLabelPanel.add(label, BorderLayout.CENTER);
+    
+            legendPanel.add(colorLabelPanel);
+        }
+    
+        mainPanel.add(legendPanel, BorderLayout.CENTER);
+    
+        // Loop to allow continuous color setting
+        while (true) {
+            int result = JOptionPane.showConfirmDialog(this, mainPanel, "Select Class", JOptionPane.OK_CANCEL_OPTION);
+            if (result != JOptionPane.OK_OPTION) {
+                break; // Exit the loop if the user cancels
+            }
+    
             String selectedClass = (String) classComboBox.getSelectedItem();
             Color color = JColorChooser.showDialog(this, "Choose color for " + selectedClass, classColors.getOrDefault(selectedClass, Color.WHITE));
             if (color != null) {
@@ -423,9 +462,32 @@ public class CsvViewer extends JFrame {
                     applyCombinedRenderer();
                 }
             }
-        }
-    }    
     
+            // Update the legend with the new color
+            legendPanel.removeAll();
+            for (String className : classNames) {
+                JPanel colorLabelPanel = new JPanel(new BorderLayout());
+    
+                JLabel colorBox = new JLabel();
+                colorBox.setOpaque(true);
+                colorBox.setBackground(classColors.getOrDefault(className, Color.WHITE));
+                colorBox.setPreferredSize(new Dimension(20, 20));
+    
+                JLabel label = new JLabel(className);
+                label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
+    
+                colorLabelPanel.add(colorBox, BorderLayout.WEST);
+                colorLabelPanel.add(label, BorderLayout.CENTER);
+    
+                legendPanel.add(colorLabelPanel);
+            }
+    
+            // Repaint the legend panel to reflect the new colors
+            legendPanel.revalidate();
+            legendPanel.repaint();
+        }
+    }
+
     public void insertRow() {
         int numColumns = tableModel.getColumnCount();
         String[] emptyRow = new String[numColumns];
