@@ -10,6 +10,9 @@ Fisher Iris Data Exploration Demo.
 Shifted Paired Coordinates Demo.
 ![Demo screenshot 2](screenshots/Iris_Demo_2.png)
 
+Combined View Demo.
+![Demo screenshot 3](screenshots/Iris_Demo_3.png)
+
 Rules Tester Demo.
 ![Rules Tester Demo screenshot](screenshots/Rules_Test_Demo_1.png)
 
