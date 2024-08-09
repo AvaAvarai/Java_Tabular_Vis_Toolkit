@@ -1,7 +1,6 @@
 package src;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
@@ -14,6 +13,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.ArrayList;
+import javax.swing.table.DefaultTableCellRenderer;
+import java.awt.Component;
 
 public class CsvViewer extends JFrame {
     public JTable table;
@@ -124,7 +125,7 @@ public class CsvViewer extends JFrame {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new java.io.File("datasets"));
         int result = fileChooser.showOpenDialog(this);
-    
+
         if (result == JFileChooser.APPROVE_OPTION) {
             String filePath = fileChooser.getSelectedFile().getAbsolutePath();
             tableModel.setRowCount(0); // Clear existing table rows
@@ -138,7 +139,7 @@ public class CsvViewer extends JFrame {
             updateTableData(dataHandler.getOriginalData());
             generateClassColors(); // Generate class colors based on the loaded data
             updateSelectedRowsLabel(); // Reset the selected rows label
-            
+
             // Scroll the stats window to the top on initial load
             statsTextArea.setCaretPosition(0);
         }
@@ -147,7 +148,7 @@ public class CsvViewer extends JFrame {
     public void toggleDataView() {
         // Capture the current caret position
         int currentCaretPosition = statsTextArea.getCaretPosition();
-    
+
         if (isNormalized) {
             updateTableData(dataHandler.getOriginalData());
             isNormalized = false;
@@ -160,10 +161,10 @@ public class CsvViewer extends JFrame {
             toggleButton.setIcon(UIHelper.loadIcon("icons/denormalize.png", 40, 40));
             toggleButton.setToolTipText("Default");
         }
-    
+
         // Restore the caret position to where it was before the data was updated
         statsTextArea.setCaretPosition(currentCaretPosition);
-    }    
+    }
 
     public void updateTableData(java.util.List<String[]> data) {
         tableModel.setRowCount(0); // Clear existing data
@@ -199,15 +200,15 @@ public class CsvViewer extends JFrame {
     public void toggleHeatmap() {
         // Capture the current caret position
         int currentCaretPosition = statsTextArea.getCaretPosition();
-    
+
         // Toggle the heatmap state and update the table renderer
         isHeatmapEnabled = !isHeatmapEnabled;
         applyCombinedRenderer();
         dataHandler.updateStats(tableModel, statsTextArea);
-    
+
         // Restore the caret position to where it was before the data was updated
         statsTextArea.setCaretPosition(currentCaretPosition);
-    }    
+    }
 
     public void generateClassColors() {
         int classColumnIndex = getClassColumnIndex(); // Find the class column index
@@ -379,19 +380,19 @@ public class CsvViewer extends JFrame {
         if (classColumnIndex == -1) {
             return; // If no class column is found, return early
         }
-    
+
         Set<String> uniqueClassNames = new HashSet<>();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             uniqueClassNames.add((String) tableModel.getValueAt(i, classColumnIndex));
         }
         String[] classNames = uniqueClassNames.toArray(new String[0]);
-    
+
         // Create the main panel for the dialog
         JPanel mainPanel = new JPanel(new BorderLayout());
-    
+
         // Create and add the JComboBox for class selection
         JComboBox<String> classComboBox = new JComboBox<>(classNames);
-    
+
         // Custom renderer to show color swatches with spacing
         classComboBox.setRenderer(new ListCellRenderer<String>() {
             @Override
@@ -402,11 +403,11 @@ public class CsvViewer extends JFrame {
                 colorSwatch.setOpaque(true);
                 colorSwatch.setPreferredSize(new Dimension(20, 20));
                 colorSwatch.setBackground(classColors.getOrDefault(value, Color.WHITE));
-    
+
                 panel.add(colorSwatch, BorderLayout.WEST);
                 panel.add(Box.createRigidArea(new Dimension(5, 0)), BorderLayout.CENTER); // Add space between swatch and label
                 panel.add(label, BorderLayout.EAST);
-    
+
                 if (isSelected) {
                     panel.setBackground(list.getSelectionBackground());
                     label.setForeground(list.getSelectionForeground());
@@ -417,43 +418,43 @@ public class CsvViewer extends JFrame {
                 return panel;
             }
         });
-    
+
         mainPanel.add(classComboBox, BorderLayout.NORTH);
-    
+
         // Create the legend panel
         JPanel legendPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         legendPanel.setBorder(BorderFactory.createTitledBorder("Current Class Colors"));
-    
+
         // Add each class color and label to the legend
         for (String className : classNames) {
             JPanel colorLabelPanel = new JPanel();
             colorLabelPanel.setLayout(new BorderLayout());
-    
+
             // Create a small colored box
             JLabel colorBox = new JLabel();
             colorBox.setOpaque(true);
             colorBox.setBackground(classColors.getOrDefault(className, Color.WHITE));
             colorBox.setPreferredSize(new Dimension(20, 20));
-    
+
             // Add the class label
             JLabel label = new JLabel(className);
             label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10)); // Add some space between color box and label
-    
+
             colorLabelPanel.add(colorBox, BorderLayout.WEST);
             colorLabelPanel.add(label, BorderLayout.CENTER);
-    
+
             legendPanel.add(colorLabelPanel);
         }
-    
+
         mainPanel.add(legendPanel, BorderLayout.CENTER);
-    
+
         // Loop to allow continuous color setting
         while (true) {
             int result = JOptionPane.showConfirmDialog(this, mainPanel, "Select Class", JOptionPane.OK_CANCEL_OPTION);
             if (result != JOptionPane.OK_OPTION) {
                 break; // Exit the loop if the user cancels
             }
-    
+
             String selectedClass = (String) classComboBox.getSelectedItem();
             Color color = JColorChooser.showDialog(this, "Choose color for " + selectedClass, classColors.getOrDefault(selectedClass, Color.WHITE));
             if (color != null) {
@@ -462,26 +463,26 @@ public class CsvViewer extends JFrame {
                     applyCombinedRenderer();
                 }
             }
-    
+
             // Update the legend with the new color
             legendPanel.removeAll();
             for (String className : classNames) {
                 JPanel colorLabelPanel = new JPanel(new BorderLayout());
-    
+
                 JLabel colorBox = new JLabel();
                 colorBox.setOpaque(true);
                 colorBox.setBackground(classColors.getOrDefault(className, Color.WHITE));
                 colorBox.setPreferredSize(new Dimension(20, 20));
-    
+
                 JLabel label = new JLabel(className);
                 label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-    
+
                 colorLabelPanel.add(colorBox, BorderLayout.WEST);
                 colorLabelPanel.add(label, BorderLayout.CENTER);
-    
+
                 legendPanel.add(colorLabelPanel);
             }
-    
+
             // Repaint the legend panel to reflect the new colors
             legendPanel.revalidate();
             legendPanel.repaint();
@@ -502,6 +503,21 @@ public class CsvViewer extends JFrame {
             dataHandler.updateStats(tableModel, statsTextArea);
         } else {
             JOptionPane.showMessageDialog(this, "Please select a row to delete.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void cloneSelectedRow() {
+        int selectedRow = table.getSelectedRow();
+        if (selectedRow != -1) {
+            DefaultTableModel model = (DefaultTableModel) table.getModel();
+            Object[] rowData = new Object[model.getColumnCount()];
+            for (int col = 0; col < model.getColumnCount(); col++) {
+                rowData[col] = model.getValueAt(selectedRow, col);
+            }
+            model.addRow(rowData);
+            dataHandler.updateStats(tableModel, statsTextArea);
+        } else {
+            JOptionPane.showMessageDialog(this, "Please select a row to clone.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 

@@ -95,16 +95,14 @@ public class ButtonPanel {
             }
         });
 
-        // Toggle Stats Buttons
-        JButton toggleStatsOnButton = UIHelper.createButton("icons/hidestats.png", "Hide Stats", e -> {
-            csvViewer.toggleStatsVisibility(true);
+        // Add the Clone Row button
+        JButton cloneRowButton = UIHelper.createButton("icons/clone.png", "Clone Row", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.cloneSelectedRow();
+            }
         });
-        JButton toggleStatsOffButton = UIHelper.createButton("icons/showstats.png", "Show Stats", e -> {
-            csvViewer.toggleStatsVisibility(false);
-        });
-
-        // Initialize with the correct button (assume stats are visible initially)
-        csvViewer.toggleStatsButton = toggleStatsOnButton;
 
         buttonPanel.add(loadButton);
         buttonPanel.add(csvViewer.toggleButton);
@@ -113,16 +111,13 @@ public class ButtonPanel {
         buttonPanel.add(fontSettingsButton);
         buttonPanel.add(insertRowButton);
         buttonPanel.add(deleteRowButton);
+        buttonPanel.add(cloneRowButton);
         buttonPanel.add(exportButton);
         buttonPanel.add(parallelPlotButton);
         buttonPanel.add(shiftedPairedButton);
         buttonPanel.add(classColorButton);
         buttonPanel.add(setClassColorsButton);
         buttonPanel.add(ruleTesterButton);
-        buttonPanel.add(csvViewer.toggleStatsButton);
-
-        csvViewer.toggleStatsOnButton = toggleStatsOnButton;
-        csvViewer.toggleStatsOffButton = toggleStatsOffButton;
 
         return buttonPanel;
     }
