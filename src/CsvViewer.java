@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.ArrayList;
 import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.Component;
 
 public class CsvViewer extends JFrame {
     public JTable table;
@@ -514,7 +513,7 @@ public class CsvViewer extends JFrame {
             for (int col = 0; col < model.getColumnCount(); col++) {
                 rowData[col] = model.getValueAt(selectedRow, col);
             }
-            model.addRow(rowData);
+            model.insertRow(selectedRow + 1, rowData); // Insert the cloned row after the selected row
             dataHandler.updateStats(tableModel, statsTextArea);
         } else {
             JOptionPane.showMessageDialog(this, "Please select a row to clone.", "Error", JOptionPane.ERROR_MESSAGE);
