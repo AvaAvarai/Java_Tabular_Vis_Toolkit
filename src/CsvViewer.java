@@ -139,12 +139,15 @@ public class CsvViewer extends JFrame {
             generateClassColors(); // Generate class colors based on the loaded data
             updateSelectedRowsLabel(); // Reset the selected rows label
             
-            // Scroll the stats window to the top
+            // Scroll the stats window to the top on initial load
             statsTextArea.setCaretPosition(0);
         }
-    }    
+    }
 
     public void toggleDataView() {
+        // Capture the current caret position
+        int currentCaretPosition = statsTextArea.getCaretPosition();
+    
         if (isNormalized) {
             updateTableData(dataHandler.getOriginalData());
             isNormalized = false;
@@ -157,7 +160,10 @@ public class CsvViewer extends JFrame {
             toggleButton.setIcon(UIHelper.loadIcon("icons/denormalize.png", 40, 40));
             toggleButton.setToolTipText("Default");
         }
-    }
+    
+        // Restore the caret position to where it was before the data was updated
+        statsTextArea.setCaretPosition(currentCaretPosition);
+    }    
 
     public void updateTableData(java.util.List<String[]> data) {
         tableModel.setRowCount(0); // Clear existing data
@@ -191,10 +197,17 @@ public class CsvViewer extends JFrame {
     }
 
     public void toggleHeatmap() {
+        // Capture the current caret position
+        int currentCaretPosition = statsTextArea.getCaretPosition();
+    
+        // Toggle the heatmap state and update the table renderer
         isHeatmapEnabled = !isHeatmapEnabled;
         applyCombinedRenderer();
         dataHandler.updateStats(tableModel, statsTextArea);
-    }
+    
+        // Restore the caret position to where it was before the data was updated
+        statsTextArea.setCaretPosition(currentCaretPosition);
+    }    
 
     public void generateClassColors() {
         int classColumnIndex = getClassColumnIndex(); // Find the class column index
