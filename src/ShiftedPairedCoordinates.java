@@ -73,9 +73,12 @@ public class ShiftedPairedCoordinates extends JFrame {
             int plotWidth = getWidth() / numPlots - 10;
             int plotHeight = getHeight() - 70; // leave space for labels and title
 
+            // Custom fonts for title and labels
+            Font titleFont = new Font("Serif", Font.BOLD, 24);
+            Font labelFont = new Font("SansSerif", Font.PLAIN, 16);
+
             // Draw the title
             String title = "Shifted Paired Coordinates Plot";
-            Font titleFont = new Font("Serif", Font.BOLD, 16);
             g2.setFont(titleFont);
             FontMetrics fm = g2.getFontMetrics(titleFont);
             int titleWidth = fm.stringWidth(title);
@@ -91,7 +94,7 @@ public class ShiftedPairedCoordinates extends JFrame {
                     // If we are at the last plot and there's an odd number of attributes, duplicate the last attribute
                     attrIndex2 = attrIndex1;
                 }
-                drawScatterPlot(g2, data.get(attrIndex1), data.get(attrIndex2), x, titleHeight + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2));
+                drawScatterPlot(g2, data.get(attrIndex1), data.get(attrIndex2), x, titleHeight + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2), labelFont);
             }
 
             // Draw connecting lines between plots
@@ -135,7 +138,7 @@ public class ShiftedPairedCoordinates extends JFrame {
             }
         }
 
-        private void drawScatterPlot(Graphics2D g2, List<Double> xData, List<Double> yData, int x, int y, int width, int height, String xLabel, String yLabel) {
+        private void drawScatterPlot(Graphics2D g2, List<Double> xData, List<Double> yData, int x, int y, int width, int height, String xLabel, String yLabel, Font labelFont) {
             int plotSize = Math.min(width, height) - 40;
             int plotX = x + 40;
             int plotY = y + 20;
@@ -145,7 +148,8 @@ public class ShiftedPairedCoordinates extends JFrame {
             g2.drawLine(plotX, plotY, plotX, plotY + plotSize);
             g2.drawLine(plotX, plotY + plotSize, plotX + plotSize, plotY + plotSize);
 
-            // Draw labels
+            // Draw labels with custom font
+            g2.setFont(labelFont);
             g2.setColor(Color.BLACK);
             g2.drawString(xLabel, plotX + plotSize / 2, plotY + plotSize + 20);
             g2.drawString(yLabel, plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);
