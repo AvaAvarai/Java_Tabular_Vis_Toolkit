@@ -95,10 +95,16 @@ public class ButtonPanel {
             }
         });
 
-        // New Toggle Stats button
-        csvViewer.toggleStatsButton = UIHelper.createButton("icons/togglestats.png", "Toggle Stats", e -> {
-            csvViewer.toggleStatsVisibility();
+        // Toggle Stats Buttons
+        JButton toggleStatsOnButton = UIHelper.createButton("icons/hidestats.png", "Hide Stats", e -> {
+            csvViewer.toggleStatsVisibility(true);
         });
+        JButton toggleStatsOffButton = UIHelper.createButton("icons/showstats.png", "Show Stats", e -> {
+            csvViewer.toggleStatsVisibility(false);
+        });
+
+        // Initialize with the correct button (assume stats are visible initially)
+        csvViewer.toggleStatsButton = toggleStatsOnButton;
 
         buttonPanel.add(loadButton);
         buttonPanel.add(csvViewer.toggleButton);
@@ -113,7 +119,10 @@ public class ButtonPanel {
         buttonPanel.add(classColorButton);
         buttonPanel.add(setClassColorsButton);
         buttonPanel.add(ruleTesterButton);
-        buttonPanel.add(csvViewer.toggleStatsButton); // Add the Toggle Stats button to the panel
+        buttonPanel.add(csvViewer.toggleStatsButton);
+
+        csvViewer.toggleStatsOnButton = toggleStatsOnButton;
+        csvViewer.toggleStatsOffButton = toggleStatsOffButton;
 
         return buttonPanel;
     }

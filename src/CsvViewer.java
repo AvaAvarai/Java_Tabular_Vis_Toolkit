@@ -24,6 +24,8 @@ public class CsvViewer extends JFrame {
     public JTextArea statsTextArea;
     public JButton toggleButton;
     public JButton toggleStatsButton;
+    public JButton toggleStatsOnButton;
+    public JButton toggleStatsOffButton;
     public Map<String, Color> classColors = new HashMap<>(); // Store class colors
     public JLabel selectedRowsLabel; // Label to display the number of selected rows
     public JPanel bottomPanel; // Panel for the selected rows label
@@ -67,17 +69,29 @@ public class CsvViewer extends JFrame {
         add(bottomPanel, BorderLayout.SOUTH); // Always visible at the bottom
     }
 
-    public void toggleStatsVisibility() {
-        if (splitPane.getBottomComponent() != null) {
+    public void toggleStatsVisibility(boolean hideStats) {
+        if (hideStats) {
             // Remove the stats panel
             splitPane.setBottomComponent(null);
             splitPane.setDividerSize(0); // Remove the divider when stats are hidden
+            switchToggleStatsButton(toggleStatsOffButton);
         } else {
             // Re-add the stats panel
             splitPane.setBottomComponent(statsPanel);
             splitPane.setDividerSize(10); // Restore the divider size
             splitPane.setDividerLocation(0.8); // Adjust the split pane layout after toggling
+            switchToggleStatsButton(toggleStatsOnButton);
         }
+    }
+
+    private void switchToggleStatsButton(JButton newButton) {
+        // Replace the current toggle stats button with the new one
+        JPanel buttonPanel = (JPanel) toggleStatsButton.getParent();
+        buttonPanel.remove(toggleStatsButton);
+        toggleStatsButton = newButton;
+        buttonPanel.add(toggleStatsButton);
+        buttonPanel.revalidate();
+        buttonPanel.repaint();
     }
 
     public void noDataLoadedError() {
