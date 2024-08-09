@@ -6,6 +6,8 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,8 +25,14 @@ public class CsvViewer extends JFrame {
     public Color cellTextColor = Color.BLACK; // Default cell text color
     public JTextArea statsTextArea;
     public JButton toggleButton;
+    public JButton toggleStatsButton; // New button to toggle stats visibility
     public Map<String, Color> classColors = new HashMap<>(); // Store class colors
     public JLabel selectedRowsLabel; // Label to display the number of selected rows
+    public JPanel bottomPanel; // Store the bottom panel for selected rows label
+    public JPanel statsPanel; // Store the panel for stats visibility toggling
+    public JScrollPane statsScrollPane; // Store the stats scroll pane to toggle its visibility
+    public JScrollPane tableScrollPane; // Store the table scroll pane for re-adding to split pane
+    public JSplitPane splitPane; // Store the split pane for adjusting layout
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -41,21 +49,48 @@ public class CsvViewer extends JFrame {
         table.setRowSorter(sorter);
 
         JPanel buttonPanel = ButtonPanel.createButtonPanel(this);
+
+        // Add a button to toggle the stats visibility
+        toggleStatsButton = new JButton("Toggle Stats");
+        toggleStatsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                toggleStatsVisibility();
+            }
+        });
+        buttonPanel.add(toggleStatsButton); // Add the button to the button panel
+
         add(buttonPanel, BorderLayout.NORTH);
 
         statsTextArea = UIHelper.createTextArea(3, 0);
-        JScrollPane statsScrollPane = new JScrollPane(statsTextArea);
+        statsScrollPane = new JScrollPane(statsTextArea);
 
-        JScrollPane tableScrollPane = new JScrollPane(table);
+        tableScrollPane = new JScrollPane(table);
 
         selectedRowsLabel = new JLabel("Selected rows: 0");
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.add(selectedRowsLabel, BorderLayout.SOUTH);
-        bottomPanel.add(statsScrollPane, BorderLayout.CENTER);
+        bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(selectedRowsLabel, BorderLayout.CENTER);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScrollPane, bottomPanel);
+        statsPanel = new JPanel(new BorderLayout());
+        statsPanel.add(statsScrollPane, BorderLayout.CENTER);
+
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScrollPane, statsPanel);
         splitPane.setResizeWeight(0.8); // 80% of space for table, 20% for stats initially
         add(splitPane, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH); // Always visible at the bottom
+    }
+
+    public void toggleStatsVisibility() {
+        if (splitPane.getBottomComponent() != null) {
+            // Remove the stats panel
+            splitPane.setBottomComponent(null);
+            splitPane.setDividerSize(0); // Remove the divider when stats are hidden
+        } else {
+            // Re-add the stats panel
+            splitPane.setBottomComponent(statsPanel);
+            splitPane.setDividerSize(10); // Restore the divider size
+            splitPane.setDividerLocation(0.8); // Adjust the split pane layout after toggling
+        }
     }
 
     public void noDataLoadedError() {
