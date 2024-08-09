@@ -19,19 +19,18 @@ Rules Tester Demo.
 ## Features
 
 - **Load CSV Data**: Load and display CSV data in a tabular format.
-- **Normalize Data**: Toggle normalization of numerical columns in the dataset.
-- **Highlight Blanks**: Toggle highlight of cell backgrounds with missing data.
-- **Heatmap Visualization**: Toggle highlighting data rows backgrounds as a heatmap.
-- **Parallel Coordinates Visualization**: Display a new window with data shown in a Parallel coordinates plot, normalization (or not), column ordering, and augmentation carries over.
-- **Shifted Paired Coordinates Visualization**: Display a new window with data shown in a Shifted Paired coordinates plot, column ordering and augmentation carries over.
-- **Row Manipulation**: Insert, delete, and augment (change value) rows, and visually reorder rows using drag and drop.
-- **Font Color Customization**: Customize the font color of the table cells.
-- **Tabular Class Field Highlight**: Toggle tabular class fields drawn with class color for background with class color selection.
-- **Data Export**: Export the modified data back to a CSV file.
-- **Rules Tester**: Tool window to test classification rules of the form: val1 R1 att R2 val2 i.e. 0.0 < petal.length < 2.0 rules can be chained in succession with conjunction (and) or disjunction (or) clauses, and effect one class.
-- **Rules Save**: Rules serialize and save locally for reloading when the window is reopened for convenience when retesting rules.
-- **Multi-row select and drag reorder**: Press shift and left click to select from the current row to the clicked row (total rows highlighted displayed in footer), can drag and reorder rows including entire shift-click selections.
-- **Tabular cell copy**: Left-click ctrl-c copy of tabular cells.
+- **Normalize Data**: Toggle normalization of numerical columns.
+- **Highlight Blanks**: Highlight cells with missing data.
+- **Heatmap Visualization**: Highlight data rows as a heatmap.
+- **Parallel Coordinates Visualization**: View data in a Parallel coordinates plot.
+- **Shifted Paired Coordinates Visualization**: View data in a Shifted Paired coordinates plot.
+- **Row Manipulation**: Insert, delete, clone, and reorder rows.
+- **Font Color Customization**: Customize the font color of table cells.
+- **Tabular Class Field Highlight**: Highlight class fields with color.
+- **Data Export**: Export modified data to CSV.
+- **Rules Tester**: Test classification rules and save them.
+- **Multi-row Select and Drag Reorder**: Select and reorder multiple rows.
+- **Tabular Cell Copy**: Copy cell content with Ctrl+C.
 
 ## Getting Started
 
