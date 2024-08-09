@@ -166,6 +166,8 @@ public class CsvViewer extends JFrame {
     }
 
     public void updateTableData(java.util.List<String[]> data) {
+        int currentCaretPosition = statsTextArea.getCaretPosition();  // Capture the current caret position
+    
         tableModel.setRowCount(0); // Clear existing data
         for (String[] row : data) {
             tableModel.addRow(row);
@@ -177,6 +179,8 @@ public class CsvViewer extends JFrame {
         }
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel(); // Update the selected rows label
+    
+        statsTextArea.setCaretPosition(currentCaretPosition);  // Restore the caret position
     }
 
     public void highlightBlanks() {
@@ -314,9 +318,13 @@ public class CsvViewer extends JFrame {
     }
 
     public void toggleClassColors() {
+        int currentCaretPosition = statsTextArea.getCaretPosition();  // Capture the current caret position
+    
         isClassColorEnabled = !isClassColorEnabled;
         applyCombinedRenderer();
         dataHandler.updateStats(tableModel, statsTextArea);
+    
+        statsTextArea.setCaretPosition(currentCaretPosition);  // Restore the caret position
     }
 
     public void applyDefaultRenderer() {
@@ -489,17 +497,25 @@ public class CsvViewer extends JFrame {
     }
 
     public void insertRow() {
+        int currentCaretPosition = statsTextArea.getCaretPosition();  // Capture the current caret position
+    
         int numColumns = tableModel.getColumnCount();
         String[] emptyRow = new String[numColumns];
         tableModel.addRow(emptyRow);
         dataHandler.updateStats(tableModel, statsTextArea);
+    
+        statsTextArea.setCaretPosition(currentCaretPosition);  // Restore the caret position
     }
 
     public void deleteRow() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow != -1) {
+            int currentCaretPosition = statsTextArea.getCaretPosition();  // Capture the current caret position
+    
             tableModel.removeRow(selectedRow);
             dataHandler.updateStats(tableModel, statsTextArea);
+    
+            statsTextArea.setCaretPosition(currentCaretPosition);  // Restore the caret position
         } else {
             JOptionPane.showMessageDialog(this, "Please select a row to delete.", "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -508,13 +524,17 @@ public class CsvViewer extends JFrame {
     public void cloneSelectedRow() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow != -1) {
+            int currentCaretPosition = statsTextArea.getCaretPosition();  // Capture the current caret position
+    
             DefaultTableModel model = (DefaultTableModel) table.getModel();
             Object[] rowData = new Object[model.getColumnCount()];
             for (int col = 0; col < model.getColumnCount(); col++) {
                 rowData[col] = model.getValueAt(selectedRow, col);
             }
-            model.insertRow(selectedRow + 1, rowData); // Insert the cloned row after the selected row
+            model.insertRow(selectedRow + 1, rowData);  // Insert the cloned row after the selected row
             dataHandler.updateStats(tableModel, statsTextArea);
+    
+            statsTextArea.setCaretPosition(currentCaretPosition);  // Restore the caret position
         } else {
             JOptionPane.showMessageDialog(this, "Please select a row to clone.", "Error", JOptionPane.ERROR_MESSAGE);
         }
