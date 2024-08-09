@@ -1,20 +1,19 @@
 package src;
 
-import javax.swing.*; // Import for Swing components
+import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumnModel; // Import for TableColumnModel
+import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
-import java.awt.*; // Import for AWT classes
-import java.awt.datatransfer.StringSelection; // Import for clipboard operations
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.ArrayList; // Import for ArrayList
-import java.util.List; // Import for List
+import java.util.ArrayList;
 
 public class CsvViewer extends JFrame {
     public JTable table;
@@ -367,13 +366,40 @@ public class CsvViewer extends JFrame {
         if (classColumnIndex == -1) {
             return; // If no class column is found, return early
         }
+        
         Set<String> uniqueClassNames = new HashSet<>();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             uniqueClassNames.add((String) tableModel.getValueAt(i, classColumnIndex));
         }
         String[] classNames = uniqueClassNames.toArray(new String[0]);
         JComboBox<String> classComboBox = new JComboBox<>(classNames);
-
+    
+        // Custom renderer to show color swatches with spacing
+        classComboBox.setRenderer(new ListCellRenderer<String>() {
+            @Override
+            public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
+                JPanel panel = new JPanel(new BorderLayout());
+                JLabel label = new JLabel(value);
+                JLabel colorSwatch = new JLabel();
+                colorSwatch.setOpaque(true);
+                colorSwatch.setPreferredSize(new Dimension(20, 20));
+                colorSwatch.setBackground(classColors.getOrDefault(value, Color.WHITE));
+    
+                panel.add(colorSwatch, BorderLayout.WEST);
+                panel.add(Box.createRigidArea(new Dimension(5, 0)), BorderLayout.CENTER); // Add space between swatch and label
+                panel.add(label, BorderLayout.EAST);
+    
+                if (isSelected) {
+                    panel.setBackground(list.getSelectionBackground());
+                    label.setForeground(list.getSelectionForeground());
+                } else {
+                    panel.setBackground(list.getBackground());
+                    label.setForeground(list.getForeground());
+                }
+                return panel;
+            }
+        });
+    
         int result = JOptionPane.showConfirmDialog(this, classComboBox, "Select Class", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
             String selectedClass = (String) classComboBox.getSelectedItem();
@@ -385,8 +411,8 @@ public class CsvViewer extends JFrame {
                 }
             }
         }
-    }
-
+    }    
+    
     public void insertRow() {
         int numColumns = tableModel.getColumnCount();
         String[] emptyRow = new String[numColumns];
