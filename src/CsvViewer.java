@@ -1,17 +1,20 @@
 package src;
 
-import javax.swing.*;
+import javax.swing.*; // Import for Swing components
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableColumnModel; // Import for TableColumnModel
 import javax.swing.table.TableRowSorter;
-import java.awt.*;
-import java.util.ArrayList;
+import java.awt.*; // Import for AWT classes
+import java.awt.datatransfer.StringSelection; // Import for clipboard operations
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.ArrayList; // Import for ArrayList
+import java.util.List; // Import for List
 
 public class CsvViewer extends JFrame {
     public JTable table;
@@ -48,6 +51,16 @@ public class CsvViewer extends JFrame {
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
         table.setRowSorter(sorter);
 
+        // Add a KeyAdapter to handle Ctrl+C for copying cell content
+        table.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_C) {
+                    copySelectedCell();
+                }
+            }
+        });
+
         JPanel buttonPanel = ButtonPanel.createButtonPanel(this);
         add(buttonPanel, BorderLayout.NORTH);
 
@@ -67,6 +80,16 @@ public class CsvViewer extends JFrame {
         splitPane.setResizeWeight(0.8); // 80% of space for table, 20% for stats initially
         add(splitPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH); // Always visible at the bottom
+    }
+
+    private void copySelectedCell() {
+        int row = table.getSelectedRow();
+        int col = table.getSelectedColumn();
+        if (row != -1 && col != -1) {
+            Object cellValue = table.getValueAt(row, col);
+            StringSelection stringSelection = new StringSelection(cellValue != null ? cellValue.toString() : "");
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+        }
     }
 
     public void toggleStatsVisibility(boolean hideStats) {
@@ -134,7 +157,7 @@ public class CsvViewer extends JFrame {
         }
     }
 
-    public void updateTableData(List<String[]> data) {
+    public void updateTableData(java.util.List<String[]> data) {
         tableModel.setRowCount(0); // Clear existing data
         for (String[] row : data) {
             tableModel.addRow(row);
@@ -401,7 +424,7 @@ public class CsvViewer extends JFrame {
             columnOrder[i] = table.convertColumnIndexToModel(i);
         }
         // Get the data
-        List<String[]> data = dataHandler.isDataEmpty() ? dataHandler.getOriginalData() : (isNormalized ? dataHandler.getNormalizedData() : dataHandler.getOriginalData());
+        java.util.List<String[]> data = dataHandler.isDataEmpty() ? dataHandler.getOriginalData() : (isNormalized ? dataHandler.getNormalizedData() : dataHandler.getOriginalData());
     
         // Create and show the plot
         ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder);
@@ -409,9 +432,9 @@ public class CsvViewer extends JFrame {
     }
 
     public void showShiftedPairedCoordinates() {
-        List<List<Double>> data = new ArrayList<>();
-        List<String> attributeNames = new ArrayList<>();
-        List<String> classLabels = new ArrayList<>();
+        java.util.List<java.util.List<Double>> data = new ArrayList<>();
+        java.util.List<String> attributeNames = new ArrayList<>();
+        java.util.List<String> classLabels = new ArrayList<>();
     
         // Get the reordered column names
         TableColumnModel columnModel = table.getColumnModel();
@@ -423,7 +446,7 @@ public class CsvViewer extends JFrame {
     
         for (int col = 0; col < columnOrder.length; col++) {
             boolean isNumeric = true;
-            List<Double> columnData = new ArrayList<>();
+            java.util.List<Double> columnData = new ArrayList<>();
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 try {
                     columnData.add(Double.parseDouble(tableModel.getValueAt(row, columnOrder[col]).toString()));

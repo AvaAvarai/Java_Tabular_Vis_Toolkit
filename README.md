@@ -31,6 +31,7 @@ Rules Tester Demo.
 - **Rules Tester**: Tool window to test classification rules of the form: val1 R1 att R2 val2 i.e. 0.0 < petal.length < 2.0 rules can be chained in succession with conjunction (and) or disjunction (or) clauses, and effect one class.
 - **Rules Save**: Rules serialize and save locally for reloading when the window is reopened for convenience when retesting rules.
 - **Multi-row select and drag reorder**: Press shift and left click to select from the current row to the clicked row (total rows highlighted displayed in footer), can drag and reorder rows including entire shift-click selections.
+- **Tabular cell copy**: Left-click ctrl-c copy of tabular cells.
 
 ## Getting Started
 
