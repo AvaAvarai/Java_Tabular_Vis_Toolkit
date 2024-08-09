@@ -25,6 +25,38 @@ public class ShiftedPairedCoordinates extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
         add(new ShiftedPairedCoordinatesPanel(), BorderLayout.CENTER);
+
+        // Add a legend panel at the bottom (horizontal)
+        add(createLegendPanel(), BorderLayout.SOUTH);
+    }
+
+    private JPanel createLegendPanel() {
+        JPanel legendPanel = new JPanel();
+        legendPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Add each class color and label to the legend
+        for (Map.Entry<String, Color> entry : classColors.entrySet()) {
+            JPanel colorLabelPanel = new JPanel();
+            colorLabelPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+
+            // Create a small colored box
+            JLabel colorBox = new JLabel();
+            colorBox.setOpaque(true);
+            colorBox.setBackground(entry.getValue());
+            colorBox.setPreferredSize(new Dimension(20, 20));
+
+            // Add the class label
+            JLabel label = new JLabel(entry.getKey());
+
+            colorLabelPanel.add(colorBox);
+            colorLabelPanel.add(Box.createRigidArea(new Dimension(5, 0))); // Spacing between color box and label
+            colorLabelPanel.add(label);
+
+            legendPanel.add(colorLabelPanel);
+        }
+
+        return legendPanel;
     }
 
     private class ShiftedPairedCoordinatesPanel extends JPanel {
