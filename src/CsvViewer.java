@@ -155,7 +155,7 @@ public class CsvViewer extends JFrame {
 
     public void toggleDataView() {
         int currentCaretPosition = statsTextArea.getCaretPosition();
-
+    
         if (isNormalized) {
             updateTableData(dataHandler.getOriginalData());
             isNormalized = false;
@@ -168,13 +168,15 @@ public class CsvViewer extends JFrame {
             toggleButton.setIcon(UIHelper.loadIcon("icons/denormalize.png", 40, 40));
             toggleButton.setToolTipText("Default");
         }
-
+    
+        // Ensure the caret position is within valid bounds
+        currentCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length());
         statsTextArea.setCaretPosition(currentCaretPosition);
-    }
+    }    
 
     public void updateTableData(List<String[]> data) {
         int currentCaretPosition = statsTextArea.getCaretPosition();
-
+    
         tableModel.setRowCount(0); // Clear existing data
         for (String[] row : data) {
             tableModel.addRow(row);
@@ -186,10 +188,12 @@ public class CsvViewer extends JFrame {
         }
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
-
+    
+        // Ensure the caret position is within valid bounds
+        currentCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length());
         statsTextArea.setCaretPosition(currentCaretPosition);
     }
-
+        
     public void highlightBlanks() {
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
