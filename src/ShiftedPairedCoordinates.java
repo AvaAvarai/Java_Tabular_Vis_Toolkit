@@ -135,49 +135,60 @@ public class ShiftedPairedCoordinates extends JFrame {
                 drawScatterPlot(g2, data.get(attrIndex1), data.get(attrIndex2), x, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2));
             }
 
-            // Draw connecting lines between plots
+            // Draw non-highlighted rows first
             for (int row = 0; row < data.get(0).size(); row++) {
-                for (int i = 0; i < numPlots - 1; i++) {
-                    int attrIndex1 = i * 2;
-                    int attrIndex2 = (i * 2) + 1;
-                    if (attrIndex2 >= data.size()) {
-                        attrIndex2 = attrIndex1;
-                    }
-
-                    int plotX1 = i * plotWidth + 40;
-                    int plotY1 = titleHeight + TITLE_PADDING + 10;
-                    int plotSize = Math.min(plotWidth, plotHeight) - 40;
-
-                    double normX1 = (data.get(attrIndex1).get(row) - getMin(data.get(attrIndex1))) / (getMax(data.get(attrIndex1)) - getMin(data.get(attrIndex1)));
-                    double normY1 = (data.get(attrIndex2).get(row) - getMin(data.get(attrIndex2))) / (getMax(data.get(attrIndex2)) - getMin(data.get(attrIndex2)));
-
-                    int x1 = plotX1 + (int) (plotSize * normX1);
-                    int y1 = plotY1 + plotSize - (int) (plotSize * normY1) + 20;
-
-                    // Set the line color to yellow if the row is selected
-                    if (selectedRows.contains(row)) {
-                        g2.setColor(Color.YELLOW);
-                    } else {
-                        g2.setColor(classColors.getOrDefault(classLabels.get(row), Color.BLACK));
-                    }
-
-                    int nextAttrIndex1 = (i + 1) * 2;
-                    int nextAttrIndex2 = (i + 1) * 2 + 1;
-                    if (nextAttrIndex2 >= data.size()) {
-                        nextAttrIndex2 = nextAttrIndex1;
-                    }
-
-                    int plotX2 = (i + 1) * plotWidth + 40;
-                    int plotY2 = titleHeight + TITLE_PADDING + 10;
-
-                    double normX2 = (data.get(nextAttrIndex1).get(row) - getMin(data.get(nextAttrIndex1))) / (getMax(data.get(nextAttrIndex1)) - getMin(data.get(nextAttrIndex1)));
-                    double normY2 = (data.get(nextAttrIndex2).get(row) - getMin(data.get(nextAttrIndex2))) / (getMax(data.get(nextAttrIndex2)) - getMin(data.get(nextAttrIndex2)));
-
-                    int x2 = plotX2 + (int) (plotSize * normX2);
-                    int y2 = plotY2 + plotSize - (int) (plotSize * normY2) + 20;
-
-                    g2.drawLine(x1, y1, x2, y2);
+                if (!selectedRows.contains(row)) {
+                    drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                 }
+            }
+
+            // Draw highlighted rows last (so they appear on top)
+            for (int row = 0; row < data.get(0).size(); row++) {
+                if (selectedRows.contains(row)) {
+                    drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
+                }
+            }
+        }
+
+        private void drawRow(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight) {
+            for (int i = 0; i < numPlots - 1; i++) {
+                int attrIndex1 = i * 2;
+                int attrIndex2 = (i * 2) + 1;
+                if (attrIndex2 >= data.size()) {
+                    attrIndex2 = attrIndex1;
+                }
+
+                int plotX1 = i * plotWidth + 40;
+                int plotSize = Math.min(plotWidth, plotHeight) - 40;
+
+                double normX1 = (data.get(attrIndex1).get(row) - getMin(data.get(attrIndex1))) / (getMax(data.get(attrIndex1)) - getMin(data.get(attrIndex1)));
+                double normY1 = (data.get(attrIndex2).get(row) - getMin(data.get(attrIndex2))) / (getMax(data.get(attrIndex2)) - getMin(data.get(attrIndex2)));
+
+                int x1 = plotX1 + (int) (plotSize * normX1);
+                int y1 = plotY + plotSize - (int) (plotSize * normY1) + 20;
+
+                // Set the line color to yellow if the row is selected
+                if (selectedRows.contains(row)) {
+                    g2.setColor(Color.YELLOW);
+                } else {
+                    g2.setColor(classColors.getOrDefault(classLabels.get(row), Color.BLACK));
+                }
+
+                int nextAttrIndex1 = (i + 1) * 2;
+                int nextAttrIndex2 = (i + 1) * 2 + 1;
+                if (nextAttrIndex2 >= data.size()) {
+                    nextAttrIndex2 = nextAttrIndex1;
+                }
+
+                int plotX2 = (i + 1) * plotWidth + 40;
+
+                double normX2 = (data.get(nextAttrIndex1).get(row) - getMin(data.get(nextAttrIndex1))) / (getMax(data.get(nextAttrIndex1)) - getMin(data.get(nextAttrIndex1)));
+                double normY2 = (data.get(nextAttrIndex2).get(row) - getMin(data.get(nextAttrIndex2))) / (getMax(data.get(nextAttrIndex2)) - getMin(data.get(nextAttrIndex2)));
+
+                int x2 = plotX2 + (int) (plotSize * normX2);
+                int y2 = plotY + plotSize - (int) (plotSize * normY2) + 20;
+
+                g2.drawLine(x1, y1, x2, y2);
             }
         }
 
@@ -191,7 +202,7 @@ public class ShiftedPairedCoordinates extends JFrame {
             g2.drawLine(plotX, plotY, plotX, plotY + plotSize);
             g2.drawLine(plotX, plotY + plotSize, plotX + plotSize, plotY + plotSize);
 
-            // Draw labels
+            // Draw labels with consistent font
             g2.setFont(AXIS_LABEL_FONT);
             g2.setColor(Color.BLACK);
             g2.drawString(xLabel, plotX + plotSize / 2, plotY + plotSize + 20);
