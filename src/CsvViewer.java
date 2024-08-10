@@ -709,7 +709,17 @@ public class CsvViewer extends JFrame {
             columnOrder[i] = table.convertColumnIndexToModel(i);
         }
     
-        List<String[]> data = dataHandler.isDataEmpty() ? dataHandler.getOriginalData() : (isNormalized ? dataHandler.getNormalizedData() : dataHandler.getOriginalData());
+        // Get the current data from the table model
+        List<String[]> data = new ArrayList<>();
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            String[] rowData = new String[columnCount];
+            for (int col = 0; col < columnCount; col++) {
+                Object value = tableModel.getValueAt(row, col);
+                rowData[col] = value != null ? value.toString() : "";
+            }
+            data.add(rowData);
+        }
+    
         List<Integer> selectedRows = getSelectedRowsIndices();
     
         ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows);
