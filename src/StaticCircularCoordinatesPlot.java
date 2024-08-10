@@ -135,8 +135,12 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             // Calculate positions on the circumference for each attribute
             for (int i = 0; i < numAttributes; i++) {
                 double angle = i * angleStep - Math.PI / 2;  // Start at the top (12 o'clock)
-                double x = centerX + radius * Math.cos(angle);
-                double y = centerY + radius * Math.sin(angle);
+                int labelradius = radius + 20; 
+                if (i > numAttributes / 2) {
+                    labelradius = radius + 75; 
+                }
+                double x = centerX + labelradius * Math.cos(angle);
+                double y = centerY + labelradius * Math.sin(angle);
                 attributePositions[i] = new Point2D.Double(x, y);
 
                 // Draw attribute labels

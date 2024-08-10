@@ -82,7 +82,13 @@ public class ParallelCoordinatesPlot extends JFrame {
                         double x = domainAxis.getCategoryMiddle(col, getColumnCount(), dataArea, plot.getDomainAxisEdge());
                         double y = rangeAxis.valueToJava2D(dataset.getValue(actualRow, col).doubleValue(), dataArea, plot.getRangeAxisEdge());
 
-                        g2.setPaint(getItemPaint(actualRow, col));
+                        // Draw the shapes in yellow if the row is selected
+                        if (selectedRows.contains(actualRow)) {
+                            g2.setPaint(Color.YELLOW);
+                        } else {
+                            g2.setPaint(getItemPaint(actualRow, col));
+                        }
+
                         Shape shape = getItemShape(actualRow, col);
                         g2.translate(x, y);
                         g2.fill(shape);

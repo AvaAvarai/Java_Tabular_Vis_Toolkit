@@ -232,7 +232,7 @@ public class ShiftedPairedCoordinates extends JFrame {
 
                 // Get class label, color, and shape
                 String classLabel = classLabels.get(row);
-                Color color = classColors.getOrDefault(classLabel, Color.BLACK);
+                Color color = selectedRows.contains(row) ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
                 Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
 
                 g2.setColor(color);
