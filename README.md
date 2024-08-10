@@ -13,6 +13,9 @@ Shifted Paired Coordinates Demo.
 Combined View Demo.
 ![Demo screenshot 3](screenshots/Iris_Demo_3.png)
 
+Outlier in Setosa sepal width attribute highlighted.
+![Demo screenshot 4](screenshots/Iris_Demo_4.png)
+
 Rules Tester Demo.
 ![Rules Tester Demo screenshot](screenshots/Rules_Test_Demo_1.png)
 
@@ -22,8 +25,8 @@ Rules Tester Demo.
 - **Normalize Data**: Toggle normalization of numerical columns.
 - **Highlight Blanks**: Highlight cells with missing data.
 - **Heatmap Visualization**: Highlight data rows as a heatmap.
-- **Parallel Coordinates Visualization**: View data in a Parallel coordinates plot.
-- **Shifted Paired Coordinates Visualization**: View data in a Shifted Paired coordinates plot.
+- **Parallel Coordinates Visualization**: View data in a Parallel coordinates (PC) plot.
+- **Shifted Paired Coordinates Visualization**: View data in a Shifted Paired coordinates (SPC) plot.
 - **Row Manipulation**: Insert, delete, clone, and reorder rows.
 - **Font Color Customization**: Customize the font color of table cells.
 - **Tabular Class Field Highlight**: Highlight class fields with color.
@@ -31,6 +34,7 @@ Rules Tester Demo.
 - **Rules Tester**: Test classification rules and save them.
 - **Multi-row Select and Drag Reorder**: Select and reorder multiple rows.
 - **Tabular Cell Copy**: Copy cell content with Ctrl+C.
+- **Rows Selected Highlight**: Selected rows in tabular view highlight in PC and SPC.
 
 ## Getting Started
 
