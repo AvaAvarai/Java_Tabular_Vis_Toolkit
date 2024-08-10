@@ -4,19 +4,22 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
+import java.awt.geom.Ellipse2D;
 
 public class ShiftedPairedCoordinates extends JFrame {
 
     private List<List<Double>> data;
     private List<String> attributeNames;
     private Map<String, Color> classColors;
+    private Map<String, Shape> classShapes;  // Use the shapes from CsvViewer
     private List<String> classLabels;
     private int numPlots;
 
-    public ShiftedPairedCoordinates(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, List<String> classLabels, int numPlots) {
+    public ShiftedPairedCoordinates(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
+        this.classShapes = classShapes;  // Initialize with the provided class shapes
         this.classLabels = classLabels;
         this.numPlots = numPlots;
 
@@ -35,22 +38,32 @@ public class ShiftedPairedCoordinates extends JFrame {
         legendPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Add each class color and label to the legend
+        // Add each class color and shape to the legend
         for (Map.Entry<String, Color> entry : classColors.entrySet()) {
-            JPanel colorLabelPanel = new JPanel();
-            colorLabelPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+            String className = entry.getKey();
+            Color color = entry.getValue();
+            Shape shape = classShapes.get(className);
 
-            // Create a small colored box
-            JLabel colorBox = new JLabel();
-            colorBox.setOpaque(true);
-            colorBox.setBackground(entry.getValue());
-            colorBox.setPreferredSize(new Dimension(20, 20));
+            JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
 
-            // Add the class label
-            JLabel label = new JLabel(entry.getKey());
+            // Create a larger shape symbol
+            JLabel shapeLabel = new JLabel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    Graphics2D g2 = (Graphics2D) g;
+                    g2.setColor(color);
+                    g2.translate(10, 10); // Center the shape in the label
+                    g2.scale(2, 2); // Scale the shape to make it larger
+                    g2.fill(shape);
+                }
+            };
+            shapeLabel.setPreferredSize(new Dimension(40, 40));  // Increased the size
 
-            colorLabelPanel.add(colorBox);
-            colorLabelPanel.add(Box.createRigidArea(new Dimension(5, 0))); // Spacing between color box and label
+            JLabel label = new JLabel(className);
+            label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
+
+            colorLabelPanel.add(shapeLabel);
             colorLabelPanel.add(label);
 
             legendPanel.add(colorLabelPanel);
@@ -91,7 +104,6 @@ public class ShiftedPairedCoordinates extends JFrame {
                 int attrIndex1 = i * 2;
                 int attrIndex2 = (i * 2) + 1;
                 if (attrIndex2 >= data.size()) {
-                    // If we are at the last plot and there's an odd number of attributes, duplicate the last attribute
                     attrIndex2 = attrIndex1;
                 }
                 drawScatterPlot(g2, data.get(attrIndex1), data.get(attrIndex2), x, titleHeight + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2), labelFont);
@@ -154,7 +166,7 @@ public class ShiftedPairedCoordinates extends JFrame {
             g2.drawString(xLabel, plotX + plotSize / 2, plotY + plotSize + 20);
             g2.drawString(yLabel, plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);
 
-            // Draw data points
+            // Draw data points using class shapes
             for (int i = 0; i < xData.size(); i++) {
                 double normX = (xData.get(i) - getMin(xData)) / (getMax(xData) - getMin(xData));
                 double normY = (yData.get(i) - getMin(yData)) / (getMax(yData) - getMin(yData));
@@ -162,12 +174,15 @@ public class ShiftedPairedCoordinates extends JFrame {
                 int px = plotX + (int) (normX * plotSize);
                 int py = plotY + plotSize - (int) (normY * plotSize);
 
-                // Get class label and color
+                // Get class label, color, and shape
                 String classLabel = classLabels.get(i);
                 Color color = classColors.getOrDefault(classLabel, Color.BLACK);
+                Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
 
                 g2.setColor(color);
-                g2.fillOval(px - 3, py - 3, 6, 6);
+                g2.translate(px, py);
+                g2.fill(shape);
+                g2.translate(-px, -py);
             }
         }
 
