@@ -524,60 +524,70 @@ public class CsvViewer extends JFrame {
             }
         }
     
-        mainPanel.add(shapePickerPanel, BorderLayout.SOUTH);
+        mainPanel.add(shapePickerPanel, BorderLayout.CENTER);
     
-        while (true) {
-            int result = JOptionPane.showConfirmDialog(this, mainPanel, "Select Class & Shape", JOptionPane.OK_CANCEL_OPTION);
-            if (result != JOptionPane.OK_OPTION) {
-                break;
-            }
+        // Button panel with the new "Set Color" button
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton setColorButton = new JButton("Set Color");
+        JButton okButton = new JButton("OK");
+        JButton cancelButton = new JButton("Cancel");
     
+        setColorButton.addActionListener(e -> {
             String selectedClass = (String) classComboBox.getSelectedItem();
             Color color = JColorChooser.showDialog(this, "Choose color for " + selectedClass, classColors.getOrDefault(selectedClass, Color.WHITE));
             if (color != null) {
                 classColors.put(selectedClass, color);
+                // Refresh legend panel
+                for (Component comp : legendPanel.getComponents()) {
+                    if (comp instanceof JPanel) {
+                        JPanel colorLabelPanel = (JPanel) comp;
+                        JLabel colorBox = (JLabel) colorLabelPanel.getComponent(0);
+                        if (colorBox.getBackground().equals(color)) {
+                            colorBox.setBackground(color);
+                        }
+                    }
+                }
+                legendPanel.revalidate();
+                legendPanel.repaint();
             }
+        });
     
+        okButton.addActionListener(e -> {
+            String selectedClass = (String) classComboBox.getSelectedItem();
             for (int i = 0; i < shapeButtons.length; i++) {
                 if (shapeButtons[i].isSelected()) {
                     classShapes.put(selectedClass, availableShapes[i]);
                     break;
                 }
             }
-    
-            legendPanel.removeAll();
-            for (String className : classNames) {
-                JPanel colorLabelPanel = new JPanel(new BorderLayout());
-    
-                JLabel colorBox = new JLabel();
-                colorBox.setOpaque(true);
-                colorBox.setBackground(classColors.getOrDefault(className, Color.WHITE));
-                colorBox.setPreferredSize(new Dimension(20, 20));
-    
-                JLabel shapeBox = new JLabel() {
-                    @Override
-                    protected void paintComponent(Graphics g) {
-                        super.paintComponent(g);
-                        Graphics2D g2 = (Graphics2D) g;
-                        g2.setColor(Color.BLACK);
-                        g2.fill(classShapes.getOrDefault(className, new Ellipse2D.Double(-3, -3, 6, 6)));
-                    }
-                };
-                shapeBox.setPreferredSize(new Dimension(20, 20));
-    
-                JLabel label = new JLabel(className);
-                label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-    
-                colorLabelPanel.add(colorBox, BorderLayout.WEST);
-                colorLabelPanel.add(shapeBox, BorderLayout.CENTER);
-                colorLabelPanel.add(label, BorderLayout.EAST);
-    
-                legendPanel.add(colorLabelPanel);
+            // Close only the color picker dialog
+            Window window = SwingUtilities.getWindowAncestor(okButton);
+            if (window != null) {
+                window.dispose();
             }
+        });
     
-            legendPanel.revalidate();
-            legendPanel.repaint();
-        }
+        cancelButton.addActionListener(e -> {
+            // Close only the color picker dialog without saving
+            Window window = SwingUtilities.getWindowAncestor(cancelButton);
+            if (window != null) {
+                window.dispose();
+            }
+        });
+    
+        buttonPanel.add(setColorButton);
+        buttonPanel.add(okButton);
+        buttonPanel.add(cancelButton);
+    
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+    
+        // Show the dialog
+        JDialog dialog = new JDialog(this, "Select Class, Color & Shape", true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setContentPane(mainPanel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 
     public void insertRow() {
