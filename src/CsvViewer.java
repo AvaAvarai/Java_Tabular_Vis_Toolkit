@@ -672,33 +672,34 @@ public class CsvViewer extends JFrame {
         TableColumnModel columnModel = table.getColumnModel();
         int columnCount = columnModel.getColumnCount();
         String[] columnNames = new String[columnCount];
-        int[] columnOrder = new int[columnCount]; 
+        int[] columnOrder = new int[columnCount];
         for (int i = 0; i < columnCount; i++) {
             columnNames[i] = columnModel.getColumn(i).getHeaderValue().toString();
             columnOrder[i] = table.convertColumnIndexToModel(i);
         }
-
+    
         List<String[]> data = dataHandler.isDataEmpty() ? dataHandler.getOriginalData() : (isNormalized ? dataHandler.getNormalizedData() : dataHandler.getOriginalData());
-
-        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder);
+        List<Integer> selectedRows = getSelectedRowsIndices();
+    
+        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows);
         plot.setVisible(true);
     }
-
+    
     public void showShiftedPairedCoordinates() {
-        java.util.List<java.util.List<Double>> data = new ArrayList<>();
-        java.util.List<String> attributeNames = new ArrayList<>();
-        java.util.List<String> classLabels = new ArrayList<>();
-
+        List<List<Double>> data = new ArrayList<>();
+        List<String> attributeNames = new ArrayList<>();
+        List<String> classLabels = new ArrayList<>();
+    
         TableColumnModel columnModel = table.getColumnModel();
         int columnCount = columnModel.getColumnCount();
         int[] columnOrder = new int[columnCount];
         for (int i = 0; i < columnCount; i++) {
             columnOrder[i] = table.convertColumnIndexToModel(i);
         }
-
+    
         for (int col = 0; col < columnOrder.length; col++) {
             boolean isNumeric = true;
-            java.util.List<Double> columnData = new ArrayList<>();
+            List<Double> columnData = new ArrayList<>();
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 try {
                     columnData.add(Double.parseDouble(tableModel.getValueAt(row, columnOrder[col]).toString()));
@@ -712,15 +713,15 @@ public class CsvViewer extends JFrame {
                 attributeNames.add(tableModel.getColumnName(columnOrder[col]));
             }
         }
-
+    
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             classLabels.add((String) tableModel.getValueAt(row, getClassColumnIndex()));
         }
-
+    
         int numPlots = (attributeNames.size() + 1) / 2;
-
-        // Corrected the constructor call to include classShapes
-        ShiftedPairedCoordinates shiftedPairedCoordinates = new ShiftedPairedCoordinates(data, attributeNames, classColors, classShapes, classLabels, numPlots);
+        List<Integer> selectedRows = getSelectedRowsIndices();
+    
+        ShiftedPairedCoordinates shiftedPairedCoordinates = new ShiftedPairedCoordinates(data, attributeNames, classColors, classShapes, classLabels, numPlots, selectedRows);
         shiftedPairedCoordinates.setVisible(true);
     }
 
@@ -733,6 +734,15 @@ public class CsvViewer extends JFrame {
         int selectedRowCount = table.getSelectedRowCount();
         selectedRowsLabel.setText("Selected rows: " + selectedRowCount);
     }
+
+    public List<Integer> getSelectedRowsIndices() {
+        int[] selectedRows = table.getSelectedRows();
+        List<Integer> selectedIndices = new ArrayList<>();
+        for (int row : selectedRows) {
+            selectedIndices.add(table.convertRowIndexToModel(row));
+        }
+        return selectedIndices;
+    }    
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {

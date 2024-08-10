@@ -2,26 +2,29 @@ package src;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
-import java.util.Map;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+import java.util.List; // Explicitly import java.util.List
+import java.util.Map;
 
 public class ShiftedPairedCoordinates extends JFrame {
 
     private List<List<Double>> data;
     private List<String> attributeNames;
     private Map<String, Color> classColors;
-    private Map<String, Shape> classShapes;  // Use the shapes from CsvViewer
+    private Map<String, Shape> classShapes;
     private List<String> classLabels;
     private int numPlots;
+    private List<Integer> selectedRows;
 
-    public ShiftedPairedCoordinates(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots) {
+    public ShiftedPairedCoordinates(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
-        this.classShapes = classShapes;  // Initialize with the provided class shapes
+        this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.numPlots = numPlots;
+        this.selectedRows = selectedRows;
 
         setTitle("Shifted Paired Coordinates");
         setSize(800, 600);
@@ -53,12 +56,12 @@ public class ShiftedPairedCoordinates extends JFrame {
                     super.paintComponent(g);
                     Graphics2D g2 = (Graphics2D) g;
                     g2.setColor(color);
-                    g2.translate(10, 10); // Center the shape in the label
-                    g2.scale(2, 2); // Scale the shape to make it larger
+                    g2.translate(10, 10);
+                    g2.scale(2, 2);
                     g2.fill(shape);
                 }
             };
-            shapeLabel.setPreferredSize(new Dimension(40, 40));  // Increased the size
+            shapeLabel.setPreferredSize(new Dimension(40, 40));
 
             JLabel label = new JLabel(className);
             label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
@@ -128,7 +131,12 @@ public class ShiftedPairedCoordinates extends JFrame {
                     int x1 = plotX1 + (int) (plotSize * normX1);
                     int y1 = plotY1 + plotSize - (int) (plotSize * normY1) + 20;
 
-                    g2.setColor(classColors.getOrDefault(classLabels.get(row), Color.BLACK));
+                    // Set the line color to yellow if the row is selected
+                    if (selectedRows.contains(row)) {
+                        g2.setColor(Color.YELLOW);
+                    } else {
+                        g2.setColor(classColors.getOrDefault(classLabels.get(row), Color.BLACK));
+                    }
 
                     int nextAttrIndex1 = (i + 1) * 2;
                     int nextAttrIndex2 = (i + 1) * 2 + 1;
@@ -178,6 +186,12 @@ public class ShiftedPairedCoordinates extends JFrame {
                 String classLabel = classLabels.get(i);
                 Color color = classColors.getOrDefault(classLabel, Color.BLACK);
                 Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
+
+                // Highlight selected rows with a different color and possibly different shape
+                if (selectedRows.contains(i)) {
+                    color = Color.RED;
+                    shape = new Rectangle2D.Double(-4, -4, 8, 8); // Use a different shape for selected rows
+                }
 
                 g2.setColor(color);
                 g2.translate(px, py);
