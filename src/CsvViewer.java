@@ -124,7 +124,7 @@ public class CsvViewer extends JFrame {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new java.io.File("datasets"));
         int result = fileChooser.showOpenDialog(this);
-
+    
         if (result == JFileChooser.APPROVE_OPTION) {
             String filePath = fileChooser.getSelectedFile().getAbsolutePath();
             tableModel.setRowCount(0); // Clear existing table rows
@@ -138,11 +138,15 @@ public class CsvViewer extends JFrame {
             updateTableData(dataHandler.getOriginalData());
             generateClassColors(); // Generate class colors based on the loaded data
             updateSelectedRowsLabel(); // Reset the selected rows label
-
+    
+            // Reset the Normalize button to its initial state
+            toggleButton.setIcon(UIHelper.loadIcon("icons/normalize.png", 40, 40));
+            toggleButton.setToolTipText("Normalize");
+    
             // Scroll the stats window to the top on initial load
             statsTextArea.setCaretPosition(0);
         }
-    }
+    }    
 
     public void toggleDataView() {
         // Capture the current caret position
