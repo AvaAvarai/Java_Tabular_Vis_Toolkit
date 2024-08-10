@@ -49,7 +49,7 @@ public class ShiftedPairedCoordinates extends JFrame {
         JPanel legendPanel = new JPanel();
         legendPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        legendPanel.setBackground(Color.WHITE); // Set background color of the legend panel
+        legendPanel.setBackground(Color.WHITE);
 
         // Add each class color and shape to the legend
         for (Map.Entry<String, Color> entry : classColors.entrySet()) {
@@ -58,16 +58,15 @@ public class ShiftedPairedCoordinates extends JFrame {
             Shape shape = classShapes.get(className);
 
             JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            colorLabelPanel.setBackground(Color.WHITE); // Set background color for individual legend items
+            colorLabelPanel.setBackground(Color.WHITE);
 
-            // Create a larger shape symbol
             JLabel shapeLabel = new JLabel() {
                 @Override
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
                     Graphics2D g2 = (Graphics2D) g;
                     g2.setColor(color);
-                    g2.translate(10, 10);
+                    g2.translate(32, 20);
                     g2.scale(2, 2);
                     g2.fill(shape);
                 }
