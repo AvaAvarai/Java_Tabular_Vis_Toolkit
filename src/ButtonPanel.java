@@ -66,7 +66,7 @@ public class ButtonPanel {
                 csvViewer.showParallelCoordinatesPlot();
             }
         });
-        JButton shiftedPairedButton = UIHelper.createButton("icons/shiftedpaired.png", "Shifted Paired", e -> {
+        JButton shiftedPairedButton = UIHelper.createButton("icons/shiftedpaired.png", "Shifted Paired Coordinates", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
