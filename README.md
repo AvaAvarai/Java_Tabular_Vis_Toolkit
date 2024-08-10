@@ -5,7 +5,7 @@
 Fisher Iris Data Exploration Demo. Selecting outliers in sepal.width attribute for the Virignica class (yellow highlighted cases in plot.)
 ![Demo screenshot 1](screenshots/Iris_Demo_1.png)
 
-Shifted Paired Coordinates Demo.
+Shifted Paired Coordinates Demo selecting and highlighting a classification conflicting in sepal.width attribute Viriginica class case.
 ![Demo screenshot 2](screenshots/Iris_Demo_2.png)
 
 Combined View Demo.
