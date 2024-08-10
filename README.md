@@ -1,10 +1,8 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-**JTabViz** is a Java-based application for loading, viewing, augmenting, and classifying tabular machine learning data loaded from CSV files. The application provides features including normalization, heatmap visualization, row deleting, row insertion, field augmentation, Parallel Coordinates, rules testing, and data export.
+**JTabViz** is a machine learning data analysis software suite that is built in Java and is actively being developed. Current features support the loading of CSVs for loading, viewing, searching, analyzing, augmenting, and classifying tabular data. The application provides features including normalization, heatmap visualization, row deleting, row insertion, field augmentation, Parallel coordinates (PC), Shifted Paired coordinates (SPC) rules testing, and data export.
 
-We are now implementing additional custom visualization techniques with the utilized libraries (Java Swing, JFreeChart).
-
-Fisher Iris Data Exploration Demo.
+Fisher Iris Data Exploration Demo. Selecting outliers in sepal.width attribute for the Virignica class (yellow highlighted cases in plot.)
 ![Demo screenshot 1](screenshots/Iris_Demo_1.png)
 
 Shifted Paired Coordinates Demo.
@@ -32,7 +30,8 @@ Rules Tester Demo.
 - **Tabular Class Field Highlight**: Highlight class fields with color.
 - **Data Export**: Export modified data to CSV.
 - **Rules Tester**: Test classification rules and save them.
-- **Multi-row Select and Drag Reorder**: Select and reorder multiple rows.
+- **Multi-row Selection and Reordering**: Select and reorder multiple rows using the Shift key for inclusive selection or the Ctrl key for individual selection.
+    Cell Content Copying: Quickly copy cell content using Ctrl+C.
 - **Tabular Cell Copy**: Copy cell content with Ctrl+C.
 - **Rows Selected Highlight**: Selected rows in tabular view highlight in PC and SPC.
 
