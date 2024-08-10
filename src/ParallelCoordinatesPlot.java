@@ -42,15 +42,11 @@ public class ParallelCoordinatesPlot extends JFrame {
         CategoryPlot plot = (CategoryPlot) chart.getPlot();
         LineAndShapeRenderer renderer = new LineAndShapeRenderer() {
 
-            // Drawing highlights last
             private List<Integer> drawOrder;
 
             @Override
             public void drawItem(Graphics2D g2, CategoryItemRendererState state, Rectangle2D dataArea, CategoryPlot plot, CategoryAxis domainAxis, ValueAxis rangeAxis, CategoryDataset dataset, int row, int column, int pass) {
-                // Skip rendering for the first pass to handle ordering manually
-                if (pass == 0) {
-                    return;
-                }
+                if (pass != 1) return;  // Ensure we only draw on the second pass (shapes and lines).
 
                 if (drawOrder == null) {
                     drawOrder = new ArrayList<>();
@@ -64,7 +60,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
                 int actualRow = drawOrder.get(row);
 
-                super.drawItem(g2, state, dataArea, plot, domainAxis, rangeAxis, dataset, actualRow, column, pass);
+                // Draw the lines in the order of the tabular view
                 if (column > 0) {
                     double x1 = domainAxis.getCategoryMiddle(column - 1, getColumnCount(), dataArea, plot.getDomainAxisEdge());
                     double y1 = rangeAxis.valueToJava2D(dataset.getValue(actualRow, column - 1).doubleValue(), dataArea, plot.getRangeAxisEdge());
@@ -79,8 +75,23 @@ public class ParallelCoordinatesPlot extends JFrame {
                     }
                     g2.draw(new Line2D.Double(x1, y1, x2, y2));
                 }
+
+                // Draw the scatterplot shapes in the order of the tabular view
+                if (column == dataset.getColumnCount() - 1) {
+                    for (int col = 0; col < dataset.getColumnCount(); col++) {
+                        double x = domainAxis.getCategoryMiddle(col, getColumnCount(), dataArea, plot.getDomainAxisEdge());
+                        double y = rangeAxis.valueToJava2D(dataset.getValue(actualRow, col).doubleValue(), dataArea, plot.getRangeAxisEdge());
+
+                        g2.setPaint(getItemPaint(actualRow, col));
+                        Shape shape = getItemShape(actualRow, col);
+                        g2.translate(x, y);
+                        g2.fill(shape);
+                        g2.translate(-x, -y);
+                    }
+                }
+
                 if (actualRow == 0 && column == 0) {
-                    // Draw the parallel lines (axes) manually
+                    // Draw the parallel lines (axes) manually first
                     for (int i = 0; i < dataset.getColumnCount(); i++) {
                         double x = domainAxis.getCategoryMiddle(i, getColumnCount(), dataArea, plot.getDomainAxisEdge());
                         g2.setPaint(Color.BLACK);
