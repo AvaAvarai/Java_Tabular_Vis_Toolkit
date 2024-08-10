@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
-import java.util.List; // Explicitly import java.util.List
+import java.util.List; 
 import java.util.Map;
 
 public class ShiftedPairedCoordinates extends JFrame {
@@ -76,6 +76,11 @@ public class ShiftedPairedCoordinates extends JFrame {
     }
 
     private class ShiftedPairedCoordinatesPanel extends JPanel {
+
+        public ShiftedPairedCoordinatesPanel() {
+            setBackground(new Color(0xC0C0C0));  // Set the background to match ParallelCoordinatesPlot
+        }
+    
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
