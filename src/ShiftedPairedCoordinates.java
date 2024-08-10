@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
-import java.util.List; 
+import java.util.List;
 import java.util.Map;
 
 public class ShiftedPairedCoordinates extends JFrame {
@@ -16,6 +16,9 @@ public class ShiftedPairedCoordinates extends JFrame {
     private List<String> classLabels;
     private int numPlots;
     private List<Integer> selectedRows;
+
+    // Shared font for the title
+    private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
 
     public ShiftedPairedCoordinates(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows) {
         this.data = data;
@@ -76,11 +79,10 @@ public class ShiftedPairedCoordinates extends JFrame {
     }
 
     private class ShiftedPairedCoordinatesPanel extends JPanel {
-
         public ShiftedPairedCoordinatesPanel() {
-            setBackground(new Color(0xC0C0C0));  // Set the background to match ParallelCoordinatesPlot
+            setBackground(new Color(0xC0C0C0));
         }
-    
+
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -94,14 +96,10 @@ public class ShiftedPairedCoordinates extends JFrame {
             int plotWidth = getWidth() / numPlots - 10;
             int plotHeight = getHeight() - 70; // leave space for labels and title
 
-            // Custom fonts for title and labels
-            Font titleFont = new Font("Serif", Font.BOLD, 24);
-            Font labelFont = new Font("SansSerif", Font.PLAIN, 16);
-
             // Draw the title
             String title = "Shifted Paired Coordinates Plot";
-            g2.setFont(titleFont);
-            FontMetrics fm = g2.getFontMetrics(titleFont);
+            g2.setFont(TITLE_FONT); // Use the shared font for the title
+            FontMetrics fm = g2.getFontMetrics(TITLE_FONT);
             int titleWidth = fm.stringWidth(title);
             int titleHeight = fm.getHeight();
             g2.drawString(title, (getWidth() - titleWidth) / 2, titleHeight);
@@ -114,7 +112,7 @@ public class ShiftedPairedCoordinates extends JFrame {
                 if (attrIndex2 >= data.size()) {
                     attrIndex2 = attrIndex1;
                 }
-                drawScatterPlot(g2, data.get(attrIndex1), data.get(attrIndex2), x, titleHeight + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2), labelFont);
+                drawScatterPlot(g2, data.get(attrIndex1), data.get(attrIndex2), x, titleHeight + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2));
             }
 
             // Draw connecting lines between plots
@@ -163,7 +161,7 @@ public class ShiftedPairedCoordinates extends JFrame {
             }
         }
 
-        private void drawScatterPlot(Graphics2D g2, List<Double> xData, List<Double> yData, int x, int y, int width, int height, String xLabel, String yLabel, Font labelFont) {
+        private void drawScatterPlot(Graphics2D g2, List<Double> xData, List<Double> yData, int x, int y, int width, int height, String xLabel, String yLabel) {
             int plotSize = Math.min(width, height) - 40;
             int plotX = x + 40;
             int plotY = y + 20;
@@ -174,7 +172,7 @@ public class ShiftedPairedCoordinates extends JFrame {
             g2.drawLine(plotX, plotY + plotSize, plotX + plotSize, plotY + plotSize);
 
             // Draw labels with custom font
-            g2.setFont(labelFont);
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 16));
             g2.setColor(Color.BLACK);
             g2.drawString(xLabel, plotX + plotSize / 2, plotY + plotSize + 20);
             g2.drawString(yLabel, plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);

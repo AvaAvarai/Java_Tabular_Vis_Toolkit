@@ -28,6 +28,9 @@ public class ParallelCoordinatesPlot extends JFrame {
     private Map<String, Shape> classShapes;
     private List<Integer> selectedRows;
 
+    // Shared font for the title
+    private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
+
     public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex, int[] columnOrder, List<Integer> selectedRows) {
         setTitle("Parallel Coordinates Plot");
         setSize(800, 600);
@@ -114,9 +117,16 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         plot.setFixedLegendItems(legendItems);
 
-        ChartPanel chartPanel = new ChartPanel(chart);
-        chartPanel.setPreferredSize(new Dimension(800, 600));
-        setContentPane(chartPanel);
+        // Create a custom panel to display the chart with the title using the specified font
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(new ChartPanel(chart), BorderLayout.CENTER);
+        
+        // Add the title to the top of the panel
+        JLabel titleLabel = new JLabel("Parallel Coordinates Plot", SwingConstants.CENTER);
+        titleLabel.setFont(TITLE_FONT);  // Use the shared font for the title
+        panel.add(titleLabel, BorderLayout.NORTH);
+
+        setContentPane(panel);
     }
 
     private Map<String, Shape> createClassShapes() {
@@ -161,7 +171,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
     private JFreeChart createChart(DefaultCategoryDataset dataset, String[] columnNames) {
         JFreeChart chart = ChartFactory.createLineChart(
-                "Parallel Coordinates Plot", // chart title
+                null, // No title, as the title is added separately
                 "Attribute", // domain axis label
                 "Value", // range axis label
                 dataset);
