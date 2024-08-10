@@ -54,6 +54,9 @@ public class StaticCircularCoordinatesPlot extends JFrame {
         // Plot points on the circumference and connect them
         for (int row = 0; row < data.get(0).size(); row++) {
             Point2D.Double[] points = new Point2D.Double[numAttributes];
+            String classLabel = classLabels.get(row);
+            Color color = classColors.getOrDefault(classLabel, Color.BLACK);
+            Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
 
             for (int i = 0; i < numAttributes; i++) {
                 double value = data.get(i).get(row);
@@ -64,15 +67,15 @@ public class StaticCircularCoordinatesPlot extends JFrame {
                 double y = centerY + radius * Math.sin(i * angleStep + normValue * angleStep - Math.PI / 2);
                 points[i] = new Point2D.Double(x, y);
 
-                // Draw points
-                String classLabel = classLabels.get(row);
-                Color color = classColors.getOrDefault(classLabel, Color.BLACK);
+                // Draw points with the corresponding class shape and color
                 g2.setColor(color);
-                g2.fill(new Ellipse2D.Double(x - 3, y - 3, 6, 6));
+                g2.translate(x, y);  // Move the origin to the point location
+                g2.fill(shape);       // Draw the shape at the translated origin
+                g2.translate(-x, -y); // Move back the origin
             }
 
-            // Connect points sequentially
-            g2.setColor(Color.GRAY);
+            // Connect points sequentially with class color
+            g2.setColor(color);
             for (int i = 0; i < numAttributes - 1; i++) {
                 g2.draw(new Line2D.Double(points[i], points[i + 1]));
             }
