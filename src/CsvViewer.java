@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
+
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
@@ -641,16 +643,28 @@ public class CsvViewer extends JFrame {
     }
 
     public void deleteRow() {
-        int selectedRow = table.getSelectedRow();
-        if (selectedRow != -1) {
+        int[] selectedRows = table.getSelectedRows();
+        if (selectedRows.length > 0) {
             int currentCaretPosition = statsTextArea.getCaretPosition();
 
-            tableModel.removeRow(selectedRow);
+            // Convert selected rows to model indices and sort them in descending order
+            List<Integer> rowsToDelete = new ArrayList<>();
+            for (int row : selectedRows) {
+                rowsToDelete.add(table.convertRowIndexToModel(row));
+            }
+            rowsToDelete.sort(Collections.reverseOrder());
+
+            // Delete rows in descending order to avoid issues with shifting indices
+            for (int rowIndex : rowsToDelete) {
+                tableModel.removeRow(rowIndex);
+            }
+
             dataHandler.updateStats(tableModel, statsTextArea);
+            updateSelectedRowsLabel();
 
             statsTextArea.setCaretPosition(currentCaretPosition);
         } else {
-            JOptionPane.showMessageDialog(this, "Please select a row to delete.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please select at least one row to delete.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
