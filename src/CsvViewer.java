@@ -502,6 +502,9 @@ public class CsvViewer extends JFrame {
         ButtonGroup shapeButtonGroup = new ButtonGroup();
         JRadioButton[] shapeButtons = new JRadioButton[availableShapes.length];
     
+        // Preselect the current shape when the dialog is opened
+        String selectedClass = (String) classComboBox.getSelectedItem();
+    
         for (int i = 0; i < availableShapes.length; i++) {
             Shape shape = availableShapes[i];
             shapeButtons[i] = new JRadioButton() {
@@ -519,7 +522,7 @@ public class CsvViewer extends JFrame {
             shapePickerPanel.add(shapeButtons[i]);
     
             // Preselect current shape if it matches
-            if (classShapes.get(classComboBox.getSelectedItem()).equals(shape)) {
+            if (classShapes.get(selectedClass).equals(shape)) {
                 shapeButtons[i].setSelected(true);
             }
         }
@@ -533,7 +536,6 @@ public class CsvViewer extends JFrame {
         JButton cancelButton = new JButton("Cancel");
     
         setColorButton.addActionListener(e -> {
-            String selectedClass = (String) classComboBox.getSelectedItem();
             Color color = JColorChooser.showDialog(this, "Choose color for " + selectedClass, classColors.getOrDefault(selectedClass, Color.WHITE));
             if (color != null) {
                 classColors.put(selectedClass, color);
@@ -542,9 +544,7 @@ public class CsvViewer extends JFrame {
                     if (comp instanceof JPanel) {
                         JPanel colorLabelPanel = (JPanel) comp;
                         JLabel colorBox = (JLabel) colorLabelPanel.getComponent(0);
-                        if (colorBox.getBackground().equals(color)) {
-                            colorBox.setBackground(color);
-                        }
+                        colorBox.setBackground(color);
                     }
                 }
                 // Refresh combo box renderer
@@ -553,7 +553,6 @@ public class CsvViewer extends JFrame {
         });
     
         okButton.addActionListener(e -> {
-            String selectedClass = (String) classComboBox.getSelectedItem();
             for (int i = 0; i < shapeButtons.length; i++) {
                 if (shapeButtons[i].isSelected()) {
                     classShapes.put(selectedClass, availableShapes[i]);
