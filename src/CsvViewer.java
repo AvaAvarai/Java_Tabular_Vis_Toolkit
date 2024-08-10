@@ -510,13 +510,8 @@ public class CsvViewer extends JFrame {
         Runnable updateShapeSelection = () -> {
             String selectedClass = (String) classComboBox.getSelectedItem();
             Shape currentShape = tempClassShapes.get(selectedClass);
-    
             for (int i = 0; i < availableShapes.length; i++) {
-                if (currentShape.equals(availableShapes[i])) {
-                    shapeButtons[i].setSelected(true);
-                } else {
-                    shapeButtons[i].setSelected(false);
-                }
+                shapeButtons[i].setSelected(currentShape.getClass().equals(availableShapes[i].getClass()));
             }
         };
     
