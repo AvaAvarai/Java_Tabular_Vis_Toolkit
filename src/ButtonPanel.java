@@ -73,6 +73,13 @@ public class ButtonPanel {
                 csvViewer.showShiftedPairedCoordinates();
             }
         });
+        JButton staticCircularCoordinatesButton = UIHelper.createButton("icons/staticcircular.png", "Static Circular Coordinates", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showStaticCircularCoordinatesPlot();
+            }
+        });
         JButton classColorButton = UIHelper.createButton("icons/classcolor.png", "Toggle Class Colors", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
@@ -115,6 +122,7 @@ public class ButtonPanel {
         buttonPanel.add(exportButton);
         buttonPanel.add(parallelPlotButton);
         buttonPanel.add(shiftedPairedButton);
+        buttonPanel.add(staticCircularCoordinatesButton);
         buttonPanel.add(classColorButton);
         buttonPanel.add(setClassColorsButton);
         buttonPanel.add(ruleTesterButton);

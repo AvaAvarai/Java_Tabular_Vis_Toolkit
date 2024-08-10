@@ -742,6 +742,46 @@ public class CsvViewer extends JFrame {
         shiftedPairedCoordinates.setVisible(true);
     }
 
+    public void showStaticCircularCoordinatesPlot() {
+        List<List<Double>> data = new ArrayList<>();
+        List<String> attributeNames = new ArrayList<>();
+        List<String> classLabels = new ArrayList<>();
+    
+        TableColumnModel columnModel = table.getColumnModel();
+        int columnCount = columnModel.getColumnCount();
+        int[] columnOrder = new int[columnCount];
+        for (int i = 0; i < columnCount; i++) {
+            columnOrder[i] = table.convertColumnIndexToModel(i);
+        }
+    
+        for (int col = 0; col < columnOrder.length; col++) {
+            boolean isNumeric = true;
+            List<Double> columnData = new ArrayList<>();
+            for (int row = 0; row < tableModel.getRowCount(); row++) {
+                try {
+                    columnData.add(Double.parseDouble(tableModel.getValueAt(row, columnOrder[col]).toString()));
+                } catch (NumberFormatException e) {
+                    isNumeric = false;
+                    break;
+                }
+            }
+            if (isNumeric) {
+                data.add(columnData);
+                attributeNames.add(tableModel.getColumnName(columnOrder[col]));
+            }
+        }
+    
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            classLabels.add((String) tableModel.getValueAt(row, getClassColumnIndex()));
+        }
+    
+        List<Integer> selectedRows = getSelectedRowsIndices();
+    
+        // Create and show the StaticCircularCoordinates plot
+        StaticCircularCoordinatesPlot plot = new StaticCircularCoordinatesPlot(data, attributeNames, classColors, classShapes, classLabels, selectedRows);
+        plot.setVisible(true);
+    }
+
     public void showRuleTesterDialog() {
         RuleTesterDialog ruleTesterDialog = new RuleTesterDialog(this, tableModel);
         ruleTesterDialog.setVisible(true);
