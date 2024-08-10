@@ -547,8 +547,8 @@ public class CsvViewer extends JFrame {
                         }
                     }
                 }
-                legendPanel.revalidate();
-                legendPanel.repaint();
+                // Refresh combo box renderer
+                classComboBox.repaint();
             }
         });
     
