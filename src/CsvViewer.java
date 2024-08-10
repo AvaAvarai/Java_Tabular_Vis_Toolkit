@@ -84,7 +84,7 @@ public class CsvViewer extends JFrame {
         add(splitPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH); // Always visible at the bottom
 
-        generateClassShapes(); // Generate class shapes based on the classes
+        generateClassShapes();
     }
 
     private void copySelectedCell() {
@@ -243,15 +243,20 @@ public class CsvViewer extends JFrame {
         Shape[] availableShapes = {
             new Ellipse2D.Double(-3, -3, 6, 6),
             new Rectangle2D.Double(-3, -3, 6, 6),
-            new Polygon(new int[]{-3, 3, 0}, new int[]{-3, -3, 3}, 3)
+            new Polygon(new int[]{-3, 3, 0}, new int[]{-3, -3, 3}, 3),
+            ShapeUtils.createStar(4, 6, 3),  // 4-point star
+            ShapeUtils.createStar(5, 6, 3),  // 5-point star
+            ShapeUtils.createStar(6, 6, 3),  // 6-point star
+            ShapeUtils.createStar(7, 6, 3),  // 7-point star
+            ShapeUtils.createStar(8, 6, 3)   // 8-point star
         };
-
+    
         int i = 0;
         for (String className : classColors.keySet()) {
             classShapes.put(className, availableShapes[i % availableShapes.length]);
             i++;
         }
-    }
+    }    
 
     public int getClassColumnIndex() {
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
@@ -395,17 +400,17 @@ public class CsvViewer extends JFrame {
         if (classColumnIndex == -1) {
             return;
         }
-
+    
         Set<String> uniqueClassNames = new HashSet<>();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             uniqueClassNames.add((String) tableModel.getValueAt(i, classColumnIndex));
         }
         String[] classNames = uniqueClassNames.toArray(new String[0]);
-
+    
         JPanel mainPanel = new JPanel(new BorderLayout());
-
+    
         JComboBox<String> classComboBox = new JComboBox<>(classNames);
-
+    
         classComboBox.setRenderer(new ListCellRenderer<String>() {
             @Override
             public Component getListCellRendererComponent(JList<? extends String> list, String value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -415,11 +420,22 @@ public class CsvViewer extends JFrame {
                 colorSwatch.setOpaque(true);
                 colorSwatch.setPreferredSize(new Dimension(20, 20));
                 colorSwatch.setBackground(classColors.getOrDefault(value, Color.WHITE));
-
+    
+                JLabel shapeSwatch = new JLabel() {
+                    @Override
+                    protected void paintComponent(Graphics g) {
+                        super.paintComponent(g);
+                        Graphics2D g2 = (Graphics2D) g;
+                        g2.setColor(Color.BLACK);
+                        g2.fill(classShapes.getOrDefault(value, new Ellipse2D.Double(-3, -3, 6, 6)));
+                    }
+                };
+                shapeSwatch.setPreferredSize(new Dimension(20, 20));
+    
                 panel.add(colorSwatch, BorderLayout.WEST);
-                panel.add(Box.createRigidArea(new Dimension(5, 0)), BorderLayout.CENTER);
+                panel.add(shapeSwatch, BorderLayout.CENTER);
                 panel.add(label, BorderLayout.EAST);
-
+    
                 if (isSelected) {
                     panel.setBackground(list.getSelectionBackground());
                     label.setForeground(list.getSelectionForeground());
@@ -430,64 +446,135 @@ public class CsvViewer extends JFrame {
                 return panel;
             }
         });
-
+    
         mainPanel.add(classComboBox, BorderLayout.NORTH);
-
+    
         JPanel legendPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        legendPanel.setBorder(BorderFactory.createTitledBorder("Current Class Colors"));
-
+        legendPanel.setBorder(BorderFactory.createTitledBorder("Current Class Colors & Shapes"));
+    
         for (String className : classNames) {
             JPanel colorLabelPanel = new JPanel(new BorderLayout());
-
+    
             JLabel colorBox = new JLabel();
             colorBox.setOpaque(true);
             colorBox.setBackground(classColors.getOrDefault(className, Color.WHITE));
             colorBox.setPreferredSize(new Dimension(20, 20));
-
+    
+            JLabel shapeBox = new JLabel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    Graphics2D g2 = (Graphics2D) g;
+                    g2.setColor(Color.BLACK);
+                    g2.fill(classShapes.getOrDefault(className, new Ellipse2D.Double(-3, -3, 6, 6)));
+                }
+            };
+            shapeBox.setPreferredSize(new Dimension(20, 20));
+    
             JLabel label = new JLabel(className);
             label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-
+    
             colorLabelPanel.add(colorBox, BorderLayout.WEST);
-            colorLabelPanel.add(label, BorderLayout.CENTER);
-
+            colorLabelPanel.add(shapeBox, BorderLayout.CENTER);
+            colorLabelPanel.add(label, BorderLayout.EAST);
+    
             legendPanel.add(colorLabelPanel);
         }
-
+    
         mainPanel.add(legendPanel, BorderLayout.CENTER);
-
+    
+        // Shape picker panel
+        JPanel shapePickerPanel = new JPanel(new GridLayout(2, 4, 5, 5));
+        shapePickerPanel.setBorder(BorderFactory.createTitledBorder("Pick Shape"));
+    
+        // Add shape options to the picker
+        Shape[] availableShapes = {
+            new Ellipse2D.Double(-3, -3, 6, 6),
+            new Rectangle2D.Double(-3, -3, 6, 6),
+            new Polygon(new int[]{-3, 3, 0}, new int[]{-3, -3, 3}, 3),
+            ShapeUtils.createStar(4, 6, 3),  // 4-point star
+            ShapeUtils.createStar(5, 6, 3),  // 5-point star
+            ShapeUtils.createStar(6, 6, 3),  // 6-point star
+            ShapeUtils.createStar(7, 6, 3),  // 7-point star
+            ShapeUtils.createStar(8, 6, 3)   // 8-point star
+        };
+    
+        ButtonGroup shapeButtonGroup = new ButtonGroup();
+        JRadioButton[] shapeButtons = new JRadioButton[availableShapes.length];
+    
+        for (int i = 0; i < availableShapes.length; i++) {
+            Shape shape = availableShapes[i];
+            shapeButtons[i] = new JRadioButton() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    Graphics2D g2 = (Graphics2D) g;
+                    g2.setColor(Color.BLACK);
+                    g2.translate(10, 10);
+                    g2.fill(shape);
+                    g2.translate(-10, -10);
+                }
+            };
+            shapeButtonGroup.add(shapeButtons[i]);
+            shapePickerPanel.add(shapeButtons[i]);
+    
+            // Preselect current shape if it matches
+            if (classShapes.get(classComboBox.getSelectedItem()).equals(shape)) {
+                shapeButtons[i].setSelected(true);
+            }
+        }
+    
+        mainPanel.add(shapePickerPanel, BorderLayout.SOUTH);
+    
         while (true) {
-            int result = JOptionPane.showConfirmDialog(this, mainPanel, "Select Class", JOptionPane.OK_CANCEL_OPTION);
+            int result = JOptionPane.showConfirmDialog(this, mainPanel, "Select Class & Shape", JOptionPane.OK_CANCEL_OPTION);
             if (result != JOptionPane.OK_OPTION) {
                 break;
             }
-
+    
             String selectedClass = (String) classComboBox.getSelectedItem();
             Color color = JColorChooser.showDialog(this, "Choose color for " + selectedClass, classColors.getOrDefault(selectedClass, Color.WHITE));
             if (color != null) {
                 classColors.put(selectedClass, color);
-                if (isClassColorEnabled) {
-                    applyCombinedRenderer();
+            }
+    
+            for (int i = 0; i < shapeButtons.length; i++) {
+                if (shapeButtons[i].isSelected()) {
+                    classShapes.put(selectedClass, availableShapes[i]);
+                    break;
                 }
             }
-
+    
             legendPanel.removeAll();
             for (String className : classNames) {
                 JPanel colorLabelPanel = new JPanel(new BorderLayout());
-
+    
                 JLabel colorBox = new JLabel();
                 colorBox.setOpaque(true);
                 colorBox.setBackground(classColors.getOrDefault(className, Color.WHITE));
                 colorBox.setPreferredSize(new Dimension(20, 20));
-
+    
+                JLabel shapeBox = new JLabel() {
+                    @Override
+                    protected void paintComponent(Graphics g) {
+                        super.paintComponent(g);
+                        Graphics2D g2 = (Graphics2D) g;
+                        g2.setColor(Color.BLACK);
+                        g2.fill(classShapes.getOrDefault(className, new Ellipse2D.Double(-3, -3, 6, 6)));
+                    }
+                };
+                shapeBox.setPreferredSize(new Dimension(20, 20));
+    
                 JLabel label = new JLabel(className);
                 label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-
+    
                 colorLabelPanel.add(colorBox, BorderLayout.WEST);
-                colorLabelPanel.add(label, BorderLayout.CENTER);
-
+                colorLabelPanel.add(shapeBox, BorderLayout.CENTER);
+                colorLabelPanel.add(label, BorderLayout.EAST);
+    
                 legendPanel.add(colorLabelPanel);
             }
-
+    
             legendPanel.revalidate();
             legendPanel.repaint();
         }
