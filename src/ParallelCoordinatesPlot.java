@@ -37,33 +37,49 @@ public class ParallelCoordinatesPlot extends JFrame {
         this.classShapes = createClassShapes();
 
         DefaultCategoryDataset dataset = createDataset(data, columnNames, classColumnIndex, columnOrder);
-        JFreeChart chart = createChart(dataset, columnNames);
+        JFreeChart chart = createChart(dataset, columnNames, selectedRows);
 
         CategoryPlot plot = (CategoryPlot) chart.getPlot();
         LineAndShapeRenderer renderer = new LineAndShapeRenderer() {
-            @Override
-            public void drawDomainGridline(Graphics2D g2, CategoryPlot plot, Rectangle2D dataArea, double value) {
-                // No need to draw default gridlines
-            }
+
+            // Drawing highlights last
+            private List<Integer> drawOrder;
 
             @Override
             public void drawItem(Graphics2D g2, CategoryItemRendererState state, Rectangle2D dataArea, CategoryPlot plot, CategoryAxis domainAxis, ValueAxis rangeAxis, CategoryDataset dataset, int row, int column, int pass) {
-                super.drawItem(g2, state, dataArea, plot, domainAxis, rangeAxis, dataset, row, column, pass);
+                // Skip rendering for the first pass to handle ordering manually
+                if (pass == 0) {
+                    return;
+                }
+
+                if (drawOrder == null) {
+                    drawOrder = new ArrayList<>();
+                    for (int i = 0; i < dataset.getRowCount(); i++) {
+                        if (!selectedRows.contains(i)) {
+                            drawOrder.add(i);
+                        }
+                    }
+                    drawOrder.addAll(selectedRows);
+                }
+
+                int actualRow = drawOrder.get(row);
+
+                super.drawItem(g2, state, dataArea, plot, domainAxis, rangeAxis, dataset, actualRow, column, pass);
                 if (column > 0) {
                     double x1 = domainAxis.getCategoryMiddle(column - 1, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                    double y1 = rangeAxis.valueToJava2D(dataset.getValue(row, column - 1).doubleValue(), dataArea, plot.getRangeAxisEdge());
+                    double y1 = rangeAxis.valueToJava2D(dataset.getValue(actualRow, column - 1).doubleValue(), dataArea, plot.getRangeAxisEdge());
 
                     double x2 = domainAxis.getCategoryMiddle(column, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                    double y2 = rangeAxis.valueToJava2D(dataset.getValue(row, column).doubleValue(), dataArea, plot.getRangeAxisEdge());
+                    double y2 = rangeAxis.valueToJava2D(dataset.getValue(actualRow, column).doubleValue(), dataArea, plot.getRangeAxisEdge());
 
-                    if (selectedRows.contains(row)) {
+                    if (selectedRows.contains(actualRow)) {
                         g2.setPaint(Color.YELLOW);
                     } else {
-                        g2.setPaint(getItemPaint(row, column));
+                        g2.setPaint(getItemPaint(actualRow, column));
                     }
                     g2.draw(new Line2D.Double(x1, y1, x2, y2));
                 }
-                if (row == 0 && column == 0) {
+                if (actualRow == 0 && column == 0) {
                     // Draw the parallel lines (axes) manually
                     for (int i = 0; i < dataset.getColumnCount(); i++) {
                         double x = domainAxis.getCategoryMiddle(i, getColumnCount(), dataArea, plot.getDomainAxisEdge());
@@ -153,7 +169,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         return dataset;
     }
 
-    private JFreeChart createChart(DefaultCategoryDataset dataset, String[] columnNames) {
+    private JFreeChart createChart(DefaultCategoryDataset dataset, String[] columnNames, List<Integer> selectedRows) {
         JFreeChart chart = ChartFactory.createLineChart(
                 "Parallel Coordinates Plot", // chart title
                 "Attribute", // domain axis label
