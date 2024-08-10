@@ -25,6 +25,7 @@ Rules Tester Demo.
 - **Heatmap Visualization**: Highlight data rows as a heatmap.
 - **Parallel Coordinates Visualization**: View data in a Parallel coordinates (PC) plot.
 - **Shifted Paired Coordinates Visualization**: View data in a Shifted Paired coordinates (SPC) plot.
+- **Static Circular Coordinates Visualization**: View data in a Static Circular coordinates (SCC) plot.
 - **Row Manipulation**: Insert, delete, clone, and reorder rows.
 - **Font Color Customization**: Customize the font color of table cells.
 - **Tabular Class Field Highlight**: Highlight class fields with color.

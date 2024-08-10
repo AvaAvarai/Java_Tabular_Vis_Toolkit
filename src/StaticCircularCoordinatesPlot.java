@@ -40,6 +40,10 @@ public class StaticCircularCoordinatesPlot extends JFrame {
 
         Point2D.Double[] attributePositions = new Point2D.Double[numAttributes];
 
+        // Draw the circular axis
+        g2.setColor(Color.BLACK);
+        g2.draw(new Ellipse2D.Double(centerX - radius, centerY - radius, 2 * radius, 2 * radius));
+
         // Calculate positions on the circumference for each attribute
         for (int i = 0; i < numAttributes; i++) {
             double angle = i * angleStep - Math.PI / 2;  // Start at the top (12 o'clock)
@@ -51,35 +55,48 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             g2.drawString(attributeNames.get(i), (int) x, (int) y);
         }
 
-        // Plot points on the circumference and connect them
+        // Draw non-selected rows first
         for (int row = 0; row < data.get(0).size(); row++) {
-            Point2D.Double[] points = new Point2D.Double[numAttributes];
-            String classLabel = classLabels.get(row);
-            Color color = classColors.getOrDefault(classLabel, Color.BLACK);
-            Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
-
-            for (int i = 0; i < numAttributes; i++) {
-                double value = data.get(i).get(row);
-                double normValue = value;  // Data is already normalized to [0, 1]
-
-                // Interpolate between the start and end points of each segment on the circumference
-                double x = centerX + radius * Math.cos(i * angleStep + normValue * angleStep - Math.PI / 2);
-                double y = centerY + radius * Math.sin(i * angleStep + normValue * angleStep - Math.PI / 2);
-                points[i] = new Point2D.Double(x, y);
-
-                // Draw points with the corresponding class shape and color
-                g2.setColor(color);
-                g2.translate(x, y);  // Move the origin to the point location
-                g2.fill(shape);       // Draw the shape at the translated origin
-                g2.translate(-x, -y); // Move back the origin
+            if (!selectedRows.contains(row)) {
+                drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, false);
             }
+        }
 
-            // Connect points sequentially with class color
-            g2.setColor(color);
-            for (int i = 0; i < numAttributes - 1; i++) {
-                g2.draw(new Line2D.Double(points[i], points[i + 1]));
-            }
-            g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
+        // Draw selected rows last (highlighted in yellow)
+        for (int row : selectedRows) {
+            drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, true);
+        }
+    }
+
+    private void drawRow(Graphics2D g2, int row, Point2D.Double[] attributePositions, int centerX, int centerY, int radius, double angleStep, boolean isSelected) {
+        Point2D.Double[] points = new Point2D.Double[numAttributes];
+        String classLabel = classLabels.get(row);
+        Color color = isSelected ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+        Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
+
+        // Calculate points
+        for (int i = 0; i < numAttributes; i++) {
+            double value = data.get(i).get(row);
+            double normValue = value;  // Data is already normalized to [0, 1]
+
+            // Interpolate between the start and end points of each segment on the circumference
+            double x = centerX + radius * Math.cos(i * angleStep + normValue * angleStep - Math.PI / 2);
+            double y = centerY + radius * Math.sin(i * angleStep + normValue * angleStep - Math.PI / 2);
+            points[i] = new Point2D.Double(x, y);
+        }
+
+        // Connect points sequentially with class color or yellow if selected
+        g2.setColor(color);
+        for (int i = 0; i < numAttributes - 1; i++) {
+            g2.draw(new Line2D.Double(points[i], points[i + 1]));
+        }
+        g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
+
+        // Draw the shapes at the points
+        for (int i = 0; i < numAttributes; i++) {
+            g2.translate(points[i].x, points[i].y);  // Move the origin to the point location
+            g2.fill(shape);       // Draw the shape at the translated origin
+            g2.translate(-points[i].x, -points[i].y); // Move back the origin
         }
     }
 }
