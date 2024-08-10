@@ -267,19 +267,49 @@ public class CsvViewer extends JFrame {
         return -1;
     }
 
+    public void toggleClassColors() {
+        int currentCaretPosition = statsTextArea.getCaretPosition();
+
+        isClassColorEnabled = !isClassColorEnabled;
+        applyCombinedRenderer();
+        dataHandler.updateStats(tableModel, statsTextArea);
+
+        statsTextArea.setCaretPosition(currentCaretPosition);
+    }
+
+    public void applyDefaultRenderer() {
+        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (hasFocus) {
+                    if (c instanceof JComponent) {
+                        ((JComponent) c).setBorder(BorderFactory.createLineBorder(Color.RED, 2)); // Red border around clicked cell
+                    }
+                } else {
+                    if (c instanceof JComponent) {
+                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder()); // No border when not selected
+                    }
+                }
+                return c;
+            }
+        });
+        table.repaint();
+    }    
+
     public void applyCombinedRenderer() {
         int numColumns = tableModel.getColumnCount();
         double[] minValues = new double[numColumns];
         double[] maxValues = new double[numColumns];
         boolean[] isNumerical = new boolean[numColumns];
         int classColumnIndex = getClassColumnIndex();
-
+    
         for (int i = 0; i < numColumns; i++) {
             minValues[i] = Double.MAX_VALUE;
             maxValues[i] = Double.MIN_VALUE;
             isNumerical[i] = true;
         }
-
+    
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             for (int col = 0; col < numColumns; col++) {
                 try {
@@ -291,13 +321,13 @@ public class CsvViewer extends JFrame {
                 }
             }
         }
-
+    
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 int modelColumn = table.convertColumnIndexToModel(column);
-
+    
                 if (isClassColorEnabled && modelColumn == classColumnIndex) {
                     String className = (String) value;
                     if (classColors.containsKey(className)) {
@@ -317,40 +347,27 @@ public class CsvViewer extends JFrame {
                 } else {
                     c.setBackground(Color.WHITE);
                 }
-
+    
+                if (hasFocus) {
+                    if (c instanceof JComponent) {
+                        ((JComponent) c).setBorder(BorderFactory.createLineBorder(Color.RED, 2)); // Red border around clicked cell
+                    }
+                } else {
+                    if (c instanceof JComponent) {
+                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder()); // No border when not selected
+                    }
+                }
+    
                 c.setForeground(cellTextColor);
                 return c;
             }
-
+    
             private Color getColorForValue(double value) {
                 int red = (int) (255 * value);
                 int blue = 255 - red;
                 red = Math.max(0, Math.min(255, red));
                 blue = Math.max(0, Math.min(255, blue));
                 return new Color(red, 0, blue);
-            }
-        });
-        table.repaint();
-    }
-
-    public void toggleClassColors() {
-        int currentCaretPosition = statsTextArea.getCaretPosition();
-
-        isClassColorEnabled = !isClassColorEnabled;
-        applyCombinedRenderer();
-        dataHandler.updateStats(tableModel, statsTextArea);
-
-        statsTextArea.setCaretPosition(currentCaretPosition);
-    }
-
-    public void applyDefaultRenderer() {
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                c.setBackground(Color.WHITE);
-                c.setForeground(cellTextColor);
-                return c;
             }
         });
         table.repaint();
