@@ -228,10 +228,23 @@ public class CsvViewer extends JFrame {
         }
         Map<String, Integer> classMap = new HashMap<>();
         int colorIndex = 0;
+        List<String> classNames = new ArrayList<>();
+        // First pass: check for predefined classes and assign their colors
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            String className = (String) tableModel.getValueAt(row, classColumnIndex);
+    
+            if (className.equalsIgnoreCase("malignant") || className.equalsIgnoreCase("positive")) {
+                classColors.put(className, Color.RED);
+                classNames.add(className);
+            } else if (className.equalsIgnoreCase("benign") || className.equalsIgnoreCase("negative")) {
+                classColors.put(className, Color.GREEN);
+                classNames.add(className);
+            }
+        }
 
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             String className = (String) tableModel.getValueAt(row, classColumnIndex);
-            if (!classMap.containsKey(className)) {
+            if (!classMap.containsKey(className) && !classNames.contains(className)) {
                 classMap.put(className, colorIndex++);
             }
         }
