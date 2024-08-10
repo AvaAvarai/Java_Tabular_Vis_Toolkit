@@ -19,17 +19,13 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
-import java.util.List; // Explicitly import java.util.List
 import java.util.*;
+import java.util.List;
 
 public class ParallelCoordinatesPlot extends JFrame {
 
     private Map<String, Color> classColors;
     private Map<String, Shape> classShapes;
-    private List<Integer> selectedRows;
-
-    // Shared font for the title
-    private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
 
     public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex, int[] columnOrder, List<Integer> selectedRows) {
         setTitle("Parallel Coordinates Plot");
@@ -39,7 +35,6 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         this.classColors = classColors;
         this.classShapes = createClassShapes();
-        this.selectedRows = selectedRows;
 
         DefaultCategoryDataset dataset = createDataset(data, columnNames, classColumnIndex, columnOrder);
         JFreeChart chart = createChart(dataset, columnNames);
@@ -53,27 +48,23 @@ public class ParallelCoordinatesPlot extends JFrame {
 
             @Override
             public void drawItem(Graphics2D g2, CategoryItemRendererState state, Rectangle2D dataArea, CategoryPlot plot, CategoryAxis domainAxis, ValueAxis rangeAxis, CategoryDataset dataset, int row, int column, int pass) {
-                if (pass == 1) { // Draw the lines manually in pass 1
-                    if (column > 0) {
-                        double x1 = domainAxis.getCategoryMiddle(column - 1, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                        double y1 = rangeAxis.valueToJava2D(dataset.getValue(row, column - 1).doubleValue(), dataArea, plot.getRangeAxisEdge());
+                super.drawItem(g2, state, dataArea, plot, domainAxis, rangeAxis, dataset, row, column, pass);
+                if (column > 0) {
+                    double x1 = domainAxis.getCategoryMiddle(column - 1, getColumnCount(), dataArea, plot.getDomainAxisEdge());
+                    double y1 = rangeAxis.valueToJava2D(dataset.getValue(row, column - 1).doubleValue(), dataArea, plot.getRangeAxisEdge());
 
-                        double x2 = domainAxis.getCategoryMiddle(column, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                        double y2 = rangeAxis.valueToJava2D(dataset.getValue(row, column).doubleValue(), dataArea, plot.getRangeAxisEdge());
+                    double x2 = domainAxis.getCategoryMiddle(column, getColumnCount(), dataArea, plot.getDomainAxisEdge());
+                    double y2 = rangeAxis.valueToJava2D(dataset.getValue(row, column).doubleValue(), dataArea, plot.getRangeAxisEdge());
 
-                        if (selectedRows.contains(row)) {
-                            g2.setPaint(Color.YELLOW);
-                        } else {
-                            g2.setPaint(getItemPaint(row, column));
-                        }
-                        g2.draw(new Line2D.Double(x1, y1, x2, y2));
+                    if (selectedRows.contains(row)) {
+                        g2.setPaint(Color.YELLOW);
+                    } else {
+                        g2.setPaint(getItemPaint(row, column));
                     }
-                } else if (pass == 2) { // Pass 2: Draw points normally
-                    super.drawItem(g2, state, dataArea, plot, domainAxis, rangeAxis, dataset, row, column, pass);
+                    g2.draw(new Line2D.Double(x1, y1, x2, y2));
                 }
-
-                // Draw axes only once per column
-                if (row == 0 && column == 0 && pass == 1) {
+                if (row == 0 && column == 0) {
+                    // Draw the parallel lines (axes) manually
                     for (int i = 0; i < dataset.getColumnCount(); i++) {
                         double x = domainAxis.getCategoryMiddle(i, getColumnCount(), dataArea, plot.getDomainAxisEdge());
                         g2.setPaint(Color.BLACK);
@@ -89,7 +80,7 @@ public class ParallelCoordinatesPlot extends JFrame {
                 String seriesKey = (String) getPlot().getDataset().getRowKey(row);
                 String className = seriesKey.contains(" - ") ? seriesKey.split(" - ")[0] : seriesKey;
                 return classColors.getOrDefault(className, Color.BLACK);
-            }            
+            }
 
             @Override
             public Shape getItemShape(int row, int column) {
@@ -117,16 +108,9 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         plot.setFixedLegendItems(legendItems);
 
-        // Create a custom panel to display the chart with the title using the specified font
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new ChartPanel(chart), BorderLayout.CENTER);
-        
-        // Add the title to the top of the panel
-        JLabel titleLabel = new JLabel("Parallel Coordinates Plot", SwingConstants.CENTER);
-        titleLabel.setFont(TITLE_FONT);  // Use the shared font for the title
-        panel.add(titleLabel, BorderLayout.NORTH);
-
-        setContentPane(panel);
+        ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new Dimension(800, 600));
+        setContentPane(chartPanel);
     }
 
     private Map<String, Shape> createClassShapes() {
@@ -171,7 +155,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
     private JFreeChart createChart(DefaultCategoryDataset dataset, String[] columnNames) {
         JFreeChart chart = ChartFactory.createLineChart(
-                null, // No title, as the title is added separately
+                "Parallel Coordinates Plot", // chart title
                 "Attribute", // domain axis label
                 "Value", // range axis label
                 dataset);
