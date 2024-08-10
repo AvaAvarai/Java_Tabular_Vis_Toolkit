@@ -124,7 +124,7 @@ public class ShiftedPairedCoordinates extends JFrame {
             int plotWidth = getWidth() / numPlots - 10;
             int plotHeight = getHeight() - titleHeight - TITLE_PADDING - 50; // leave space for labels and title
 
-            // Draw scatter plots
+            // Draw axes and labels first
             for (int i = 0; i < numPlots; i++) {
                 int x = i * plotWidth;
                 int attrIndex1 = i * 2;
@@ -132,10 +132,10 @@ public class ShiftedPairedCoordinates extends JFrame {
                 if (attrIndex2 >= data.size()) {
                     attrIndex2 = attrIndex1;
                 }
-                drawScatterPlot(g2, data.get(attrIndex1), data.get(attrIndex2), x, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2));
+                drawAxesAndLabels(g2, x, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2));
             }
 
-            // Draw non-highlighted rows first
+            // Draw non-highlighted rows
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (!selectedRows.contains(row)) {
                     drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
@@ -148,6 +148,28 @@ public class ShiftedPairedCoordinates extends JFrame {
                     drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                 }
             }
+
+            // Finally, draw scatter plot shapes in order of the tabular view
+            for (int row = 0; row < data.get(0).size(); row++) {
+                drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
+            }
+        }
+
+        private void drawAxesAndLabels(Graphics2D g2, int x, int y, int width, int height, String xLabel, String yLabel) {
+            int plotSize = Math.min(width, height) - 40;
+            int plotX = x + 40;
+            int plotY = y + 20;
+
+            // Draw axes
+            g2.setColor(Color.BLACK);
+            g2.drawLine(plotX, plotY, plotX, plotY + plotSize);
+            g2.drawLine(plotX, plotY + plotSize, plotX + plotSize, plotY + plotSize);
+
+            // Draw labels with consistent font
+            g2.setFont(AXIS_LABEL_FONT);
+            g2.setColor(Color.BLACK);
+            g2.drawString(xLabel, plotX + plotSize / 2, plotY + plotSize + 20);
+            g2.drawString(yLabel, plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);
         }
 
         private void drawRow(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight) {
@@ -192,32 +214,25 @@ public class ShiftedPairedCoordinates extends JFrame {
             }
         }
 
-        private void drawScatterPlot(Graphics2D g2, List<Double> xData, List<Double> yData, int x, int y, int width, int height, String xLabel, String yLabel) {
-            int plotSize = Math.min(width, height) - 40;
-            int plotX = x + 40;
-            int plotY = y + 20;
+        private void drawScatterPlot(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight) {
+            for (int i = 0; i < numPlots; i++) {
+                int attrIndex1 = i * 2;
+                int attrIndex2 = (i * 2) + 1;
+                if (attrIndex2 >= data.size()) {
+                    attrIndex2 = attrIndex1;
+                }
 
-            // Draw axes
-            g2.setColor(Color.BLACK);
-            g2.drawLine(plotX, plotY, plotX, plotY + plotSize);
-            g2.drawLine(plotX, plotY + plotSize, plotX + plotSize, plotY + plotSize);
+                int plotX = i * plotWidth + 40;
+                int plotSize = Math.min(plotWidth, plotHeight) - 40;
 
-            // Draw labels with consistent font
-            g2.setFont(AXIS_LABEL_FONT);
-            g2.setColor(Color.BLACK);
-            g2.drawString(xLabel, plotX + plotSize / 2, plotY + plotSize + 20);
-            g2.drawString(yLabel, plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);
+                double normX = (data.get(attrIndex1).get(row) - getMin(data.get(attrIndex1))) / (getMax(data.get(attrIndex1)) - getMin(data.get(attrIndex1)));
+                double normY = (data.get(attrIndex2).get(row) - getMin(data.get(attrIndex2))) / (getMax(data.get(attrIndex2)) - getMin(data.get(attrIndex2)));
 
-            // Draw data points using class shapes
-            for (int i = 0; i < xData.size(); i++) {
-                double normX = (xData.get(i) - getMin(xData)) / (getMax(xData) - getMin(xData));
-                double normY = (yData.get(i) - getMin(yData)) / (getMax(yData) - getMin(yData));
-
-                int px = plotX + (int) (normX * plotSize);
-                int py = plotY + plotSize - (int) (normY * plotSize);
+                int px = plotX + (int) (plotSize * normX);
+                int py = plotY + plotSize - (int) (plotSize * normY) + 20;
 
                 // Get class label, color, and shape
-                String classLabel = classLabels.get(i);
+                String classLabel = classLabels.get(row);
                 Color color = classColors.getOrDefault(classLabel, Color.BLACK);
                 Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
 
