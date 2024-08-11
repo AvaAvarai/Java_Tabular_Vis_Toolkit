@@ -533,14 +533,14 @@ public class CsvViewer extends JFrame {
     
         // Add shape options to the picker
         Shape[] availableShapes = {
-            new Ellipse2D.Double(-3, -3, 6, 6),
-            new Rectangle2D.Double(-3, -3, 6, 6),
-            new Polygon(new int[]{-3, 3, 0}, new int[]{-3, -3, 3}, 3),
-            ShapeUtils.createStar(4, 6, 3),  // 4-point star
-            ShapeUtils.createStar(5, 6, 3),  // 5-point star
-            ShapeUtils.createStar(6, 6, 3),  // 6-point star
-            ShapeUtils.createStar(7, 6, 3),  // 7-point star
-            ShapeUtils.createStar(8, 6, 3)   // 8-point star
+            new Ellipse2D.Double(-5, -5, 10, 10),
+            new Rectangle2D.Double(-5, -5, 10, 10),
+            new Polygon(new int[]{-5, 5, 0}, new int[]{-5, -5, 5}, 3),
+            ShapeUtils.createStar(4, 10, 5),  // 4-point star
+            ShapeUtils.createStar(5, 10, 5),  // 5-point star
+            ShapeUtils.createStar(6, 10, 5),  // 6-point star
+            ShapeUtils.createStar(7, 10, 5),  // 7-point star
+            ShapeUtils.createStar(8, 10, 5)   // 8-point star
         };
     
         ButtonGroup shapeButtonGroup = new ButtonGroup();
@@ -563,11 +563,13 @@ public class CsvViewer extends JFrame {
                     super.paintComponent(g);
                     Graphics2D g2 = (Graphics2D) g;
                     g2.setColor(Color.BLACK);
-                    g2.translate(10, 10);
+                    g2.translate(20, 15);
+                    g2.scale(1.5, 1.5);  // Scale the shape to make it larger
                     g2.fill(shape);
-                    g2.translate(-10, -10);
+                    g2.translate(-15, -15);
                 }
             };
+            shapeButtons[i].setPreferredSize(new Dimension(40, 40));  // Increase the size of the radio button
             shapeButtonGroup.add(shapeButtons[i]);
             shapePickerPanel.add(shapeButtons[i]);
     
