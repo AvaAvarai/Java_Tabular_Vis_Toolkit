@@ -38,6 +38,8 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 - Highlight selected rows in PC and SPC views
 - Analytical single attribute rule discovery algorithm
 - Case classifiable with single pure attribute intervals hideable
+- Hidden classified cases no longer clutter visualizations for analysis of difficult to classify regions with single attribute approach.
+- Default threshold position work in progress
 
 ## Classifying with Single Attribute Pure Intervals
 

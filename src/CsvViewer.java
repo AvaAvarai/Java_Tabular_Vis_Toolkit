@@ -71,6 +71,7 @@ public class CsvViewer extends JFrame {
     public JSplitPane splitPane; // Split pane for table and stats
     private List<Integer> hiddenRows = new ArrayList<>(); // Store indices of hidden rows
     public JSlider thresholdSlider;
+    public JLabel thresholdLabel;
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -82,13 +83,13 @@ public class CsvViewer extends JFrame {
         tableModel = new ReorderableTableModel();
         table = TableSetup.createTable(tableModel);
         table.addMouseListener(new TableMouseListener(this));
-        
+
         // Add a KeyAdapter to handle Ctrl+C for copying cell content
         table.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_C) {
-                    if (table.getSelectedRows().length == 1) 
+                    if (table.getSelectedRows().length == 1)
                         copySelectedCell();
                     else {
                         StringBuilder sb = new StringBuilder();
@@ -100,7 +101,7 @@ public class CsvViewer extends JFrame {
                         }
                         StringSelection stringSelection = new StringSelection(sb.toString());
                         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
-                    }    
+                    }
                 }
             }
         });
@@ -124,14 +125,22 @@ public class CsvViewer extends JFrame {
         thresholdSlider.setPaintLabels(true);
         thresholdSlider.setToolTipText("Adjust threshold percentage");
 
-        // Add listener to update the filtering logic
+        // Initialize the threshold label
+        thresholdLabel = new JLabel("5%"); // Initial label value corresponding to the initial slider value
+
+        // Add listener to update the filtering logic and label
         thresholdSlider.addChangeListener(e -> {
             int thresholdValue = thresholdSlider.getValue();
+            thresholdLabel.setText(thresholdValue + "%"); // Update label text
             calculateAndDisplayPureRegions(thresholdValue);
         });
 
-        // Adding slider to the bottom panel
-        bottomPanel.add(thresholdSlider, BorderLayout.EAST);
+        // Adding slider and label to the bottom panel
+        JPanel sliderPanel = new JPanel(new BorderLayout());
+        sliderPanel.add(thresholdSlider, BorderLayout.CENTER);
+        sliderPanel.add(thresholdLabel, BorderLayout.EAST); // Add the label to the right of the slider
+
+        bottomPanel.add(sliderPanel, BorderLayout.EAST);
         bottomPanel.add(selectedRowsLabel, BorderLayout.CENTER);
 
         statsPanel = new JPanel(new BorderLayout());
@@ -156,107 +165,20 @@ public class CsvViewer extends JFrame {
     }
 
     public double calculateAndDisplayPureRegions(int thresholdPercentage) {
-        int classColumnIndex = getClassColumnIndex(); // Find the class column index
-        if (classColumnIndex == -1) {
-            noDataLoadedError();
-            return 0.0;
-        }
+        List<PureRegion> pureRegions = calculatePureRegions(thresholdPercentage);
     
-        // Clear previous pure regions info
-        String previousText = statsTextArea.getText();
-        String newText = previousText.replaceAll("(?s)Single-Attribute Pure Regions:.*", "");
-    
-        List<PureRegion> pureRegions = new ArrayList<>();
-        int numColumns = tableModel.getColumnCount();
-        int totalRows = tableModel.getRowCount(); // Total number of rows in the dataset
-    
-        // Get the class counts for the entire dataset
-        Map<String, Integer> classCounts = new HashMap<>();
-        for (int row = 0; row < totalRows; row++) {
-            String className = tableModel.getValueAt(row, classColumnIndex).toString();
-            classCounts.put(className, classCounts.getOrDefault(className, 0) + 1);
-        }
-    
-        // Loop through columns to find pure regions
-        for (int col = 0; col < numColumns; col++) {
-            if (col == classColumnIndex) continue; // Skip the class column
-    
-            String attributeName = tableModel.getColumnName(col);
-            List<Double> values = new ArrayList<>();
-            Map<Double, List<Integer>> valueToRowIndicesMap = new HashMap<>();
-    
-            // Collect values and their corresponding row indices
-            for (int row = 0; row < totalRows; row++) {
-                try {
-                    double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
-                    values.add(value);
-                    valueToRowIndicesMap.computeIfAbsent(value, k -> new ArrayList<>()).add(row);
-                } catch (NumberFormatException e) {
-                    // Skip non-numerical values
-                }
-            }
-    
-            if (values.isEmpty()) continue; // Skip if there are no numerical values
-    
-            Collections.sort(values);
-    
-            // Process windows by growing them to maximize their size while maintaining purity
-            for (int start = 0; start < values.size(); start++) {
-                String currentClass = null;
-                Set<Integer> rowsInWindow = new HashSet<>();
-                boolean isPure = true;
-    
-                for (int end = start + 1; end <= values.size(); end++) {
-                    List<Integer> rowIndices = valueToRowIndicesMap.get(values.get(end - 1));
-                    for (int rowIndex : rowIndices) {
-                        String className = tableModel.getValueAt(rowIndex, classColumnIndex).toString();
-                        if (currentClass == null) {
-                            currentClass = className;
-                        } else if (!currentClass.equals(className)) {
-                            isPure = false;
-                            break;
-                        }
-                        rowsInWindow.add(rowIndex);
-                    }
-    
-                    if (!isPure) {
-                        break;
-                    }
-    
-                    if (rowsInWindow.size() > 0) {
-                        int regionCount = rowsInWindow.size();
-                        double percentageOfClass = (regionCount / (double) classCounts.get(currentClass)) * 100;
-                        double percentageOfDataset = (regionCount / (double) totalRows) * 100;
-                        double expandedEnd = values.get(end - 1);
-    
-                        PureRegion region = new PureRegion(
-                                attributeName, values.get(start), expandedEnd,
-                                currentClass, regionCount, percentageOfClass, percentageOfDataset
-                        );
-                        pureRegions.add(region);
-                    }
-                }
-            }
-        }
-    
-        // Keep only the largest regions by topological size and number of cases
-        pureRegions = filterLargestSignificantRegions(pureRegions, thresholdPercentage);
-    
-        // Sort pure regions by the percentage of the dataset
-        Collections.sort(pureRegions, Comparator.comparingDouble(region -> -region.percentageOfDataset));
-    
-        // Calculate remaining coverage after hiding pure regions
+        int totalRows = tableModel.getRowCount();
         Set<Integer> hiddenRows = new HashSet<>();
         for (PureRegion region : pureRegions) {
             for (int row = 0; row < totalRows; row++) {
                 String attributeName = region.attributeName;
                 int attributeColumnIndex = tableModel.findColumn(attributeName);
-
+    
                 if (attributeColumnIndex != -1) {
                     try {
                         double value = Double.parseDouble(tableModel.getValueAt(row, attributeColumnIndex).toString());
-                        String className = tableModel.getValueAt(row, classColumnIndex).toString();
-
+                        String className = tableModel.getValueAt(row, getClassColumnIndex()).toString();
+    
                         if (value >= region.start && value < region.end && className.equals(region.currentClass)) {
                             hiddenRows.add(row);
                         }
@@ -266,22 +188,14 @@ public class CsvViewer extends JFrame {
                 }
             }
         }
-
+    
         double remainingCoverage = ((totalRows - hiddenRows.size()) / (double) totalRows) * 100.0;
-
-        // Display sorted results
-        StringBuilder sb = new StringBuilder();
-        sb.append("Single-Attribute Pure Regions:\n");
-        for (PureRegion region : pureRegions) {
-            sb.append(String.format("Attribute: %s, Pure Region: %.2f <= %s < %.2f, Class: %s, Count: %d (%.2f%% of class, %.2f%% of dataset)\n",
-                    region.attributeName, region.start, region.attributeName, region.end,
-                    region.currentClass, region.regionCount, region.percentageOfClass, region.percentageOfDataset));
-        }
-
-        statsTextArea.setText(newText + sb.toString());
-
+    
+        // Display the pure regions
+        displayPureRegions(pureRegions);
+    
         return remainingCoverage;
-    }
+    }    
     
     private List<PureRegion> filterLargestSignificantRegions(List<PureRegion> pureRegions, int thresholdPercentage) {
         List<PureRegion> filteredRegions = new ArrayList<>();
@@ -313,7 +227,7 @@ public class CsvViewer extends JFrame {
         filteredRegions.removeIf(region -> region.percentageOfClass < minCoverage && region.percentageOfDataset < minCoverage);
     
         return filteredRegions;
-    }
+    }    
 
     public boolean hasHiddenRows() {
         return !hiddenRows.isEmpty();
@@ -348,7 +262,6 @@ public class CsvViewer extends JFrame {
             toggleEasyCasesButton.setToolTipText("Show Easy Cases");
         }
     }
-    
 
     public void hideEasyCases() {
         int classColumnIndex = getClassColumnIndex();
@@ -356,20 +269,22 @@ public class CsvViewer extends JFrame {
             noDataLoadedError();
             return;
         }
-
-        List<PureRegion> pureRegions = calculatePureRegions();
+    
+        // Calculate pure regions based on the current threshold value
+        int currentThreshold = thresholdSlider.getValue();
+        List<PureRegion> pureRegions = calculatePureRegionsWithThreshold(currentThreshold);
         Set<Integer> rowsToHide = new HashSet<>();
-
+    
         for (PureRegion region : pureRegions) {
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 String attributeName = region.attributeName;
                 int attributeColumnIndex = tableModel.findColumn(attributeName);
-                
+    
                 if (attributeColumnIndex != -1) {
                     try {
                         double value = Double.parseDouble(tableModel.getValueAt(row, attributeColumnIndex).toString());
                         String className = tableModel.getValueAt(row, classColumnIndex).toString();
-                        
+    
                         if (value >= region.start && value < region.end && className.equals(region.currentClass)) {
                             rowsToHide.add(row);
                         }
@@ -379,11 +294,15 @@ public class CsvViewer extends JFrame {
                 }
             }
         }
-
+    
         hiddenRows.clear();
         hiddenRows.addAll(rowsToHide);
         applyRowFilter();
         updateSelectedRowsLabel();
+    }
+    
+    private List<PureRegion> calculatePureRegionsWithThreshold(int thresholdPercentage) {
+        return calculatePureRegions(thresholdPercentage);
     }
 
     public void showEasyCases() {
@@ -404,25 +323,30 @@ public class CsvViewer extends JFrame {
         updateSelectedRowsLabel(); // Update the label after applying the filter
     }    
 
-    private List<PureRegion> calculatePureRegions() {
-        List<PureRegion> pureRegions = new ArrayList<>();
+    private List<PureRegion> calculatePureRegions(int thresholdPercentage) {
         int classColumnIndex = getClassColumnIndex();
+        if (classColumnIndex == -1) {
+            noDataLoadedError();
+            return Collections.emptyList();
+        }
+    
+        List<PureRegion> pureRegions = new ArrayList<>();
         int numColumns = tableModel.getColumnCount();
         int totalRows = tableModel.getRowCount();
-
+    
         Map<String, Integer> classCounts = new HashMap<>();
         for (int row = 0; row < totalRows; row++) {
             String className = tableModel.getValueAt(row, classColumnIndex).toString();
             classCounts.put(className, classCounts.getOrDefault(className, 0) + 1);
         }
-
+    
         for (int col = 0; col < numColumns; col++) {
             if (col == classColumnIndex) continue;
-
+    
             String attributeName = tableModel.getColumnName(col);
             List<Double> values = new ArrayList<>();
             Map<Double, List<Integer>> valueToRowIndicesMap = new HashMap<>();
-
+    
             for (int row = 0; row < totalRows; row++) {
                 try {
                     double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
@@ -432,37 +356,39 @@ public class CsvViewer extends JFrame {
                     // Skip non-numerical values
                 }
             }
-
+    
             Collections.sort(values);
-
+    
             for (int start = 0; start < values.size(); start++) {
+                String currentClass = null;
+                Set<Integer> rowsInWindow = new HashSet<>();
+                boolean isPure = true;
+    
                 for (int end = start + 1; end <= values.size(); end++) {
-                    Set<Integer> rowsInWindow = new HashSet<>();
-                    String currentClass = null;
-                    boolean isPure = true;
-
-                    for (int i = start; i < end; i++) {
-                        List<Integer> rowIndices = valueToRowIndicesMap.get(values.get(i));
-                        for (int rowIndex : rowIndices) {
-                            String className = tableModel.getValueAt(rowIndex, classColumnIndex).toString();
-                            if (currentClass == null) {
-                                currentClass = className;
-                            } else if (!currentClass.equals(className)) {
-                                isPure = false;
-                                break;
-                            }
-                            rowsInWindow.add(rowIndex);
+                    List<Integer> rowIndices = valueToRowIndicesMap.get(values.get(end - 1));
+                    for (int rowIndex : rowIndices) {
+                        String className = tableModel.getValueAt(rowIndex, classColumnIndex).toString();
+                        if (currentClass == null) {
+                            currentClass = className;
+                        } else if (!currentClass.equals(className)) {
+                            isPure = false;
+                            break;
                         }
-                        if (!isPure) break;
+                        rowsInWindow.add(rowIndex);
                     }
-
-                    if (isPure && !rowsInWindow.isEmpty()) {
+    
+                    if (!isPure) {
+                        break;
+                    }
+    
+                    if (!rowsInWindow.isEmpty()) {
                         int regionCount = rowsInWindow.size();
                         double percentageOfClass = (regionCount / (double) classCounts.get(currentClass)) * 100;
                         double percentageOfDataset = (regionCount / (double) totalRows) * 100;
-
+                        double expandedEnd = values.get(end - 1);
+    
                         PureRegion region = new PureRegion(
-                                attributeName, values.get(start), values.get(end - 1),
+                                attributeName, values.get(start), expandedEnd,
                                 currentClass, regionCount, percentageOfClass, percentageOfDataset
                         );
                         pureRegions.add(region);
@@ -470,8 +396,9 @@ public class CsvViewer extends JFrame {
                 }
             }
         }
-
-        return pureRegions;
+    
+        // Filter and return the largest significant regions
+        return filterLargestSignificantRegions(pureRegions, thresholdPercentage);
     }
 
     public void toggleStatsVisibility(boolean hideStats) {
@@ -681,6 +608,18 @@ public class CsvViewer extends JFrame {
         statsTextArea.setCaretPosition(Math.max(newCaretPosition, 0));  // Ensure it's not negative
         calculateAndDisplayPureRegions(thresholdSlider.getValue());
     }
+
+    private void displayPureRegions(List<PureRegion> pureRegions) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Single-Attribute Pure Regions:\n");
+        for (PureRegion region : pureRegions) {
+            sb.append(String.format("Attribute: %s, Pure Region: %.2f <= %s < %.2f, Class: %s, Count: %d (%.2f%% of class, %.2f%% of dataset)\n",
+                    region.attributeName, region.start, region.attributeName, region.end,
+                    region.currentClass, region.regionCount, region.percentageOfClass, region.percentageOfDataset));
+        }
+        dataHandler.updateStats(tableModel, statsTextArea);
+        statsTextArea.append(sb.toString());
+    }    
 
     public void applyDefaultRenderer() {
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
