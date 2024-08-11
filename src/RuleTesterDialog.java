@@ -19,7 +19,7 @@ public class RuleTesterDialog extends JDialog {
     private String[] columnNames;
 
     public RuleTesterDialog(JFrame parent, DefaultTableModel tableModel) {
-        super(parent, "Rule Tester", true);
+        super(parent, "Rule Tester", false);  // Changed to non-modal dialog
         this.tableModel = tableModel;
         columnNames = getColumnNames();
         rulesPanel = new JPanel();
