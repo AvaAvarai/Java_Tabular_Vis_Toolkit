@@ -72,60 +72,102 @@ public class CsvViewer extends JFrame {
     private List<Integer> hiddenRows = new ArrayList<>(); // Store indices of hidden rows
     public JSlider thresholdSlider;
     public JLabel thresholdLabel;
+    private boolean areDifferenceColumnsVisible = false; // State to track if diff columns are shown
+    private List<String[]> originalData; // Store the original data to restore when toggling off
+    private List<String> originalColumnNames; // Store original column names to restore when toggling off
 
-    public void addDifferenceColumns() {
+    public void toggleDifferenceColumns() {
+        if (areDifferenceColumnsVisible) {
+            removeDifferenceColumns(); // Remove difference columns
+        } else {
+            addDifferenceColumns(); // Add difference columns
+        }
+        areDifferenceColumnsVisible = !areDifferenceColumnsVisible; // Toggle state
+    }
+
+    private void addDifferenceColumns() {
+        if (!areDifferenceColumnsVisible) {
+            // Save the original data and column names only the first time
+            originalData = new ArrayList<>();
+            originalColumnNames = new ArrayList<>();
+            for (int row = 0; row < tableModel.getRowCount(); row++) {
+                String[] rowData = new String[tableModel.getColumnCount()];
+                for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                    rowData[col] = tableModel.getValueAt(row, col).toString();
+                }
+                originalData.add(rowData);
+            }
+            for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                originalColumnNames.add(tableModel.getColumnName(col));
+            }
+        }
+    
         int numRows = tableModel.getRowCount();
         int numCols = tableModel.getColumnCount();
-
-        // Find the index of the class column
         int classColumnIndex = getClassColumnIndex();
-
-        // Generate new column names for the differences, excluding the class column
+    
+        // Add difference columns dynamically, skipping the class column
         for (int col = 0; col < numCols - 1; col++) {
-            if (col == classColumnIndex || col + 1 == classColumnIndex) continue;  // Skip the class column
-            String newColName = "Diff " + tableModel.getColumnName(col) + "-" + tableModel.getColumnName(col + 1);
+            if (col == classColumnIndex || col + 1 == classColumnIndex) continue; // Skip class column
+    
+            String newColName = "Diff " + tableModel.getColumnName(col + 1) + "-" + tableModel.getColumnName(col);
             tableModel.addColumn(newColName);
         }
+    
         // Add the final difference column comparing the last numeric attribute with the first numeric attribute
         String finalColName = "Diff " + tableModel.getColumnName(numCols - 2) + "-" + tableModel.getColumnName(0);
         tableModel.addColumn(finalColName);
-
+    
         // Calculate differences for each row and add them to the new columns
         for (int row = 0; row < numRows; row++) {
             int newColIndex = numCols;  // Start adding new columns after the original ones
-
+    
             for (int col = 0; col < numCols - 1; col++) {
-                if (col == classColumnIndex || col + 1 == classColumnIndex) continue;  // Skip the class column
+                if (col == classColumnIndex || col + 1 == classColumnIndex) continue; // Skip class column
+    
                 try {
                     double value1 = Double.parseDouble(tableModel.getValueAt(row, col).toString());
                     double value2 = Double.parseDouble(tableModel.getValueAt(row, col + 1).toString());
                     double difference = value2 - value1;
-
-                    // Set the difference in the corresponding new column
                     tableModel.setValueAt(difference, row, newColIndex++);
                 } catch (NumberFormatException | NullPointerException e) {
                     // Handle non-numeric or null values by setting an empty value
                     tableModel.setValueAt("", row, newColIndex++);
                 }
             }
-
+    
             // Calculate the difference between the last numeric attribute and the first numeric attribute
             try {
                 double lastValue = Double.parseDouble(tableModel.getValueAt(row, numCols - 2).toString());
                 double firstValue = Double.parseDouble(tableModel.getValueAt(row, 0).toString());
                 double finalDifference = lastValue - firstValue;
-
-                // Set this final difference in the newly added column
                 tableModel.setValueAt(finalDifference, row, tableModel.getColumnCount() - 1);
             } catch (NumberFormatException | NullPointerException e) {
                 // Handle non-numeric or null values by setting an empty value
                 tableModel.setValueAt("", row, tableModel.getColumnCount() - 1);
             }
         }
-
+    
         // Update the UI after adding the new columns and differences
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
+    }
+
+    private void removeDifferenceColumns() {
+        if (originalData != null && originalColumnNames != null) {
+            tableModel.setColumnCount(0); // Clear all columns
+            for (String colName : originalColumnNames) {
+                tableModel.addColumn(colName); // Restore original column names
+            }
+            tableModel.setRowCount(0); // Clear all rows
+            for (String[] rowData : originalData) {
+                tableModel.addRow(rowData); // Restore original data
+            }
+
+            // Update the UI after removing the columns
+            dataHandler.updateStats(tableModel, statsTextArea);
+            updateSelectedRowsLabel();
+        }
     }
 
     public CsvViewer() {
