@@ -16,12 +16,36 @@ import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 
 public class CsvViewer extends JFrame {
+
+    // Inner class to hold pure region data
+    class PureRegion {
+        String attributeName;
+        double start;
+        double end;
+        String currentClass;
+        int regionCount;
+        double percentageOfClass;
+        double percentageOfDataset;
+
+        public PureRegion(String attributeName, double start, double end, String currentClass,
+                          int regionCount, double percentageOfClass, double percentageOfDataset) {
+            this.attributeName = attributeName;
+            this.start = start;
+            this.end = end;
+            this.currentClass = currentClass;
+            this.regionCount = regionCount;
+            this.percentageOfClass = percentageOfClass;
+            this.percentageOfDataset = percentageOfDataset;
+        }
+    }
+
     public JTable table;
     public ReorderableTableModel tableModel;
     public CsvDataHandler dataHandler;
@@ -112,37 +136,37 @@ public class CsvViewer extends JFrame {
         }
     }
 
+
     public void calculateAndDisplayPureRegions() {
         int classColumnIndex = getClassColumnIndex(); // Find the class column index
         if (classColumnIndex == -1) {
             noDataLoadedError();
             return;
         }
-    
+
         // Clear previous pure regions info
         String previousText = statsTextArea.getText();
         String newText = previousText.replaceAll("(?s)Single-Attribute Pure Regions:.*", "");
-    
-        StringBuilder sb = new StringBuilder();
-        sb.append("Single-Attribute Pure Regions:\n");
-    
+
+        List<PureRegion> pureRegions = new ArrayList<>();
+
         int numColumns = tableModel.getColumnCount();
         int totalRows = tableModel.getRowCount(); // Total number of rows in the dataset
-    
+
         // Get the class counts for the entire dataset
         Map<String, Integer> classCounts = new HashMap<>();
         for (int row = 0; row < totalRows; row++) {
             String className = tableModel.getValueAt(row, classColumnIndex).toString();
             classCounts.put(className, classCounts.getOrDefault(className, 0) + 1);
         }
-    
+
         for (int col = 0; col < numColumns; col++) {
             if (col == classColumnIndex) continue; // Skip the class column
-    
+
             String attributeName = tableModel.getColumnName(col);
             List<Double> values = new ArrayList<>();
             Map<Double, List<Integer>> valueToRowIndicesMap = new HashMap<>();
-    
+
             // Collect values and their corresponding row indices
             for (int row = 0; row < totalRows; row++) {
                 try {
@@ -153,16 +177,16 @@ public class CsvViewer extends JFrame {
                     // Skip non-numerical values
                 }
             }
-    
+
             Collections.sort(values);
-    
+
             // Process windows
             for (int start = 0; start < values.size(); start++) {
                 for (int end = start + 1; end <= values.size(); end++) {
                     Set<Integer> rowsInWindow = new HashSet<>();
                     String currentClass = null;
                     boolean isPure = true;
-    
+
                     for (int i = start; i < end; i++) {
                         List<Integer> rowIndices = valueToRowIndicesMap.get(values.get(i));
                         for (int rowIndex : rowIndices) {
@@ -177,22 +201,36 @@ public class CsvViewer extends JFrame {
                         }
                         if (!isPure) break;
                     }
-    
+
                     if (isPure && !rowsInWindow.isEmpty()) { // Valid pure region found
                         int regionCount = rowsInWindow.size();
                         double percentageOfClass = (regionCount / (double) classCounts.get(currentClass)) * 100;
                         double percentageOfDataset = (regionCount / (double) totalRows) * 100;
-    
-                        sb.append(String.format("Attribute: %s, Pure Region: %.2f <= %s < %.2f, Class: %s, Count: %d (%.2f%% of class, %.2f%% of dataset)\n",
-                                attributeName, values.get(start), attributeName, values.get(end - 1), currentClass, regionCount, percentageOfClass, percentageOfDataset));
+
+                        PureRegion region = new PureRegion(
+                                attributeName, values.get(start), values.get(end - 1),
+                                currentClass, regionCount, percentageOfClass, percentageOfDataset
+                        );
+                        pureRegions.add(region);
                     }
                 }
             }
         }
-    
-        // Append the new pure regions information to the previous text and display it
+
+        // Sort pure regions by the percentage of the dataset
+        Collections.sort(pureRegions, Comparator.comparingDouble(region -> -region.percentageOfDataset));
+
+        // Display sorted results
+        StringBuilder sb = new StringBuilder();
+        sb.append("Single-Attribute Pure Regions:\n");
+        for (PureRegion region : pureRegions) {
+            sb.append(String.format("Attribute: %s, Pure Region: %.2f <= %s < %.2f, Class: %s, Count: %d (%.2f%% of class, %.2f%% of dataset)\n",
+                    region.attributeName, region.start, region.attributeName, region.end,
+                    region.currentClass, region.regionCount, region.percentageOfClass, region.percentageOfDataset));
+        }
+
         statsTextArea.setText(newText + sb.toString());
-    }    
+    }
 
     public void toggleStatsVisibility(boolean hideStats) {
         if (hideStats) {
