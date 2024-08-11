@@ -66,6 +66,7 @@ public class CsvViewer extends JFrame {
     public JScrollPane statsScrollPane; // Scroll pane for stats text area
     public JScrollPane tableScrollPane; // Scroll pane for the table
     public JSplitPane splitPane; // Split pane for table and stats
+    private List<Integer> hiddenRows = new ArrayList<>(); // Store indices of hidden rows
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -228,6 +229,127 @@ public class CsvViewer extends JFrame {
         }
 
         statsTextArea.setText(newText + sb.toString());
+    }
+
+    public void hideEasyCases() {
+        int classColumnIndex = getClassColumnIndex();
+        if (classColumnIndex == -1) {
+            noDataLoadedError();
+            return;
+        }
+
+        List<PureRegion> pureRegions = calculatePureRegions();
+        Set<Integer> rowsToHide = new HashSet<>();
+
+        for (PureRegion region : pureRegions) {
+            for (int row = 0; row < tableModel.getRowCount(); row++) {
+                String attributeName = region.attributeName;
+                int attributeColumnIndex = tableModel.findColumn(attributeName);
+                
+                if (attributeColumnIndex != -1) {
+                    try {
+                        double value = Double.parseDouble(tableModel.getValueAt(row, attributeColumnIndex).toString());
+                        String className = tableModel.getValueAt(row, classColumnIndex).toString();
+                        
+                        if (value >= region.start && value < region.end && className.equals(region.currentClass)) {
+                            rowsToHide.add(row);
+                        }
+                    } catch (NumberFormatException e) {
+                        // Skip non-numerical values
+                    }
+                }
+            }
+        }
+
+        hiddenRows.clear();
+        hiddenRows.addAll(rowsToHide);
+        applyRowFilter();
+    }
+
+    public void showEasyCases() {
+        hiddenRows.clear();
+        applyRowFilter();
+    }
+
+    private void applyRowFilter() {
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
+        sorter.setRowFilter(new RowFilter<DefaultTableModel, Integer>() {
+            @Override
+            public boolean include(Entry<? extends DefaultTableModel, ? extends Integer> entry) {
+                return !hiddenRows.contains(entry.getIdentifier());
+            }
+        });
+        table.setRowSorter(sorter);
+    }
+
+    private List<PureRegion> calculatePureRegions() {
+        List<PureRegion> pureRegions = new ArrayList<>();
+        int classColumnIndex = getClassColumnIndex();
+        int numColumns = tableModel.getColumnCount();
+        int totalRows = tableModel.getRowCount();
+
+        Map<String, Integer> classCounts = new HashMap<>();
+        for (int row = 0; row < totalRows; row++) {
+            String className = tableModel.getValueAt(row, classColumnIndex).toString();
+            classCounts.put(className, classCounts.getOrDefault(className, 0) + 1);
+        }
+
+        for (int col = 0; col < numColumns; col++) {
+            if (col == classColumnIndex) continue;
+
+            String attributeName = tableModel.getColumnName(col);
+            List<Double> values = new ArrayList<>();
+            Map<Double, List<Integer>> valueToRowIndicesMap = new HashMap<>();
+
+            for (int row = 0; row < totalRows; row++) {
+                try {
+                    double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                    values.add(value);
+                    valueToRowIndicesMap.computeIfAbsent(value, k -> new ArrayList<>()).add(row);
+                } catch (NumberFormatException e) {
+                    // Skip non-numerical values
+                }
+            }
+
+            Collections.sort(values);
+
+            for (int start = 0; start < values.size(); start++) {
+                for (int end = start + 1; end <= values.size(); end++) {
+                    Set<Integer> rowsInWindow = new HashSet<>();
+                    String currentClass = null;
+                    boolean isPure = true;
+
+                    for (int i = start; i < end; i++) {
+                        List<Integer> rowIndices = valueToRowIndicesMap.get(values.get(i));
+                        for (int rowIndex : rowIndices) {
+                            String className = tableModel.getValueAt(rowIndex, classColumnIndex).toString();
+                            if (currentClass == null) {
+                                currentClass = className;
+                            } else if (!currentClass.equals(className)) {
+                                isPure = false;
+                                break;
+                            }
+                            rowsInWindow.add(rowIndex);
+                        }
+                        if (!isPure) break;
+                    }
+
+                    if (isPure && !rowsInWindow.isEmpty()) {
+                        int regionCount = rowsInWindow.size();
+                        double percentageOfClass = (regionCount / (double) classCounts.get(currentClass)) * 100;
+                        double percentageOfDataset = (regionCount / (double) totalRows) * 100;
+
+                        PureRegion region = new PureRegion(
+                                attributeName, values.get(start), values.get(end - 1),
+                                currentClass, regionCount, percentageOfClass, percentageOfDataset
+                        );
+                        pureRegions.add(region);
+                    }
+                }
+            }
+        }
+
+        return pureRegions;
     }
 
     public void toggleStatsVisibility(boolean hideStats) {

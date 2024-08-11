@@ -111,6 +111,23 @@ public class ButtonPanel {
             }
         });
 
+        // Add the Toggle Easy Cases button
+        JToggleButton toggleEasyCasesButton = new JToggleButton("Hide Easy Cases");
+        toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/hide_easy.png", 40, 40));
+        toggleEasyCasesButton.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                if (toggleEasyCasesButton.isSelected()) {
+                    csvViewer.hideEasyCases();
+                    toggleEasyCasesButton.setText("Show Easy Cases");
+                } else {
+                    csvViewer.showEasyCases();
+                    toggleEasyCasesButton.setText("Hide Easy Cases");
+                }
+            }
+        });
+
         buttonPanel.add(loadButton);
         buttonPanel.add(csvViewer.toggleButton);
         buttonPanel.add(highlightBlanksButton);
@@ -126,6 +143,7 @@ public class ButtonPanel {
         buttonPanel.add(classColorButton);
         buttonPanel.add(setClassColorsButton);
         buttonPanel.add(ruleTesterButton);
+        buttonPanel.add(toggleEasyCasesButton);
 
         return buttonPanel;
     }
