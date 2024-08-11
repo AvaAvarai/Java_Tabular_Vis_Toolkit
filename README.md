@@ -36,6 +36,7 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 - Multi-row selection and reordering
 - Copy cell content (Ctrl+C)
 - Highlight selected rows in PC and SPC views
+- Analytical single attribute rule discovery algorithm
 
 ## Getting Started
 
