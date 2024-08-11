@@ -111,6 +111,15 @@ public class ButtonPanel {
             }
         });
 
+        // Add the Add Differences button
+        JButton addDifferencesButton = UIHelper.createButton("icons/differences.png", "Add Differences", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.addDifferenceColumns();
+            }
+        });
+
         // Initialize the toggleEasyCasesButton
         csvViewer.toggleEasyCasesButton = UIHelper.createButton("icons/easy.png", "Show Easy Cases", null);
 
@@ -140,6 +149,7 @@ public class ButtonPanel {
         buttonPanel.add(insertRowButton);
         buttonPanel.add(deleteRowButton);
         buttonPanel.add(cloneRowButton);
+        buttonPanel.add(addDifferencesButton);  // Add the "Add Differences" button
         buttonPanel.add(exportButton);
         buttonPanel.add(parallelPlotButton);
         buttonPanel.add(shiftedPairedButton);

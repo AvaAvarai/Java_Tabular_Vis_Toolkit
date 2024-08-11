@@ -73,6 +73,61 @@ public class CsvViewer extends JFrame {
     public JSlider thresholdSlider;
     public JLabel thresholdLabel;
 
+    public void addDifferenceColumns() {
+        int numRows = tableModel.getRowCount();
+        int numCols = tableModel.getColumnCount();
+
+        // Find the index of the class column
+        int classColumnIndex = getClassColumnIndex();
+
+        // Generate new column names for the differences, excluding the class column
+        for (int col = 0; col < numCols - 1; col++) {
+            if (col == classColumnIndex || col + 1 == classColumnIndex) continue;  // Skip the class column
+            String newColName = "Diff " + tableModel.getColumnName(col) + "-" + tableModel.getColumnName(col + 1);
+            tableModel.addColumn(newColName);
+        }
+        // Add the final difference column comparing the last numeric attribute with the first numeric attribute
+        String finalColName = "Diff " + tableModel.getColumnName(numCols - 2) + "-" + tableModel.getColumnName(0);
+        tableModel.addColumn(finalColName);
+
+        // Calculate differences for each row and add them to the new columns
+        for (int row = 0; row < numRows; row++) {
+            int newColIndex = numCols;  // Start adding new columns after the original ones
+
+            for (int col = 0; col < numCols - 1; col++) {
+                if (col == classColumnIndex || col + 1 == classColumnIndex) continue;  // Skip the class column
+                try {
+                    double value1 = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                    double value2 = Double.parseDouble(tableModel.getValueAt(row, col + 1).toString());
+                    double difference = value2 - value1;
+
+                    // Set the difference in the corresponding new column
+                    tableModel.setValueAt(difference, row, newColIndex++);
+                } catch (NumberFormatException | NullPointerException e) {
+                    // Handle non-numeric or null values by setting an empty value
+                    tableModel.setValueAt("", row, newColIndex++);
+                }
+            }
+
+            // Calculate the difference between the last numeric attribute and the first numeric attribute
+            try {
+                double lastValue = Double.parseDouble(tableModel.getValueAt(row, numCols - 2).toString());
+                double firstValue = Double.parseDouble(tableModel.getValueAt(row, 0).toString());
+                double finalDifference = lastValue - firstValue;
+
+                // Set this final difference in the newly added column
+                tableModel.setValueAt(finalDifference, row, tableModel.getColumnCount() - 1);
+            } catch (NumberFormatException | NullPointerException e) {
+                // Handle non-numeric or null values by setting an empty value
+                tableModel.setValueAt("", row, tableModel.getColumnCount() - 1);
+            }
+        }
+
+        // Update the UI after adding the new columns and differences
+        dataHandler.updateStats(tableModel, statsTextArea);
+        updateSelectedRowsLabel();
+    }
+
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
         setSize(800, 600);
