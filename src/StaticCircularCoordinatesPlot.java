@@ -135,12 +135,14 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             // Calculate positions on the circumference for each attribute
             for (int i = 0; i < numAttributes; i++) {
                 double angle = i * angleStep - Math.PI / 2;  // Start at the top (12 o'clock)
-                int labelradius = radius + 20; 
+                int labelradius1 = radius + 15; 
+                int labelradius2 = radius + 20;
                 if (i > numAttributes / 2) {
-                    labelradius = radius + 75; 
+                    labelradius1 = radius + 95;
+                    labelradius2 = radius + 30;
                 }
-                double x = centerX + labelradius * Math.cos(angle);
-                double y = centerY + labelradius * Math.sin(angle);
+                double x = centerX + labelradius1 * Math.cos(angle);
+                double y = centerY + labelradius2 * Math.sin(angle);
                 attributePositions[i] = new Point2D.Double(x, y);
 
                 // Draw attribute labels
@@ -166,31 +168,34 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             String classLabel = classLabels.get(row);
             Color color = isSelected ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
             Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
-
+        
             // Calculate points
             for (int i = 0; i < numAttributes; i++) {
                 double value = data.get(i).get(row);
-                double normValue = value;  // Data is already normalized to [0, 1]
-
-                // Interpolate between the start and end points of each segment on the circumference
-                double x = centerX + radius * Math.cos(i * angleStep + normValue * angleStep - Math.PI / 2);
-                double y = centerY + radius * Math.sin(i * angleStep + normValue * angleStep - Math.PI / 2);
+                double minValue = data.get(i).stream().min(Double::compare).orElse(0.0);
+                double maxValue = data.get(i).stream().max(Double::compare).orElse(1.0);
+        
+                // Calculate the corresponding angle based on value directly between the min and max
+                double angleOffset = (value - minValue) / (maxValue - minValue) * angleStep;
+        
+                double x = centerX + radius * Math.cos(i * angleStep + angleOffset - Math.PI / 2);
+                double y = centerY + radius * Math.sin(i * angleStep + angleOffset - Math.PI / 2);
                 points[i] = new Point2D.Double(x, y);
             }
-
+        
             // Connect points sequentially with class color or yellow if selected
             g2.setColor(color);
             for (int i = 0; i < numAttributes - 1; i++) {
                 g2.draw(new Line2D.Double(points[i], points[i + 1]));
             }
             g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
-
+        
             // Draw the shapes at the points
             for (int i = 0; i < numAttributes; i++) {
                 g2.translate(points[i].x, points[i].y);  // Move the origin to the point location
                 g2.fill(shape);       // Draw the shape at the translated origin
                 g2.translate(-points[i].x, -points[i].y); // Move back the origin
             }
-        }
+        }        
     }
 }
