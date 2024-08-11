@@ -139,37 +139,35 @@ public class CsvViewer extends JFrame {
         }
     }
 
-
     public void calculateAndDisplayPureRegions() {
         int classColumnIndex = getClassColumnIndex(); // Find the class column index
         if (classColumnIndex == -1) {
             noDataLoadedError();
             return;
         }
-
+    
         // Clear previous pure regions info
         String previousText = statsTextArea.getText();
         String newText = previousText.replaceAll("(?s)Single-Attribute Pure Regions:.*", "");
-
+    
         List<PureRegion> pureRegions = new ArrayList<>();
-
         int numColumns = tableModel.getColumnCount();
         int totalRows = tableModel.getRowCount(); // Total number of rows in the dataset
-
+    
         // Get the class counts for the entire dataset
         Map<String, Integer> classCounts = new HashMap<>();
         for (int row = 0; row < totalRows; row++) {
             String className = tableModel.getValueAt(row, classColumnIndex).toString();
             classCounts.put(className, classCounts.getOrDefault(className, 0) + 1);
         }
-
+    
         for (int col = 0; col < numColumns; col++) {
             if (col == classColumnIndex) continue; // Skip the class column
-
+    
             String attributeName = tableModel.getColumnName(col);
             List<Double> values = new ArrayList<>();
             Map<Double, List<Integer>> valueToRowIndicesMap = new HashMap<>();
-
+    
             // Collect values and their corresponding row indices
             for (int row = 0; row < totalRows; row++) {
                 try {
@@ -180,16 +178,30 @@ public class CsvViewer extends JFrame {
                     // Skip non-numerical values
                 }
             }
-
+    
+            if (values.isEmpty()) continue; // Skip if there are no numerical values
+    
             Collections.sort(values);
-
-            // Process windows
+    
+            // Calculate the minimum delta between consecutive values
+            double minDelta = Double.MAX_VALUE;
+            for (int i = 1; i < values.size(); i++) {
+                double delta = values.get(i) - values.get(i - 1);
+                if (delta < minDelta) {
+                    minDelta = delta;
+                }
+            }
+    
+            // Keep track of seen regions
+            Set<String> seenRegions = new HashSet<>();
+    
+            // Process windows with expansion using minDelta
             for (int start = 0; start < values.size(); start++) {
                 for (int end = start + 1; end <= values.size(); end++) {
                     Set<Integer> rowsInWindow = new HashSet<>();
                     String currentClass = null;
                     boolean isPure = true;
-
+    
                     for (int i = start; i < end; i++) {
                         List<Integer> rowIndices = valueToRowIndicesMap.get(values.get(i));
                         for (int rowIndex : rowIndices) {
@@ -204,25 +216,35 @@ public class CsvViewer extends JFrame {
                         }
                         if (!isPure) break;
                     }
-
+    
                     if (isPure && !rowsInWindow.isEmpty()) { // Valid pure region found
                         int regionCount = rowsInWindow.size();
                         double percentageOfClass = (regionCount / (double) classCounts.get(currentClass)) * 100;
                         double percentageOfDataset = (regionCount / (double) totalRows) * 100;
-
-                        PureRegion region = new PureRegion(
-                                attributeName, values.get(start), values.get(end - 1),
-                                currentClass, regionCount, percentageOfClass, percentageOfDataset
-                        );
-                        pureRegions.add(region);
+    
+                        // Expand the region by the minimum delta
+                        double expandedEnd = values.get(end - 1) + minDelta;
+    
+                        // Create a key for the region to check if it's already been seen
+                        String regionKey = String.format("%s-%.2f-%.2f-%s", attributeName, values.get(start), expandedEnd, currentClass);
+    
+                        if (!seenRegions.contains(regionKey)) {
+                            seenRegions.add(regionKey);
+    
+                            PureRegion region = new PureRegion(
+                                    attributeName, values.get(start), expandedEnd,
+                                    currentClass, regionCount, percentageOfClass, percentageOfDataset
+                            );
+                            pureRegions.add(region);
+                        }
                     }
                 }
             }
         }
-
+    
         // Sort pure regions by the percentage of the dataset
         Collections.sort(pureRegions, Comparator.comparingDouble(region -> -region.percentageOfDataset));
-
+    
         // Display sorted results
         StringBuilder sb = new StringBuilder();
         sb.append("Single-Attribute Pure Regions:\n");
@@ -231,7 +253,7 @@ public class CsvViewer extends JFrame {
                     region.attributeName, region.start, region.attributeName, region.end,
                     region.currentClass, region.regionCount, region.percentageOfClass, region.percentageOfDataset));
         }
-
+    
         statsTextArea.setText(newText + sb.toString());
     }
 
