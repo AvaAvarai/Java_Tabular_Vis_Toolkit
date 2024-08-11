@@ -235,20 +235,53 @@ public class CsvViewer extends JFrame {
 
     public void setSliderToMaxCoverage() {
         int bestThreshold = 0;
-        double maxCoverage = 0.0;
-
-        for (int threshold = 0; threshold <= 100; threshold += 1) {
-            double coverage = calculateAndDisplayPureRegions(threshold);
-            if (coverage > maxCoverage) {
-                maxCoverage = coverage;
+        int minRemainingCases = Integer.MAX_VALUE;
+    
+        for (int threshold = 0; threshold <= 100; threshold++) {
+            int remainingCases = calculateRemainingCases(threshold);
+            if (remainingCases <= minRemainingCases) {
+                minRemainingCases = remainingCases;
                 bestThreshold = threshold;
             }
         }
-
-        thresholdSlider.setValue(bestThreshold); // Set the slider to the best threshold
-        calculateAndDisplayPureRegions(bestThreshold); // Recalculate and display with the best threshold
+    
+        thresholdSlider.setValue(bestThreshold);
+        calculateAndDisplayPureRegions(bestThreshold);
     }
 
+    public int calculateRemainingCases(int threshold) {
+        int classColumnIndex = getClassColumnIndex();
+        if (classColumnIndex == -1) {
+            noDataLoadedError();
+            return 0;
+        }
+    
+        List<PureRegion> pureRegions = calculatePureRegions(threshold);
+        Set<Integer> hiddenRows = new HashSet<>();
+    
+        for (PureRegion region : pureRegions) {
+            for (int row = 0; row < tableModel.getRowCount(); row++) {
+                String attributeName = region.attributeName;
+                int attributeColumnIndex = tableModel.findColumn(attributeName);
+    
+                if (attributeColumnIndex != -1) {
+                    try {
+                        double value = Double.parseDouble(tableModel.getValueAt(row, attributeColumnIndex).toString());
+                        String className = tableModel.getValueAt(row, classColumnIndex).toString();
+    
+                        if (value >= region.start && value < region.end && className.equals(region.currentClass)) {
+                            hiddenRows.add(row);
+                        }
+                    } catch (NumberFormatException e) {
+                        // Skip non-numerical values
+                    }
+                }
+            }
+        }
+    
+        return tableModel.getRowCount() - hiddenRows.size();
+    }
+    
     public void toggleEasyCases() {
         if (hiddenRows.isEmpty()) {
             hideEasyCases();
