@@ -21,6 +21,9 @@ import java.util.Comparator;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class CsvViewer extends JFrame {
 
@@ -977,7 +980,33 @@ public class CsvViewer extends JFrame {
 
         if (result == JFileChooser.APPROVE_OPTION) {
             String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-            dataHandler.saveCsvData(filePath, tableModel);
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+                // Write header row
+                for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                    writer.write(tableModel.getColumnName(col));
+                    if (col < tableModel.getColumnCount() - 1) {
+                        writer.write(",");
+                    }
+                }
+                writer.newLine();
+
+                // Write data rows, excluding hidden rows
+                for (int row = 0; row < tableModel.getRowCount(); row++) {
+                    if (!hiddenRows.contains(row)) {
+                        for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                            Object value = tableModel.getValueAt(row, col);
+                            writer.write(value != null ? value.toString() : "");
+                            if (col < tableModel.getColumnCount() - 1) {
+                                writer.write(",");
+                            }
+                        }
+                        writer.newLine();
+                    }
+                }
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error saving CSV file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 

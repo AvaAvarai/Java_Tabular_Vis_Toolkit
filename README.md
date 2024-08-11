@@ -37,7 +37,11 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 - Copy cell content (Ctrl+C)
 - Highlight selected rows in PC and SPC views
 - Analytical single attribute rule discovery algorithm
-- Hide easy to classify cases found with single attribute rules
+- Case classifiable with single pure attribute intervals hideable
+
+## Classifying with Single Attribute Pure Intervals
+
+The feature in JTabViz automatically identifies and utilizes pure intervals within individual attributes to classify data points. A pure interval is a range within a single attribute where all data points belong to the same class. This approach allows for straightforward and interpretable classification rules based on specific attribute values.
 
 ## Getting Started
 
