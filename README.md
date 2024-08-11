@@ -53,7 +53,7 @@ There are three ways to run JTabViz:
    - Run the following command:
 
      ```sh
-     java -cp ".;libs/*;JTabViz.jar" src.CsvViewer
+     java -cp ".;libs/*;JTabViz.jar" src.Main
      ```
 
 2. Compiling and running from source:
@@ -67,13 +67,13 @@ There are three ways to run JTabViz:
    - Compile the project:
 
      ```sh
-     javac -cp ".;libs/*" src/CsvViewer.java
+     javac -cp ".;libs/*" src/Main.java
      ```
 
    - Run the compiled project:
 
      ```sh
-     java -cp ".;libs/*" src/CsvViewer
+     java -cp ".;libs/*" src/Main
      ```
 
 3. Creating and running your own JAR file:
@@ -87,7 +87,7 @@ There are three ways to run JTabViz:
    - Run the created JAR file:
 
      ```sh
-     java -cp ".;libs/*;JTabViz.jar" src.CsvViewer
+     java -cp ".;libs/*;JTabViz.jar" src.Main
      ```
 
 Note: Replace `;` with `:` in the classpath (-cp) if you're using a Unix-based system (Linux, macOS).

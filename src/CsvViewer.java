@@ -1265,11 +1265,4 @@ public class CsvViewer extends JFrame {
         }
         return selectedIndices;
     }    
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            CsvViewer viewer = new CsvViewer();
-            viewer.setVisible(true);
-        });
-    }
 }
