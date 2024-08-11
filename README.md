@@ -8,6 +8,9 @@ Fisher Iris Data Exploration Demo. Selecting outliers in sepal.width attribute f
 Shifted Paired Coordinates Demo selecting and highlighting a classification conflicting in sepal.width attribute Viriginica class case.
 ![Demo screenshot 2](screenshots/Iris_Demo_2.png)
 
+Static Circular Coordinates Demo selecting and highlighting a petal.length outlier n the Virginica class.
+![Demo screenshot 5](screenshots/Iris_Demo_5.png)
+
 Combined View Demo.
 ![Demo screenshot 3](screenshots/Iris_Demo_3.png)
 
