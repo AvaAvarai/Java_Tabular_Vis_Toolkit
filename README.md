@@ -2,7 +2,7 @@
 
 **JTabViz** is a Java-based machine learning data analysis toolkit. It supports loading, viewing, analyzing, and classifying CSV data. Key features include data normalization, visualization (heatmaps, Parallel Coordinates, Shifted Paired Coordinates, Static Circular Coordinates), row manipulation, rules testing, and data export.
 
-Demo: Exploring Fisher Iris Data. Highlighting sepal width outliers for Virginica class.
+Demo: Exploring Fisher Iris data. Highlighting sepal width outliers for Virginica class.
 ![Demo screenshot 1](screenshots/Iris_Demo_1.png)
 
 Shifted Paired Coordinates Demo highlighting a potential misclassification in the Virginica class based on sepal width.
@@ -19,6 +19,9 @@ Outlier in Setosa sepal width attribute highlighted.
 
 Rules Tester Demo.
 ![Rules Tester Demo screenshot](screenshots/Rules_Test_Demo_1.png)
+
+Classifying Fisher Iris data with a single attribute for 75% of dataset.
+![Rules Tester Demo screenshot](screenshots/Rules_Test_Demo_2.png)
 
 ## Features
 
