@@ -264,11 +264,13 @@ public class CsvViewer extends JFrame {
         hiddenRows.clear();
         hiddenRows.addAll(rowsToHide);
         applyRowFilter();
+        updateSelectedRowsLabel();
     }
 
     public void showEasyCases() {
         hiddenRows.clear();
         applyRowFilter();
+        updateSelectedRowsLabel();
     }
 
     private void applyRowFilter() {
@@ -280,7 +282,8 @@ public class CsvViewer extends JFrame {
             }
         });
         table.setRowSorter(sorter);
-    }
+        updateSelectedRowsLabel(); // Update the label after applying the filter
+    }    
 
     private List<PureRegion> calculatePureRegions() {
         List<PureRegion> pureRegions = new ArrayList<>();
@@ -1087,8 +1090,9 @@ public class CsvViewer extends JFrame {
 
     public void updateSelectedRowsLabel() {
         int selectedRowCount = table.getSelectedRowCount();
-        selectedRowsLabel.setText("Selected rows: " + selectedRowCount);
-    }
+        int totalVisibleRowCount = table.getRowCount(); // This gives the count of visible rows (excluding hidden rows)
+        selectedRowsLabel.setText("Selected rows: " + selectedRowCount + " / Total visible cases: " + totalVisibleRowCount + " / Total cases: " + tableModel.getRowCount());
+    }    
 
     public List<Integer> getSelectedRowsIndices() {
         int[] selectedRows = table.getSelectedRows();
