@@ -1,14 +1,14 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-**JTabViz** is a machine learning data analysis software suite that is built in Java and is actively being developed. Current features support the loading of CSVs for loading, viewing, searching, analyzing, augmenting, and classifying tabular data. The application provides features including normalization, heatmap visualization, row deleting, row insertion, field augmentation, Parallel coordinates (PC), Shifted Paired coordinates (SPC) rules testing, and data export.
+**JTabViz** is a Java-based machine learning data analysis toolkit. It supports loading, viewing, analyzing, and classifying CSV data. Key features include data normalization, visualization (heatmaps, Parallel Coordinates, Shifted Paired Coordinates, Static Circular Coordinates), row manipulation, rules testing, and data export.
 
-Fisher Iris Data Exploration Demo. Selecting outliers in sepal.width attribute for the Virignica class (yellow highlighted cases in plot.)
+Demo: Exploring Fisher Iris Data. Highlighting sepal width outliers for Virginica class.
 ![Demo screenshot 1](screenshots/Iris_Demo_1.png)
 
-Shifted Paired Coordinates Demo selecting and highlighting a classification conflicting in sepal.width attribute Viriginica class case.
+Shifted Paired Coordinates Demo highlighting a potential misclassification in the Virginica class based on sepal width.
 ![Demo screenshot 2](screenshots/Iris_Demo_2.png)
 
-Static Circular Coordinates Demo selecting and highlighting a petal.length outlier n the Virginica class.
+Static Circular Coordinates Demo highlighting a petal length outlier in the Virginica class.
 ![Demo screenshot 5](screenshots/Iris_Demo_5.png)
 
 Combined View Demo.
@@ -22,68 +22,66 @@ Rules Tester Demo.
 
 ## Features
 
-- **Load CSV Data**: Load and display CSV data in a tabular format.
-- **Normalize Data**: Toggle normalization of numerical columns.
-- **Highlight Blanks**: Highlight cells with missing data.
-- **Heatmap Visualization**: Highlight data rows as a heatmap.
-- **Parallel Coordinates Visualization**: View data in a Parallel coordinates (PC) plot.
-- **Shifted Paired Coordinates Visualization**: View data in a Shifted Paired coordinates (SPC) plot.
-- **Static Circular Coordinates Visualization**: View data in a Static Circular coordinates (SCC) plot.
-- **Row Manipulation**: Insert, delete, clone, and reorder rows.
-- **Font Color Customization**: Customize the font color of table cells.
-- **Tabular Class Field Highlight**: Highlight class fields with color.
-- **Data Export**: Export modified data to CSV.
-- **Rules Tester**: Test classification rules and save them.
-- **Multi-row Selection and Reordering**: Select and reorder multiple rows using the Shift key for inclusive selection or the Ctrl key for individual selection.
-    Cell Content Copying: Quickly copy cell content using Ctrl+C.
-- **Tabular Cell Copy**: Copy cell content with Ctrl+C.
-- **Rows Selected Highlight**: Selected rows in tabular view highlight in PC and SPC.
+- Load and display CSV data
+- Normalize numerical columns
+- Highlight missing data
+- Visualize data as heatmap, Parallel Coordinates (PC), Shifted Paired Coordinates (SPC), and Static Circular Coordinates (SCC)
+- Manipulate rows (insert, delete, clone, reorder)
+- Customize font color and highlight class fields
+- Export modified data to CSV
+- Test and save classification rules
+- Multi-row selection and reordering
+- Copy cell content (Ctrl+C)
+- Highlight selected rows in PC and SPC views
 
 ## Getting Started
 
-To run this project you need to compile to project along with the contained library in `libs\`. To do so there is three steps:
+There are three ways to run JTabViz:
 
-With our Pre-Compiled Jar:
+1. Using the pre-compiled JAR file:
+   - Download the `JTabViz.jar` file and the `libs` folder.
+   - Open a terminal and navigate to the directory containing the JAR file.
+   - Run the following command:
 
-1; Run from jar
+     ```sh
+     java -cp ".;libs/*;JTabViz.jar" src.CsvViewer
+     ```
 
-```sh
-java -cp ".;libs/*;JTabViz.jar" src.CsvViewer
-```
+2. Compiling and running from source:
+   - Clone the repository:
 
-Stand-alone:
+     ```sh
+     git clone https://github.com/AvaAvarai/jtabviz.git
+     ```
 
-1; Clone the project to your computer:
+   - Navigate to the project directory.
+   - Compile the project:
 
-```sh
-git clone git@github.com:AvaAvarai/jtabviz.git
-```
+     ```sh
+     javac -cp ".;libs/*" src/CsvViewer.java
+     ```
 
-2; Compile the project:
+   - Run the compiled project:
 
-```sh
-javac -cp ".;libs/*" src/CsvViewer.java
-```
+     ```sh
+     java -cp ".;libs/*" src/CsvViewer
+     ```
 
-3; Execute the compiled project:
+3. Creating and running your own JAR file:
+   - Follow steps 1 and 2 of the "Compiling and running from source" method.
+   - Create a JAR file:
 
-```sh
-java -cp ".;libs/*" src/CsvViewer
-```
+     ```sh
+     jar cfm JTabViz.jar MANIFEST.MF -C out .
+     ```
 
-With a Jar:
+   - Run the created JAR file:
 
-1; Compile a jar
+     ```sh
+     java -cp ".;libs/*;JTabViz.jar" src.CsvViewer
+     ```
 
-```sh
-jar cfm JTabViz.jar MANIFEST.MF -C out .
-```
-
-2; Run from jar
-
-```sh
-java -cp ".;libs/*;JTabViz.jar" src.CsvViewer
-```
+Note: Replace `;` with `:` in the classpath (-cp) if you're using a Unix-based system (Linux, macOS).
 
 ## Data Format
 
