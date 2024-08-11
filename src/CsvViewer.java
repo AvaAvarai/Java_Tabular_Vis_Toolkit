@@ -487,7 +487,7 @@ public class CsvViewer extends JFrame {
             toggleButton.setToolTipText("Normalize");
 
             // Scroll the stats window to the top on initial load
-            calculateAndDisplayPureRegions(5);
+            calculateAndDisplayPureRegions(thresholdSlider.getValue());
             statsTextArea.setCaretPosition(0);
         }
     }
@@ -530,7 +530,7 @@ public class CsvViewer extends JFrame {
     
         // Ensure the caret position is within valid bounds
         currentCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length());
-        calculateAndDisplayPureRegions(5);
+        calculateAndDisplayPureRegions(thresholdSlider.getValue());
         statsTextArea.setCaretPosition(currentCaretPosition);
     }
         
@@ -630,12 +630,15 @@ public class CsvViewer extends JFrame {
 
     public void toggleClassColors() {
         int currentCaretPosition = statsTextArea.getCaretPosition();
-
+    
         isClassColorEnabled = !isClassColorEnabled;
         applyCombinedRenderer();
         dataHandler.updateStats(tableModel, statsTextArea);
-
-        statsTextArea.setCaretPosition(currentCaretPosition);
+    
+        // Ensure the caret position is within valid bounds
+        int newCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length());
+        statsTextArea.setCaretPosition(Math.max(newCaretPosition, 0));  // Ensure it's not negative
+        calculateAndDisplayPureRegions(thresholdSlider.getValue());
     }
 
     public void applyDefaultRenderer() {
@@ -972,47 +975,56 @@ public class CsvViewer extends JFrame {
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         dialog.setContentPane(mainPanel);
         dialog.pack();
-        dialog.setSize(dialog.getWidth(), dialog.getHeight() + 75); // Increase the height slightly
+        dialog.setSize(dialog.getWidth(), dialog.getHeight() + 75); // Increase the height of the dialog
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
     }
 
     public void insertRow() {
         int currentCaretPosition = statsTextArea.getCaretPosition();
-
+    
         int numColumns = tableModel.getColumnCount();
         String[] emptyRow = new String[numColumns];
+    
+        // Initialize the empty row with empty strings
+        for (int i = 0; i < numColumns; i++) {
+            emptyRow[i] = "";
+        }
+    
         tableModel.addRow(emptyRow);
         dataHandler.updateStats(tableModel, statsTextArea);
-
+    
         statsTextArea.setCaretPosition(currentCaretPosition);
-    }
+    }    
 
     public void deleteRow() {
         int[] selectedRows = table.getSelectedRows();
         if (selectedRows.length > 0) {
             int currentCaretPosition = statsTextArea.getCaretPosition();
-
+    
             // Convert selected rows to model indices and sort them in descending order
             List<Integer> rowsToDelete = new ArrayList<>();
             for (int row : selectedRows) {
                 rowsToDelete.add(table.convertRowIndexToModel(row));
             }
             rowsToDelete.sort(Collections.reverseOrder());
-
+    
             // Delete rows in descending order to avoid issues with shifting indices
             for (int rowIndex : rowsToDelete) {
                 tableModel.removeRow(rowIndex);
             }
-
+    
             dataHandler.updateStats(tableModel, statsTextArea);
             updateSelectedRowsLabel();
-
-            statsTextArea.setCaretPosition(currentCaretPosition);
+    
+            // Ensure the caret position is within valid bounds
+            int newCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length());
+            statsTextArea.setCaretPosition(Math.max(newCaretPosition, 0));  // Ensure it's not negative
         } else {
             JOptionPane.showMessageDialog(this, "Please select at least one row to delete.", "Error", JOptionPane.ERROR_MESSAGE);
         }
-    }
+        calculateAndDisplayPureRegions(thresholdSlider.getValue());
+    }    
 
     public void cloneSelectedRow() {
         int selectedRow = table.getSelectedRow();
