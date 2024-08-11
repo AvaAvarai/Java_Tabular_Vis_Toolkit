@@ -112,10 +112,10 @@ public class ButtonPanel {
         });
 
         // Initialize the toggleEasyCasesButton
-        JButton toggleEasyCasesButton = UIHelper.createButton("icons/easy.png", "Show Easy Cases", null);
+        csvViewer.toggleEasyCasesButton = UIHelper.createButton("icons/easy.png", "Show Easy Cases", null);
 
         // Now set the action listener for the toggleEasyCasesButton
-        toggleEasyCasesButton.addActionListener(e -> {
+        csvViewer.toggleEasyCasesButton.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -123,11 +123,11 @@ public class ButtonPanel {
 
                 // Switch the icon and tooltip based on the current state
                 if (csvViewer.hasHiddenRows()) {
-                    toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/uneasy.png", 40, 40));
-                    toggleEasyCasesButton.setToolTipText("Show All Cases");
+                    csvViewer.toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/uneasy.png", 40, 40));
+                    csvViewer.toggleEasyCasesButton.setToolTipText("Show All Cases");
                 } else {
-                    toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/easy.png", 40, 40));
-                    toggleEasyCasesButton.setToolTipText("Show Non-Easy Cases");
+                    csvViewer.toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/easy.png", 40, 40));
+                    csvViewer.toggleEasyCasesButton.setToolTipText("Show Non-Easy Cases");
                 }
             }
         });
@@ -147,7 +147,7 @@ public class ButtonPanel {
         buttonPanel.add(classColorButton);
         buttonPanel.add(setClassColorsButton);
         buttonPanel.add(ruleTesterButton);
-        buttonPanel.add(toggleEasyCasesButton);
+        buttonPanel.add(csvViewer.toggleEasyCasesButton);
 
         return buttonPanel;
     }

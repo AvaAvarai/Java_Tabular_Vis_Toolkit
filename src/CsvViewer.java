@@ -55,6 +55,7 @@ public class CsvViewer extends JFrame {
     public Color cellTextColor = Color.BLACK; // Default cell text color
     public JTextArea statsTextArea;
     public JButton toggleButton;
+    public JButton toggleEasyCasesButton;
     public JButton toggleStatsButton;
     public JButton toggleStatsOnButton;
     public JButton toggleStatsOffButton;
@@ -238,14 +239,17 @@ public class CsvViewer extends JFrame {
     public void toggleEasyCases() {
         if (hiddenRows.isEmpty()) {
             hideEasyCases();
-            toggleButton.setIcon(UIHelper.loadIcon("icons/uneasy.png", 40, 40)); // Switch to uneasy icon
-            toggleButton.setToolTipText("Show All Cases");
+            // This line should be updating the toggleEasyCasesButton, not toggleButton
+            toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/uneasy.png", 40, 40)); // Switch to uneasy icon
+            toggleEasyCasesButton.setToolTipText("Show All Cases");
         } else {
             showEasyCases();
-            toggleButton.setIcon(UIHelper.loadIcon("icons/easy.png", 40, 40)); // Switch back to easy icon
-            toggleButton.setToolTipText("Show Easy Cases");
+            // This line should be updating the toggleEasyCasesButton, not toggleButton
+            toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/easy.png", 40, 40)); // Switch back to easy icon
+            toggleEasyCasesButton.setToolTipText("Show Easy Cases");
         }
-    }    
+    }
+    
 
     public void hideEasyCases() {
         int classColumnIndex = getClassColumnIndex();
