@@ -231,6 +231,22 @@ public class CsvViewer extends JFrame {
         statsTextArea.setText(newText + sb.toString());
     }
 
+    public boolean hasHiddenRows() {
+        return !hiddenRows.isEmpty();
+    }    
+
+    public void toggleEasyCases() {
+        if (hiddenRows.isEmpty()) {
+            hideEasyCases();
+            toggleButton.setIcon(UIHelper.loadIcon("icons/uneasy.png", 40, 40)); // Switch to uneasy icon
+            toggleButton.setToolTipText("Show All Cases");
+        } else {
+            showEasyCases();
+            toggleButton.setIcon(UIHelper.loadIcon("icons/easy.png", 40, 40)); // Switch back to easy icon
+            toggleButton.setToolTipText("Show Easy Cases");
+        }
+    }    
+
     public void hideEasyCases() {
         int classColumnIndex = getClassColumnIndex();
         if (classColumnIndex == -1) {
@@ -405,7 +421,7 @@ public class CsvViewer extends JFrame {
             // Reset the Normalize button to its initial state
             toggleButton.setIcon(UIHelper.loadIcon("icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
-    
+
             // Scroll the stats window to the top on initial load
             calculateAndDisplayPureRegions();
             statsTextArea.setCaretPosition(0);

@@ -111,19 +111,23 @@ public class ButtonPanel {
             }
         });
 
-        // Add the Toggle Easy Cases button
-        JToggleButton toggleEasyCasesButton = new JToggleButton("Hide Easy Cases");
-        toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/hide_easy.png", 40, 40));
+        // Initialize the toggleEasyCasesButton
+        JButton toggleEasyCasesButton = UIHelper.createButton("icons/easy.png", "Show Easy Cases", null);
+
+        // Now set the action listener for the toggleEasyCasesButton
         toggleEasyCasesButton.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
-                if (toggleEasyCasesButton.isSelected()) {
-                    csvViewer.hideEasyCases();
-                    toggleEasyCasesButton.setText("Show Easy Cases");
+                csvViewer.toggleEasyCases();
+
+                // Switch the icon and tooltip based on the current state
+                if (csvViewer.hasHiddenRows()) {
+                    toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/uneasy.png", 40, 40));
+                    toggleEasyCasesButton.setToolTipText("Show All Cases");
                 } else {
-                    csvViewer.showEasyCases();
-                    toggleEasyCasesButton.setText("Hide Easy Cases");
+                    toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/easy.png", 40, 40));
+                    toggleEasyCasesButton.setToolTipText("Show Non-Easy Cases");
                 }
             }
         });
