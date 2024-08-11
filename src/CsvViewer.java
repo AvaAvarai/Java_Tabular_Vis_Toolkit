@@ -78,31 +78,6 @@ public class CsvViewer extends JFrame {
         table = TableSetup.createTable(tableModel);
         table.addMouseListener(new TableMouseListener(this));
 
-        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
-        table.setRowSorter(sorter);
-
-        // Add a KeyAdapter to handle Ctrl+C for copying cell content
-        table.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_C) {
-                    if (table.getSelectedRows().length == 1) 
-                        copySelectedCell();
-                    else {
-                        StringBuilder sb = new StringBuilder();
-                        for (int row : table.getSelectedRows()) {
-                            for (int col : table.getSelectedColumns()) {
-                                sb.append(table.getValueAt(row, col)).append("\t");
-                            }
-                            sb.append("\n");
-                        }
-                        StringSelection stringSelection = new StringSelection(sb.toString());
-                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
-                    }    
-                }
-            }
-        });
-
         JPanel buttonPanel = ButtonPanel.createButtonPanel(this);
         add(buttonPanel, BorderLayout.NORTH);
 
