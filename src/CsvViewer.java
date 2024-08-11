@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.geom.AffineTransform;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -458,7 +459,7 @@ public class CsvViewer extends JFrame {
                 JLabel label = new JLabel(value);
                 JLabel colorSwatch = new JLabel();
                 colorSwatch.setOpaque(true);
-                colorSwatch.setPreferredSize(new Dimension(20, 20));
+                colorSwatch.setPreferredSize(new Dimension(30, 30));
                 colorSwatch.setBackground(tempClassColors.getOrDefault(value, Color.WHITE));
     
                 JLabel shapeSwatch = new JLabel() {
@@ -467,10 +468,13 @@ public class CsvViewer extends JFrame {
                         super.paintComponent(g);
                         Graphics2D g2 = (Graphics2D) g;
                         g2.setColor(Color.BLACK);
-                        g2.fill(tempClassShapes.getOrDefault(value, new Ellipse2D.Double(-3, -3, 6, 6)));
+                        Shape shape = tempClassShapes.getOrDefault(value, new Ellipse2D.Double(-6, -6, 12, 12));
+                        AffineTransform at = AffineTransform.getTranslateInstance(15, 15);
+                        at.scale(2, 2);  // Scale the shape to make it larger
+                        g2.fill(at.createTransformedShape(shape));
                     }
                 };
-                shapeSwatch.setPreferredSize(new Dimension(20, 20));
+                shapeSwatch.setPreferredSize(new Dimension(30, 30));
     
                 panel.add(colorSwatch, BorderLayout.WEST);
                 panel.add(shapeSwatch, BorderLayout.CENTER);
@@ -617,7 +621,6 @@ public class CsvViewer extends JFrame {
         classComboBox.addActionListener(e -> {
             updateShapeSelection.run();
         });
-    
         // Initial call to set the correct shape selection
         updateShapeSelection.run();
     
