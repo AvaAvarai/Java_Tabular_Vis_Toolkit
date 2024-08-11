@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
@@ -117,7 +116,6 @@ public class CsvViewer extends JFrame {
         selectedRowsLabel = new JLabel("Selected rows: 0");
         bottomPanel = new JPanel(new BorderLayout());
 
-
         // Initialize the slider
         thresholdSlider = new JSlider(0, 100, 10); // 0-100% with initial value 10%
         thresholdSlider.setMajorTickSpacing(20);
@@ -157,11 +155,11 @@ public class CsvViewer extends JFrame {
         }
     }
 
-    public void calculateAndDisplayPureRegions(int thresholdPercentage) {
+    public double calculateAndDisplayPureRegions(int thresholdPercentage) {
         int classColumnIndex = getClassColumnIndex(); // Find the class column index
         if (classColumnIndex == -1) {
             noDataLoadedError();
-            return;
+            return 0.0;
         }
     
         // Clear previous pure regions info
@@ -247,6 +245,30 @@ public class CsvViewer extends JFrame {
         // Sort pure regions by the percentage of the dataset
         Collections.sort(pureRegions, Comparator.comparingDouble(region -> -region.percentageOfDataset));
     
+        // Calculate remaining coverage after hiding pure regions
+        Set<Integer> hiddenRows = new HashSet<>();
+        for (PureRegion region : pureRegions) {
+            for (int row = 0; row < totalRows; row++) {
+                String attributeName = region.attributeName;
+                int attributeColumnIndex = tableModel.findColumn(attributeName);
+
+                if (attributeColumnIndex != -1) {
+                    try {
+                        double value = Double.parseDouble(tableModel.getValueAt(row, attributeColumnIndex).toString());
+                        String className = tableModel.getValueAt(row, classColumnIndex).toString();
+
+                        if (value >= region.start && value < region.end && className.equals(region.currentClass)) {
+                            hiddenRows.add(row);
+                        }
+                    } catch (NumberFormatException e) {
+                        // Skip non-numerical values
+                    }
+                }
+            }
+        }
+
+        double remainingCoverage = ((totalRows - hiddenRows.size()) / (double) totalRows) * 100.0;
+
         // Display sorted results
         StringBuilder sb = new StringBuilder();
         sb.append("Single-Attribute Pure Regions:\n");
@@ -255,11 +277,12 @@ public class CsvViewer extends JFrame {
                     region.attributeName, region.start, region.attributeName, region.end,
                     region.currentClass, region.regionCount, region.percentageOfClass, region.percentageOfDataset));
         }
-    
+
         statsTextArea.setText(newText + sb.toString());
+
+        return remainingCoverage;
     }
     
-    // Method to filter and keep the largest and most significant regions
     private List<PureRegion> filterLargestSignificantRegions(List<PureRegion> pureRegions, int thresholdPercentage) {
         List<PureRegion> filteredRegions = new ArrayList<>();
     
@@ -291,10 +314,26 @@ public class CsvViewer extends JFrame {
     
         return filteredRegions;
     }
-    
+
     public boolean hasHiddenRows() {
         return !hiddenRows.isEmpty();
-    }    
+    }
+
+    public void setSliderToMaxCoverage() {
+        int bestThreshold = 0;
+        double maxCoverage = 0.0;
+
+        for (int threshold = 0; threshold <= 100; threshold += 1) {
+            double coverage = calculateAndDisplayPureRegions(threshold);
+            if (coverage > maxCoverage) {
+                maxCoverage = coverage;
+                bestThreshold = threshold;
+            }
+        }
+
+        thresholdSlider.setValue(bestThreshold); // Set the slider to the best threshold
+        calculateAndDisplayPureRegions(bestThreshold); // Recalculate and display with the best threshold
+    }
 
     public void toggleEasyCases() {
         if (hiddenRows.isEmpty()) {
@@ -486,8 +525,10 @@ public class CsvViewer extends JFrame {
             toggleButton.setIcon(UIHelper.loadIcon("icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
 
+            // Automatically set the slider to the best threshold
+            setSliderToMaxCoverage(); 
+
             // Scroll the stats window to the top on initial load
-            calculateAndDisplayPureRegions(thresholdSlider.getValue());
             statsTextArea.setCaretPosition(0);
         }
     }
