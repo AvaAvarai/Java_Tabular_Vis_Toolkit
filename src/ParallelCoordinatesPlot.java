@@ -43,6 +43,8 @@ public class ParallelCoordinatesPlot extends JFrame {
         LineAndShapeRenderer renderer = new LineAndShapeRenderer() {
 
             private List<Integer> drawOrder;
+            private Map<Integer, Double> columnMinValues = new HashMap<>();
+            private Map<Integer, Double> columnMaxValues = new HashMap<>();
 
             @Override
             public void drawItem(Graphics2D g2, CategoryItemRendererState state, Rectangle2D dataArea, CategoryPlot plot, CategoryAxis domainAxis, ValueAxis rangeAxis, CategoryDataset dataset, int row, int column, int pass) {
@@ -56,6 +58,19 @@ public class ParallelCoordinatesPlot extends JFrame {
                         }
                     }
                     drawOrder.addAll(selectedRows);
+
+                    // Calculate min and max values for each column
+                    for (int col = 0; col < dataset.getColumnCount(); col++) {
+                        double min = Double.MAX_VALUE;
+                        double max = Double.MIN_VALUE;
+                        for (int r = 0; r < dataset.getRowCount(); r++) {
+                            double value = dataset.getValue(r, col).doubleValue();
+                            min = Math.min(min, value);
+                            max = Math.max(max, value);
+                        }
+                        columnMinValues.put(col, min);
+                        columnMaxValues.put(col, max);
+                    }
                 }
 
                 int actualRow = drawOrder.get(row);
@@ -63,10 +78,10 @@ public class ParallelCoordinatesPlot extends JFrame {
                 // Draw the lines in the order of the tabular view
                 if (column > 0) {
                     double x1 = domainAxis.getCategoryMiddle(column - 1, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                    double y1 = rangeAxis.valueToJava2D(dataset.getValue(actualRow, column - 1).doubleValue(), dataArea, plot.getRangeAxisEdge());
+                    double y1 = getNormalizedY(actualRow, column - 1, dataArea);
 
                     double x2 = domainAxis.getCategoryMiddle(column, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                    double y2 = rangeAxis.valueToJava2D(dataset.getValue(actualRow, column).doubleValue(), dataArea, plot.getRangeAxisEdge());
+                    double y2 = getNormalizedY(actualRow, column, dataArea);
 
                     if (selectedRows.contains(actualRow)) {
                         g2.setPaint(Color.YELLOW);
@@ -80,7 +95,7 @@ public class ParallelCoordinatesPlot extends JFrame {
                 if (column == dataset.getColumnCount() - 1) {
                     for (int col = 0; col < dataset.getColumnCount(); col++) {
                         double x = domainAxis.getCategoryMiddle(col, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                        double y = rangeAxis.valueToJava2D(dataset.getValue(actualRow, col).doubleValue(), dataArea, plot.getRangeAxisEdge());
+                        double y = getNormalizedY(actualRow, col, dataArea);
 
                         // Draw the shapes in yellow if the row is selected
                         if (selectedRows.contains(actualRow)) {
@@ -106,6 +121,14 @@ public class ParallelCoordinatesPlot extends JFrame {
                         g2.draw(line);
                     }
                 }
+            }
+
+            private double getNormalizedY(int row, int column, Rectangle2D dataArea) {
+                double value = dataset.getValue(row, column).doubleValue();
+                double min = columnMinValues.get(column);
+                double max = columnMaxValues.get(column);
+                double normalizedValue = (value - min) / (max - min);
+                return dataArea.getMaxY() - (normalizedValue * dataArea.getHeight());
             }
 
             @Override
@@ -190,12 +213,15 @@ public class ParallelCoordinatesPlot extends JFrame {
         JFreeChart chart = ChartFactory.createLineChart(
                 "Parallel Coordinates Plot", // chart title
                 "Attribute", // domain axis label
-                "Value", // range axis label
+                "", // range axis label (removed)
                 dataset);
 
         CategoryPlot plot = (CategoryPlot) chart.getPlot();
         plot.setDomainAxis(new CategoryAxis());
-        plot.setRangeAxis(new NumberAxis());
+        NumberAxis rangeAxis = new NumberAxis();
+        rangeAxis.setVisible(false); // Hide the range axis
+        plot.setRangeAxis(rangeAxis);
+        plot.setRangeGridlinesVisible(false); // Remove the background grid lines
 
         return chart;
     }
