@@ -645,14 +645,16 @@ public class CsvViewer extends JFrame {
     private void displayPureRegions(List<PureRegion> pureRegions) {
         StringBuilder sb = new StringBuilder();
         sb.append("Single-Attribute Pure Regions:\n");
-        for (PureRegion region : pureRegions) {
+        // loop pure regions backwards to display the largest regions first
+        for (int i = pureRegions.size() - 1; i >= 0; i--) {
+            PureRegion region = pureRegions.get(i);
             sb.append(String.format("Attribute: %s, Pure Region: %.2f <= %s < %.2f, Class: %s, Count: %d (%.2f%% of class, %.2f%% of dataset)\n",
                     region.attributeName, region.start, region.attributeName, region.end,
                     region.currentClass, region.regionCount, region.percentageOfClass, region.percentageOfDataset));
         }
         dataHandler.updateStats(tableModel, statsTextArea);
         statsTextArea.append(sb.toString());
-    }    
+    }
 
     public void applyDefaultRenderer() {
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
