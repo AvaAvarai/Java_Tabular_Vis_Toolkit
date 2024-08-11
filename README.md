@@ -85,7 +85,34 @@ Note: Replace `;` with `:` in the classpath (-cp) if you're using a Unix-based s
 
 ## Data Format
 
-Data used should be stored in a .csv file, ideally numerical, however, this software should accept blank fields. The label column should be titled `class`, case-insensitive.
+JTabViz accepts data in CSV (Comma-Separated Values) format. Here are the key points about the expected data format:
+
+1. File Extension: The data file should have a .csv extension.
+
+2. Data Types:
+   - Numerical data is preferred for optimal visualization and analysis.
+   - Non-numerical data and blank fields are also accepted.
+
+3. Class Column:
+   - A column representing the class or category of each data point is expected.
+   - This column should be titled "class" (case-insensitive, so "Class" or "CLASS" are also acceptable).
+   - The class column is used for color-coding and shape assignment in various visualizations.
+
+4. Header Row:
+   - The first row of the CSV file should contain column names.
+
+5. Delimiter:
+   - Values should be separated by commas.
+
+Example CSV structure:
+
+| x1    | x2    | x3    | x4    | x5    | class |
+|-------|-------|-------|-------|-------|-------|
+| 3.14  | 2.71  | 1.41  | 0.58  | 1.73  | A     |
+| 2.22  | 4.44  | 3.33  | 1.11  | 5.55  | B     |
+| 0.87  | 1.23  | 3.45  | 5.67  | 7.89  | A     |
+| 9.99  | 8.88  | 7.77  | 6.66  | 5.55  | C     |
+| 1.23  | 4.56  | 7.89  | 2.34  | 5.67  | B     |
 
 ## Aknowledgements
 
