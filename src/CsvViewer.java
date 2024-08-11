@@ -968,22 +968,25 @@ public class CsvViewer extends JFrame {
             columnOrder[i] = table.convertColumnIndexToModel(i);
         }
     
-        // Get the current data from the table model
+        // Get the current data from the table model, excluding hidden rows
         List<String[]> data = new ArrayList<>();
         for (int row = 0; row < tableModel.getRowCount(); row++) {
-            String[] rowData = new String[columnCount];
-            for (int col = 0; col < columnCount; col++) {
-                Object value = tableModel.getValueAt(row, col);
-                rowData[col] = value != null ? value.toString() : "";
+            if (!hiddenRows.contains(row)) {  // Exclude hidden rows
+                String[] rowData = new String[columnCount];
+                for (int col = 0; col < columnCount; col++) {
+                    Object value = tableModel.getValueAt(row, col);
+                    rowData[col] = value != null ? value.toString() : "";
+                }
+                data.add(rowData);
             }
-            data.add(rowData);
         }
     
         List<Integer> selectedRows = getSelectedRowsIndices();
+        selectedRows.removeIf(hiddenRows::contains);  // Exclude hidden rows from selectedRows
     
         ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows);
         plot.setVisible(true);
-    }
+    }    
     
     public void showShiftedPairedCoordinates() {
         List<List<Double>> data = new ArrayList<>();
@@ -1001,11 +1004,13 @@ public class CsvViewer extends JFrame {
             boolean isNumeric = true;
             List<Double> columnData = new ArrayList<>();
             for (int row = 0; row < tableModel.getRowCount(); row++) {
-                try {
-                    columnData.add(Double.parseDouble(tableModel.getValueAt(row, columnOrder[col]).toString()));
-                } catch (NumberFormatException e) {
-                    isNumeric = false;
-                    break;
+                if (!hiddenRows.contains(row)) {  // Exclude hidden rows
+                    try {
+                        columnData.add(Double.parseDouble(tableModel.getValueAt(row, columnOrder[col]).toString()));
+                    } catch (NumberFormatException e) {
+                        isNumeric = false;
+                        break;
+                    }
                 }
             }
             if (isNumeric) {
@@ -1015,15 +1020,18 @@ public class CsvViewer extends JFrame {
         }
     
         for (int row = 0; row < tableModel.getRowCount(); row++) {
-            classLabels.add((String) tableModel.getValueAt(row, getClassColumnIndex()));
+            if (!hiddenRows.contains(row)) {  // Exclude hidden rows
+                classLabels.add((String) tableModel.getValueAt(row, getClassColumnIndex()));
+            }
         }
     
         int numPlots = (attributeNames.size() + 1) / 2;
         List<Integer> selectedRows = getSelectedRowsIndices();
+        selectedRows.removeIf(hiddenRows::contains);  // Exclude hidden rows from selectedRows
     
         ShiftedPairedCoordinates shiftedPairedCoordinates = new ShiftedPairedCoordinates(data, attributeNames, classColors, classShapes, classLabels, numPlots, selectedRows);
         shiftedPairedCoordinates.setVisible(true);
-    }
+    }    
 
     public void showStaticCircularCoordinatesPlot() {
         List<List<Double>> data = new ArrayList<>();
@@ -1037,15 +1045,18 @@ public class CsvViewer extends JFrame {
             columnOrder[i] = table.convertColumnIndexToModel(i);
         }
     
+        // Loop through columns to get numeric data
         for (int col = 0; col < columnOrder.length; col++) {
             boolean isNumeric = true;
             List<Double> columnData = new ArrayList<>();
             for (int row = 0; row < tableModel.getRowCount(); row++) {
-                try {
-                    columnData.add(Double.parseDouble(tableModel.getValueAt(row, columnOrder[col]).toString()));
-                } catch (NumberFormatException e) {
-                    isNumeric = false;
-                    break;
+                if (!hiddenRows.contains(row)) {  // Only include visible rows
+                    try {
+                        columnData.add(Double.parseDouble(tableModel.getValueAt(row, columnOrder[col]).toString()));
+                    } catch (NumberFormatException e) {
+                        isNumeric = false;
+                        break;
+                    }
                 }
             }
             if (isNumeric) {
@@ -1054,16 +1065,20 @@ public class CsvViewer extends JFrame {
             }
         }
     
+        // Get class labels, excluding hidden rows
         for (int row = 0; row < tableModel.getRowCount(); row++) {
-            classLabels.add((String) tableModel.getValueAt(row, getClassColumnIndex()));
+            if (!hiddenRows.contains(row)) {  // Only include visible rows
+                classLabels.add((String) tableModel.getValueAt(row, getClassColumnIndex()));
+            }
         }
     
         List<Integer> selectedRows = getSelectedRowsIndices();
+        selectedRows.removeIf(hiddenRows::contains);  // Exclude hidden rows from selectedRows
     
         // Create and show the StaticCircularCoordinates plot
         StaticCircularCoordinatesPlot plot = new StaticCircularCoordinatesPlot(data, attributeNames, classColors, classShapes, classLabels, selectedRows);
         plot.setVisible(true);
-    }
+    }    
 
     public void showRuleTesterDialog() {
         RuleTesterDialog ruleTesterDialog = new RuleTesterDialog(this, tableModel);
