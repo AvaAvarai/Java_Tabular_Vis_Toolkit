@@ -71,6 +71,7 @@ public class CsvViewer extends JFrame {
     public JScrollPane tableScrollPane; // Scroll pane for the table
     public JSplitPane splitPane; // Split pane for table and stats
     private List<Integer> hiddenRows = new ArrayList<>(); // Store indices of hidden rows
+    public JSlider thresholdSlider;
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -82,7 +83,6 @@ public class CsvViewer extends JFrame {
         tableModel = new ReorderableTableModel();
         table = TableSetup.createTable(tableModel);
         table.addMouseListener(new TableMouseListener(this));
-        JSlider thresholdSlider;
         
         // Add a KeyAdapter to handle Ctrl+C for copying cell content
         table.addKeyListener(new KeyAdapter() {
@@ -553,13 +553,17 @@ public class CsvViewer extends JFrame {
 
     public void toggleHeatmap() {
         int currentCaretPosition = statsTextArea.getCaretPosition();
-
+    
         isHeatmapEnabled = !isHeatmapEnabled;
         applyCombinedRenderer();
         dataHandler.updateStats(tableModel, statsTextArea);
-
-        statsTextArea.setCaretPosition(currentCaretPosition);
-    }
+    
+        // Ensure the caret position is within valid bounds
+        int newCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length() - 1);
+        statsTextArea.setCaretPosition(Math.max(newCaretPosition, 0));  // Ensure it's not negative
+    
+        calculateAndDisplayPureRegions(thresholdSlider.getValue());
+    }    
 
     public void generateClassColors() {
         int classColumnIndex = getClassColumnIndex(); // Find the class column index
