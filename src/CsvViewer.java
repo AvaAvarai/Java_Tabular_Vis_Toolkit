@@ -140,9 +140,26 @@ public class CsvViewer extends JFrame {
 
     public boolean hasHiddenRows() {
         return !hiddenRows.isEmpty();
-    }    
+    }
 
     public void toggleTrigonometricColumns() {
+        if (!isNormalized) {
+            int choice = JOptionPane.showConfirmDialog(this, 
+                "Data is not normalized. Normalization is required to insert trigonometric columns. Would you like to normalize the data now?", 
+                "Normalization Required", 
+                JOptionPane.YES_NO_OPTION);
+            
+            if (choice == JOptionPane.YES_OPTION) {
+                dataHandler.normalizeData();
+                updateTableData(dataHandler.getNormalizedData());
+                isNormalized = true;
+                toggleButton.setIcon(UIHelper.loadIcon("icons/denormalize.png", 40, 40));
+                toggleButton.setToolTipText("Default");
+            } else {
+                return;
+            }
+        }
+    
         if (areDifferenceColumnsVisible) {
             removeTrigonometricColumns();
         } else {
@@ -150,7 +167,7 @@ public class CsvViewer extends JFrame {
         }
         areDifferenceColumnsVisible = !areDifferenceColumnsVisible;
     }
-
+    
     private void addTrigonometricColumns() {
         if (!areDifferenceColumnsVisible) {
             originalData = new ArrayList<>();
