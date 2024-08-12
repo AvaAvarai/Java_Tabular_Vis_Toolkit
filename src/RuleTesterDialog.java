@@ -83,9 +83,12 @@ public class RuleTesterDialog extends JDialog {
     }
 
     private void testRule() {
+        filterContainedRules();  // Filter out redundant rules first
+
         Map<String, Map<String, Integer>> confusionMatrix = new HashMap<>();
         String[] uniqueClassNames = getUniqueClassNames();
 
+        // Initialize the confusion matrix
         for (String actualClass : uniqueClassNames) {
             confusionMatrix.put(actualClass, new HashMap<>());
             for (String predictedClass : uniqueClassNames) {
@@ -184,6 +187,92 @@ public class RuleTesterDialog extends JDialog {
             default:
                 return false;
         }
+    }
+
+    private void filterContainedRules() {
+        List<RulePanel> filteredRules = new ArrayList<>();
+
+        for (RulePanel ruleA : rulePanels) {
+            boolean isContained = false;
+            for (RulePanel ruleB : rulePanels) {
+                if (ruleA != ruleB && isRuleContained(ruleA, ruleB)) {
+                    isContained = true;
+                    break;
+                }
+            }
+            if (!isContained) {
+                filteredRules.add(ruleA);
+            }
+        }
+
+        rulePanels.clear();
+        rulePanels.addAll(filteredRules);
+        updateRulesPanel();
+    }
+
+    private boolean isRuleContained(RulePanel ruleA, RulePanel ruleB) {
+        // Check if all clauses in ruleA are contained in ruleB
+        for (ClausePanel clauseA : ruleA.getClausePanels()) {
+            boolean clauseContained = false;
+            for (ClausePanel clauseB : ruleB.getClausePanels()) {
+                if (isClauseContained(clauseA, clauseB)) {
+                    clauseContained = true;
+                    break;
+                }
+            }
+            // If any clause in ruleA is not contained in ruleB, ruleA is not fully contained
+            if (!clauseContained) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isClauseContained(ClausePanel clauseA, ClausePanel clauseB) {
+        // Check if clauseA is contained in clauseB
+        String attributeA = clauseA.getAttribute();
+        String attributeB = clauseB.getAttribute();
+        if (!attributeA.equals(attributeB)) {
+            return false;
+        }
+
+        double value1A = Double.parseDouble(clauseA.getValue1());
+        double value2A = clauseA.getValue2().isEmpty() ? Double.POSITIVE_INFINITY : Double.parseDouble(clauseA.getValue2());
+        double value1B = Double.parseDouble(clauseB.getValue1());
+        double value2B = clauseB.getValue2().isEmpty() ? Double.POSITIVE_INFINITY : Double.parseDouble(clauseB.getValue2());
+
+        boolean relation1Match = compareValues(clauseA.getRelation1(), value1A, value1B);
+        boolean relation2Match = compareValues(clauseA.getRelation2(), value2A, value2B);
+
+        return relation1Match && relation2Match;
+    }
+
+    private boolean compareValues(String relation, double valueA, double valueB) {
+        switch (relation) {
+            case "<":
+                return valueA >= valueB;
+            case "<=":
+                return valueA >= valueB;
+            case ">":
+                return valueA <= valueB;
+            case ">=":
+                return valueA <= valueB;
+            case "==":
+                return valueA == valueB;
+            case "!=":
+                return valueA != valueB;
+            default:
+                return false;
+        }
+    }
+
+    private void updateRulesPanel() {
+        rulesPanel.removeAll();
+        for (RulePanel rulePanel : rulePanels) {
+            rulesPanel.add(rulePanel);
+        }
+        rulesPanel.revalidate();
+        rulesPanel.repaint();
     }
 
     private void showConfusionMatrix(Map<String, Map<String, Integer>> confusionMatrix, String[] classNames, double accuracy) {
