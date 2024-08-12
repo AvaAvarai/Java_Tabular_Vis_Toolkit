@@ -151,6 +151,16 @@ public class ButtonPanel {
             }
         });
 
+        JButton ruleOverlayButton = UIHelper.createButton("icons/rule_overlay.png", "Rule Overlay", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showRuleOverlayPlot();
+            }
+        });
+        
+              
+
         buttonPanel.add(loadButton);
         buttonPanel.add(csvViewer.toggleButton);
         buttonPanel.add(highlightBlanksButton);
@@ -168,7 +178,8 @@ public class ButtonPanel {
         buttonPanel.add(ruleTesterButton);
         buttonPanel.add(csvViewer.toggleTrigonometricButton);
         buttonPanel.add(csvViewer.toggleEasyCasesButton);
-
+        buttonPanel.add(ruleOverlayButton);
+        
         return buttonPanel;
     }
 }

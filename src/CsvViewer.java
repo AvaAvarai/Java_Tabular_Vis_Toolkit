@@ -263,6 +263,38 @@ public class CsvViewer extends JFrame {
         updateSelectedRowsLabel();
     }
 
+    public void showRuleOverlayPlot() {
+        TableColumnModel columnModel = table.getColumnModel();
+        int columnCount = columnModel.getColumnCount();
+        String[] columnNames = new String[columnCount];
+        int[] columnOrder = new int[columnCount];
+        for (int i = 0; i < columnCount; i++) {
+            columnNames[i] = columnModel.getColumn(i).getHeaderValue().toString();
+            columnOrder[i] = table.convertColumnIndexToModel(i);
+        }
+    
+        List<String[]> data = new ArrayList<>();
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            if (!hiddenRows.contains(row)) {
+                String[] rowData = new String[columnCount];
+                for (int col = 0; col < columnCount; col++) {
+                    Object value = tableModel.getValueAt(row, col);
+                    rowData[col] = value != null ? value.toString() : "";
+                }
+                data.add(rowData);
+            }
+        }
+    
+        List<Integer> selectedRows = getSelectedRowsIndices();
+        selectedRows.removeIf(hiddenRows::contains);
+    
+        List<PureRegion> pureRegions = PureRegion.calculatePureRegions(tableModel, thresholdSlider.getValue(), getClassColumnIndex());
+    
+        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows);
+        plot.setPureRegionsOverlay(pureRegions); // Assuming the plot class can take this data
+        plot.setVisible(true);
+    }    
+
     private void removeTrigonometricColumns() {
         if (originalData != null && originalColumnNames != null) {
             tableModel.setColumnCount(0);

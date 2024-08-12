@@ -26,6 +26,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
     private Map<String, Color> classColors;
     private Map<String, Shape> classShapes;
+    private List<PureRegion> pureRegions;
 
     public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex, int[] columnOrder, List<Integer> selectedRows) {
         setTitle("Parallel Coordinates Plot");
@@ -121,6 +122,25 @@ public class ParallelCoordinatesPlot extends JFrame {
                         g2.draw(line);
                     }
                 }
+
+                // Draw pure regions as overlays
+                if (pureRegions != null) {
+                    for (PureRegion region : pureRegions) {
+                        int startColIndex = findColumnIndex(region.attributeName, columnNames);
+                        int endColIndex = startColIndex + 1;
+
+                        if (startColIndex >= 0 && endColIndex < dataset.getColumnCount()) {
+                            double startX = domainAxis.getCategoryMiddle(startColIndex, getColumnCount(), dataArea, plot.getDomainAxisEdge());
+                            double endX = domainAxis.getCategoryMiddle(endColIndex, getColumnCount(), dataArea, plot.getDomainAxisEdge());
+
+                            double startY = getNormalizedY(region.start, startColIndex, dataArea, columnMinValues, columnMaxValues);
+                            double endY = getNormalizedY(region.end, endColIndex, dataArea, columnMinValues, columnMaxValues);
+
+                            g2.setPaint(new Color(classColors.get(region.currentClass).getRed(), classColors.get(region.currentClass).getGreen(), classColors.get(region.currentClass).getBlue(), 100));
+                            g2.fill(new Rectangle2D.Double(startX, startY, endX - startX, endY - startY));
+                        }
+                    }
+                }
             }
 
             private double getNormalizedY(int row, int column, Rectangle2D dataArea) {
@@ -129,6 +149,22 @@ public class ParallelCoordinatesPlot extends JFrame {
                 double max = columnMaxValues.get(column);
                 double normalizedValue = (value - min) / (max - min);
                 return dataArea.getMaxY() - (normalizedValue * dataArea.getHeight());
+            }
+
+            private double getNormalizedY(double value, int column, Rectangle2D dataArea, Map<Integer, Double> minValues, Map<Integer, Double> maxValues) {
+                double min = minValues.get(column);
+                double max = maxValues.get(column);
+                double normalizedValue = (value - min) / (max - min);
+                return dataArea.getMaxY() - (normalizedValue * dataArea.getHeight());
+            }
+
+            private int findColumnIndex(String columnName, String[] columnNames) {
+                for (int i = 0; i < columnNames.length; i++) {
+                    if (columnNames[i].equalsIgnoreCase(columnName)) {
+                        return i;
+                    }
+                }
+                return -1;
             }
 
             @Override
@@ -167,6 +203,10 @@ public class ParallelCoordinatesPlot extends JFrame {
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new Dimension(800, 600));
         setContentPane(chartPanel);
+    }
+
+    public void setPureRegionsOverlay(List<PureRegion> pureRegions) {
+        this.pureRegions = pureRegions;
     }
 
     private Map<String, Shape> createClassShapes() {
