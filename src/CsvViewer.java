@@ -159,17 +159,32 @@ public class CsvViewer extends JFrame {
                 return;
             }
         }
-    
+        
         if (areDifferenceColumnsVisible) {
-            removeTrigonometricColumns();
+            removeTrigonometricColumns(); // If columns are visible, remove them
         } else {
-            addTrigonometricColumns();
+            // Ask user to choose the mode for trigonometric columns
+            String[] options = {"Forward Difference", "Backward Difference", "Direct"};
+            String mode = (String) JOptionPane.showInputDialog(this, 
+                "Choose the mode for trigonometric columns:", 
+                "Trigonometric Columns Mode", 
+                JOptionPane.PLAIN_MESSAGE, 
+                null, 
+                options, 
+                options[0]);
+    
+            if (mode != null) { // User selected a mode, add columns based on the mode
+                addTrigonometricColumns(mode);
+            }
         }
+    
+        // Toggle the state of whether the difference columns are visible
         areDifferenceColumnsVisible = !areDifferenceColumnsVisible;
     }
     
-    private void addTrigonometricColumns() {
+    private void addTrigonometricColumns(String mode) {
         if (!areDifferenceColumnsVisible) {
+            // Save the original data and column names before adding new columns
             originalData = new ArrayList<>();
             originalColumnNames = new ArrayList<>();
             for (int row = 0; row < tableModel.getRowCount(); row++) {
@@ -183,85 +198,96 @@ public class CsvViewer extends JFrame {
                 originalColumnNames.add(tableModel.getColumnName(col));
             }
         }
-
+    
         int numRows = tableModel.getRowCount();
         TableColumnModel columnModel = table.getColumnModel();
         int numCols = columnModel.getColumnCount();
-        int classColumnIndex = getClassColumnIndex();
-
-        for (int i = 0; i < numCols - 1; i++) {
+        int classColumnIndex = getClassColumnIndex(); // Ensure we are skipping the class column
+    
+        // Add new columns for trigonometric values with descriptive names
+        for (int i = 0; i < numCols; i++) {
             int col1 = columnModel.getColumn(i).getModelIndex();
-            int col2 = columnModel.getColumn(i + 1).getModelIndex();
-
-            if (col1 == classColumnIndex || col2 == classColumnIndex) continue;
-
-            String baseColName = tableModel.getColumnName(col2) + "-" + tableModel.getColumnName(col1);
-            tableModel.addColumn("Arccos " + baseColName);
-            tableModel.addColumn("Arcsin " + baseColName);
-            tableModel.addColumn("Arctan " + baseColName);
+            int col2 = -1;
+            String description = "";
+    
+            if (col1 == classColumnIndex) continue; // Skip the class column
+    
+            switch (mode) {
+                case "Direct":
+                    description = tableModel.getColumnName(col1);
+                    break;
+                case "Forward Difference":
+                    col2 = (i + 1) % numCols;
+                    if (col2 == classColumnIndex) col2 = (col2 + 1) % numCols;
+                    description = tableModel.getColumnName(col2) + " - " + tableModel.getColumnName(col1);
+                    break;
+                case "Backward Difference":
+                    col2 = (i - 1 + numCols) % numCols;
+                    if (col2 == classColumnIndex) col2 = (col2 - 1 + numCols) % numCols;
+                    description = tableModel.getColumnName(col1) + " - " + tableModel.getColumnName(col2);
+                    break;
+            }
+    
+            tableModel.addColumn("Arccos " + description);
+            tableModel.addColumn("Arcsin " + description);
+            tableModel.addColumn("Arctan " + description);
         }
-
-        int firstColIndex = columnModel.getColumn(0).getModelIndex();
-        int lastColIndex = columnModel.getColumn(numCols - 2).getModelIndex();
-        String finalBaseColName = tableModel.getColumnName(lastColIndex) + "-" + tableModel.getColumnName(firstColIndex);
-        tableModel.addColumn("Arccos " + finalBaseColName);
-        tableModel.addColumn("Arcsin " + finalBaseColName);
-        tableModel.addColumn("Arctan " + finalBaseColName);
-
+    
+        // Calculate and populate the new columns with trigonometric values
         for (int row = 0; row < numRows; row++) {
-            int newColIndex = numCols;
-
-            for (int i = 0; i < numCols - 1; i++) {
+            int newColIndex = numCols; // Start adding at the new columns
+    
+            for (int i = 0; i < numCols; i++) {
                 int col1 = columnModel.getColumn(i).getModelIndex();
-                int col2 = columnModel.getColumn(i + 1).getModelIndex();
-
-                if (col1 == classColumnIndex || col2 == classColumnIndex) continue;
-
+                int col2;
+    
+                if (col1 == classColumnIndex) continue; // Skip the class column
+    
                 try {
                     double value1 = Double.parseDouble(tableModel.getValueAt(row, col1).toString());
-                    double value2 = Double.parseDouble(tableModel.getValueAt(row, col2).toString());
-                    double difference = value2 - value1;
-
-                    double normalizedDifference = Math.max(-1, Math.min(1, difference));
-
-                    double arccosValue = Math.acos(normalizedDifference);
-                    double arcsinValue = Math.asin(normalizedDifference);
-                    double arctanValue = Math.atan(difference);
-
+                    double value2 = 0;
+    
+                    switch (mode) {
+                        case "Direct":
+                            value2 = value1;
+                            break;
+    
+                        case "Forward Difference":
+                            col2 = (i + 1) % numCols;
+                            if (col2 == classColumnIndex) col2 = (col2 + 1) % numCols;
+                            value2 = Double.parseDouble(tableModel.getValueAt(row, col2).toString());
+                            value1 = value2 - value1;
+                            break;
+    
+                        case "Backward Difference":
+                            col2 = (i - 1 + numCols) % numCols;
+                            if (col2 == classColumnIndex) col2 = (col2 - 1 + numCols) % numCols;
+                            value2 = Double.parseDouble(tableModel.getValueAt(row, col2).toString());
+                            value1 = value1 - value2;
+                            break;
+                    }
+    
+                    // Calculate trigonometric values
+                    double arccosValue = Math.acos(value1);
+                    double arcsinValue = Math.asin(value1);
+                    double arctanValue = Math.atan(value1);
+    
+                    // Set the calculated values in the respective columns
                     tableModel.setValueAt(arccosValue, row, newColIndex++);
                     tableModel.setValueAt(arcsinValue, row, newColIndex++);
                     tableModel.setValueAt(arctanValue, row, newColIndex++);
                 } catch (NumberFormatException | NullPointerException e) {
+                    // If there's an issue parsing the numbers, set the values as empty strings
                     tableModel.setValueAt("", row, newColIndex++);
                     tableModel.setValueAt("", row, newColIndex++);
                     tableModel.setValueAt("", row, newColIndex++);
                 }
             }
-
-            try {
-                double lastValue = Double.parseDouble(tableModel.getValueAt(row, lastColIndex).toString());
-                double firstValue = Double.parseDouble(tableModel.getValueAt(row, firstColIndex).toString());
-                double finalDifference = lastValue - firstValue;
-
-                double normalizedFinalDifference = Math.max(-1, Math.min(1, finalDifference));
-
-                double finalArccosValue = Math.acos(normalizedFinalDifference);
-                double finalArcsinValue = Math.asin(normalizedFinalDifference);
-                double finalArctanValue = Math.atan(finalDifference);
-
-                tableModel.setValueAt(finalArccosValue, row, tableModel.getColumnCount() - 3);
-                tableModel.setValueAt(finalArcsinValue, row, tableModel.getColumnCount() - 2);
-                tableModel.setValueAt(finalArctanValue, row, tableModel.getColumnCount() - 1);
-            } catch (NumberFormatException | NullPointerException e) {
-                tableModel.setValueAt("", row, tableModel.getColumnCount() - 3);
-                tableModel.setValueAt("", row, tableModel.getColumnCount() - 2);
-                tableModel.setValueAt("", row, tableModel.getColumnCount() - 1);
-            }
         }
-
+    
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
-    }
+    }    
 
     public void showRuleOverlayPlot() {
         TableColumnModel columnModel = table.getColumnModel();
