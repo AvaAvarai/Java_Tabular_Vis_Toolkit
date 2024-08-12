@@ -25,29 +25,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class CsvViewer extends JFrame {
-
-    // Inner class to hold pure region data
-    class PureRegion {
-        String attributeName;
-        double start;
-        double end;
-        String currentClass;
-        int regionCount;
-        double percentageOfClass;
-        double percentageOfDataset;
-
-        public PureRegion(String attributeName, double start, double end, String currentClass,
-                          int regionCount, double percentageOfClass, double percentageOfDataset) {
-            this.attributeName = attributeName;
-            this.start = start;
-            this.end = end;
-            this.currentClass = currentClass;
-            this.regionCount = regionCount;
-            this.percentageOfClass = percentageOfClass;
-            this.percentageOfDataset = percentageOfDataset;
-        }
-    }
-
     public JTable table;
     public ReorderableTableModel tableModel;
     public CsvDataHandler dataHandler;
