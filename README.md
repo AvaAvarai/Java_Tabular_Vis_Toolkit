@@ -47,11 +47,11 @@ JTabViz automatically identifies and utilizes pure intervals within individual a
 
 ## Trigonometric Differences
 
-Trigonometric functions can be applied to the differences of successive attributes.
+To better analyze relationships between attributes, JTabViz applies trigonometric functions to the differences between successive attributes. This approach helps uncover various patterns and interactions in the data. This feature respects the order of rows allowing for observation of different attribute orderings.
 
-- arcsin: Emphasizes small differences of attributes.
-- arctan: Emphasizes slope between attributes.
-- arccos: Emphasizes rotational attribute relations.
+- arcsin: Highlights small differences between attributes, making it easier to detect subtle variations.
+- arctan: Emphasizes the slope or rate of change between attributes, useful for understanding trends and gradients.
+- arccos: Focuses on rotational relationships between attributes, revealing how one attribute rotates relative to another.
 
 ## Getting Started
 
