@@ -31,6 +31,7 @@ public class CsvViewer extends JFrame {
     public boolean isNormalized = false;
     public boolean isHeatmapEnabled = false;
     public boolean isClassColorEnabled = false; // Flag for class column coloring
+    public boolean areDifferenceColumnsVisible = false;
     public Color cellTextColor = Color.BLACK; // Default cell text color
     public JTextArea statsTextArea;
     public JButton toggleButton;
@@ -38,6 +39,7 @@ public class CsvViewer extends JFrame {
     public JButton toggleStatsButton;
     public JButton toggleStatsOnButton;
     public JButton toggleStatsOffButton;
+    public JButton toggleTrigonometricButton;
     public Map<String, Color> classColors = new HashMap<>(); // Store class colors
     public Map<String, Shape> classShapes = new HashMap<>(); // Store class shapes
     public JLabel selectedRowsLabel; // Label to display the number of selected rows
@@ -49,9 +51,99 @@ public class CsvViewer extends JFrame {
     private List<Integer> hiddenRows = new ArrayList<>(); // Store indices of hidden rows
     public JSlider thresholdSlider;
     public JLabel thresholdLabel;
-    private boolean areDifferenceColumnsVisible = false; // State to track if diff columns are shown
     private List<String[]> originalData; // Store the original data to restore when toggling off
     private List<String> originalColumnNames; // Store original column names to restore when toggling off
+
+    public CsvViewer() {
+        setTitle("JTabViz: Java Tabular Visualization Toolkit");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        dataHandler = new CsvDataHandler();
+        tableModel = new ReorderableTableModel();
+        table = TableSetup.createTable(tableModel);
+        table.addMouseListener(new TableMouseListener(this));
+
+        // Add a KeyAdapter to handle Ctrl+C for copying cell content
+        table.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_C) {
+                    if (table.getSelectedRows().length == 1)
+                        copySelectedCell();
+                    else {
+                        StringBuilder sb = new StringBuilder();
+                        for (int row : table.getSelectedRows()) {
+                            for (int col : table.getSelectedColumns()) {
+                                sb.append(table.getValueAt(row, col)).append("\t");
+                            }
+                            sb.append("\n");
+                        }
+                        StringSelection stringSelection = new StringSelection(sb.toString());
+                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+                    }
+                }
+            }
+        });
+
+        JPanel buttonPanel = ButtonPanel.createButtonPanel(this);
+        add(buttonPanel, BorderLayout.NORTH);
+
+        statsTextArea = UIHelper.createTextArea(3, 0);
+        statsScrollPane = new JScrollPane(statsTextArea);
+
+        tableScrollPane = new JScrollPane(table);
+
+        selectedRowsLabel = new JLabel("Selected rows: 0");
+        bottomPanel = new JPanel(new BorderLayout());
+
+        // Initialize the slider
+        thresholdSlider = new JSlider(0, 100, 10); // 0-100% with initial value 10%
+        thresholdSlider.setMajorTickSpacing(20);
+        thresholdSlider.setMinorTickSpacing(5);
+        thresholdSlider.setPaintTicks(true);
+        thresholdSlider.setPaintLabels(true);
+        thresholdSlider.setToolTipText("Adjust threshold percentage");
+
+        // Initialize the threshold label
+        thresholdLabel = new JLabel("5%"); // Initial label value corresponding to the initial slider value
+
+        // Add listener to update the filtering logic and label
+        thresholdSlider.addChangeListener(e -> {
+            int thresholdValue = thresholdSlider.getValue();
+            thresholdLabel.setText(thresholdValue + "%"); // Update label text
+            calculateAndDisplayPureRegions(thresholdValue);
+        });
+
+        // Adding slider and label to the bottom panel
+        JPanel sliderPanel = new JPanel(new BorderLayout());
+        sliderPanel.add(thresholdSlider, BorderLayout.CENTER);
+        sliderPanel.add(thresholdLabel, BorderLayout.EAST); // Add the label to the right of the slider
+
+        bottomPanel.add(sliderPanel, BorderLayout.EAST);
+        bottomPanel.add(selectedRowsLabel, BorderLayout.CENTER);
+
+        statsPanel = new JPanel(new BorderLayout());
+        statsPanel.add(statsScrollPane, BorderLayout.CENTER);
+
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScrollPane, statsPanel);
+        splitPane.setResizeWeight(0.8); // 80% of space for table, 20% for stats initially
+        add(splitPane, BorderLayout.CENTER);
+        add(bottomPanel, BorderLayout.SOUTH); // Always visible at the bottom
+
+        generateClassShapes();
+    }
+
+    private void copySelectedCell() {
+        int row = table.getSelectedRow();
+        int col = table.getSelectedColumn();
+        if (row != -1 && col != -1) {
+            Object cellValue = table.getValueAt(row, col);
+            StringSelection stringSelection = new StringSelection(cellValue != null ? cellValue.toString() : "");
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
+        }
+    }
 
     public void toggleTrigonometricColumns() {
         if (areDifferenceColumnsVisible) {
@@ -186,97 +278,6 @@ public class CsvViewer extends JFrame {
         }
     }
 
-    public CsvViewer() {
-        setTitle("JTabViz: Java Tabular Visualization Toolkit");
-        setSize(800, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-
-        dataHandler = new CsvDataHandler();
-        tableModel = new ReorderableTableModel();
-        table = TableSetup.createTable(tableModel);
-        table.addMouseListener(new TableMouseListener(this));
-
-        // Add a KeyAdapter to handle Ctrl+C for copying cell content
-        table.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_C) {
-                    if (table.getSelectedRows().length == 1)
-                        copySelectedCell();
-                    else {
-                        StringBuilder sb = new StringBuilder();
-                        for (int row : table.getSelectedRows()) {
-                            for (int col : table.getSelectedColumns()) {
-                                sb.append(table.getValueAt(row, col)).append("\t");
-                            }
-                            sb.append("\n");
-                        }
-                        StringSelection stringSelection = new StringSelection(sb.toString());
-                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
-                    }
-                }
-            }
-        });
-
-        JPanel buttonPanel = ButtonPanel.createButtonPanel(this);
-        add(buttonPanel, BorderLayout.NORTH);
-
-        statsTextArea = UIHelper.createTextArea(3, 0);
-        statsScrollPane = new JScrollPane(statsTextArea);
-
-        tableScrollPane = new JScrollPane(table);
-
-        selectedRowsLabel = new JLabel("Selected rows: 0");
-        bottomPanel = new JPanel(new BorderLayout());
-
-        // Initialize the slider
-        thresholdSlider = new JSlider(0, 100, 10); // 0-100% with initial value 10%
-        thresholdSlider.setMajorTickSpacing(20);
-        thresholdSlider.setMinorTickSpacing(5);
-        thresholdSlider.setPaintTicks(true);
-        thresholdSlider.setPaintLabels(true);
-        thresholdSlider.setToolTipText("Adjust threshold percentage");
-
-        // Initialize the threshold label
-        thresholdLabel = new JLabel("5%"); // Initial label value corresponding to the initial slider value
-
-        // Add listener to update the filtering logic and label
-        thresholdSlider.addChangeListener(e -> {
-            int thresholdValue = thresholdSlider.getValue();
-            thresholdLabel.setText(thresholdValue + "%"); // Update label text
-            calculateAndDisplayPureRegions(thresholdValue);
-        });
-
-        // Adding slider and label to the bottom panel
-        JPanel sliderPanel = new JPanel(new BorderLayout());
-        sliderPanel.add(thresholdSlider, BorderLayout.CENTER);
-        sliderPanel.add(thresholdLabel, BorderLayout.EAST); // Add the label to the right of the slider
-
-        bottomPanel.add(sliderPanel, BorderLayout.EAST);
-        bottomPanel.add(selectedRowsLabel, BorderLayout.CENTER);
-
-        statsPanel = new JPanel(new BorderLayout());
-        statsPanel.add(statsScrollPane, BorderLayout.CENTER);
-
-        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScrollPane, statsPanel);
-        splitPane.setResizeWeight(0.8); // 80% of space for table, 20% for stats initially
-        add(splitPane, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH); // Always visible at the bottom
-
-        generateClassShapes();
-    }
-
-    private void copySelectedCell() {
-        int row = table.getSelectedRow();
-        int col = table.getSelectedColumn();
-        if (row != -1 && col != -1) {
-            Object cellValue = table.getValueAt(row, col);
-            StringSelection stringSelection = new StringSelection(cellValue != null ? cellValue.toString() : "");
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
-        }
-    }
-
     public double calculateAndDisplayPureRegions(int thresholdPercentage) {
         List<PureRegion> pureRegions = calculatePureRegions(thresholdPercentage);
     
@@ -394,7 +395,7 @@ public class CsvViewer extends JFrame {
     
         return tableModel.getRowCount() - hiddenRows.size();
     }
-    
+
     public void toggleEasyCases() {
         if (hiddenRows.isEmpty()) {
             hideEasyCases();

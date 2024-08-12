@@ -111,11 +111,22 @@ public class ButtonPanel {
             }
         });
 
-        JButton toggleDifferencesButton = UIHelper.createButton("icons/differences.png", "Toggle Differences", e -> {
+        // Initialize the toggleTrigonometricButton
+        csvViewer.toggleTrigonometricButton = UIHelper.createButton("icons/trigon.png", "Insert Trig Columns", null);
+        csvViewer.toggleTrigonometricButton.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
+                // Toggle the trigonometric columns and immediately update the state
                 csvViewer.toggleTrigonometricColumns();
+                // Update the icon and tooltip based on the state
+                if (csvViewer.areDifferenceColumnsVisible) {
+                    csvViewer.toggleTrigonometricButton.setIcon(UIHelper.loadIcon("icons/trigoff.png", 40, 40));
+                    csvViewer.toggleTrigonometricButton.setToolTipText("Remove Trig Columns");
+                } else {
+                    csvViewer.toggleTrigonometricButton.setIcon(UIHelper.loadIcon("icons/trigon.png", 40, 40));
+                    csvViewer.toggleTrigonometricButton.setToolTipText("Insert Trig Columns");
+                }
             }
         });
 
@@ -148,7 +159,6 @@ public class ButtonPanel {
         buttonPanel.add(insertRowButton);
         buttonPanel.add(deleteRowButton);
         buttonPanel.add(cloneRowButton);
-        buttonPanel.add(toggleDifferencesButton);
         buttonPanel.add(exportButton);
         buttonPanel.add(parallelPlotButton);
         buttonPanel.add(shiftedPairedButton);
@@ -156,6 +166,7 @@ public class ButtonPanel {
         buttonPanel.add(classColorButton);
         buttonPanel.add(setClassColorsButton);
         buttonPanel.add(ruleTesterButton);
+        buttonPanel.add(csvViewer.toggleTrigonometricButton);
         buttonPanel.add(csvViewer.toggleEasyCasesButton);
 
         return buttonPanel;
