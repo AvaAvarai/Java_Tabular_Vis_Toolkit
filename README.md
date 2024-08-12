@@ -43,7 +43,7 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 
 ## Classifying with Single Attribute Pure Intervals
 
-The feature in JTabViz automatically identifies and utilizes pure intervals within individual attributes to classify data points. A pure interval is a range within a single attribute where all data points belong to the same class. This approach allows for straightforward and interpretable classification rules based on specific attribute values.
+JTabViz automatically identifies and utilizes pure intervals within individual attributes to classify data points. A pure interval is a range within a single attribute where all data points belong to the same class. This approach allows for straightforward and interpretable classification rules based on specific attribute values.
 
 ## Getting Started
 

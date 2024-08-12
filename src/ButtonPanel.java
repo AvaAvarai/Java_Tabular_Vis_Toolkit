@@ -115,7 +115,7 @@ public class ButtonPanel {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
-                csvViewer.toggleArcosColumns();
+                csvViewer.toggleTrigonometricColumns();
             }
         });
 

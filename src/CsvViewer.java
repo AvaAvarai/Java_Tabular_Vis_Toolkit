@@ -76,16 +76,16 @@ public class CsvViewer extends JFrame {
     private List<String[]> originalData; // Store the original data to restore when toggling off
     private List<String> originalColumnNames; // Store original column names to restore when toggling off
 
-    public void toggleArcosColumns() {
+    public void toggleTrigonometricColumns() {
         if (areDifferenceColumnsVisible) {
-            removeArcosColumns(); // Remove difference columns
+            removeTrigonometricColumns(); // Remove the trig columns
         } else {
-            addArccosColumns(); // Add difference columns
+            addTrigonometricColumns(); // Add trig columns
         }
         areDifferenceColumnsVisible = !areDifferenceColumnsVisible; // Toggle state
     }
-
-    private void addArccosColumns() {
+    
+    private void addTrigonometricColumns() {
         if (!areDifferenceColumnsVisible) {
             // Save the original data and column names only the first time
             originalData = new ArrayList<>();
@@ -101,71 +101,98 @@ public class CsvViewer extends JFrame {
                 originalColumnNames.add(tableModel.getColumnName(col));
             }
         }
-    
+        
         int numRows = tableModel.getRowCount();
-        int numCols = tableModel.getColumnCount();
+        TableColumnModel columnModel = table.getColumnModel();
+        int numCols = columnModel.getColumnCount();
         int classColumnIndex = getClassColumnIndex();
     
-        // Add arccos columns dynamically, skipping the class column
-        for (int col = 0; col < numCols - 1; col++) {
-            if (col == classColumnIndex || col + 1 == classColumnIndex) continue; // Skip class column
-    
-            String newColName = "Arccos " + tableModel.getColumnName(col + 1) + "-" + tableModel.getColumnName(col);
-            tableModel.addColumn(newColName);
+        // Add trig columns dynamically, skipping the class column
+        for (int i = 0; i < numCols - 1; i++) {
+            int col1 = columnModel.getColumn(i).getModelIndex();
+            int col2 = columnModel.getColumn(i + 1).getModelIndex();
+            
+            if (col1 == classColumnIndex || col2 == classColumnIndex) continue; // Skip class column
+            
+            String baseColName = tableModel.getColumnName(col2) + "-" + tableModel.getColumnName(col1);
+            tableModel.addColumn("Arccos " + baseColName);
+            tableModel.addColumn("Arcsin " + baseColName);
+            tableModel.addColumn("Arctan " + baseColName);
         }
-    
-        // Add the final arccos column comparing the last numeric attribute with the first numeric attribute
-        String finalColName = "Arccos " + tableModel.getColumnName(numCols - 2) + "-" + tableModel.getColumnName(0);
-        tableModel.addColumn(finalColName);
-    
-        // Calculate arccos for each row and add them to the new columns
+        
+        // Add the final trig columns comparing the last numeric attribute with the first numeric attribute
+        int firstColIndex = columnModel.getColumn(0).getModelIndex();
+        int lastColIndex = columnModel.getColumn(numCols - 2).getModelIndex();
+        String finalBaseColName = tableModel.getColumnName(lastColIndex) + "-" + tableModel.getColumnName(firstColIndex);
+        tableModel.addColumn("Arccos " + finalBaseColName);
+        tableModel.addColumn("Arcsin " + finalBaseColName);
+        tableModel.addColumn("Arctan " + finalBaseColName);
+        
+        // Calculate trig functions for each row and add them to the new columns
         for (int row = 0; row < numRows; row++) {
             int newColIndex = numCols;  // Start adding new columns after the original ones
-    
-            for (int col = 0; col < numCols - 1; col++) {
-                if (col == classColumnIndex || col + 1 == classColumnIndex) continue; // Skip class column
-    
+            
+            for (int i = 0; i < numCols - 1; i++) {
+                int col1 = columnModel.getColumn(i).getModelIndex();
+                int col2 = columnModel.getColumn(i + 1).getModelIndex();
+                
+                if (col1 == classColumnIndex || col2 == classColumnIndex) continue; // Skip class column
+                
                 try {
-                    double value1 = Double.parseDouble(tableModel.getValueAt(row, col).toString());
-                    double value2 = Double.parseDouble(tableModel.getValueAt(row, col + 1).toString());
+                    double value1 = Double.parseDouble(tableModel.getValueAt(row, col1).toString());
+                    double value2 = Double.parseDouble(tableModel.getValueAt(row, col2).toString());
                     double difference = value2 - value1;
-    
+        
                     // Normalize the difference to the range [-1, 1] if necessary
                     double normalizedDifference = Math.max(-1, Math.min(1, difference));
-    
-                    // Compute arccos of the normalized difference
+        
+                    // Compute arccos, arcsin, arctan of the normalized difference
                     double arccosValue = Math.acos(normalizedDifference);
+                    double arcsinValue = Math.asin(normalizedDifference);
+                    double arctanValue = Math.atan(difference);
+                    
                     tableModel.setValueAt(arccosValue, row, newColIndex++);
+                    tableModel.setValueAt(arcsinValue, row, newColIndex++);
+                    tableModel.setValueAt(arctanValue, row, newColIndex++);
                 } catch (NumberFormatException | NullPointerException e) {
                     // Handle non-numeric or null values by setting an empty value
                     tableModel.setValueAt("", row, newColIndex++);
+                    tableModel.setValueAt("", row, newColIndex++);
+                    tableModel.setValueAt("", row, newColIndex++);
                 }
             }
-    
-            // Calculate the arccos between the last numeric attribute and the first numeric attribute
+        
+            // Calculate the trig functions between the last numeric attribute and the first numeric attribute
             try {
-                double lastValue = Double.parseDouble(tableModel.getValueAt(row, numCols - 2).toString());
-                double firstValue = Double.parseDouble(tableModel.getValueAt(row, 0).toString());
+                double lastValue = Double.parseDouble(tableModel.getValueAt(row, lastColIndex).toString());
+                double firstValue = Double.parseDouble(tableModel.getValueAt(row, firstColIndex).toString());
                 double finalDifference = lastValue - firstValue;
-    
+        
                 // Normalize the difference to the range [-1, 1] if necessary
                 double normalizedFinalDifference = Math.max(-1, Math.min(1, finalDifference));
-    
-                // Compute arccos of the normalized difference
+        
+                // Compute arccos, arcsin, arctan of the normalized difference
                 double finalArccosValue = Math.acos(normalizedFinalDifference);
-                tableModel.setValueAt(finalArccosValue, row, tableModel.getColumnCount() - 1);
+                double finalArcsinValue = Math.asin(normalizedFinalDifference);
+                double finalArctanValue = Math.atan(finalDifference);
+                
+                tableModel.setValueAt(finalArccosValue, row, tableModel.getColumnCount() - 3);
+                tableModel.setValueAt(finalArcsinValue, row, tableModel.getColumnCount() - 2);
+                tableModel.setValueAt(finalArctanValue, row, tableModel.getColumnCount() - 1);
             } catch (NumberFormatException | NullPointerException e) {
                 // Handle non-numeric or null values by setting an empty value
+                tableModel.setValueAt("", row, tableModel.getColumnCount() - 3);
+                tableModel.setValueAt("", row, tableModel.getColumnCount() - 2);
                 tableModel.setValueAt("", row, tableModel.getColumnCount() - 1);
             }
         }
-    
-        // Update the UI after adding the new columns and arccos values
+        
+        // Update the UI after adding the new columns and trig values
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
     }
-
-    private void removeArcosColumns() {
+    
+    private void removeTrigonometricColumns() {
         if (originalData != null && originalColumnNames != null) {
             tableModel.setColumnCount(0); // Clear all columns
             for (String colName : originalColumnNames) {
@@ -175,7 +202,7 @@ public class CsvViewer extends JFrame {
             for (String[] rowData : originalData) {
                 tableModel.addRow(rowData); // Restore original data
             }
-
+    
             // Update the UI after removing the columns
             dataHandler.updateStats(tableModel, statsTextArea);
             updateSelectedRowsLabel();
