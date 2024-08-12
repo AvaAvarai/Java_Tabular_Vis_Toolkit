@@ -289,9 +289,9 @@ public class CsvViewer extends JFrame {
         selectedRows.removeIf(hiddenRows::contains);
     
         List<PureRegion> pureRegions = PureRegion.calculatePureRegions(tableModel, thresholdSlider.getValue(), getClassColumnIndex());
-    
+
         ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows);
-        plot.setPureRegionsOverlay(pureRegions); // Assuming the plot class can take this data
+        plot.setPureRegionsOverlay(pureRegions);
         plot.setVisible(true);
     }    
 

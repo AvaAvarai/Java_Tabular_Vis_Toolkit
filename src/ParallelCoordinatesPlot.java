@@ -123,24 +123,25 @@ public class ParallelCoordinatesPlot extends JFrame {
                     }
                 }
 
-                // Draw pure regions as overlays
                 if (pureRegions != null) {
                     for (PureRegion region : pureRegions) {
                         int startColIndex = findColumnIndex(region.attributeName, columnNames);
-                        int endColIndex = startColIndex + 1;
-
-                        if (startColIndex >= 0 && endColIndex < dataset.getColumnCount()) {
-                            double startX = domainAxis.getCategoryMiddle(startColIndex, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                            double endX = domainAxis.getCategoryMiddle(endColIndex, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-
+                
+                        if (startColIndex >= 0) {
+                            double xCenter = domainAxis.getCategoryMiddle(startColIndex, getColumnCount(), dataArea, plot.getDomainAxisEdge());
+                
                             double startY = getNormalizedY(region.start, startColIndex, dataArea, columnMinValues, columnMaxValues);
-                            double endY = getNormalizedY(region.end, endColIndex, dataArea, columnMinValues, columnMaxValues);
-
+                            double endY = getNormalizedY(region.end, startColIndex, dataArea, columnMinValues, columnMaxValues);
+                
+                            // Set the width of the rectangle to a fixed value of 0.1
+                            double rectWidth = 0.1 * (dataArea.getWidth() / dataset.getColumnCount());
+                
+                            // Draw the rectangle with a fixed width
                             g2.setPaint(new Color(classColors.get(region.currentClass).getRed(), classColors.get(region.currentClass).getGreen(), classColors.get(region.currentClass).getBlue(), 100));
-                            g2.fill(new Rectangle2D.Double(startX, startY, endX - startX, endY - startY));
+                            g2.fill(new Rectangle2D.Double(xCenter - rectWidth / 2, Math.min(startY, endY), rectWidth, Math.abs(startY - endY)));
                         }
                     }
-                }
+                }                
             }
 
             private double getNormalizedY(int row, int column, Rectangle2D dataArea) {
@@ -207,6 +208,8 @@ public class ParallelCoordinatesPlot extends JFrame {
 
     public void setPureRegionsOverlay(List<PureRegion> pureRegions) {
         this.pureRegions = pureRegions;
+        // now visualize pureRegions
+        repaint();
     }
 
     private Map<String, Shape> createClassShapes() {
