@@ -127,7 +127,8 @@ public class ParallelCoordinatesPlot extends JFrame {
                     for (PureRegion region : pureRegions) {
                         int startColIndex = findColumnIndex(region.attributeName, columnNames);
                 
-                        if (startColIndex >= 0) {
+                        // Ensure the startColIndex is valid
+                        if (startColIndex >= 0 && startColIndex < dataset.getColumnCount()) {
                             double xCenter = domainAxis.getCategoryMiddle(startColIndex, getColumnCount(), dataArea, plot.getDomainAxisEdge());
                 
                             double startY = getNormalizedY(region.start, startColIndex, dataArea, columnMinValues, columnMaxValues);
@@ -141,7 +142,7 @@ public class ParallelCoordinatesPlot extends JFrame {
                             g2.fill(new Rectangle2D.Double(xCenter - rectWidth / 2, Math.min(startY, endY), rectWidth, Math.abs(startY - endY)));
                         }
                     }
-                }                
+                }
             }
 
             private double getNormalizedY(int row, int column, Rectangle2D dataArea) {
