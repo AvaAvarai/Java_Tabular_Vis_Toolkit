@@ -1,6 +1,6 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-**JTabViz** is a Java-based machine learning data analysis toolkit. It supports loading, viewing, analyzing, and classifying CSV data. Key features include data normalization, visualization (heatmaps, Parallel Coordinates, Shifted Paired Coordinates, Static Circular Coordinates), row manipulation, rules testing, analytical rule discovery automation, and data export.
+**JTabViz** is a Java-based machine learning data analysis toolkit designed for data scientists and machine learning practitioners to easily analyze and visualize tabular data used for building visual machine learning models. With data augmentation features, users can explore how changes in the dataset affect resultantly trained models. It supports loading, viewing, analyzing, and classifying CSV data. Key features include data normalization, visualization (heatmaps, Parallel Coordinates, Shifted Paired Coordinates, Static Circular Coordinates), row manipulation, rules testing, analytical rule discovery automation, and data export.
 
 Demo: Exploring Fisher Iris data. Highlighting sepal width outliers for Virginica class.
 ![Demo screenshot 1](screenshots/Iris_Demo_1.png)
@@ -39,11 +39,19 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 - Analytical single attribute rule discovery algorithm
 - Case classifiable with single pure attribute intervals hideable
 - Hidden classified cases no longer clutter visualizations for analysis of difficult to classify regions with single attribute approach.
-- Default threshold position work in progress
+- Calculate trigonometric difference between successive attributes
 
 ## Classifying with Single Attribute Pure Intervals
 
 JTabViz automatically identifies and utilizes pure intervals within individual attributes to classify data points. A pure interval is a range within a single attribute where all data points belong to the same class. This approach allows for straightforward and interpretable classification rules based on specific attribute values.
+
+## Trigonometric Differences
+
+Trigonometric functions can be applied to the differences of successive attributes.
+
+- arcsin: Emphasizes small differences of attributes.
+- arctan: Emphasizes slope between attributes.
+- arccos: Emphasizes rotational attribute relations.
 
 ## Getting Started
 
@@ -106,7 +114,8 @@ JTabViz accepts data in CSV (Comma-Separated Values) format. Here are the key po
 
 3. Class Column:
    - A column representing the class or category of each data point is expected.
-   - This column should be titled "class" (case-insensitive, so "Class" or "CLASS" are also acceptable).
+   - This column can appear in any position.
+   - Should be titled 'class' (case-insensitive, so 'Class' or 'CLASS' are also acceptable).
    - The class column is used for color-coding and shape assignment in various visualizations.
 
 4. Header Row:
@@ -125,10 +134,10 @@ Example CSV structure:
 | 9.99  | 8.88  | 7.77  | 6.66  | 5.55  | C     |
 | 1.23  | 4.56  | 7.89  | 2.34  | 5.67  | B     |
 
-## Aknowledgements
+## Acknowledgements
 
-The user interface icons used are source from Font Awesome.
+The user interface icons used are sourced from Font Awesome.
 
 ## License
 
-The software is freely available for personal and commerical use under the MIT license see `LICENSE` for full details.
+The software is freely available for personal and commercial use under the MIT license, see `LICENSE` for full details.
