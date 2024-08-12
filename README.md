@@ -38,16 +38,22 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 - Highlight selected rows in PC and SPC views
 - Analytical single attribute rule discovery algorithm
 - Case classifiable with single pure attribute intervals hideable
-- Hidden classified cases no longer clutter visualizations for analysis of difficult to classify regions with single attribute approach.
-- Calculate trigonometric difference between successive attributes
+- Hidden classified cases no longer clutter visualizations for analysis of difficult-to-classify regions with a single attribute approach
+- Direct Trigonometric Attribute Measures
+- Forward and Backward Trigonometric Differences between Attributes
+- Overlay single attribute rule regions on Parallel Coordinates to visualize regions
 
-## Classifying with Single Attribute Pure Intervals
+## Automatic Rule Discovery
 
-JTabViz automatically identifies and utilizes pure intervals within individual attributes to classify data points. A pure interval is a range within a single attribute where all data points belong to the same class. This approach allows for straightforward and interpretable classification rules based on specific attribute values.
+For classifying of data we automatically discover pure regions, intervals within a single attribute where all data points belong to the same class.
+
+### Single Attribute Pure Intervals
+
+Using a sliding window algorithm we automatically identify pure intervals within individual attributes based on a single attribute. After identifying all potential pure regions, JTabViz filters them to ensure only the most significant regions are used for classification, eliminating regions which contain another or if the threshold slider is not met for total percentage of class or dataset contained.
 
 ## Trigonometric Differences
 
-To better analyze relationships between attributes, JTabViz applies trigonometric functions to the differences between successive attributes. This approach helps uncover various patterns and interactions in the data. This feature respects the order of rows allowing for observation of different attribute orderings.
+To better analyze relationships between attributes, JTabViz applies trigonometric functions to the forward differences, backward differences, and direct attribute values. This helps uncover various patterns and interactions in the data between attributes.
 
 - arcsin: Highlights small differences between attributes, making it easier to detect subtle variations.
 - arctan: Emphasizes the slope or rate of change between attributes, useful for understanding trends and gradients.
