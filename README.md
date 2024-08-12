@@ -97,7 +97,7 @@ There are three ways to run JTabViz:
    - Run the created JAR file:
 
      ```sh
-     java -cp ".;libs/*;JTabViz.jar" src.Main
+     java -cp ".;libs/*;out/JTabViz.jar" src.Main
      ```
 
 Note: Replace `;` with `:` in the classpath (-cp) if you're using a Unix-based system (Linux, macOS).
