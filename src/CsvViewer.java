@@ -76,16 +76,16 @@ public class CsvViewer extends JFrame {
     private List<String[]> originalData; // Store the original data to restore when toggling off
     private List<String> originalColumnNames; // Store original column names to restore when toggling off
 
-    public void toggleDifferenceColumns() {
+    public void toggleArcosColumns() {
         if (areDifferenceColumnsVisible) {
-            removeDifferenceColumns(); // Remove difference columns
+            removeArcosColumns(); // Remove difference columns
         } else {
-            addDifferenceColumns(); // Add difference columns
+            addArccosColumns(); // Add difference columns
         }
         areDifferenceColumnsVisible = !areDifferenceColumnsVisible; // Toggle state
     }
 
-    private void addDifferenceColumns() {
+    private void addArccosColumns() {
         if (!areDifferenceColumnsVisible) {
             // Save the original data and column names only the first time
             originalData = new ArrayList<>();
@@ -106,19 +106,19 @@ public class CsvViewer extends JFrame {
         int numCols = tableModel.getColumnCount();
         int classColumnIndex = getClassColumnIndex();
     
-        // Add difference columns dynamically, skipping the class column
+        // Add arccos columns dynamically, skipping the class column
         for (int col = 0; col < numCols - 1; col++) {
             if (col == classColumnIndex || col + 1 == classColumnIndex) continue; // Skip class column
     
-            String newColName = "Diff " + tableModel.getColumnName(col + 1) + "-" + tableModel.getColumnName(col);
+            String newColName = "Arccos " + tableModel.getColumnName(col + 1) + "-" + tableModel.getColumnName(col);
             tableModel.addColumn(newColName);
         }
     
-        // Add the final difference column comparing the last numeric attribute with the first numeric attribute
-        String finalColName = "Diff " + tableModel.getColumnName(numCols - 2) + "-" + tableModel.getColumnName(0);
+        // Add the final arccos column comparing the last numeric attribute with the first numeric attribute
+        String finalColName = "Arccos " + tableModel.getColumnName(numCols - 2) + "-" + tableModel.getColumnName(0);
         tableModel.addColumn(finalColName);
     
-        // Calculate differences for each row and add them to the new columns
+        // Calculate arccos for each row and add them to the new columns
         for (int row = 0; row < numRows; row++) {
             int newColIndex = numCols;  // Start adding new columns after the original ones
     
@@ -129,31 +129,43 @@ public class CsvViewer extends JFrame {
                     double value1 = Double.parseDouble(tableModel.getValueAt(row, col).toString());
                     double value2 = Double.parseDouble(tableModel.getValueAt(row, col + 1).toString());
                     double difference = value2 - value1;
-                    tableModel.setValueAt(difference, row, newColIndex++);
+    
+                    // Normalize the difference to the range [-1, 1] if necessary
+                    double normalizedDifference = Math.max(-1, Math.min(1, difference));
+    
+                    // Compute arccos of the normalized difference
+                    double arccosValue = Math.acos(normalizedDifference);
+                    tableModel.setValueAt(arccosValue, row, newColIndex++);
                 } catch (NumberFormatException | NullPointerException e) {
                     // Handle non-numeric or null values by setting an empty value
                     tableModel.setValueAt("", row, newColIndex++);
                 }
             }
     
-            // Calculate the difference between the last numeric attribute and the first numeric attribute
+            // Calculate the arccos between the last numeric attribute and the first numeric attribute
             try {
                 double lastValue = Double.parseDouble(tableModel.getValueAt(row, numCols - 2).toString());
                 double firstValue = Double.parseDouble(tableModel.getValueAt(row, 0).toString());
                 double finalDifference = lastValue - firstValue;
-                tableModel.setValueAt(finalDifference, row, tableModel.getColumnCount() - 1);
+    
+                // Normalize the difference to the range [-1, 1] if necessary
+                double normalizedFinalDifference = Math.max(-1, Math.min(1, finalDifference));
+    
+                // Compute arccos of the normalized difference
+                double finalArccosValue = Math.acos(normalizedFinalDifference);
+                tableModel.setValueAt(finalArccosValue, row, tableModel.getColumnCount() - 1);
             } catch (NumberFormatException | NullPointerException e) {
                 // Handle non-numeric or null values by setting an empty value
                 tableModel.setValueAt("", row, tableModel.getColumnCount() - 1);
             }
         }
     
-        // Update the UI after adding the new columns and differences
+        // Update the UI after adding the new columns and arccos values
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
     }
 
-    private void removeDifferenceColumns() {
+    private void removeArcosColumns() {
         if (originalData != null && originalColumnNames != null) {
             tableModel.setColumnCount(0); // Clear all columns
             for (String colName : originalColumnNames) {
@@ -564,30 +576,43 @@ public class CsvViewer extends JFrame {
     
         if (result == JFileChooser.APPROVE_OPTION) {
             String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-            tableModel.setRowCount(0); // Clear existing table rows
-            tableModel.setColumnCount(0); // Clear existing table columns
-            classColors.clear(); // Clear existing class colors
-            classShapes.clear(); // Clear existing class shapes
-            dataHandler.clearData(); // Clear existing data in data handler
+            
+            // Reset table model and related state
+            clearTableAndState();
+    
+            // Load the new dataset
             dataHandler.loadCsvData(filePath, tableModel, statsTextArea);
+    
+            // Reinitialize state based on the new data
             isNormalized = false;
-            isHeatmapEnabled = false; // Reset heatmap state when new CSV is loaded
-            isClassColorEnabled = false; // Reset class color state when new CSV is loaded
-            updateTableData(dataHandler.getOriginalData());
+            isHeatmapEnabled = false;
+            isClassColorEnabled = false;
             generateClassColors(); // Generate class colors based on the loaded data
             generateClassShapes(); // Generate class shapes based on the loaded data
             updateSelectedRowsLabel(); // Reset the selected rows label
-    
+            
             // Reset the Normalize button to its initial state
             toggleButton.setIcon(UIHelper.loadIcon("icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
-
+    
             // Automatically set the slider to the best threshold
             setSliderToMaxCoverage(); 
-
+    
             // Scroll the stats window to the top on initial load
             statsTextArea.setCaretPosition(0);
         }
+    }
+
+    // Helper method to clear the table and reset internal state
+    private void clearTableAndState() {
+        tableModel.setRowCount(0); // Clear existing table rows
+        tableModel.setColumnCount(0); // Clear existing table columns
+        classColors.clear(); // Clear existing class colors
+        classShapes.clear(); // Clear existing class shapes
+        dataHandler.clearData(); // Clear existing data in data handler
+        originalData = null; // Reset original data storage
+        originalColumnNames = null; // Reset original column names storage
+        areDifferenceColumnsVisible = false; // Reset difference columns visibility flag
     }
 
     public void toggleDataView() {
