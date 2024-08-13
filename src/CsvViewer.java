@@ -465,6 +465,7 @@ public class CsvViewer extends JFrame {
         Map<String, List<Double>> classSums = new HashMap<>();
         int classColumnIndex = getClassColumnIndex();
     
+        // Calculate the linear combination sums for each class
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             double sum = 0.0;
             for (int j = 0; j < originalColumnIndices.size(); j++) {
@@ -475,20 +476,40 @@ public class CsvViewer extends JFrame {
             classSums.computeIfAbsent(className, k -> new ArrayList<>()).add(sum);
         }
     
-        double separation = 0.0;
-        List<Double> centers = new ArrayList<>();
-        for (List<Double> sums : classSums.values()) {
-            double mean = sums.stream().mapToDouble(Double::doubleValue).average().orElse(0);
-            centers.add(mean);
+        // Calculate overall mean (to be used for between-class variance)
+        double overallMean = classSums.values().stream()
+            .flatMapToDouble(classList -> classList.stream().mapToDouble(Double::doubleValue))
+            .average().orElse(0.0);
+    
+        double betweenClassVariance = 0.0;
+        double withinClassVariance = 0.0;
+        int totalSampleCount = tableModel.getRowCount();
+    
+        // Calculate between-class and within-class variance
+        for (Map.Entry<String, List<Double>> entry : classSums.entrySet()) {
+            List<Double> classValues = entry.getValue();
+            int classSampleCount = classValues.size();
+            double classMean = classValues.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+            
+            // Between-class variance contribution
+            betweenClassVariance += classSampleCount * Math.pow(classMean - overallMean, 2);
+    
+            // Within-class variance
+            double classVariance = classValues.stream().mapToDouble(v -> Math.pow(v - classMean, 2)).sum();
+            withinClassVariance += classVariance;
         }
     
-        for (int i = 0; i < centers.size(); i++) {
-            for (int j = i + 1; j < centers.size(); j++) {
-                separation += Math.abs(centers.get(i) - centers.get(j));
-            }
+        // Normalize variances
+        betweenClassVariance /= totalSampleCount;
+        withinClassVariance /= totalSampleCount;
+    
+        // If within-class variance is zero, return a large value to emphasize maximal separation
+        if (withinClassVariance == 0) {
+            return Double.MAX_VALUE;
         }
     
-        return separation;
+        // Maximize the separation by maximizing between-class variance and minimizing within-class variance
+        return betweenClassVariance / withinClassVariance;
     }
 
     private void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel) {
