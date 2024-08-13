@@ -159,7 +159,13 @@ public class ButtonPanel {
             }
         });
         
-              
+        JButton linearCombinationButton = UIHelper.createButton("icons/linear_combination.png", "Insert Linear Combination Column", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.insertLinearCombinationColumn();
+            }
+        });        
 
         buttonPanel.add(loadButton);
         buttonPanel.add(csvViewer.toggleButton);
@@ -179,6 +185,7 @@ public class ButtonPanel {
         buttonPanel.add(csvViewer.toggleTrigonometricButton);
         buttonPanel.add(csvViewer.toggleEasyCasesButton);
         buttonPanel.add(ruleOverlayButton);
+        buttonPanel.add(linearCombinationButton);
 
         return buttonPanel;
     }
