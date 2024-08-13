@@ -1,6 +1,8 @@
 package src;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
@@ -61,6 +63,17 @@ public class CsvViewer extends JFrame {
         dataHandler = new CsvDataHandler();
         tableModel = new ReorderableTableModel();
         table = TableSetup.createTable(tableModel);
+
+        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        table.setRowSelectionAllowed(true);
+        table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                updateSelectedRowsLabel();
+            }
+        });
+        
+
         table.addMouseListener(new TableMouseListener(this));
         table.getTableHeader().addMouseListener(new TableMouseListener(this));
 
