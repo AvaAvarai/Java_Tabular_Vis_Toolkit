@@ -370,32 +370,28 @@ public class CsvViewer extends JFrame {
             return;
         }
     
-        // Initialize lists to store column indices and coefficients
-        List<Integer> columnIndices = new ArrayList<>();
+        // Identify original columns by skipping any previously added linear combination columns
+        List<Integer> originalColumnIndices = new ArrayList<>();
         List<Double> coefficients = new ArrayList<>();
-        
-        // Create a dialog to get the coefficients from the user
+    
         JPanel panel = new JPanel(new GridLayout(0, 2));
         
-        // Populate the dialog with fields for each column, excluding the "class" column
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            if (!tableModel.getColumnName(i).equalsIgnoreCase("class")) {
-                JLabel label = new JLabel("Coefficient for " + tableModel.getColumnName(i) + ":");
+            String columnName = tableModel.getColumnName(i);
+            // Consider a column original if its name doesn't start with "Linear Combination:"
+            if (!columnName.startsWith("Linear Combination:") && !columnName.equalsIgnoreCase("class")) {
+                originalColumnIndices.add(i);
+                JLabel label = new JLabel("Coefficient for " + columnName + ":");
                 JTextField coefficientField = new JTextField("1"); // Default coefficient is 1
-                
                 panel.add(label);
                 panel.add(coefficientField);
-                
-                // Store the column index and prepare to capture the coefficient
-                columnIndices.add(i);
                 coefficients.add(null); // Placeholder for the coefficient
             }
         }
     
         int result = JOptionPane.showConfirmDialog(this, panel, "Enter Coefficients for Linear Combination", JOptionPane.OK_CANCEL_OPTION);
-        
+    
         if (result == JOptionPane.OK_OPTION) {
-            // Parse coefficients entered by the user
             try {
                 for (int j = 0; j < coefficients.size(); j++) {
                     coefficients.set(j, Double.parseDouble(((JTextField) panel.getComponent(2 * j + 1)).getText()));
@@ -404,29 +400,28 @@ public class CsvViewer extends JFrame {
                 JOptionPane.showMessageDialog(this, "Please enter valid numbers for coefficients.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            
+    
             // Construct the name for the new column
             StringBuilder columnNameBuilder = new StringBuilder("Linear Combination: ");
-            for (int j = 0; j < columnIndices.size(); j++) {
-                columnNameBuilder.append(coefficients.get(j)).append(" * ").append(tableModel.getColumnName(columnIndices.get(j)));
-                if (j < columnIndices.size() - 1) {
+            for (int j = 0; j < originalColumnIndices.size(); j++) {
+                columnNameBuilder.append(coefficients.get(j)).append(" * ").append(tableModel.getColumnName(originalColumnIndices.get(j)));
+                if (j < originalColumnIndices.size() - 1) {
                     columnNameBuilder.append(" + ");
                 }
             }
     
             tableModel.addColumn(columnNameBuilder.toString());
     
-            // Populate the new column with the computed linear combination
+            // Populate the new column with the computed linear combination based on original columns
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 double sum = 0.0;
                 try {
-                    for (int j = 0; j < columnIndices.size(); j++) {
-                        Object value = tableModel.getValueAt(row, columnIndices.get(j));
+                    for (int j = 0; j < originalColumnIndices.size(); j++) {
+                        Object value = tableModel.getValueAt(row, originalColumnIndices.get(j));
                         sum += coefficients.get(j) * Double.parseDouble(value.toString());
                     }
                 } catch (NumberFormatException | NullPointerException e) {
-                    // Handle cases where a value cannot be converted to a number
-                    sum = Double.NaN; // Mark invalid rows with NaN
+                    sum = Double.NaN; // Handle invalid entries with NaN
                 }
                 tableModel.setValueAt(sum, row, tableModel.getColumnCount() - 1);
             }
