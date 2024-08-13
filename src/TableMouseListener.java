@@ -2,6 +2,8 @@ package src;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javax.swing.*;
+import javax.swing.table.JTableHeader;
 
 public class TableMouseListener extends MouseAdapter {
     private CsvViewer csvViewer;
@@ -12,6 +14,20 @@ public class TableMouseListener extends MouseAdapter {
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        csvViewer.updateSelectedRowsLabel();
+        JTable table = csvViewer.table;
+        JTableHeader header = table.getTableHeader();
+        int column = header.columnAtPoint(e.getPoint());
+
+        if (column != -1 && e.getClickCount() == 2) {
+            int confirm = JOptionPane.showConfirmDialog(
+                    csvViewer,
+                    "Are you sure you want to delete this column?",
+                    "Delete Column",
+                    JOptionPane.YES_NO_OPTION
+            );
+            if (confirm == JOptionPane.YES_OPTION) {
+                csvViewer.deleteColumn(column);
+            }
+        }
     }
 }

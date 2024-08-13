@@ -42,6 +42,7 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 - Direct Trigonometric Attribute Measures
 - Forward and Backward Trigonometric Differences between Attributes
 - Overlay single attribute rule regions on Parallel Coordinates to visualize regions
+- Inserted columns can be deleted by double-left clicking on their header.
 
 ## Automatic Rule Discovery
 

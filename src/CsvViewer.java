@@ -62,6 +62,7 @@ public class CsvViewer extends JFrame {
         tableModel = new ReorderableTableModel();
         table = TableSetup.createTable(tableModel);
         table.addMouseListener(new TableMouseListener(this));
+        table.getTableHeader().addMouseListener(new TableMouseListener(this));
 
         table.addKeyListener(new KeyAdapter() {
             @Override
@@ -615,26 +616,32 @@ public class CsvViewer extends JFrame {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new java.io.File("datasets"));
         int result = fileChooser.showOpenDialog(this);
-
+    
         if (result == JFileChooser.APPROVE_OPTION) {
             String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-
+    
             clearTableAndState();
-
+    
             dataHandler.loadCsvData(filePath, tableModel, statsTextArea);
-
+    
+            // Initialize originalColumnNames after loading data
+            originalColumnNames = new ArrayList<>();
+            for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                originalColumnNames.add(tableModel.getColumnName(i));
+            }
+    
             isNormalized = false;
             isHeatmapEnabled = false;
             isClassColorEnabled = false;
             generateClassColors();
             generateClassShapes();
             updateSelectedRowsLabel();
-
+    
             toggleButton.setIcon(UIHelper.loadIcon("icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
-
+    
             setSliderToMaxCoverage();
-
+    
             statsTextArea.setCaretPosition(0);
         }
     }
@@ -649,6 +656,37 @@ public class CsvViewer extends JFrame {
         originalColumnNames = null;
         areDifferenceColumnsVisible = false;
     }
+
+    public void deleteColumn(int columnIndex) {
+        int classColumnIndex = getClassColumnIndex();  // Use the method to find the class column index
+    
+        // Check if the selected column is the class column
+        if (columnIndex == classColumnIndex) {
+            JOptionPane.showMessageDialog(this, "Cannot delete the class column.", "Deletion Not Allowed", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        if (originalColumnNames.contains(tableModel.getColumnName(columnIndex))) {
+            JOptionPane.showMessageDialog(this, "Cannot delete original attribute columns.", "Deletion Not Allowed", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+    
+        // Remove the column from the table model
+        TableColumnModel columnModel = table.getColumnModel();
+        columnModel.removeColumn(columnModel.getColumn(columnIndex));
+    
+        // Remove the column data from the table model
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            for (int col = columnIndex; col < tableModel.getColumnCount() - 1; col++) {
+                tableModel.setValueAt(tableModel.getValueAt(row, col + 1), row, col);
+            }
+        }
+        tableModel.setColumnCount(tableModel.getColumnCount() - 1);
+        
+        // Update UI components that may rely on column data
+        dataHandler.updateStats(tableModel, statsTextArea);
+        updateSelectedRowsLabel();
+        calculateAndDisplayPureRegions(thresholdSlider.getValue());
+    }    
 
     public void toggleDataView() {
         int currentCaretPosition = statsTextArea.getCaretPosition();
@@ -672,11 +710,18 @@ public class CsvViewer extends JFrame {
 
     public void updateTableData(List<String[]> data) {
         int currentCaretPosition = statsTextArea.getCaretPosition();
-
+    
         tableModel.setRowCount(0);
         for (String[] row : data) {
             tableModel.addRow(row);
         }
+        
+        // Re-populate originalColumnNames after updating table data
+        originalColumnNames = new ArrayList<>();
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            originalColumnNames.add(tableModel.getColumnName(i));
+        }
+    
         if (isHeatmapEnabled || isClassColorEnabled) {
             applyCombinedRenderer();
         } else {
@@ -684,7 +729,7 @@ public class CsvViewer extends JFrame {
         }
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
-
+    
         currentCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length());
         calculateAndDisplayPureRegions(thresholdSlider.getValue());
         statsTextArea.setCaretPosition(currentCaretPosition);
