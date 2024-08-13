@@ -159,7 +159,7 @@ public class ButtonPanel {
             }
         });
         
-        JButton linearCombinationButton = UIHelper.createButton("icons/linear_combination.png", "Insert Linear Combination Column", e -> {
+        JButton linearCombinationButton = UIHelper.createButton("icons/combo.png", "Insert Linear Combination Column", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
