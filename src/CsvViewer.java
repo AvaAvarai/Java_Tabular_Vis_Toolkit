@@ -390,6 +390,13 @@ public class CsvViewer extends JFrame {
             }
         }
     
+        JButton exhaustiveSearchButton = new JButton("Exhaustive Search");
+        exhaustiveSearchButton.addActionListener(e -> {
+            performExhaustiveSearch(originalColumnIndices, coefficients, panel);
+        });
+        
+        panel.add(exhaustiveSearchButton);
+    
         int result = JOptionPane.showConfirmDialog(this, panel, "Enter Coefficients for Linear Combination", JOptionPane.OK_CANCEL_OPTION);
     
         if (result == JOptionPane.OK_OPTION) {
@@ -431,6 +438,102 @@ public class CsvViewer extends JFrame {
             updateSelectedRowsLabel();
         }
     }
+
+    private void performExhaustiveSearch(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel) {
+        double bestSeparation = Double.NEGATIVE_INFINITY;  // Initialize bestSeparation locally
+        List<Double> bestCoefficients = new ArrayList<>(coefficients);
+    
+        int numAttributes = originalColumnIndices.size();
+        double lowerBound = -numAttributes;
+        double upperBound = numAttributes;
+        double stepSize = 0.5; // Smaller step size for finer search
+    
+        double[] currentCoefficients = new double[numAttributes];
+        bestSeparation = searchCoefficientsRecursive(originalColumnIndices, currentCoefficients, 0, lowerBound, upperBound, stepSize, bestCoefficients, bestSeparation);
+    
+        // Update the UI with the best coefficients found
+        for (int i = 0; i < bestCoefficients.size(); i++) {
+            JTextField coefficientField = (JTextField) panel.getComponent(2 * i + 1);
+            coefficientField.setText(bestCoefficients.get(i).toString());
+        }
+    
+        JOptionPane.showMessageDialog(this, "Exhaustive search completed. Best coefficients applied.", "Search Complete", JOptionPane.INFORMATION_MESSAGE);
+    }    
+    
+    private double searchCoefficientsRecursive(List<Integer> originalColumnIndices, double[] currentCoefficients, int index, double lowerBound, double upperBound, double stepSize, List<Double> bestCoefficients, double bestSeparation) {
+        if (index == currentCoefficients.length) {
+            // Evaluate the current set of coefficients
+            double separation = evaluateClassSeparation(originalColumnIndices, currentCoefficients);
+            if (separation > bestSeparation) {
+                bestSeparation = separation;
+                for (int i = 0; i < currentCoefficients.length; i++) {
+                    bestCoefficients.set(i, currentCoefficients[i]);
+                }
+            }
+            return bestSeparation;
+        }
+    
+        for (double coef = lowerBound; coef <= upperBound; coef += stepSize) {
+            currentCoefficients[index] = coef;
+            bestSeparation = searchCoefficientsRecursive(originalColumnIndices, currentCoefficients, index + 1, lowerBound, upperBound, stepSize, bestCoefficients, bestSeparation);
+        }
+        
+        return bestSeparation;
+    }    
+    
+    private double evaluateClassSeparation(List<Integer> originalColumnIndices, double[] coefficients) {
+        Map<String, List<Double>> classSums = new HashMap<>();
+        int classColumnIndex = getClassColumnIndex();
+    
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            double sum = 0.0;
+            for (int j = 0; j < originalColumnIndices.size(); j++) {
+                double value = Double.parseDouble(tableModel.getValueAt(row, originalColumnIndices.get(j)).toString());
+                sum += coefficients[j] * value;
+            }
+            String className = (String) tableModel.getValueAt(row, classColumnIndex);
+            classSums.computeIfAbsent(className, k -> new ArrayList<>()).add(sum);
+        }
+    
+        double separation = 0.0;
+        List<Double> centers = new ArrayList<>();
+        for (List<Double> sums : classSums.values()) {
+            double mean = sums.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+            centers.add(mean);
+        }
+    
+        for (int i = 0; i < centers.size(); i++) {
+            for (int j = i + 1; j < centers.size(); j++) {
+                separation += Math.abs(centers.get(i) - centers.get(j));
+            }
+        }
+    
+        return separation;
+    }
+    
+    private double evaluateLinearCombination(List<Integer> originalColumnIndices, List<Double> coefficients) {
+        double score = 0.0;
+    
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            double sum = 0.0;
+            try {
+                for (int j = 0; j < originalColumnIndices.size(); j++) {
+                    Object value = tableModel.getValueAt(row, originalColumnIndices.get(j));
+                    sum += coefficients.get(j) * Double.parseDouble(value.toString());
+                }
+            } catch (NumberFormatException | NullPointerException e) {
+                // Skip invalid entries
+                continue;
+            }
+    
+            // Define a scoring function based on how well the sum separates the classes
+            // For example, you could use the absolute difference between sums of different classes
+            // Modify this scoring function as per your specific requirements
+            score += Math.abs(sum);
+        }
+    
+        return score;
+    }    
 
     public double calculateAndDisplayPureRegions(int thresholdPercentage) {
         int classColumnIndex = getClassColumnIndex();
