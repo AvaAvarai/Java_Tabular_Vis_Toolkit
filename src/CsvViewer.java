@@ -410,7 +410,7 @@ public class CsvViewer extends JFrame {
             }
     
             // Construct the base name for the new column
-            StringBuilder baseColumnNameBuilder = new StringBuilder("Linear Combination: ");
+            StringBuilder baseColumnNameBuilder = new StringBuilder("cos(Linear Combination): ");
             for (int j = 0; j < originalColumnIndices.size(); j++) {
                 baseColumnNameBuilder.append(coefficients.get(j)).append(" * ").append(tableModel.getColumnName(originalColumnIndices.get(j)));
                 if (j < originalColumnIndices.size() - 1) {
@@ -423,7 +423,7 @@ public class CsvViewer extends JFrame {
     
             tableModel.addColumn(newColumnName);
     
-            // Populate the new column with the computed linear combination based on original columns
+            // Populate the new column with the arccos of the computed linear combination based on original columns
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 double sum = 0.0;
                 try {
@@ -431,8 +431,12 @@ public class CsvViewer extends JFrame {
                         Object value = tableModel.getValueAt(row, originalColumnIndices.get(j));
                         sum += coefficients.get(j) * Double.parseDouble(value.toString());
                     }
+                    sum = Math.cos(sum); // Apply the arccos function to the result
                 } catch (NumberFormatException | NullPointerException e) {
                     sum = Double.NaN; // Handle invalid entries with NaN
+                } catch (IllegalArgumentException e) {
+                    // Handle cases where the sum is outside the valid range [-1, 1] for arccos
+                    sum = Double.NaN;
                 }
                 tableModel.setValueAt(sum, row, tableModel.getColumnCount() - 1);
             }
@@ -440,7 +444,7 @@ public class CsvViewer extends JFrame {
             dataHandler.updateStats(tableModel, statsTextArea);
             updateSelectedRowsLabel();
         }
-    }
+    }    
     
     private String getUniqueColumnName(String baseName) {
         String newName = baseName;
