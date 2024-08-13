@@ -390,9 +390,14 @@ public class CsvViewer extends JFrame {
             }
         }
     
+        String[] trigOptions = {"None", "cos", "sin", "tan", "arccos", "arcsin", "arctan"};
+        JComboBox<String> trigFunctionSelector = new JComboBox<>(trigOptions);
+        panel.add(new JLabel("Wrap Linear Combination in:"));
+        panel.add(trigFunctionSelector);
+    
         JButton exhaustiveSearchButton = new JButton("Gradient Descent Search");
         exhaustiveSearchButton.addActionListener(e -> {
-            optimizeCoefficientsUsingGradientDescent(originalColumnIndices, coefficients, panel);
+            optimizeCoefficientsUsingGradientDescent(originalColumnIndices, coefficients, panel, (String) trigFunctionSelector.getSelectedItem());
         });
     
         panel.add(exhaustiveSearchButton);
@@ -410,7 +415,7 @@ public class CsvViewer extends JFrame {
             }
     
             // Construct the base name for the new column
-            StringBuilder baseColumnNameBuilder = new StringBuilder("cos(Linear Combination): ");
+            StringBuilder baseColumnNameBuilder = new StringBuilder("Linear Combination: ");
             for (int j = 0; j < originalColumnIndices.size(); j++) {
                 baseColumnNameBuilder.append(coefficients.get(j)).append(" * ").append(tableModel.getColumnName(originalColumnIndices.get(j)));
                 if (j < originalColumnIndices.size() - 1) {
@@ -423,7 +428,8 @@ public class CsvViewer extends JFrame {
     
             tableModel.addColumn(newColumnName);
     
-            // Populate the new column with the arccos of the computed linear combination based on original columns
+            // Populate the new column with the computed linear combination based on original columns
+            String trigFunction = (String) trigFunctionSelector.getSelectedItem();
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 double sum = 0.0;
                 try {
@@ -431,12 +437,10 @@ public class CsvViewer extends JFrame {
                         Object value = tableModel.getValueAt(row, originalColumnIndices.get(j));
                         sum += coefficients.get(j) * Double.parseDouble(value.toString());
                     }
-                    sum = Math.cos(sum); // Apply the arccos function to the result
+                    // Apply the selected trigonometric function
+                    sum = applyTrigFunction(sum, trigFunction);
                 } catch (NumberFormatException | NullPointerException e) {
                     sum = Double.NaN; // Handle invalid entries with NaN
-                } catch (IllegalArgumentException e) {
-                    // Handle cases where the sum is outside the valid range [-1, 1] for arccos
-                    sum = Double.NaN;
                 }
                 tableModel.setValueAt(sum, row, tableModel.getColumnCount() - 1);
             }
@@ -444,7 +448,27 @@ public class CsvViewer extends JFrame {
             dataHandler.updateStats(tableModel, statsTextArea);
             updateSelectedRowsLabel();
         }
-    }    
+    }
+    
+    private double applyTrigFunction(double value, String trigFunction) {
+        switch (trigFunction) {
+            case "cos":
+                return Math.cos(value);
+            case "sin":
+                return Math.sin(value);
+            case "tan":
+                return Math.tan(value);
+            case "arccos":
+                return Math.acos(value);
+            case "arcsin":
+                return Math.asin(value);
+            case "arctan":
+                return Math.atan(value);
+            case "None":
+            default:
+                return value; // No transformation
+        }
+    }
     
     private String getUniqueColumnName(String baseName) {
         String newName = baseName;
@@ -465,17 +489,17 @@ public class CsvViewer extends JFrame {
         return false;
     }
     
-    private double evaluateClassSeparation(List<Integer> originalColumnIndices, double[] coefficients) {
+    private double evaluateClassSeparation(List<Integer> originalColumnIndices, double[] coefficients, String trigFunction) {
         Map<String, List<Double>> classSums = new HashMap<>();
         int classColumnIndex = getClassColumnIndex();
     
-        // Calculate the linear combination sums for each class
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             double sum = 0.0;
             for (int j = 0; j < originalColumnIndices.size(); j++) {
                 double value = Double.parseDouble(tableModel.getValueAt(row, originalColumnIndices.get(j)).toString());
                 sum += coefficients[j] * value;
             }
+            sum = applyTrigFunction(sum, trigFunction); // Apply the selected trigonometric function
             String className = (String) tableModel.getValueAt(row, classColumnIndex);
             classSums.computeIfAbsent(className, k -> new ArrayList<>()).add(sum);
         }
@@ -516,8 +540,7 @@ public class CsvViewer extends JFrame {
         return betweenClassVariance / withinClassVariance;
     }
 
-    private void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel) {
-        // Initialize coefficients if they are null
+    private void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel, String trigFunction) {
         for (int i = 0; i < coefficients.size(); i++) {
             if (coefficients.get(i) == null) {
                 coefficients.set(i, 1.0); // Default value
@@ -532,12 +555,12 @@ public class CsvViewer extends JFrame {
         double[] gradients = new double[n];
     
         for (int iteration = 0; iteration < maxIterations; iteration++) {
-            double currentScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray());
+            double currentScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray(), trigFunction);
     
             // Calculate the gradient for each coefficient
             for (int i = 0; i < n; i++) {
                 coefficients.set(i, coefficients.get(i) + tolerance); // Perturb coefficient
-                double newScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray());
+                double newScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray(), trigFunction);
                 gradients[i] = (newScore - currentScore) / tolerance; // Estimate gradient
                 coefficients.set(i, coefficients.get(i) - tolerance); // Restore original coefficient
             }
@@ -563,7 +586,7 @@ public class CsvViewer extends JFrame {
             JTextField coefficientField = (JTextField) panel.getComponent(2 * i + 1);
             coefficientField.setText(coefficients.get(i).toString());
         }
-    }    
+    }
     
     public double calculateAndDisplayPureRegions(int thresholdPercentage) {
         int classColumnIndex = getClassColumnIndex();
