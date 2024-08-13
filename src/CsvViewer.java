@@ -371,16 +371,16 @@ public class CsvViewer extends JFrame {
             return;
         }
     
-        // Identify original columns by skipping any previously added linear combination columns
+        // Identify original columns using the originalColumnNames list
         List<Integer> originalColumnIndices = new ArrayList<>();
         List<Double> coefficients = new ArrayList<>();
     
         JPanel panel = new JPanel(new GridLayout(0, 2));
-        
+    
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
             String columnName = tableModel.getColumnName(i);
-            // Consider a column original if its name doesn't start with "Linear Combination:"
-            if (!columnName.startsWith("Linear Combination:") && !columnName.equalsIgnoreCase("class")) {
+            // Consider a column original if it is in the originalColumnNames list
+            if (originalColumnNames.contains(columnName) && !columnName.equalsIgnoreCase("class")) {
                 originalColumnIndices.add(i);
                 JLabel label = new JLabel("Coefficient for " + columnName + ":");
                 JTextField coefficientField = new JTextField("1"); // Default coefficient is 1
@@ -394,7 +394,7 @@ public class CsvViewer extends JFrame {
         exhaustiveSearchButton.addActionListener(e -> {
             optimizeCoefficientsUsingGradientDescent(originalColumnIndices, coefficients, panel);
         });
-        
+    
         panel.add(exhaustiveSearchButton);
     
         int result = JOptionPane.showConfirmDialog(this, panel, "Enter Coefficients for Linear Combination", JOptionPane.OK_CANCEL_OPTION);
@@ -409,16 +409,19 @@ public class CsvViewer extends JFrame {
                 return;
             }
     
-            // Construct the name for the new column
-            StringBuilder columnNameBuilder = new StringBuilder("Linear Combination: ");
+            // Construct the base name for the new column
+            StringBuilder baseColumnNameBuilder = new StringBuilder("Linear Combination: ");
             for (int j = 0; j < originalColumnIndices.size(); j++) {
-                columnNameBuilder.append(coefficients.get(j)).append(" * ").append(tableModel.getColumnName(originalColumnIndices.get(j)));
+                baseColumnNameBuilder.append(coefficients.get(j)).append(" * ").append(tableModel.getColumnName(originalColumnIndices.get(j)));
                 if (j < originalColumnIndices.size() - 1) {
-                    columnNameBuilder.append(" + ");
+                    baseColumnNameBuilder.append(" + ");
                 }
             }
     
-            tableModel.addColumn(columnNameBuilder.toString());
+            // Ensure the column name is unique
+            String newColumnName = getUniqueColumnName(baseColumnNameBuilder.toString());
+    
+            tableModel.addColumn(newColumnName);
     
             // Populate the new column with the computed linear combination based on original columns
             for (int row = 0; row < tableModel.getRowCount(); row++) {
@@ -437,6 +440,25 @@ public class CsvViewer extends JFrame {
             dataHandler.updateStats(tableModel, statsTextArea);
             updateSelectedRowsLabel();
         }
+    }
+    
+    private String getUniqueColumnName(String baseName) {
+        String newName = baseName;
+        int counter = 1;
+        while (columnExists(newName)) {
+            newName = baseName + " (" + counter + ")";
+            counter++;
+        }
+        return newName;
+    }
+    
+    private boolean columnExists(String columnName) {
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            if (tableModel.getColumnName(i).equals(columnName)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     private double evaluateClassSeparation(List<Integer> originalColumnIndices, double[] coefficients) {
