@@ -159,12 +159,19 @@ public class CsvViewer extends JFrame {
                 return;
             }
         }
-        
+    
         if (areDifferenceColumnsVisible) {
             removeTrigonometricColumns(); // If columns are visible, remove them
         } else {
             // Ask user to choose the mode for trigonometric columns
-            String[] options = {"Forward Difference", "Backward Difference", "Direct"};
+            String[] options = {
+                "Forward Differences", 
+                "Backward Differences", 
+                "Direct", 
+                "Inverse Forward Differences", 
+                "Inverse Backward Differences", 
+                "Inverse Direct"
+            };
             String mode = (String) JOptionPane.showInputDialog(this, 
                 "Choose the mode for trigonometric columns:", 
                 "Trigonometric Columns Mode", 
@@ -174,7 +181,16 @@ public class CsvViewer extends JFrame {
                 options[0]);
     
             if (mode != null) { // User selected a mode, add columns based on the mode
-                addTrigonometricColumns(mode);
+                switch (mode) {
+                    case "Inverse Direct":
+                    case "Inverse Forward Differences":
+                    case "Inverse Backward Differences":
+                        addTrigonometricColumns(mode.replace("Inverse ", ""), true);
+                        break;
+                    default:
+                        addTrigonometricColumns(mode, false);
+                        break;
+                }
             }
         }
     
@@ -182,7 +198,7 @@ public class CsvViewer extends JFrame {
         areDifferenceColumnsVisible = !areDifferenceColumnsVisible;
     }
     
-    private void addTrigonometricColumns(String mode) {
+    private void addTrigonometricColumns(String mode, boolean isInverse) {
         if (!areDifferenceColumnsVisible) {
             // Save the original data and column names before adding new columns
             originalData = new ArrayList<>();
@@ -204,6 +220,9 @@ public class CsvViewer extends JFrame {
         int numCols = columnModel.getColumnCount();
         int classColumnIndex = getClassColumnIndex(); // Ensure we are skipping the class column
     
+        // Determine the prefix for inverse operations
+        String prefix = isInverse ? "Inverse " : "";
+    
         // Add new columns for trigonometric values with descriptive names
         for (int i = 0; i < numCols; i++) {
             int col1 = columnModel.getColumn(i).getModelIndex();
@@ -216,21 +235,22 @@ public class CsvViewer extends JFrame {
                 case "Direct":
                     description = tableModel.getColumnName(col1);
                     break;
-                case "Forward Difference":
+                case "Forward Differences":
                     col2 = (i + 1) % numCols;
                     if (col2 == classColumnIndex) col2 = (col2 + 1) % numCols;
                     description = tableModel.getColumnName(col2) + " - " + tableModel.getColumnName(col1);
                     break;
-                case "Backward Difference":
+                case "Backward Differences":
                     col2 = (i - 1 + numCols) % numCols;
                     if (col2 == classColumnIndex) col2 = (col2 - 1 + numCols) % numCols;
                     description = tableModel.getColumnName(col1) + " - " + tableModel.getColumnName(col2);
                     break;
             }
     
-            tableModel.addColumn("Arccos " + description);
-            tableModel.addColumn("Arcsin " + description);
-            tableModel.addColumn("Arctan " + description);
+            // Add columns for trigonometric functions
+            tableModel.addColumn(prefix + "Cos " + description);
+            tableModel.addColumn(prefix + "Sin " + description);
+            tableModel.addColumn(prefix + "Tan " + description);
         }
     
         // Calculate and populate the new columns with trigonometric values
@@ -252,14 +272,14 @@ public class CsvViewer extends JFrame {
                             value2 = value1;
                             break;
     
-                        case "Forward Difference":
+                        case "Forward Differences":
                             col2 = (i + 1) % numCols;
                             if (col2 == classColumnIndex) col2 = (col2 + 1) % numCols;
                             value2 = Double.parseDouble(tableModel.getValueAt(row, col2).toString());
                             value1 = value2 - value1;
                             break;
     
-                        case "Backward Difference":
+                        case "Backward Differences":
                             col2 = (i - 1 + numCols) % numCols;
                             if (col2 == classColumnIndex) col2 = (col2 - 1 + numCols) % numCols;
                             value2 = Double.parseDouble(tableModel.getValueAt(row, col2).toString());
@@ -268,14 +288,21 @@ public class CsvViewer extends JFrame {
                     }
     
                     // Calculate trigonometric values
-                    double arccosValue = Math.acos(value1);
-                    double arcsinValue = Math.asin(value1);
-                    double arctanValue = Math.atan(value1);
+                    double cosValue = Math.cos(value1);
+                    double sinValue = Math.sin(value1);
+                    double tanValue = Math.tan(value1);
+    
+                    if (isInverse) {
+                        // Calculate inverse trigonometric values
+                        cosValue = Math.acos(value1);
+                        sinValue = Math.asin(value1);
+                        tanValue = Math.atan(value1);
+                    }
     
                     // Set the calculated values in the respective columns
-                    tableModel.setValueAt(arccosValue, row, newColIndex++);
-                    tableModel.setValueAt(arcsinValue, row, newColIndex++);
-                    tableModel.setValueAt(arctanValue, row, newColIndex++);
+                    tableModel.setValueAt(cosValue, row, newColIndex++);
+                    tableModel.setValueAt(sinValue, row, newColIndex++);
+                    tableModel.setValueAt(tanValue, row, newColIndex++);
                 } catch (NumberFormatException | NullPointerException e) {
                     // If there's an issue parsing the numbers, set the values as empty strings
                     tableModel.setValueAt("", row, newColIndex++);
@@ -287,7 +314,7 @@ public class CsvViewer extends JFrame {
     
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
-    }    
+    }
 
     public void showRuleOverlayPlot() {
         TableColumnModel columnModel = table.getColumnModel();
