@@ -390,9 +390,9 @@ public class CsvViewer extends JFrame {
             }
         }
     
-        JButton exhaustiveSearchButton = new JButton("Exhaustive Search");
+        JButton exhaustiveSearchButton = new JButton("Gradient Descent Search");
         exhaustiveSearchButton.addActionListener(e -> {
-            performExhaustiveSearch(originalColumnIndices, coefficients, panel);
+            optimizeCoefficientsUsingGradientDescent(originalColumnIndices, coefficients, panel);
         });
         
         panel.add(exhaustiveSearchButton);
@@ -438,48 +438,6 @@ public class CsvViewer extends JFrame {
             updateSelectedRowsLabel();
         }
     }
-
-    private void performExhaustiveSearch(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel) {
-        double bestSeparation = Double.NEGATIVE_INFINITY;  // Initialize bestSeparation locally
-        List<Double> bestCoefficients = new ArrayList<>(coefficients);
-    
-        int numAttributes = originalColumnIndices.size();
-        double lowerBound = -numAttributes;
-        double upperBound = numAttributes;
-        double stepSize = 0.5; // Smaller step size for finer search
-    
-        double[] currentCoefficients = new double[numAttributes];
-        bestSeparation = searchCoefficientsRecursive(originalColumnIndices, currentCoefficients, 0, lowerBound, upperBound, stepSize, bestCoefficients, bestSeparation);
-    
-        // Update the UI with the best coefficients found
-        for (int i = 0; i < bestCoefficients.size(); i++) {
-            JTextField coefficientField = (JTextField) panel.getComponent(2 * i + 1);
-            coefficientField.setText(bestCoefficients.get(i).toString());
-        }
-    
-        JOptionPane.showMessageDialog(this, "Exhaustive search completed. Best coefficients applied.", "Search Complete", JOptionPane.INFORMATION_MESSAGE);
-    }    
-    
-    private double searchCoefficientsRecursive(List<Integer> originalColumnIndices, double[] currentCoefficients, int index, double lowerBound, double upperBound, double stepSize, List<Double> bestCoefficients, double bestSeparation) {
-        if (index == currentCoefficients.length) {
-            // Evaluate the current set of coefficients
-            double separation = evaluateClassSeparation(originalColumnIndices, currentCoefficients);
-            if (separation > bestSeparation) {
-                bestSeparation = separation;
-                for (int i = 0; i < currentCoefficients.length; i++) {
-                    bestCoefficients.set(i, currentCoefficients[i]);
-                }
-            }
-            return bestSeparation;
-        }
-    
-        for (double coef = lowerBound; coef <= upperBound; coef += stepSize) {
-            currentCoefficients[index] = coef;
-            bestSeparation = searchCoefficientsRecursive(originalColumnIndices, currentCoefficients, index + 1, lowerBound, upperBound, stepSize, bestCoefficients, bestSeparation);
-        }
-        
-        return bestSeparation;
-    }    
     
     private double evaluateClassSeparation(List<Integer> originalColumnIndices, double[] coefficients) {
         Map<String, List<Double>> classSums = new HashMap<>();
@@ -510,31 +468,56 @@ public class CsvViewer extends JFrame {
     
         return separation;
     }
-    
-    private double evaluateLinearCombination(List<Integer> originalColumnIndices, List<Double> coefficients) {
-        double score = 0.0;
-    
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            double sum = 0.0;
-            try {
-                for (int j = 0; j < originalColumnIndices.size(); j++) {
-                    Object value = tableModel.getValueAt(row, originalColumnIndices.get(j));
-                    sum += coefficients.get(j) * Double.parseDouble(value.toString());
-                }
-            } catch (NumberFormatException | NullPointerException e) {
-                // Skip invalid entries
-                continue;
+
+    private void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel) {
+        // Initialize coefficients if they are null
+        for (int i = 0; i < coefficients.size(); i++) {
+            if (coefficients.get(i) == null) {
+                coefficients.set(i, 1.0); // Default value
             }
-    
-            // Define a scoring function based on how well the sum separates the classes
-            // For example, you could use the absolute difference between sums of different classes
-            // Modify this scoring function as per your specific requirements
-            score += Math.abs(sum);
         }
     
-        return score;
+        double learningRate = 0.01; // Learning rate for gradient descent
+        int maxIterations = 1000; // Maximum number of iterations
+        double tolerance = 1e-6; // Tolerance for convergence
+        
+        int n = coefficients.size();
+        double[] gradients = new double[n];
+    
+        for (int iteration = 0; iteration < maxIterations; iteration++) {
+            double currentScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray());
+    
+            // Calculate the gradient for each coefficient
+            for (int i = 0; i < n; i++) {
+                coefficients.set(i, coefficients.get(i) + tolerance); // Perturb coefficient
+                double newScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray());
+                gradients[i] = (newScore - currentScore) / tolerance; // Estimate gradient
+                coefficients.set(i, coefficients.get(i) - tolerance); // Restore original coefficient
+            }
+    
+            // Update coefficients based on gradients
+            boolean hasConverged = true;
+            for (int i = 0; i < n; i++) {
+                double newCoefficient = coefficients.get(i) + learningRate * gradients[i];
+                if (Math.abs(newCoefficient - coefficients.get(i)) > tolerance) {
+                    hasConverged = false;
+                }
+                coefficients.set(i, newCoefficient);
+            }
+    
+            // Check for convergence
+            if (hasConverged) {
+                break;
+            }
+        }
+    
+        // Update the JTextField components in the panel with the optimized coefficients
+        for (int i = 0; i < coefficients.size(); i++) {
+            JTextField coefficientField = (JTextField) panel.getComponent(2 * i + 1);
+            coefficientField.setText(coefficients.get(i).toString());
+        }
     }    
-
+    
     public double calculateAndDisplayPureRegions(int thresholdPercentage) {
         int classColumnIndex = getClassColumnIndex();
         if (classColumnIndex == -1) {
