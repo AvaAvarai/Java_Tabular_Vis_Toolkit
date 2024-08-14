@@ -1017,8 +1017,6 @@ public class CsvViewer extends JFrame {
     }
 
     public void toggleClassColors() {
-        int currentCaretPosition = statsTextArea.getCaretPosition();
-    
         isClassColorEnabled = !isClassColorEnabled;
         
         // Use a single SwingWorker to process and apply the colors in the background
@@ -1028,14 +1026,6 @@ public class CsvViewer extends JFrame {
                 // Apply the class colors in the background to avoid freezing the UI
                 applyCombinedRenderer();
                 return null;
-            }
-    
-            @Override
-            protected void done() {
-                // Update the stats and UI on the Event Dispatch Thread after the background task completes
-                dataHandler.updateStats(tableModel, statsTextArea);
-                statsTextArea.setCaretPosition(Math.max(Math.min(currentCaretPosition, statsTextArea.getText().length()), 0));
-                calculateAndDisplayPureRegions(thresholdSlider.getValue());
             }
         };
         
