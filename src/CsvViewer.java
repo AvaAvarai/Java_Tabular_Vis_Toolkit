@@ -1036,15 +1036,29 @@ public class CsvViewer extends JFrame {
 
     public void toggleClassColors() {
         int currentCaretPosition = statsTextArea.getCaretPosition();
-
+    
         isClassColorEnabled = !isClassColorEnabled;
-        applyCombinedRenderer();
-        dataHandler.updateStats(tableModel, statsTextArea);
-
-        int newCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length());
-        statsTextArea.setCaretPosition(Math.max(newCaretPosition, 0));
-        calculateAndDisplayPureRegions(thresholdSlider.getValue());
-    }
+        
+        // Use a single SwingWorker to process and apply the colors in the background
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                // Apply the class colors in the background to avoid freezing the UI
+                applyCombinedRenderer();
+                return null;
+            }
+    
+            @Override
+            protected void done() {
+                // Update the stats and UI on the Event Dispatch Thread after the background task completes
+                dataHandler.updateStats(tableModel, statsTextArea);
+                statsTextArea.setCaretPosition(Math.max(Math.min(currentCaretPosition, statsTextArea.getText().length()), 0));
+                calculateAndDisplayPureRegions(thresholdSlider.getValue());
+            }
+        };
+        
+        worker.execute();
+    }    
 
     private void displayPureRegions(List<PureRegion> pureRegions) {
         StringBuilder sb = new StringBuilder();
