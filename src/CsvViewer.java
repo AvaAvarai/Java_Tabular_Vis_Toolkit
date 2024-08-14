@@ -23,6 +23,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 
 public class CsvViewer extends JFrame {
     public JTable table;
@@ -76,7 +77,6 @@ public class CsvViewer extends JFrame {
                 updateSelectedRowsLabel();
             }
         });
-        
 
         table.addMouseListener(new TableMouseListener(this));
         table.getTableHeader().addMouseListener(new TableMouseListener(this));
@@ -145,7 +145,7 @@ public class CsvViewer extends JFrame {
 
         generateClassShapes();
     }
-
+    
     private void copySelectedCell() {
         int row = table.getSelectedRow();
         int col = table.getSelectedColumn();
@@ -381,19 +381,19 @@ public class CsvViewer extends JFrame {
             updateSelectedRowsLabel();
         }
     }
-
+    
     public void insertLinearCombinationColumn() {
         if (tableModel.getColumnCount() == 0) {
             noDataLoadedError();
             return;
         }
-    
+
         // Identify original columns using the originalColumnNames list
         List<Integer> originalColumnIndices = new ArrayList<>();
         List<Double> coefficients = new ArrayList<>();
-    
+
         JPanel panel = new JPanel(new GridLayout(0, 2));
-    
+
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
             String columnName = tableModel.getColumnName(i);
             // Consider a column original if it is in the originalColumnNames list
@@ -406,21 +406,21 @@ public class CsvViewer extends JFrame {
                 coefficients.add(null); // Placeholder for the coefficient
             }
         }
-    
+
         String[] trigOptions = {"None", "cos", "sin", "tan", "arccos", "arcsin", "arctan"};
         JComboBox<String> trigFunctionSelector = new JComboBox<>(trigOptions);
         panel.add(new JLabel("Wrap Linear Combination in:"));
         panel.add(trigFunctionSelector);
-    
+
         JButton exhaustiveSearchButton = new JButton("Gradient Descent Search");
         exhaustiveSearchButton.addActionListener(e -> {
             optimizeCoefficientsUsingGradientDescent(originalColumnIndices, coefficients, panel, (String) trigFunctionSelector.getSelectedItem());
         });
-    
+
         panel.add(exhaustiveSearchButton);
-    
+
         int result = JOptionPane.showConfirmDialog(this, panel, "Enter Coefficients for Linear Combination", JOptionPane.OK_CANCEL_OPTION);
-    
+
         if (result == JOptionPane.OK_OPTION) {
             try {
                 for (int j = 0; j < coefficients.size(); j++) {
@@ -430,7 +430,7 @@ public class CsvViewer extends JFrame {
                 JOptionPane.showMessageDialog(this, "Please enter valid numbers for coefficients.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-    
+
             // Construct the base name for the new column
             StringBuilder baseColumnNameBuilder = new StringBuilder("Linear Combination: ");
             for (int j = 0; j < originalColumnIndices.size(); j++) {
@@ -439,12 +439,15 @@ public class CsvViewer extends JFrame {
                     baseColumnNameBuilder.append(" + ");
                 }
             }
-    
+
             // Ensure the column name is unique
             String newColumnName = getUniqueColumnName(baseColumnNameBuilder.toString());
-    
+
             tableModel.addColumn(newColumnName);
-    
+
+            // Format for displaying the numbers without scientific notation
+            DecimalFormat decimalFormat = new DecimalFormat("#.##########################");
+
             // Populate the new column with the computed linear combination based on original columns
             String trigFunction = (String) trigFunctionSelector.getSelectedItem();
             for (int row = 0; row < tableModel.getRowCount(); row++) {
@@ -459,9 +462,10 @@ public class CsvViewer extends JFrame {
                 } catch (NumberFormatException | NullPointerException e) {
                     sum = Double.NaN; // Handle invalid entries with NaN
                 }
-                tableModel.setValueAt(sum, row, tableModel.getColumnCount() - 1);
+                // Set the formatted value into the table
+                tableModel.setValueAt(decimalFormat.format(sum), row, tableModel.getColumnCount() - 1);
             }
-    
+
             dataHandler.updateStats(tableModel, statsTextArea);
             updateSelectedRowsLabel();
         }
@@ -797,7 +801,16 @@ public class CsvViewer extends JFrame {
     
             dataHandler.loadCsvData(filePath, tableModel, statsTextArea);
     
-            // Initialize originalColumnNames after loading data
+            // Format each numeric value as a decimal
+            for (int row = 0; row < tableModel.getRowCount(); row++) {
+                for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                    Object value = tableModel.getValueAt(row, col);
+                    if (value != null && isNumeric(value.toString())) {
+                        tableModel.setValueAt(formatAsDecimal(value.toString()), row, col);
+                    }
+                }
+            }
+    
             originalColumnNames = new ArrayList<>();
             for (int i = 0; i < tableModel.getColumnCount(); i++) {
                 originalColumnNames.add(tableModel.getColumnName(i));
@@ -818,6 +831,27 @@ public class CsvViewer extends JFrame {
             statsTextArea.setCaretPosition(0);
         }
     }
+    
+    private boolean isNumeric(String str) {
+        try {
+            Double.parseDouble(str.trim());
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+    
+    private String formatDecimalWithoutScientificNotation(double value) {
+        DecimalFormat decimalFormat = new DecimalFormat("#.##########################"); 
+        // Use this pattern to ensure no scientific notation and remove trailing zeros
+        decimalFormat.setDecimalSeparatorAlwaysShown(false);
+        return decimalFormat.format(value);
+    }
+
+    private String formatAsDecimal(String str) {
+        double value = Double.parseDouble(str.trim());
+        return formatDecimalWithoutScientificNotation(value);
+    } 
 
     private void clearTableAndState() {
         tableModel.setRowCount(0);
