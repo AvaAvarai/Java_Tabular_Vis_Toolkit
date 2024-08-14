@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.geom.Ellipse2D;
@@ -982,6 +983,86 @@ public class CsvViewer extends JFrame {
             Color color = new Color(Color.HSBtoRGB(value / (float) classMap.size(), 1.0f, 1.0f));
             classColors.put(entry.getKey(), color);
         }
+    }
+
+    public void showCovarianceMatrix() {
+        // Extract numerical data from the table
+        int rowCount = tableModel.getRowCount();
+        int colCount = tableModel.getColumnCount();
+        List<double[]> numericalData = new ArrayList<>();
+        List<String> columnNames = new ArrayList<>();
+        
+        for (int col = 0; col < colCount; col++) {
+            boolean isNumeric = true;
+            double[] columnData = new double[rowCount];
+            
+            for (int row = 0; row < rowCount; row++) {
+                try {
+                    columnData[row] = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                } catch (NumberFormatException e) {
+                    isNumeric = false;
+                    break;
+                }
+            }
+            
+            if (isNumeric) {
+                numericalData.add(columnData);
+                columnNames.add(tableModel.getColumnName(col));
+            }
+        }
+
+        // Calculate the covariance matrix
+        int numAttributes = numericalData.size();
+        double[][] covarianceMatrix = new double[numAttributes][numAttributes];
+
+        for (int i = 0; i < numAttributes; i++) {
+            for (int j = 0; j < numAttributes; j++) {
+                covarianceMatrix[i][j] = calculateCovariance(numericalData.get(i), numericalData.get(j));
+            }
+        }
+
+        // Display the covariance matrix in a new window
+        JTextArea covarianceMatrixTextArea = new JTextArea();
+        covarianceMatrixTextArea.setEditable(false);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Covariance Matrix:\n\n");
+
+        sb.append(String.format("%-20s", ""));
+        for (String colName : columnNames) {
+            sb.append(String.format("%-20s", colName));
+        }
+        sb.append("\n");
+
+        for (int i = 0; i < numAttributes; i++) {
+            sb.append(String.format("%-20s", columnNames.get(i)));
+            for (int j = 0; j < numAttributes; j++) {
+                sb.append(String.format("%-20.4f", covarianceMatrix[i][j]));
+            }
+            sb.append("\n");
+        }
+
+        covarianceMatrixTextArea.setText(sb.toString());
+        JScrollPane scrollPane = new JScrollPane(covarianceMatrixTextArea);
+
+        JFrame frame = new JFrame("Covariance Matrix");
+        frame.setSize(600, 400);
+        frame.add(scrollPane);
+        frame.setLocationRelativeTo(this);
+        frame.setVisible(true);
+    }
+
+    private double calculateCovariance(double[] x, double[] y) {
+        int n = x.length;
+        double meanX = Arrays.stream(x).average().orElse(0.0);
+        double meanY = Arrays.stream(y).average().orElse(0.0);
+
+        double covariance = 0.0;
+        for (int i = 0; i < n; i++) {
+            covariance += (x[i] - meanX) * (y[i] - meanY);
+        }
+
+        return covariance / (n - 1);
     }
 
     public void generateClassShapes() {

@@ -31,6 +31,13 @@ public class ButtonPanel {
                 csvViewer.toggleHeatmap();
             }
         });
+        JButton covarianceMatrixButton = UIHelper.createButton("icons/covariance.png", "Show Covariance Matrix", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showCovarianceMatrix();
+            }
+        });
         JButton fontSettingsButton = UIHelper.createButton("icons/fontcolor.png", "Font Color", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
@@ -171,6 +178,7 @@ public class ButtonPanel {
         buttonPanel.add(csvViewer.toggleButton);
         buttonPanel.add(highlightBlanksButton);
         buttonPanel.add(heatmapButton);
+        buttonPanel.add(covarianceMatrixButton);
         buttonPanel.add(fontSettingsButton);
         buttonPanel.add(insertRowButton);
         buttonPanel.add(deleteRowButton);

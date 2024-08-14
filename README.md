@@ -31,6 +31,7 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 - Load and display CSV data in tabular view
 - Normalize numerical columns
 - Highlight missing data
+- Covariance matrix
 - Visualize data as a heatmap, Parallel Coordinates (PC), Shifted Paired Coordinates (SPC), and Static Circular Coordinates (SCC)
 - Manipulate rows (insert, delete, clone, copy contents of selection, edit individual cell values)
 - Customize font color and highlight class fields
