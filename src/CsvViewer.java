@@ -942,16 +942,8 @@ public class CsvViewer extends JFrame {
     }
 
     public void toggleHeatmap() {
-        int currentCaretPosition = statsTextArea.getCaretPosition();
-
         isHeatmapEnabled = !isHeatmapEnabled;
         applyCombinedRenderer();
-        dataHandler.updateStats(tableModel, statsTextArea);
-
-        int newCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length() - 1);
-        statsTextArea.setCaretPosition(Math.max(newCaretPosition, 0));
-
-        calculateAndDisplayPureRegions(thresholdSlider.getValue());
     }
 
     public void generateClassColors() {
@@ -1018,18 +1010,7 @@ public class CsvViewer extends JFrame {
 
     public void toggleClassColors() {
         isClassColorEnabled = !isClassColorEnabled;
-        
-        // Use a single SwingWorker to process and apply the colors in the background
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-            @Override
-            protected Void doInBackground() {
-                // Apply the class colors in the background to avoid freezing the UI
-                applyCombinedRenderer();
-                return null;
-            }
-        };
-        
-        worker.execute();
+        applyCombinedRenderer();
     }    
 
     private void displayPureRegions(List<PureRegion> pureRegions) {
