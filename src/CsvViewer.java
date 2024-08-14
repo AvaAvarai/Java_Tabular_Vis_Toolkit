@@ -53,6 +53,10 @@ public class CsvViewer extends JFrame {
     public JLabel thresholdLabel;
     private List<String[]> originalData;
     private List<String> originalColumnNames;
+    
+    private double[] minValues;
+    private double[] maxValues;
+    private boolean[] isNumerical;
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -63,7 +67,7 @@ public class CsvViewer extends JFrame {
         dataHandler = new CsvDataHandler();
         tableModel = new ReorderableTableModel();
         table = TableSetup.createTable(tableModel);
-
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table.setRowSelectionAllowed(true);
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -1043,17 +1047,21 @@ public class CsvViewer extends JFrame {
 
     public void applyCombinedRenderer() {
         int numColumns = tableModel.getColumnCount();
-        double[] minValues = new double[numColumns];
-        double[] maxValues = new double[numColumns];
-        boolean[] isNumerical = new boolean[numColumns];
+        
+        // Reinitialize arrays to match the current number of columns
+        minValues = new double[numColumns];
+        maxValues = new double[numColumns];
+        isNumerical = new boolean[numColumns];
         int classColumnIndex = getClassColumnIndex();
-
+    
+        // Initialize arrays and check which columns are numerical
         for (int i = 0; i < numColumns; i++) {
             minValues[i] = Double.MAX_VALUE;
             maxValues[i] = Double.MIN_VALUE;
             isNumerical[i] = true;
         }
-
+    
+        // Determine min and max values for numerical columns
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             for (int col = 0; col < numColumns; col++) {
                 try {
@@ -1065,33 +1073,38 @@ public class CsvViewer extends JFrame {
                 }
             }
         }
-
+    
+        // Set the cell renderer
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 int modelColumn = table.convertColumnIndexToModel(column);
-
-                if (isClassColorEnabled && modelColumn == classColumnIndex) {
-                    String className = (String) value;
-                    if (classColors.containsKey(className)) {
-                        c.setBackground(classColors.get(className));
+    
+                if (modelColumn >= 0 && modelColumn < numColumns) {
+                    if (isClassColorEnabled && modelColumn == classColumnIndex) {
+                        String className = (String) value;
+                        if (classColors.containsKey(className)) {
+                            c.setBackground(classColors.get(className));
+                        } else {
+                            c.setBackground(Color.WHITE);
+                        }
+                    } else if (isHeatmapEnabled && value != null && !value.toString().trim().isEmpty() && isNumerical[modelColumn]) {
+                        try {
+                            double val = Double.parseDouble(value.toString());
+                            double normalizedValue = (val - minValues[modelColumn]) / (maxValues[modelColumn] - minValues[modelColumn]);
+                            Color color = getColorForValue(normalizedValue);
+                            c.setBackground(color);
+                        } catch (NumberFormatException e) {
+                            c.setBackground(Color.WHITE);
+                        }
                     } else {
                         c.setBackground(Color.WHITE);
                     }
-                } else if (isHeatmapEnabled && value != null && !value.toString().trim().isEmpty() && isNumerical[modelColumn]) {
-                    try {
-                        double val = Double.parseDouble(value.toString());
-                        double normalizedValue = (val - minValues[modelColumn]) / (maxValues[modelColumn] - minValues[modelColumn]);
-                        Color color = getColorForValue(normalizedValue);
-                        c.setBackground(color);
-                    } catch (NumberFormatException e) {
-                        c.setBackground(Color.WHITE);
-                    }
                 } else {
-                    c.setBackground(Color.WHITE);
+                    c.setBackground(Color.WHITE); // Fallback if modelColumn is out of bounds
                 }
-
+    
                 if (hasFocus) {
                     if (c instanceof JComponent) {
                         ((JComponent) c).setBorder(BorderFactory.createLineBorder(Color.RED, 2));
@@ -1101,11 +1114,11 @@ public class CsvViewer extends JFrame {
                         ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
                     }
                 }
-
+    
                 c.setForeground(cellTextColor);
                 return c;
             }
-
+    
             private Color getColorForValue(double value) {
                 int red = (int) (255 * value);
                 int blue = 255 - red;
@@ -1115,8 +1128,8 @@ public class CsvViewer extends JFrame {
             }
         });
         table.repaint();
-    }
-
+    }    
+            
     public void showFontSettingsDialog() {
         JPanel panel = new JPanel(new GridLayout(0, 1));
 
