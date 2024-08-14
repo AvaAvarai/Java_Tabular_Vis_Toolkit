@@ -112,6 +112,25 @@ public class ParallelCoordinatesPlot extends JFrame {
                     }
                 }
 
+                // if selected rows not empty then we want to draw the lines again
+                if (selectedRows.size() != 0) {
+                    if (column > 0) {
+                        double x1 = domainAxis.getCategoryMiddle(column - 1, getColumnCount(), dataArea, plot.getDomainAxisEdge());
+                        double y1 = getNormalizedY(actualRow, column - 1, dataArea);
+    
+                        double x2 = domainAxis.getCategoryMiddle(column, getColumnCount(), dataArea, plot.getDomainAxisEdge());
+                        double y2 = getNormalizedY(actualRow, column, dataArea);
+    
+                        if (selectedRows.contains(actualRow)) {
+                            g2.setPaint(Color.YELLOW);
+                        } else {
+                            // dont draw
+                            return;
+                        }
+                        g2.draw(new Line2D.Double(x1, y1, x2, y2));
+                    }
+                }
+
                 if (actualRow == 0 && column == 0) {
                     // Draw the parallel lines (axes) manually first
                     for (int i = 0; i < dataset.getColumnCount(); i++) {
