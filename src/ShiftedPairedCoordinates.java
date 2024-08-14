@@ -141,16 +141,16 @@ public class ShiftedPairedCoordinates extends JFrame {
                 }
             }
 
+            // Finally, draw scatter plot shapes in order of the tabular view
+            for (int row = 0; row < data.get(0).size(); row++) {
+                drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
+            }
+
             // Draw highlighted rows last (so they appear on top)
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (selectedRows.contains(row)) {
                     drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                 }
-            }
-
-            // Finally, draw scatter plot shapes in order of the tabular view
-            for (int row = 0; row < data.get(0).size(); row++) {
-                drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
             }
         }
 
