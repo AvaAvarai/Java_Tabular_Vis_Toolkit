@@ -747,22 +747,6 @@ public class CsvViewer extends JFrame {
         return tableModel.getRowCount() - hiddenRows.size();
     }
 
-    public void setSliderToMaxCoverage() {
-        int bestThreshold = 0;
-        int minRemainingCases = Integer.MAX_VALUE;
-
-        for (int threshold = 0; threshold <= 100; threshold++) {
-            int remainingCases = calculateRemainingCases(threshold);
-            if (remainingCases <= minRemainingCases) {
-                minRemainingCases = remainingCases;
-                bestThreshold = threshold;
-            }
-        }
-
-        thresholdSlider.setValue(bestThreshold);
-        calculateAndDisplayPureRegions(bestThreshold);
-    }
-
     public void toggleStatsVisibility(boolean hideStats) {
         if (hideStats) {
             splitPane.setBottomComponent(null);
@@ -825,8 +809,6 @@ public class CsvViewer extends JFrame {
     
             toggleButton.setIcon(UIHelper.loadIcon("icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
-    
-            setSliderToMaxCoverage();
     
             statsTextArea.setCaretPosition(0);
         }
