@@ -1010,44 +1010,47 @@ public class CsvViewer extends JFrame {
                 columnNames.add(tableModel.getColumnName(col));
             }
         }
-
+    
         // Calculate the covariance matrix
         int numAttributes = numericalData.size();
         double[][] covarianceMatrix = new double[numAttributes][numAttributes];
-
+    
         for (int i = 0; i < numAttributes; i++) {
             for (int j = 0; j < numAttributes; j++) {
                 covarianceMatrix[i][j] = calculateCovariance(numericalData.get(i), numericalData.get(j));
             }
         }
-
-        // Display the covariance matrix in a new window
-        JTextArea covarianceMatrixTextArea = new JTextArea();
-        covarianceMatrixTextArea.setEditable(false);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("Covariance Matrix:\n\n");
-
-        sb.append(String.format("%-20s", ""));
-        for (String colName : columnNames) {
-            sb.append(String.format("%-20s", colName));
+    
+        // Create a new table to display the covariance matrix
+        DefaultTableModel covarianceTableModel = new DefaultTableModel();
+        
+        // Add column names to the model
+        covarianceTableModel.addColumn("Attributes");
+        for (String columnName : columnNames) {
+            covarianceTableModel.addColumn(columnName);
         }
-        sb.append("\n");
-
+        
+        // Add rows to the model
         for (int i = 0; i < numAttributes; i++) {
-            sb.append(String.format("%-20s", columnNames.get(i)));
+            Object[] row = new Object[numAttributes + 1];
+            row[0] = columnNames.get(i);  // Set the attribute name in the first column
             for (int j = 0; j < numAttributes; j++) {
-                sb.append(String.format("%-20.4f", covarianceMatrix[i][j]));
+                row[j + 1] = String.format("%.4f", covarianceMatrix[i][j]);
             }
-            sb.append("\n");
+            covarianceTableModel.addRow(row);
         }
-
-        covarianceMatrixTextArea.setText(sb.toString());
-        JScrollPane scrollPane = new JScrollPane(covarianceMatrixTextArea);
-
+    
+        JTable covarianceTable = new JTable(covarianceTableModel);
+        covarianceTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+    
+        // Create a scroll pane for the table
+        JScrollPane scrollPane = new JScrollPane(covarianceTable);
+        scrollPane.setPreferredSize(new Dimension(600, 400));
+    
+        // Display the table in a dialog
         JFrame frame = new JFrame("Covariance Matrix");
-        frame.setSize(600, 400);
         frame.add(scrollPane);
+        frame.pack();
         frame.setLocationRelativeTo(this);
         frame.setVisible(true);
     }
