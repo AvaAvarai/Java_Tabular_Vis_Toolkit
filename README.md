@@ -25,24 +25,30 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 
 ## Features
 
-- Load and display CSV data
+- Load and display CSV data in tabular view
 - Normalize numerical columns
 - Highlight missing data
-- Visualize data as heatmap, Parallel Coordinates (PC), Shifted Paired Coordinates (SPC), and Static Circular Coordinates (SCC)
-- Manipulate rows (insert, delete, clone, reorder)
+- Visualize data as a heatmap, Parallel Coordinates (PC), Shifted Paired Coordinates (SPC), and Static Circular Coordinates (SCC)
+- Manipulate rows (insert, delete, clone, copy contents of selection, edit individual cell values)
 - Customize font color and highlight class fields
 - Export modified data to CSV
-- Test and save classification rules
-- Multi-row selection and reordering
-- Copy cell content (Ctrl+C)
-- Highlight selected rows in PC and SPC views
-- Analytical single attribute rule discovery algorithm
-- Case classifiable with single pure attribute intervals hideable
-- Hidden classified cases no longer clutter visualizations for analysis of difficult-to-classify regions with a single attribute approach
-- Direct Trigonometric Attribute Measures
-- Forward and Backward Trigonometric Differences between Attributes
-- Overlay single attribute rule regions on Parallel Coordinates to visualize regions
+- Test classification rules displaying results in Confusion Matrix
+- Serialize classification rules to reload
+- Highlight selected rows in visualization views (PC, SPC, SCC)
+- Analytical single attribute pure region discovery algorithm, i.e. Attribute: petal.length, Pure Region: 0.00 <= petal.length < 0.15, Class: Setosa, Count: 50 (100.00% of class, 33.33% of dataset)
+- Rules combinable to keep largest surrounding pure rule
+- Cases classifiable with single pure attribute intervals hideable to simplify classifcation problem
+- Rule threshold slider to specify required size of rule coverage over class or total dataset.
+- Feature column insertion with direct trigonometric attribute values, i.e. arccos(attribute)
+- Feature column insertion with forward x[n+1] – x[n] and backward x[n] – x[n-1] differences between attributes wrapped in trigonometric functions:
+   This helps uncover various patterns and interactions in the data between attributes.
+   - arcsin: Highlights small differences between attributes, making it easier to detect subtle variations.
+   - arctan: Emphasizes the slope or rate of change between attributes, useful for understanding trends and gradients.
+   - arccos: Focuses on rotational relationships between attributes, revealing how one attribute rotates relative to another.
+- Overlay single attribute rule regions on Parallel Coordinates to visualize regions as shaded rectangular regions
 - Inserted columns can be deleted by double-left clicking on their header.
+- Feature column engineering with insertion of linear combination column, with custom coefficients per attribute, optionally wrapped in a trigonometric function.
+- Gradient descent search for coefficients which optimize score function designed to maximize between-class variance and minimize within-class variance (fast and automatic quality coefficient discovery.)
 
 ## Automatic Rule Discovery
 
