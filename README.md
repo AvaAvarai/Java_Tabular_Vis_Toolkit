@@ -1,11 +1,14 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-**JTabViz** is a Java-based machine learning data analysis toolkit designed for data scientists and machine learning practitioners to easily analyze and visualize tabular data used for building visual machine learning models. With data augmentation features, users can explore how changes in the dataset affect resultantly trained models. It supports loading, viewing, analyzing, and classifying CSV data. Key features include data normalization, visualization (heatmaps, Parallel Coordinates, Shifted Paired Coordinates, Static Circular Coordinates), row manipulation, rules testing, analytical rule discovery automation, and data export.
+**JTabViz** is a Java-based machine learning data analysis toolkit designed for data scientists and machine learning practitioners to easily analyze and visualize tabular data used for building visual machine learning models. With data augmentation features, users can explore how changes in the dataset affect resultantly trained models. Load, view, analyze, and classify CSV data with key features of normalization, visualization (heatmaps, Parallel, Shifted Paired, and Static Circular coordinates), row manipulation, cell editing, inequality-based classification rules testing, analytical rule discovery automation, feature engineering, attribute sorting, and data export.
 
-Demo: Exploring Fisher Iris data. Highlighting sepal width outliers for Virginica class.
+Visualizing the MNIST Train data in SPC.
+![SPC Demo screenshot](screenshots/Mnist_Train_Demo_1.png)
+
+Exploring Fisher Iris data highlighting sepal width outliers for Virginica class.
 ![Demo screenshot 1](screenshots/Iris_Demo_1.png)
 
-Shifted Paired Coordinates Demo highlighting a potential misclassification in the Virginica class based on sepal width.
+Shifted Paired Coordinates highlighting a potential misclassification in the Virginica class based on sepal width.
 ![Demo screenshot 2](screenshots/Iris_Demo_2.png)
 
 Static Circular Coordinates Demo highlighting a petal length outlier in the Virginica class.
@@ -42,9 +45,9 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 - Feature column insertion with direct trigonometric attribute values, i.e. arccos(attribute)
 - Feature column insertion with forward x[n+1] – x[n] and backward x[n] – x[n-1] differences between attributes wrapped in trigonometric functions:
    This helps uncover various patterns and interactions in the data between attributes.
-   - arcsin: Highlights small differences between attributes, making it easier to detect subtle variations.
-   - arctan: Emphasizes the slope or rate of change between attributes, useful for understanding trends and gradients.
-   - arccos: Focuses on rotational relationships between attributes, revealing how one attribute rotates relative to another.
+  - arcsin: Highlights small differences between attributes, making it easier to detect subtle variations.
+  - arctan: Emphasizes the slope or rate of change between attributes, useful for understanding trends and gradients.
+  - arccos: Focuses on rotational relationships between attributes, revealing how one attribute rotates relative to another.
 - Overlay single attribute rule regions on Parallel Coordinates to visualize regions as shaded rectangular regions
 - Inserted columns can be deleted by double-left clicking on their header.
 - Feature column engineering with insertion of linear combination column, with custom coefficients per attribute, optionally wrapped in a trigonometric function.
@@ -65,6 +68,72 @@ To better analyze relationships between attributes, JTabViz applies trigonometri
 - arcsin: Highlights small differences between attributes, making it easier to detect subtle variations.
 - arctan: Emphasizes the slope or rate of change between attributes, useful for understanding trends and gradients.
 - arccos: Focuses on rotational relationships between attributes, revealing how one attribute rotates relative to another.
+
+## Feature Engineering with Linear Combinations for Data Classification
+
+### Overview
+
+In data classification, feature engineering transforms raw data into a more suitable form for building models. **JTabViz** includes a technique to create **Linear Combination Features** from existing attributes in your dataset. This method allows for the synthesis of new features that can reveal patterns and relationships not immediately visible in the original data.
+
+### What Are Linear Combination Features?
+
+A **Linear Combination Feature** is a new feature created by combining multiple existing features using a set of coefficients. It is mathematically represented as:
+
+New Feature} = c_1(x_1) + c_2(x_2) + ... + c_n(x_n)
+
+where:
+c_1, c_2, ..., c_n are the coefficients.  
+x_1, x_2, ..., x_n are the original features.
+
+These coefficients can be manually specified or automatically optimized using gradient descent.
+
+### Why Use Linear Combination Features?
+
+Linear Combination Features are used to:
+
+- **Enhance Class Separability**: Combining features can create new dimensions where different classes are more distinguishable.
+- **Reduce Dimensionality**: A well-crafted linear combination can summarize the essential information of multiple features into a single feature.
+- **Improve Model Representation**: Creating new features based on the relationships between existing features can make the data more suitable for classification.
+
+This feature is inspired by the successful dynamic coordinate mappings of General Line Coordinats developed at Central Washington University.
+
+### Automatic Coefficient Optimization with Gradient Descent
+
+JTabViz includes a gradient descent algorithm that automatically finds the optimal coefficients for your linear combination feature. The optimization process aims to:
+
+- **Maximize Between-Class Variance**: Increase the distance between the centers of different classes.
+- **Minimize Within-Class Variance**: Reduce the spread of data points within the same class.
+
+This approach ensures that the resulting linear combination feature is effective in separating different classes.
+
+### Wrapping Linear Combinations with Trigonometric Functions
+
+JTabViz allows you to apply trigonometric functions like `sin`, `cos`, or `tan`, as well as their inverses, `arcsin`, `arccos`, or `arctan`, to the linear combination feature. These transformations can reveal non-linear relationships and rotational patterns in the data, which may not be visible in the original features.
+
+For example:
+
+- **Sin**: Emphasizes periodic or cyclic relationships between features.
+- **Cos**: Highlights rotational patterns and relationships.
+- **Tan**: Focuses on the slope or rate of change between features.
+- **Arcsin**: Shows the angle whose sine is the linear combination value, often highlighting small differences.
+- **Arccos**: Represents the angle whose cosine is the linear combination value, useful for rotational relationships.
+- **Arctan**: Provides the angle whose tangent is the linear combination value, emphasizing the slope or direction.
+
+### Practical Example
+
+Suppose you have a dataset with features `x1`, `x2`, and `x3`, and you want to create a new feature that helps distinguish between classes. Using JTabViz, you might create a linear combination feature like:
+
+New Feature = 0.5(x1) + 0.3(x2) - 0.2(x3)
+
+If this linear combination is wrapped with the `cos` function, the new feature becomes:
+
+Transformed Feature = cos(0.5(x1) + 0.3(x2) - 0.2(x3))
+
+This transformed feature could provide better insight into the relationships between the features and improve the classification of data.
+
+### Summary
+
+The **Linear Combination Feature Engineering** tool in JTabViz allows you to combine existing features and optimize their relationships to create new features. This approach can help in making the data more suitable for classification tasks.
 
 ## Getting Started
 
