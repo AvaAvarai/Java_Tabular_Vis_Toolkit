@@ -387,13 +387,13 @@ public class CsvViewer extends JFrame {
             noDataLoadedError();
             return;
         }
-
+    
         // Identify original columns using the originalColumnNames list
         List<Integer> originalColumnIndices = new ArrayList<>();
         List<Double> coefficients = new ArrayList<>();
-
+    
         JPanel panel = new JPanel(new GridLayout(0, 2));
-
+    
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
             String columnName = tableModel.getColumnName(i);
             // Consider a column original if it is in the originalColumnNames list
@@ -406,21 +406,25 @@ public class CsvViewer extends JFrame {
                 coefficients.add(null); // Placeholder for the coefficient
             }
         }
-
+    
         String[] trigOptions = {"None", "cos", "sin", "tan", "arccos", "arcsin", "arctan"};
         JComboBox<String> trigFunctionSelector = new JComboBox<>(trigOptions);
         panel.add(new JLabel("Wrap Linear Combination in:"));
         panel.add(trigFunctionSelector);
-
+    
         JButton exhaustiveSearchButton = new JButton("Gradient Descent Search");
         exhaustiveSearchButton.addActionListener(e -> {
             optimizeCoefficientsUsingGradientDescent(originalColumnIndices, coefficients, panel, (String) trigFunctionSelector.getSelectedItem());
         });
-
+    
         panel.add(exhaustiveSearchButton);
-
-        int result = JOptionPane.showConfirmDialog(this, panel, "Enter Coefficients for Linear Combination", JOptionPane.OK_CANCEL_OPTION);
-
+    
+        // Wrap the panel in a JScrollPane to enable vertical scrolling
+        JScrollPane scrollPane = new JScrollPane(panel);
+        scrollPane.setPreferredSize(new Dimension(400, 300)); // Adjust the size as needed
+    
+        int result = JOptionPane.showConfirmDialog(this, scrollPane, "Enter Coefficients for Linear Combination", JOptionPane.OK_CANCEL_OPTION);
+    
         if (result == JOptionPane.OK_OPTION) {
             try {
                 for (int j = 0; j < coefficients.size(); j++) {
@@ -430,7 +434,7 @@ public class CsvViewer extends JFrame {
                 JOptionPane.showMessageDialog(this, "Please enter valid numbers for coefficients.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-
+    
             // Construct the base name for the new column
             StringBuilder baseColumnNameBuilder = new StringBuilder("Linear Combination: ");
             for (int j = 0; j < originalColumnIndices.size(); j++) {
@@ -439,15 +443,15 @@ public class CsvViewer extends JFrame {
                     baseColumnNameBuilder.append(" + ");
                 }
             }
-
+    
             // Ensure the column name is unique
             String newColumnName = getUniqueColumnName(baseColumnNameBuilder.toString());
-
+    
             tableModel.addColumn(newColumnName);
-
+    
             // Format for displaying the numbers without scientific notation
             DecimalFormat decimalFormat = new DecimalFormat("#.##########################");
-
+    
             // Populate the new column with the computed linear combination based on original columns
             String trigFunction = (String) trigFunctionSelector.getSelectedItem();
             for (int row = 0; row < tableModel.getRowCount(); row++) {
@@ -465,11 +469,11 @@ public class CsvViewer extends JFrame {
                 // Set the formatted value into the table
                 tableModel.setValueAt(decimalFormat.format(sum), row, tableModel.getColumnCount() - 1);
             }
-
+    
             dataHandler.updateStats(tableModel, statsTextArea);
             updateSelectedRowsLabel();
         }
-    }
+    }    
     
     private double applyTrigFunction(double value, String trigFunction) {
         switch (trigFunction) {
