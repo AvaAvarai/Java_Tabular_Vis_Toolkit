@@ -128,24 +128,45 @@ public class CsvDataHandler {
 
     public void updateStats(DefaultTableModel tableModel, JTextArea statsTextArea) {
         int caseCount = tableModel.getRowCount();
-        Set<String> classSet = new HashSet<>();
-        int classColumnIndex = tableModel.findColumn("class");  // TODO: make an option
-        for (int row = 0; row < caseCount; row++) {
-            if (classColumnIndex >= 0 && classColumnIndex < tableModel.getColumnCount()) {
-                classSet.add(tableModel.getValueAt(row, classColumnIndex).toString());
-            }
-        }
-        int classCount = classSet.size();
-
         StringBuilder stats = new StringBuilder();
         stats.append("Case Count: ").append(caseCount).append("\n");
-        stats.append("Class Count: ").append(classCount).append("\n");
-
+    
         int numColumns = tableModel.getColumnCount();
+        int classColumnIndex = -1;
+    
+        // Find the class column index by checking various case-insensitive possibilities
         for (int col = 0; col < numColumns; col++) {
+            String columnName = tableModel.getColumnName(col).toLowerCase();
+            if (columnName.equals("class")) {
+                classColumnIndex = col;
+                break;
+            }
+        }
+    
+        Set<String> classSet = new HashSet<>();
+        if (classColumnIndex != -1) {
+            for (int row = 0; row < caseCount; row++) {
+                Object classValue = tableModel.getValueAt(row, classColumnIndex);
+                if (classValue != null) {
+                    classSet.add(classValue.toString());
+                }
+            }
+            int classCount = classSet.size();
+            stats.append("Class Count: ").append(classCount).append("\n");
+        } else {
+            stats.append("Class column not found.\n");
+        }
+    
+        for (int col = 0; col < numColumns; col++) {
+            // Skip the "class" column
+            if (col == classColumnIndex) {
+                continue;
+            }
+    
             double minValue = Double.MAX_VALUE;
             double maxValue = Double.MIN_VALUE;
             boolean isNumerical = true;
+    
             for (int row = 0; row < caseCount; row++) {
                 try {
                     double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
@@ -156,13 +177,14 @@ public class CsvDataHandler {
                     break;
                 }
             }
+    
             if (isNumerical) {
                 stats.append(tableModel.getColumnName(col)).append(": Min=").append(minValue).append(", Max=").append(maxValue).append("\n");
             }
         }
-
+    
         statsTextArea.setText(stats.toString());
-    }
+    }     
 
     public void clearData() {
         originalData.clear();
