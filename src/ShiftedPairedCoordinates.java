@@ -134,19 +134,22 @@ public class ShiftedPairedCoordinates extends JFrame {
                 drawAxesAndLabels(g2, x, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2));
             }
 
-            // Draw non-highlighted rows
+            // Draw non-selected rows' shapes and lines
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (!selectedRows.contains(row)) {
                     drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
+                    drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                 }
             }
 
-            // Finally, draw scatter plot shapes in order of the tabular view
+            // Draw selected rows' shapes
             for (int row = 0; row < data.get(0).size(); row++) {
-                drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
+                if (selectedRows.contains(row)) {
+                    drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
+                }
             }
 
-            // Draw highlighted rows last (so they appear on top)
+            // Draw selected rows' lines last (so they appear on top)
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (selectedRows.contains(row)) {
                     drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
