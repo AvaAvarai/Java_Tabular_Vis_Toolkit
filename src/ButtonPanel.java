@@ -31,7 +31,7 @@ public class ButtonPanel {
                 csvViewer.toggleHeatmap();
             }
         });
-        JButton covarianceMatrixButton = UIHelper.createButton("icons/covariance.png", "Show Covariance Matrix", e -> {
+        JButton covarianceMatrixButton = UIHelper.createButton("icons/variance.png", "Show Covariance Matrix", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
