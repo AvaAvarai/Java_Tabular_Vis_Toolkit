@@ -1,6 +1,6 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-**JTabViz** is a Java-based machine learning data analysis toolkit designed for visualization and analysis of tabular machine learning data. Supports data augmentation features, users can export augmented data to explore how changes in the dataset affect their resultantly trained models. Load, view, analyze, and classify CSV data with normalization, visualization (heatmaps, Parallel, Shifted Paired, Static Circular coordinates, covariance matrix heatmap), row manipulation, cell editing, inequality-based classification rules testing, pure single-attribute region automatic discovery, feature engineering, attribute sorting, and data export.
+**JTabViz** is a Java-based machine learning data analysis toolkit designed for visualization and analysis of tabular machine learning data. Supports data augmentation features, users can export augmented data to explore how changes in the dataset affect their resultantly trained models. Load, view, analyze, and classify CSV data with normalization, visualization (heatmaps, Parallel, Shifted Paired, Static Circular, and Star coordinates, covariance matrix heatmap), row manipulation, cell editing, inequality-based classification rules testing, pure single-attribute region automatic discovery, feature engineering, attribute sorting, and data export.
 
 Visualizing the MNIST letters train data in Shifted Paired Coordinates.
 ![SPC Demo screenshot](screenshots/Mnist_Train_Demo_1.png)
@@ -36,13 +36,13 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 - Normalize numerical columns
 - Highlight missing data
 - Covariance matrix with heatmap overlay
-- Visualize data with heatmap overlay, Parallel Coordinates (PC), Shifted Paired Coordinates (SPC), and Static Circular Coordinates (SCC)
+- Visualize data with heatmap overlay, Parallel Coordinates (PC), Shifted Paired Coordinates (SPC), Static Circular Coordinates (SCC), Star Coordinates
 - Manipulate rows (insert, delete, clone, copy contents of selection, edit individual cell values)
 - Customize font color and highlight class fields
 - Export modified data to CSV
 - Test classification rules displaying results in Confusion Matrix
 - Serialize classification rules to reload
-- Highlight selected rows in visualization views (PC, SPC, SCC)
+- Highlight selected rows in visualization views (PC, SPC, SCC, Star)
 - Analytical single attribute pure region discovery algorithm, i.e. Attribute: petal.length, Pure Region: 0.00 <= petal.length < 0.15, Class: Setosa, Count: 50 (100.00% of class, 33.33% of dataset)
 - Rules combinable to keep largest surrounding pure rule
 - Cases classifiable with single pure attribute intervals hideable to simplify classifcation problem
@@ -138,7 +138,7 @@ This transformed feature could provide better insight into the relationships bet
 
 ### Summary
 
-The **Linear Combination Feature Engineering** tool in JTabViz allows you to combine existing features and optimize their relationships to create new features. This approach can help in making the data more suitable for classification tasks.
+The **Linear Combination Feature Engineering** tool in JTabViz allows you to combine existing features and optimize their relationships to create new features. This approach can help in finding derivations of the data which present classifiable patterns.
 
 ## Getting Started
 
