@@ -15,6 +15,7 @@ import java.util.Set;
 public class CsvDataHandler {
     private List<String[]> originalData = new ArrayList<>();
     private List<String[]> normalizedData = new ArrayList<>();
+    private boolean isNormalized = false;
 
     public void loadCsvData(String filePath, DefaultTableModel tableModel, JTextArea statsTextArea) {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -40,16 +41,23 @@ public class CsvDataHandler {
         }
     }
 
-    public void normalizeData(JTable table, JTextArea statsTextArea) {
+    public void normalizeOrDenormalizeData(JTable table, JTextArea statsTextArea) {
+        if (!isNormalized) {
+            normalizeData(table);
+        } else {
+            denormalizeData(table);
+        }
+    }
+
+    private void normalizeData(JTable table) {
         if (originalData.isEmpty()) {
             JOptionPane.showMessageDialog(null, "No data to normalize", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Use SwingWorker to perform normalization in a background thread
         SwingWorker<List<String[]>, Void> worker = new SwingWorker<List<String[]>, Void>() {
             @Override
-            protected List<String[]> doInBackground() throws Exception {
+            protected List<String[]> doInBackground() {
                 int numColumns = originalData.get(0).length;
                 double[] minValues = new double[numColumns];
                 double[] maxValues = new double[numColumns];
@@ -90,15 +98,14 @@ public class CsvDataHandler {
                     }
                     normalizedData.add(normalizedRow);
                 }
-
                 return normalizedData;
             }
 
             @Override
             protected void done() {
                 try {
-                    // Update the normalized data once the background task is complete
                     normalizedData = get();
+                    isNormalized = true;
                     updateTableWithNormalizedData(table);
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(null, "Error during normalization: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
@@ -106,7 +113,24 @@ public class CsvDataHandler {
             }
         };
 
-        worker.execute(); // Start the background task
+        worker.execute();
+    }
+
+    private void denormalizeData(JTable table) {
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() {
+                return null; // Nothing to compute in the background
+            }
+
+            @Override
+            protected void done() {
+                isNormalized = false;
+                updateTableWithOriginalData(table);
+            }
+        };
+
+        worker.execute();
     }
 
     private void updateTableWithNormalizedData(JTable table) {
@@ -115,6 +139,18 @@ public class CsvDataHandler {
 
         // Populate the table with normalized data
         for (String[] row : normalizedData) {
+            tableModel.addRow(row);
+        }
+
+        table.repaint(); // Refresh the table display
+    }
+
+    private void updateTableWithOriginalData(JTable table) {
+        DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
+        tableModel.setRowCount(0); // Clear existing data in the table
+
+        // Restore the original data
+        for (String[] row : originalData) {
             tableModel.addRow(row);
         }
 
@@ -223,5 +259,6 @@ public class CsvDataHandler {
     public void clearData() {
         originalData.clear();
         normalizedData.clear();
+        isNormalized = false;
     }
 }

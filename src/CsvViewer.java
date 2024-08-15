@@ -169,7 +169,7 @@ public class CsvViewer extends JFrame {
                 JOptionPane.YES_NO_OPTION);
             
             if (choice == JOptionPane.YES_OPTION) {
-                dataHandler.normalizeData(table, statsTextArea);
+                dataHandler.normalizeOrDenormalizeData(table, statsTextArea);
                 updateTableData(dataHandler.getNormalizedData());
                 isNormalized = true;
                 toggleButton.setIcon(UIHelper.loadIcon("icons/denormalize.png", 40, 40));
@@ -891,7 +891,7 @@ public class CsvViewer extends JFrame {
             toggleButton.setIcon(UIHelper.loadIcon("icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
         } else {
-            dataHandler.normalizeData(table, statsTextArea);
+            dataHandler.normalizeOrDenormalizeData(table, statsTextArea);
             updateTableData(dataHandler.getNormalizedData());
             isNormalized = true;
             toggleButton.setIcon(UIHelper.loadIcon("icons/denormalize.png", 40, 40));
