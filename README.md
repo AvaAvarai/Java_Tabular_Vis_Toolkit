@@ -1,8 +1,8 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-**JTabViz** is a Java-based machine learning data analysis toolkit designed for easy visualizationg and analysis of tabular data used for building visual machine learning models. With data augmentation features, users can explore how changes in the dataset affect resultantly trained models. Load, view, analyze, and classify CSV data with key features of normalization, visualization (heatmaps, Parallel, Shifted Paired, and Static Circular coordinates), row manipulation, cell editing, inequality-based classification rules testing, analytical rule discovery automation, feature engineering, attribute sorting, and data export.
+**JTabViz** is a Java-based machine learning data analysis toolkit designed for visualization and analysis of tabular machine learning data. Supports data augmentation features, users can export augmented data to explore how changes in the dataset affect their resultantly trained models. Load, view, analyze, and classify CSV data with normalization, visualization (heatmaps, Parallel, Shifted Paired, Static Circular coordinates, covariance matrix heatmap), row manipulation, cell editing, inequality-based classification rules testing, pure single-attribute region automatic discovery, feature engineering, attribute sorting, and data export.
 
-Visualizing the MNIST Train data in SPC.
+Visualizing the MNIST letters train data in Shifted Paired Coordinates.
 ![SPC Demo screenshot](screenshots/Mnist_Train_Demo_1.png)
 
 Exploring Fisher Iris data highlighting sepal width outliers for Virginica class.
