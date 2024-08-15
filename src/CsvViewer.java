@@ -1720,9 +1720,12 @@ public class CsvViewer extends JFrame {
         int selectedRowCount = table.getSelectedRowCount();
         int totalVisibleRowCount = table.getRowCount();
         int totalRowCount = tableModel.getRowCount();
-
-        double visiblePercentage = (totalVisibleRowCount / (double) totalRowCount) * 100.0;
-
+    
+        double visiblePercentage = 0.0;
+        if (totalRowCount > 0) {
+            visiblePercentage = (totalVisibleRowCount / (double) totalRowCount) * 100.0;
+        }
+    
         selectedRowsLabel.setText(String.format("Selected rows: %d / Total visible cases: %d / Total cases: %d = %.2f%% of dataset",
                 selectedRowCount, totalVisibleRowCount, totalRowCount, visiblePercentage));
     }
