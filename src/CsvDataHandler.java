@@ -1,4 +1,5 @@
 package src;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.io.BufferedReader;
@@ -39,52 +40,85 @@ public class CsvDataHandler {
         }
     }
 
-    public void normalizeData() {
+    public void normalizeData(JTable table, JTextArea statsTextArea) {
         if (originalData.isEmpty()) {
             JOptionPane.showMessageDialog(null, "No data to normalize", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        int numColumns = originalData.get(0).length;
-        double[] minValues = new double[numColumns];
-        double[] maxValues = new double[numColumns];
-        boolean[] isNumerical = new boolean[numColumns];
+        // Use SwingWorker to perform normalization in a background thread
+        SwingWorker<List<String[]>, Void> worker = new SwingWorker<List<String[]>, Void>() {
+            @Override
+            protected List<String[]> doInBackground() throws Exception {
+                int numColumns = originalData.get(0).length;
+                double[] minValues = new double[numColumns];
+                double[] maxValues = new double[numColumns];
+                boolean[] isNumerical = new boolean[numColumns];
 
-        // Initialize min and max values, and check if columns are numerical
-        for (int i = 0; i < numColumns; i++) {
-            minValues[i] = Double.MAX_VALUE;
-            maxValues[i] = Double.MIN_VALUE;
-            isNumerical[i] = true;
-        }
+                // Initialize min and max values, and check if columns are numerical
+                for (int i = 0; i < numColumns; i++) {
+                    minValues[i] = Double.MAX_VALUE;
+                    maxValues[i] = Double.MIN_VALUE;
+                    isNumerical[i] = true;
+                }
 
-        // Calculate min and max for each column
-        for (String[] row : originalData) {
-            for (int j = 0; j < numColumns; j++) {
+                // Calculate min and max for each column
+                for (String[] row : originalData) {
+                    for (int j = 0; j < numColumns; j++) {
+                        try {
+                            double value = Double.parseDouble(row[j]);
+                            if (value < minValues[j]) minValues[j] = value;
+                            if (value > maxValues[j]) maxValues[j] = value;
+                        } catch (NumberFormatException e) {
+                            isNumerical[j] = false;
+                        }
+                    }
+                }
+
+                // Normalize the data
+                List<String[]> normalizedData = new ArrayList<>();
+                for (String[] row : originalData) {
+                    String[] normalizedRow = new String[numColumns];
+                    for (int j = 0; j < numColumns; j++) {
+                        if (isNumerical[j]) {
+                            double value = Double.parseDouble(row[j]);
+                            double normalizedValue = (value - minValues[j]) / (maxValues[j] - minValues[j]);
+                            normalizedRow[j] = String.valueOf(normalizedValue);
+                        } else {
+                            normalizedRow[j] = row[j];
+                        }
+                    }
+                    normalizedData.add(normalizedRow);
+                }
+
+                return normalizedData;
+            }
+
+            @Override
+            protected void done() {
                 try {
-                    double value = Double.parseDouble(row[j]);
-                    if (value < minValues[j]) minValues[j] = value;
-                    if (value > maxValues[j]) maxValues[j] = value;
-                } catch (NumberFormatException e) {
-                    isNumerical[j] = false;
+                    // Update the normalized data once the background task is complete
+                    normalizedData = get();
+                    updateTableWithNormalizedData(table);
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null, "Error during normalization: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
+        };
+
+        worker.execute(); // Start the background task
+    }
+
+    private void updateTableWithNormalizedData(JTable table) {
+        DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
+        tableModel.setRowCount(0); // Clear existing data in the table
+
+        // Populate the table with normalized data
+        for (String[] row : normalizedData) {
+            tableModel.addRow(row);
         }
 
-        // Normalize the data
-        normalizedData.clear(); // Clear previous normalized data
-        for (String[] row : originalData) {
-            String[] normalizedRow = new String[numColumns];
-            for (int j = 0; j < numColumns; j++) {
-                if (isNumerical[j]) {
-                    double value = Double.parseDouble(row[j]);
-                    double normalizedValue = (value - minValues[j]) / (maxValues[j] - minValues[j]);
-                    normalizedRow[j] = String.valueOf(normalizedValue);
-                } else {
-                    normalizedRow[j] = row[j];
-                }
-            }
-            normalizedData.add(normalizedRow);
-        }
+        table.repaint(); // Refresh the table display
     }
 
     public void saveCsvData(String filePath, DefaultTableModel tableModel) {
@@ -130,10 +164,10 @@ public class CsvDataHandler {
         int caseCount = tableModel.getRowCount();
         StringBuilder stats = new StringBuilder();
         stats.append("Case Count: ").append(caseCount).append("\n");
-    
+
         int numColumns = tableModel.getColumnCount();
         int classColumnIndex = -1;
-    
+
         // Find the class column index by checking various case-insensitive possibilities
         for (int col = 0; col < numColumns; col++) {
             String columnName = tableModel.getColumnName(col).toLowerCase();
@@ -142,7 +176,7 @@ public class CsvDataHandler {
                 break;
             }
         }
-    
+
         Set<String> classSet = new HashSet<>();
         if (classColumnIndex != -1) {
             for (int row = 0; row < caseCount; row++) {
@@ -156,17 +190,17 @@ public class CsvDataHandler {
         } else {
             stats.append("Class column not found.\n");
         }
-    
+
         for (int col = 0; col < numColumns; col++) {
             // Skip the "class" column
             if (col == classColumnIndex) {
                 continue;
             }
-    
+
             double minValue = Double.MAX_VALUE;
             double maxValue = Double.MIN_VALUE;
             boolean isNumerical = true;
-    
+
             for (int row = 0; row < caseCount; row++) {
                 try {
                     double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
@@ -177,14 +211,14 @@ public class CsvDataHandler {
                     break;
                 }
             }
-    
+
             if (isNumerical) {
                 stats.append(tableModel.getColumnName(col)).append(": Min=").append(minValue).append(", Max=").append(maxValue).append("\n");
             }
         }
-    
+
         statsTextArea.setText(stats.toString());
-    }     
+    }
 
     public void clearData() {
         originalData.clear();
