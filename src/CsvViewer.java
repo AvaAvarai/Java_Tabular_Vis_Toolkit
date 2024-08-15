@@ -1015,11 +1015,20 @@ public class CsvViewer extends JFrame {
         int numAttributes = numericalData.size();
         double[][] covarianceMatrix = new double[numAttributes][numAttributes];
     
+        double minCovariance = Double.MAX_VALUE;
+        double maxCovariance = Double.MIN_VALUE;
+    
         for (int i = 0; i < numAttributes; i++) {
             for (int j = 0; j < numAttributes; j++) {
                 covarianceMatrix[i][j] = calculateCovariance(numericalData.get(i), numericalData.get(j));
+                minCovariance = Math.min(minCovariance, covarianceMatrix[i][j]);
+                maxCovariance = Math.max(maxCovariance, covarianceMatrix[i][j]);
             }
         }
+    
+        // Capture min and max covariance values in final variables for use in the inner class
+        final double finalMinCovariance = minCovariance;
+        final double finalMaxCovariance = maxCovariance;
     
         // Create a new table to display the covariance matrix
         DefaultTableModel covarianceTableModel = new DefaultTableModel();
@@ -1042,6 +1051,44 @@ public class CsvViewer extends JFrame {
     
         JTable covarianceTable = new JTable(covarianceTableModel);
         covarianceTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+    
+        // Apply heatmap if enabled
+        if (isHeatmapEnabled) {
+            covarianceTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+                @Override
+                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                    Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                    
+                    if (value != null && !value.toString().trim().isEmpty()) {
+                        try {
+                            double val = Double.parseDouble(value.toString());
+                            double normalizedValue = (val - finalMinCovariance) / (finalMaxCovariance - finalMinCovariance);
+                            Color color = getColorForValue(normalizedValue);
+                            c.setBackground(color);
+                        } catch (NumberFormatException e) {
+                            c.setBackground(Color.WHITE);
+                        }
+                    } else {
+                        c.setBackground(Color.WHITE);
+                    }
+                    
+                    c.setForeground(cellTextColor);
+                    return c;
+                }
+    
+                private Color getColorForValue(double value) {
+                    int red = (int) (255 * value);
+                    int blue = 255 - red;
+                    red = Math.max(0, Math.min(255, red));
+                    blue = Math.max(0, Math.min(255, blue));
+                    return new Color(red, 0, blue);
+                }
+            });
+        }
+    
+        // Apply font settings
+        covarianceTable.setFont(table.getFont());
+        covarianceTable.getTableHeader().setFont(table.getTableHeader().getFont());
     
         // Create a scroll pane for the table
         JScrollPane scrollPane = new JScrollPane(covarianceTable);

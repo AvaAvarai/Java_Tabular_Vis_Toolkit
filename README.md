@@ -28,11 +28,12 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 
 ## Features
 
+- Cross-platform support on headed platforms with Java.
 - Load and display CSV data in tabular view
 - Normalize numerical columns
 - Highlight missing data
-- Covariance matrix
-- Visualize data as a heatmap, Parallel Coordinates (PC), Shifted Paired Coordinates (SPC), and Static Circular Coordinates (SCC)
+- Covariance matrix with heatmap overlay
+- Visualize data with heatmap overlay, Parallel Coordinates (PC), Shifted Paired Coordinates (SPC), and Static Circular Coordinates (SCC)
 - Manipulate rows (insert, delete, clone, copy contents of selection, edit individual cell values)
 - Customize font color and highlight class fields
 - Export modified data to CSV
@@ -223,8 +224,10 @@ Example CSV structure:
 
 ## Acknowledgements
 
-The user interface icons used are sourced from Font Awesome.
+The user interface icons are sourced from [Font Awesome](https://fontawesome.com/search) using [fa2png tool](https://fa2png.app/).
+
+The Java charts library used is [JFreeChart](https://www.jfree.org/jfreechart/).
 
 ## License
 
-The software is freely available for personal and commercial use under the MIT license, see `LICENSE` for full details.
+The JTabViz software is completely available free of charge for use both personal and commercial under the MIT license, see the `LICENSE` for full terms and details.
