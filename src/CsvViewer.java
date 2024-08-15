@@ -471,6 +471,8 @@ public class CsvViewer extends JFrame {
                 tableModel.setValueAt(decimalFormat.format(sum), row, tableModel.getColumnCount() - 1);
             }
     
+            applyRowFilter();
+
             dataHandler.updateStats(tableModel, statsTextArea);
             updateSelectedRowsLabel();
         }
@@ -715,6 +717,10 @@ public class CsvViewer extends JFrame {
                 return !hiddenRows.contains(entry.getIdentifier());
             }
         });
+        // Apply the custom comparator for each column
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            sorter.setComparator(i, new NumericStringComparator());
+        }
         table.setRowSorter(sorter);
         updateSelectedRowsLabel();
     }
