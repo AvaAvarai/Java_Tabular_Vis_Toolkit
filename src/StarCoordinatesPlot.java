@@ -71,8 +71,7 @@ public class StarCoordinatesPlot extends JFrame {
     }
 
     private class StarCoordinatesPanel extends JPanel {
-        private static final int PADDING = 50;
-        private static final int AXIS_LENGTH = 150;
+        private static final int PADDING = 20;
 
         public StarCoordinatesPanel() {
             setBackground(Color.WHITE);
@@ -85,6 +84,7 @@ public class StarCoordinatesPlot extends JFrame {
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+            int plotSize = Math.min(getWidth(), getHeight()) - 2 * PADDING; // Calculate plot size based on available space
             int centerX = getWidth() / 2;
             int centerY = getHeight() / 2;
 
@@ -95,39 +95,37 @@ public class StarCoordinatesPlot extends JFrame {
             // Draw the star coordinates for each data point
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (!selectedRows.contains(row)) {
-                    drawStar(g2, row, centerX, centerY, angleIncrement, false);
+                    drawStar(g2, row, centerX, centerY, plotSize / 2, angleIncrement, false);
                 }
             }
 
             // Highlight selected rows
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (selectedRows.contains(row)) {
-                    drawStar(g2, row, centerX, centerY, angleIncrement, true);
+                    drawStar(g2, row, centerX, centerY, plotSize / 2, angleIncrement, true);
                 }
             }
         }
 
-        private void drawStar(Graphics2D g2, int row, int centerX, int centerY, double angleIncrement, boolean highlight) {
-            double radius = AXIS_LENGTH;
-
+        private void drawStar(Graphics2D g2, int row, int centerX, int centerY, double radius, double angleIncrement, boolean highlight) {
             Path2D starPath = new Path2D.Double();
             for (int i = 0; i < attributeNames.size(); i++) {
                 double value = data.get(i).get(row);
                 double normValue = (value - getMin(data.get(i))) / (getMax(data.get(i)) - getMin(data.get(i)));
                 double angle = i * angleIncrement;
-
+    
                 double x = centerX + radius * normValue * Math.cos(angle);
                 double y = centerY - radius * normValue * Math.sin(angle);
-
+    
                 if (i == 0) {
                     starPath.moveTo(x, y);
                 } else {
                     starPath.lineTo(x, y);
                 }
             }
-
+    
             starPath.closePath();
-
+    
             if (highlight) {
                 g2.setPaint(Color.YELLOW);
                 g2.setStroke(new BasicStroke(2));
@@ -135,7 +133,7 @@ public class StarCoordinatesPlot extends JFrame {
                 g2.setPaint(classColors.get(classLabels.get(row)));
                 g2.setStroke(new BasicStroke(1));
             }
-
+    
             g2.draw(starPath);
         }
 
