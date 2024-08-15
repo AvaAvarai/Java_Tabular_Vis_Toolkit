@@ -62,7 +62,7 @@ public class CsvViewer extends JFrame {
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
-        setSize(900, 600);
+        setSize(950, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -333,6 +333,55 @@ public class CsvViewer extends JFrame {
     
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
+    }
+
+    public void showStarCoordinatesPlot() {
+        if (tableModel.getColumnCount() == 0) {
+            noDataLoadedError();
+            return;
+        }
+    
+        // Extract data and column names for numerical columns
+        List<List<Double>> numericalData = new ArrayList<>();
+        List<String> attributeNames = new ArrayList<>();
+        List<String> classLabels = new ArrayList<>();
+    
+        int classColumnIndex = getClassColumnIndex();
+        for (int col = 0; col < tableModel.getColumnCount(); col++) {
+            if (col != classColumnIndex) {
+                boolean isNumeric = true;
+                List<Double> columnData = new ArrayList<>();
+                for (int row = 0; row < tableModel.getRowCount(); row++) {
+                    if (!hiddenRows.contains(row)) {
+                        try {
+                            columnData.add(Double.parseDouble(tableModel.getValueAt(row, col).toString()));
+                        } catch (NumberFormatException e) {
+                            isNumeric = false;
+                            break;
+                        }
+                    }
+                }
+                if (isNumeric) {
+                    numericalData.add(columnData);
+                    attributeNames.add(tableModel.getColumnName(col));
+                }
+            }
+        }
+    
+        // Extract class labels
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            if (!hiddenRows.contains(row)) {
+                classLabels.add((String) tableModel.getValueAt(row, classColumnIndex));
+            }
+        }
+    
+        // Get selected rows
+        List<Integer> selectedRows = getSelectedRowsIndices();
+        selectedRows.removeIf(hiddenRows::contains);
+    
+        // Show the Star Coordinates plot
+        StarCoordinatesPlot starCoordinatesPlot = new StarCoordinatesPlot(numericalData, attributeNames, classColors, classShapes, classLabels, selectedRows);
+        starCoordinatesPlot.setVisible(true);
     }
 
     public void showRuleOverlayPlot() {

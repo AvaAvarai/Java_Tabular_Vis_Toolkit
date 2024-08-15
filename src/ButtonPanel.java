@@ -109,7 +109,6 @@ public class ButtonPanel {
             }
         });
 
-        // Add the Clone Row button
         JButton cloneRowButton = UIHelper.createButton("icons/clone.png", "Clone Row", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
@@ -118,15 +117,12 @@ public class ButtonPanel {
             }
         });
 
-        // Initialize the toggleTrigonometricButton
         csvViewer.toggleTrigonometricButton = UIHelper.createButton("icons/trigon.png", "Insert Trig Columns", null);
         csvViewer.toggleTrigonometricButton.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
-                // Toggle the trigonometric columns and immediately update the state
                 csvViewer.toggleTrigonometricColumns();
-                // Update the icon and tooltip based on the state
                 if (csvViewer.areDifferenceColumnsVisible) {
                     csvViewer.toggleTrigonometricButton.setIcon(UIHelper.loadIcon("icons/trigoff.png", 40, 40));
                     csvViewer.toggleTrigonometricButton.setToolTipText("Remove Trig Columns");
@@ -137,17 +133,12 @@ public class ButtonPanel {
             }
         });
 
-        // Initialize the toggleEasyCasesButton
         csvViewer.toggleEasyCasesButton = UIHelper.createButton("icons/easy.png", "Show Easy Cases", null);
-
-        // Now set the action listener for the toggleEasyCasesButton
         csvViewer.toggleEasyCasesButton.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.toggleEasyCases();
-
-                // Switch the icon and tooltip based on the current state
                 if (csvViewer.hasHiddenRows()) {
                     csvViewer.toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/uneasy.png", 40, 40));
                     csvViewer.toggleEasyCasesButton.setToolTipText("Show All Cases");
@@ -172,7 +163,17 @@ public class ButtonPanel {
             } else {
                 csvViewer.insertLinearCombinationColumn();
             }
-        });        
+        });
+
+        // Add the new Star Coordinates button
+        JButton starCoordinatesButton = UIHelper.createButton("icons/starcoordinates.png", "Star Coordinates", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                // Collect data for the plot and invoke the StarCoordinatesPlot
+                csvViewer.showStarCoordinatesPlot();
+            }
+        });
 
         buttonPanel.add(loadButton);
         buttonPanel.add(csvViewer.toggleButton);
@@ -194,6 +195,7 @@ public class ButtonPanel {
         buttonPanel.add(csvViewer.toggleEasyCasesButton);
         buttonPanel.add(ruleOverlayButton);
         buttonPanel.add(linearCombinationButton);
+        buttonPanel.add(starCoordinatesButton);  // Add the new button
 
         return buttonPanel;
     }
