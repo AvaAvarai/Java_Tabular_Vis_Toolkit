@@ -5,6 +5,9 @@
 Visualizing the MNIST letters train data in Shifted Paired Coordinates.
 ![SPC Demo screenshot](screenshots/Mnist_Train_Demo_1.png)
 
+Visualizing the Wisconsin Breast Cancer 30 feature data in Star Coordinates.
+![Star demo screenshot](screenshots/WBC_30_Demo_1.png)
+
 Exploring Fisher Iris data highlighting sepal width outliers for Virginica class.
 ![Demo screenshot 1](screenshots/Iris_Demo_1.png)
 
