@@ -160,7 +160,7 @@ There are three ways to run JTabViz:
    - Compile the project:
 
      ```sh
-     javac -cp ".;libs/*" src/Main.java
+     javac -d out -cp "libs/*" src/*.java
      ```
 
    - Run the compiled project:
@@ -179,11 +179,15 @@ There are three ways to run JTabViz:
 
    - Run the created JAR file:
 
-     ```sh
-     java -cp ".;libs/*;out/JTabViz.jar" src.Main
-     ```
+      ```sh
+      java -cp ".;libs/*;out/JTabViz.jar" src.Main
+      ```
 
-Note: Replace `;` with `:` in the classpath (-cp) if you're using a Unix-based system (Linux, macOS).
+Note for Linux and MacOS: Replace `;` with `:` in the classpath (-cp) if you're using a Unix-based system:
+
+```sh
+java -cp "out:libs/*" src.Main
+```
 
 ## Data Format
 
