@@ -66,21 +66,21 @@ public class ButtonPanel {
                 csvViewer.exportCsvFile();
             }
         });
-        JButton parallelPlotButton = UIHelper.createButton("icons/parallel.png", "Parallel Coordinates", e -> {
+        JButton parallelPlotButton = UIHelper.createButton("icons/parallel.png", "Parallel Coordinates Plot", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.showParallelCoordinatesPlot();
             }
         });
-        JButton shiftedPairedButton = UIHelper.createButton("icons/shiftedpaired.png", "Shifted Paired Coordinates", e -> {
+        JButton shiftedPairedButton = UIHelper.createButton("icons/shiftedpaired.png", "Shifted Paired Coordinates Plot", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.showShiftedPairedCoordinates();
             }
         });
-        JButton staticCircularCoordinatesButton = UIHelper.createButton("icons/staticcircular.png", "Static Circular Coordinates", e -> {
+        JButton staticCircularCoordinatesButton = UIHelper.createButton("icons/staticcircular.png", "Static Circular Coordinates Plot", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -149,7 +149,7 @@ public class ButtonPanel {
             }
         });
 
-        JButton ruleOverlayButton = UIHelper.createButton("icons/ruleplot.png", "Rule Overlay", e -> {
+        JButton ruleOverlayButton = UIHelper.createButton("icons/ruleplot.png", "Rule Overlay Plot", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -166,7 +166,7 @@ public class ButtonPanel {
         });
 
         // Add the new Star Coordinates button
-        JButton starCoordinatesButton = UIHelper.createButton("icons/starcoordinates.png", "Star Coordinates", e -> {
+        JButton starCoordinatesButton = UIHelper.createButton("icons/star.png", "Star Coordinates Plot", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -188,6 +188,7 @@ public class ButtonPanel {
         buttonPanel.add(parallelPlotButton);
         buttonPanel.add(shiftedPairedButton);
         buttonPanel.add(staticCircularCoordinatesButton);
+        buttonPanel.add(starCoordinatesButton);
         buttonPanel.add(classColorButton);
         buttonPanel.add(setClassColorsButton);
         buttonPanel.add(ruleTesterButton);
@@ -195,7 +196,6 @@ public class ButtonPanel {
         buttonPanel.add(csvViewer.toggleEasyCasesButton);
         buttonPanel.add(ruleOverlayButton);
         buttonPanel.add(linearCombinationButton);
-        buttonPanel.add(starCoordinatesButton);  // Add the new button
 
         return buttonPanel;
     }
