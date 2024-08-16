@@ -2,11 +2,10 @@
 
 **JTabViz** is a Java-based machine learning data analysis toolkit designed for visualization and analysis of tabular machine learning data. Supports data augmentation features, users can export augmented data to explore how changes in the dataset affect their resultantly trained models. Load, view, analyze, and classify CSV data with normalization, visualization (heatmaps, Parallel, Shifted Paired, Static Circular, and Star coordinates, covariance matrix heatmap), row manipulation, cell editing, inequality-based classification rules testing, pure single-attribute region automatic discovery, feature engineering, attribute sorting, and data export.
 
-Visualizing the MNIST letters train data in Shifted Paired Coordinates.
-![SPC Demo screenshot](screenshots/Mnist_Train_Demo_1.png)
+## Analyzing Fisher Iris Benchmark Dataset
 
-Visualizing the Wisconsin Breast Cancer 30 feature data in Star Coordinates.
-![Star demo screenshot](screenshots/WBC_30_Demo_1.png)
+98.67% accurate Fisher Iris classifier exploring causal relations of the two remaining misclassified cases, one in Virginica and one in Versicolor classes, shown highlight in Shifted Paired Coordinates with the classification function duplicated for the third plot axes pair.
+![Demo screenshot 6](screenshots/Iris_Demo_6.png)
 
 Exploring Fisher Iris data by highlighting sepal width outliers for Virginica class by rearranging axes to accentuate monotonic patterns, sorting by the desired attribute, and ctrl-clicking outlier cases to then visualize as shown here in Parallel Coordinates.
 ![Demo screenshot 1](screenshots/Iris_Demo_1.png)
@@ -28,6 +27,14 @@ Rules Tester Demo.
 
 Classifying Fisher Iris data with a single attribute for 75% of dataset.
 ![Rules Tester Demo screenshot](screenshots/Rules_Test_Demo_2.png)
+
+## Analyzing Higher Dimensionality
+
+Visualizing the MNIST letters train data in Shifted Paired Coordinates.
+![SPC Demo screenshot](screenshots/Mnist_Train_Demo_1.png)
+
+Visualizing the Wisconsin Breast Cancer 30 feature data in Star Coordinates.
+![Star demo screenshot](screenshots/WBC_30_Demo_1.png)
 
 ## Features
 
