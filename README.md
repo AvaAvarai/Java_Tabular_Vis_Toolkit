@@ -27,6 +27,9 @@ Outlier in Setosa sepal width attribute highlighted.
 Versicolor cases conflicting in petal length attibute selected and highlighted in Star Coordinates.
 ![Demo screenshot 6](screenshots/Iris_Demo_7.png)
 
+Sorting attributes by covariance against sepal width, highlighting four outstanding cases in PC and SPC.
+![Demo screenshot 6](screenshots/Iris_Demo_8.png)
+
 Rules Tester Demo.
 ![Rules Tester Demo screenshot](screenshots/Rules_Test_Demo_1.png)
 
