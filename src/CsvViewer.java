@@ -906,6 +906,85 @@ public class CsvViewer extends JFrame {
         areDifferenceColumnsVisible = false;
     }
 
+    public void showCovarianceSortDialog() {
+        if (tableModel.getColumnCount() == 0) {
+            noDataLoadedError();
+            return;
+        }
+    
+        // Get all attribute names except the class column
+        List<String> attributes = new ArrayList<>();
+        int classColumnIndex = getClassColumnIndex();
+    
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            if (i != classColumnIndex) {
+                attributes.add(tableModel.getColumnName(i));
+            }
+        }
+    
+        // Prompt user to select an attribute to sort by
+        String selectedAttribute = (String) JOptionPane.showInputDialog(
+                this,
+                "Select an attribute to sort by covariance:",
+                "Covariance Column Sort",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                attributes.toArray(new String[0]),
+                attributes.get(0)
+        );
+    
+        if (selectedAttribute != null) {
+            sortColumnsByCovariance(selectedAttribute);
+        }
+    }
+
+    private void sortColumnsByCovariance(String selectedAttribute) {
+        int selectedColumnIndex = tableModel.findColumn(selectedAttribute);
+        int classColumnIndex = getClassColumnIndex();
+    
+        List<CovariancePair> covariancePairs = new ArrayList<>();
+    
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            if (i != selectedColumnIndex && i != classColumnIndex) {
+                double covariance = calculateCovarianceBetweenColumns(selectedColumnIndex, i);
+                covariancePairs.add(new CovariancePair(i, covariance));
+            }
+        }
+    
+        // Sort columns based on covariance values in descending order
+        covariancePairs.sort((p1, p2) -> Double.compare(p2.covariance, p1.covariance));
+    
+        // Reorder the columns in the table model based on sorted covariance values
+        TableColumnModel columnModel = table.getColumnModel();
+        for (int i = 0; i < covariancePairs.size(); i++) {
+            int fromIndex = columnModel.getColumnIndex(tableModel.getColumnName(covariancePairs.get(i).columnIndex));
+            columnModel.moveColumn(fromIndex, i);
+        }
+    
+        // Update the table to reflect the new order
+        table.getTableHeader().repaint();
+        table.repaint();
+    }
+    
+    private double calculateCovarianceBetweenColumns(int col1, int col2) {
+        int rowCount = tableModel.getRowCount();
+    
+        double[] values1 = new double[rowCount];
+        double[] values2 = new double[rowCount];
+    
+        for (int i = 0; i < rowCount; i++) {
+            try {
+                values1[i] = Double.parseDouble(tableModel.getValueAt(i, col1).toString());
+                values2[i] = Double.parseDouble(tableModel.getValueAt(i, col2).toString());
+            } catch (NumberFormatException e) {
+                values1[i] = Double.NaN;
+                values2[i] = Double.NaN;
+            }
+        }
+    
+        return calculateCovariance(values1, values2);
+    }    
+
     public void deleteColumn(int viewColumnIndex) {
         int modelColumnIndex = table.convertColumnIndexToModel(viewColumnIndex);
         int classColumnIndex = getClassColumnIndex();
@@ -1802,4 +1881,15 @@ public class CsvViewer extends JFrame {
         }
         return selectedIndices;
     }
+
+    private static class CovariancePair {
+        int columnIndex;
+        double covariance;
+    
+        CovariancePair(int columnIndex, double covariance) {
+            this.columnIndex = columnIndex;
+            this.covariance = covariance;
+        }
+    }
+    
 }

@@ -165,13 +165,19 @@ public class ButtonPanel {
             }
         });
 
-        // Add the new Star Coordinates button
         JButton starCoordinatesButton = UIHelper.createButton("icons/star.png", "Star Coordinates Plot", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
-                // Collect data for the plot and invoke the StarCoordinatesPlot
                 csvViewer.showStarCoordinatesPlot();
+            }
+        });
+
+        JButton covarianceSortButton = UIHelper.createButton("icons/sort_covariance.png", "Sort Columns by Covariance", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showCovarianceSortDialog();
             }
         });
 
@@ -189,6 +195,7 @@ public class ButtonPanel {
         buttonPanel.add(shiftedPairedButton);
         buttonPanel.add(staticCircularCoordinatesButton);
         buttonPanel.add(starCoordinatesButton);
+        buttonPanel.add(covarianceSortButton);
         buttonPanel.add(classColorButton);
         buttonPanel.add(setClassColorsButton);
         buttonPanel.add(ruleTesterButton);
