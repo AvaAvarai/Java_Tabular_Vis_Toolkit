@@ -4,13 +4,15 @@
 
 ## Analyzing Fisher Iris Benchmark Dataset
 
-98.67% accurate Fisher Iris classifier exploring causal relations of the two remaining misclassified cases, one in Virginica and one in Versicolor classes, shown highlight in Shifted Paired Coordinates with the classification function duplicated for the third plot axes pair.
+These screenshots demonstrate exploration of the Fisher Iris dataset which we utilize as a benchmark.
+
+98.67% accurate classifier exploring causal relations of the two remaining misclassified cases, one in Virginica and one in Versicolor classes, shown highlight in Shifted Paired Coordinates with the classification function duplicated for the third plot axes pair.
 ![Demo screenshot 6](screenshots/Iris_Demo_6.png)
 
-Exploring Fisher Iris data by highlighting sepal width outliers for Virginica class by rearranging axes to accentuate monotonic patterns, sorting by the desired attribute, and ctrl-clicking outlier cases to then visualize as shown here in Parallel Coordinates.
+Highlighting sepal width outliers for Virginica class by rearranging axes to accentuate monotonic patterns, sorting by the desired attribute, and ctrl-clicking outlier cases to then visualize as shown here in Parallel Coordinates.
 ![Demo screenshot 1](screenshots/Iris_Demo_1.png)
 
-Exploring Fisher Iris data by highlighting sepal length outliers for the Versicolor class which remain difficult to classify in Shifted Paired Coordinates.
+Highlighting sepal length outliers for the Versicolor class which remain difficult to classify in Shifted Paired Coordinates.
 ![Demo screenshot 2](screenshots/Iris_Demo_2.png)
 
 Static Circular Coordinates Demo highlighting a petal length outlier in the Virginica class.
@@ -21,6 +23,9 @@ Combined View Demo.
 
 Outlier in Setosa sepal width attribute highlighted.
 ![Demo screenshot 4](screenshots/Iris_Demo_4.png)
+
+Versicolor cases conflicting in petal length attibute selected and highlighted in Star Coordinates.
+![Demo screenshot 6](screenshots/Iris_Demo_7.png)
 
 Rules Tester Demo.
 ![Rules Tester Demo screenshot](screenshots/Rules_Test_Demo_1.png)
