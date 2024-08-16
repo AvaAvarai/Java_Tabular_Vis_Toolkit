@@ -1881,15 +1881,4 @@ public class CsvViewer extends JFrame {
         }
         return selectedIndices;
     }
-
-    private static class CovariancePair {
-        int columnIndex;
-        double covariance;
-    
-        CovariancePair(int columnIndex, double covariance) {
-            this.columnIndex = columnIndex;
-            this.covariance = covariance;
-        }
-    }
-    
 }

@@ -51,6 +51,7 @@ Visualizing the Wisconsin Breast Cancer 30 feature data in Star Coordinates.
 - Normalize numerical columns
 - Highlight missing data
 - Covariance matrix with heatmap overlay
+- Covariance sort opens dialog, select an attribute and sort columns by the covariances of all other attributes against the selected attribute.
 - Visualize data with heatmap overlay, Parallel Coordinates (PC), Shifted Paired Coordinates (SPC), Static Circular Coordinates (SCC), Star Coordinates
 - Manipulate rows (insert, delete, clone, copy contents of selection, edit individual cell values)
 - Customize font color and highlight class fields
