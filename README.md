@@ -8,7 +8,7 @@ Visualizing the MNIST letters train data in Shifted Paired Coordinates.
 Visualizing the Wisconsin Breast Cancer 30 feature data in Star Coordinates.
 ![Star demo screenshot](screenshots/WBC_30_Demo_1.png)
 
-Exploring Fisher Iris data highlighting sepal width outliers for Virginica class.
+Exploring Fisher Iris data highlighting sepal width outliers for Virginica class by rearranging axes to accentuate monotonic patterns, sorting by the desired attribute, and ctrl-clicking outlier cases to then visualize as shown here in Parallel coordinates.
 ![Demo screenshot 1](screenshots/Iris_Demo_1.png)
 
 Shifted Paired Coordinates highlighting a potential misclassification in the Virginica class based on sepal width.
