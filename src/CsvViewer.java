@@ -930,7 +930,17 @@ public class CsvViewer extends JFrame {
             }
         }
         tableModel.setColumnCount(tableModel.getColumnCount() - 1);
-        
+
+        // Update the table model column names
+        ArrayList<String> newColumnNames = new ArrayList<>();
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            if (i == columnIndex) {
+                continue;
+            }
+            newColumnNames.add(tableModel.getColumnName(i));
+        }
+        tableModel.setColumnIdentifiers(newColumnNames.toArray());
+
         // Update UI components that may rely on column data
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
