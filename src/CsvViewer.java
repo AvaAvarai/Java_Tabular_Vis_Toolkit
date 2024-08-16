@@ -907,45 +907,45 @@ public class CsvViewer extends JFrame {
     }
 
     public void deleteColumn(int columnIndex) {
-        int classColumnIndex = getClassColumnIndex();  // Use the method to find the class column index
+        int classColumnIndex = getClassColumnIndex();
     
         // Check if the selected column is the class column
         if (columnIndex == classColumnIndex) {
             JOptionPane.showMessageDialog(this, "Cannot delete the class column.", "Deletion Not Allowed", JOptionPane.WARNING_MESSAGE);
             return;
         }
-        if (originalColumnNames.contains(tableModel.getColumnName(columnIndex))) {
-            JOptionPane.showMessageDialog(this, "Cannot delete original attribute columns.", "Deletion Not Allowed", JOptionPane.WARNING_MESSAGE);
-            return;
+    
+        // Remove the column name from the originalColumnNames
+        if (originalColumnNames != null) {
+            originalColumnNames.remove(columnIndex);
         }
     
-        // Remove the column from the table model
+        // Remove the column from the TableColumnModel
         TableColumnModel columnModel = table.getColumnModel();
         columnModel.removeColumn(columnModel.getColumn(columnIndex));
     
-        // Remove the column data from the table model
+        // Shift data to the left and update the table model
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             for (int col = columnIndex; col < tableModel.getColumnCount() - 1; col++) {
                 tableModel.setValueAt(tableModel.getValueAt(row, col + 1), row, col);
             }
         }
+    
+        // Remove the last column, which is now duplicated
         tableModel.setColumnCount(tableModel.getColumnCount() - 1);
-
-        // Update the table model column names
-        ArrayList<String> newColumnNames = new ArrayList<>();
-        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            if (i == columnIndex) {
-                continue;
-            }
-            newColumnNames.add(tableModel.getColumnName(i));
+    
+        // Update the column headers
+        String[] newColumnNames = new String[tableModel.getColumnCount()];
+        for (int i = 0; i < newColumnNames.length; i++) {
+            newColumnNames[i] = originalColumnNames.get(i);
         }
-        tableModel.setColumnIdentifiers(newColumnNames.toArray());
-
+        tableModel.setColumnIdentifiers(newColumnNames);
+    
         // Update UI components that may rely on column data
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
         calculateAndDisplayPureRegions(thresholdSlider.getValue());
-    }    
+    }
 
     public void toggleDataView() {
         int currentCaretPosition = statsTextArea.getCaretPosition();
