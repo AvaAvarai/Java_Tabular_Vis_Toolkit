@@ -906,27 +906,28 @@ public class CsvViewer extends JFrame {
         areDifferenceColumnsVisible = false;
     }
 
-    public void deleteColumn(int columnIndex) {
+    public void deleteColumn(int viewColumnIndex) {
+        int modelColumnIndex = table.convertColumnIndexToModel(viewColumnIndex);
         int classColumnIndex = getClassColumnIndex();
     
         // Check if the selected column is the class column
-        if (columnIndex == classColumnIndex) {
+        if (modelColumnIndex == classColumnIndex) {
             JOptionPane.showMessageDialog(this, "Cannot delete the class column.", "Deletion Not Allowed", JOptionPane.WARNING_MESSAGE);
             return;
         }
     
         // Remove the column name from the originalColumnNames
-        if (originalColumnNames != null) {
-            originalColumnNames.remove(columnIndex);
+        if (originalColumnNames != null && modelColumnIndex < originalColumnNames.size()) {
+            originalColumnNames.remove(modelColumnIndex);
         }
     
         // Remove the column from the TableColumnModel
         TableColumnModel columnModel = table.getColumnModel();
-        columnModel.removeColumn(columnModel.getColumn(columnIndex));
+        columnModel.removeColumn(columnModel.getColumn(viewColumnIndex));
     
-        // Shift data to the left and update the table model
+        // Remove the column data from the model
         for (int row = 0; row < tableModel.getRowCount(); row++) {
-            for (int col = columnIndex; col < tableModel.getColumnCount() - 1; col++) {
+            for (int col = modelColumnIndex; col < tableModel.getColumnCount() - 1; col++) {
                 tableModel.setValueAt(tableModel.getValueAt(row, col + 1), row, col);
             }
         }
@@ -935,11 +936,7 @@ public class CsvViewer extends JFrame {
         tableModel.setColumnCount(tableModel.getColumnCount() - 1);
     
         // Update the column headers
-        String[] newColumnNames = new String[tableModel.getColumnCount()];
-        for (int i = 0; i < newColumnNames.length; i++) {
-            newColumnNames[i] = originalColumnNames.get(i);
-        }
-        tableModel.setColumnIdentifiers(newColumnNames);
+        tableModel.setColumnIdentifiers(originalColumnNames.toArray());
     
         // Update UI components that may rely on column data
         dataHandler.updateStats(tableModel, statsTextArea);
@@ -1200,13 +1197,15 @@ public class CsvViewer extends JFrame {
     }
 
     public int getClassColumnIndex() {
-        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            if (tableModel.getColumnName(i).equalsIgnoreCase("class")) {
-                return i;
+        TableColumnModel columnModel = table.getColumnModel();
+        for (int i = 0; i < columnModel.getColumnCount(); i++) {
+            String columnName = columnModel.getColumn(i).getHeaderValue().toString();
+            if (columnName.equalsIgnoreCase("class")) {
+                return columnModel.getColumn(i).getModelIndex();
             }
         }
-        return -1;
-    }
+        return -1; // Return -1 if the "class" column is not found
+    }    
 
     public void toggleClassColors() {
         isClassColorEnabled = !isClassColorEnabled;
