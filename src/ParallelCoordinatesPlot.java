@@ -19,6 +19,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
@@ -31,7 +32,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private Map<String, Shape> classShapes;
     private List<PureRegion> pureRegions;
 
-    public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex, int[] columnOrder, List<Integer> selectedRows, Map<String, Shape> classShapes) {
+    public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex, int[] columnOrder, List<Integer> selectedRows, Map<String, Shape> classShapes, String datasetName) {
         setTitle("Parallel Coordinates Plot");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -102,6 +103,19 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         // Reduce space between the start of the window and the graph
         scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+
+        // Add a key listener for the space bar to save a screenshot
+        scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
+        scrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "ParallelCoordinates", datasetName);
+            }
+        });
+
+        // Ensure the JFrame is focusable to capture key events
+        setFocusable(true);
+        requestFocusInWindow();
 
         // Set the scroll pane as the content pane of the JFrame
         setContentPane(scrollPane);

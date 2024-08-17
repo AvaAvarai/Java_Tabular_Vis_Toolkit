@@ -419,7 +419,7 @@ public class CsvViewer extends JFrame {
     
         List<PureRegion> pureRegions = PureRegion.calculatePureRegions(tableModel, thresholdSlider.getValue(), getClassColumnIndex());
 
-        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows, classShapes);
+        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows, classShapes, getDatasetName());
         plot.setPureRegionsOverlay(pureRegions);
         plot.setVisible(true);
     }
@@ -1612,7 +1612,7 @@ public class CsvViewer extends JFrame {
         List<Integer> selectedRows = getSelectedRowsIndices();
         selectedRows.removeIf(hiddenRows::contains);
 
-        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows, classShapes);
+        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows, classShapes, getDatasetName());
         plot.setVisible(true);
     }
 

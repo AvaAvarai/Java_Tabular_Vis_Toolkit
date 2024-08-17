@@ -38,7 +38,7 @@ Rules Tester Demo.
 Classifying Fisher Iris data with a single attribute for 75% of dataset.
 ![Rules Tester Demo screenshot](screenshots/demo/Rules_Test_Demo_2.png)
 
-## Analyzing Higher Dimensionality
+## Analyzing Higher Dimensionality Datasets
 
 Visualizing the MNIST letters train data in Shifted Paired Coordinates.
 ![SPC Demo screenshot](screenshots/demo/Mnist_Train_Demo_1.png)
