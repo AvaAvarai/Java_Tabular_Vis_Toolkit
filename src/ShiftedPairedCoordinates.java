@@ -2,6 +2,7 @@ package src;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.geom.Ellipse2D;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,7 @@ public class ShiftedPairedCoordinates extends JFrame {
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
-    public ShiftedPairedCoordinates(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows) {
+    public ShiftedPairedCoordinates(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -50,6 +51,19 @@ public class ShiftedPairedCoordinates extends JFrame {
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2)); // Minimize space around the plot
+
+        // Add a key listener for the space bar to save a screenshot
+        scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
+        scrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "ShiftedPairedCoordinates", datasetName);
+            }
+        });
+
+        // Ensure the JFrame is focusable to capture key events
+        setFocusable(true);
+        requestFocusInWindow();
 
         // Add the scroll pane and legend to the main panel
         mainPanel.add(scrollPane, BorderLayout.CENTER);

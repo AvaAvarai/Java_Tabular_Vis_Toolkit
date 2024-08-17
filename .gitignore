@@ -1,4 +1,5 @@
 *.class
 *.ser
 datasets/*/
+screenshots/export/*
 .DS_STORE

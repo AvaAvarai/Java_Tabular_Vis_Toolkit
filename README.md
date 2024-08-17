@@ -9,54 +9,54 @@ Software tested on Windows (Windows 10/11), Linux (Pop OS!), Mac OS (Sonoma).
 These screenshots demonstrate exploration of the Fisher Iris dataset which we utilize as a benchmark.
 
 98.67% accurate classifier exploring causal relations of the two remaining misclassified cases, one in Virginica and one in Versicolor classes, shown highlight in Shifted Paired Coordinates with the classification function duplicated for the third plot axes pair.
-![Demo screenshot 6](screenshots/Iris_Demo_6.png)
+![Demo screenshot 6](screenshots/demo/Iris_Demo_6.png)
 
 Highlighting sepal width outliers for Virginica class by rearranging axes to accentuate monotonic patterns, sorting by the desired attribute, and ctrl-clicking outlier cases to then visualize as shown here in Parallel Coordinates.
-![Demo screenshot 1](screenshots/Iris_Demo_1.png)
+![Demo screenshot 1](screenshots/demo/Iris_Demo_1.png)
 
 Highlighting sepal length outliers for the Versicolor class which remain difficult to classify in Shifted Paired Coordinates.
-![Demo screenshot 2](screenshots/Iris_Demo_2.png)
+![Demo screenshot 2](screenshots/demo/Iris_Demo_2.png)
 
 Static Circular Coordinates Demo highlighting a petal length outlier in the Virginica class.
-![Demo screenshot 5](screenshots/Iris_Demo_5.png)
+![Demo screenshot 5](screenshots/demo/Iris_Demo_5.png)
 
 Combined View Demo.
-![Demo screenshot 3](screenshots/Iris_Demo_3.png)
+![Demo screenshot 3](screenshots/demo/Iris_Demo_3.png)
 
 Outlier in Setosa sepal width attribute highlighted.
-![Demo screenshot 4](screenshots/Iris_Demo_4.png)
+![Demo screenshot 4](screenshots/demo/Iris_Demo_4.png)
 
 Versicolor cases conflicting in petal length attibute selected and highlighted in Star Coordinates.
-![Demo screenshot 6](screenshots/Iris_Demo_7.png)
+![Demo screenshot 6](screenshots/demo/Iris_Demo_7.png)
 
 Sorting attributes by covariance against sepal width, highlighting four outstanding cases in PC and SPC.
-![Demo screenshot 6](screenshots/Iris_Demo_8.png)
+![Demo screenshot 6](screenshots/demo/Iris_Demo_8.png)
 
 Rules Tester Demo.
-![Rules Tester Demo screenshot](screenshots/Rules_Test_Demo_1.png)
+![Rules Tester Demo screenshot](screenshots/demo/Rules_Test_Demo_1.png)
 
 Classifying Fisher Iris data with a single attribute for 75% of dataset.
-![Rules Tester Demo screenshot](screenshots/Rules_Test_Demo_2.png)
+![Rules Tester Demo screenshot](screenshots/demo/Rules_Test_Demo_2.png)
 
 ## Analyzing Higher Dimensionality
 
 Visualizing the MNIST letters train data in Shifted Paired Coordinates.
-![SPC Demo screenshot](screenshots/Mnist_Train_Demo_1.png)
+![SPC Demo screenshot](screenshots/demo/Mnist_Train_Demo_1.png)
 
 Visualizing the Wisconsin Breast Cancer 30 feature data in Parallel Coordinates.
-![PC demo screenshot](screenshots/WBC_30_Demo_1.png)
+![PC demo screenshot](screenshots/demo/WBC_30_Demo_1.png)
 
 Visualizing the Wisconsin Breast Cancer 30 feature data in Star Coordinates.
-![Star demo screenshot](screenshots/WBC_30_Demo_2.png)
+![Star demo screenshot](screenshots/demo/WBC_30_Demo_2.png)
 
 Visualizing the Musk molecule 166 feature data in Parallel Coordinates.
-![PC demo screenshot](screenshots/Musk_166_Demo_1.png)
+![PC demo screenshot](screenshots/demo/Musk_166_Demo_1.png)
 
 Sorting by covariances of attribute v7 against all other features still in Parallel Coordinates.
-![PC demo screenshot](screenshots/Musk_166_Demo_2.png)
+![PC demo screenshot](screenshots/demo/Musk_166_Demo_2.png)
 
 Hiding the classifiable cases with single attribute pure intervals which cover 5% threshold of class or dataset visualized in Parallel Coordinates.
-![PC demo screenshot](screenshots/Musk_166_Demo_3.png)
+![PC demo screenshot](screenshots/demo/Musk_166_Demo_3.png)
 
 ## Features
 

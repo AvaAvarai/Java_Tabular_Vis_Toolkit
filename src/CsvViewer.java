@@ -22,6 +22,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -55,7 +56,7 @@ public class CsvViewer extends JFrame {
     public JLabel thresholdLabel;
     private List<String[]> originalData;
     private List<String> originalColumnNames;
-    
+    private String datasetName;
     private double[] minValues;
     private double[] maxValues;
     private boolean[] isNumerical;
@@ -840,13 +841,20 @@ public class CsvViewer extends JFrame {
         JOptionPane.showMessageDialog(this, "No data loaded", "Error", JOptionPane.ERROR_MESSAGE);
     }
 
+    public String getDatasetName() {
+        return datasetName;
+    }
+
     public void loadCsvFile() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setCurrentDirectory(new java.io.File("datasets"));
         int result = fileChooser.showOpenDialog(this);
     
         if (result == JFileChooser.APPROVE_OPTION) {
-            String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+            File selectedFile = fileChooser.getSelectedFile();
+            String filePath = selectedFile.getAbsolutePath();
+            datasetName = selectedFile.getName();
+            datasetName = datasetName.substring(0, datasetName.lastIndexOf('.'));
     
             clearTableAndState();
     
@@ -1649,7 +1657,7 @@ public class CsvViewer extends JFrame {
         List<Integer> selectedRows = getSelectedRowsIndices();
         selectedRows.removeIf(hiddenRows::contains);
 
-        ShiftedPairedCoordinates shiftedPairedCoordinates = new ShiftedPairedCoordinates(data, attributeNames, classColors, classShapes, classLabels, numPlots, selectedRows);
+        ShiftedPairedCoordinates shiftedPairedCoordinates = new ShiftedPairedCoordinates(data, attributeNames, classColors, classShapes, classLabels, numPlots, selectedRows, getDatasetName());
         shiftedPairedCoordinates.setVisible(true);
     }
 
