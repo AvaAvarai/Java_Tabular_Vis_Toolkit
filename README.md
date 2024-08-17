@@ -158,9 +158,9 @@ The **Linear Combination Feature Engineering** tool in JTabViz allows you to com
 
 ## Getting Started
 
-There are three ways to run JTabViz:
+There are multiple ways to run JTabViz:
 
-1. Using the pre-compiled JAR file:
+1. **Using the Pre-Compiled JAR File:**
    - Download the `JTabViz.jar` file and the `libs` folder.
    - Open a terminal and navigate to the directory containing the JAR file.
    - Run the following command:
@@ -169,7 +169,7 @@ There are three ways to run JTabViz:
      java -cp ".;libs/*;JTabViz.jar" src.Main
      ```
 
-2. Compiling and running from source:
+2. **Compiling and Running from Source:**
    - Clone the repository:
 
      ```sh
@@ -186,28 +186,15 @@ There are three ways to run JTabViz:
    - Run the compiled project:
 
      ```sh
-     java -cp ".;libs/*" src/Main
+     java -cp ".;libs/*" src.Main
      ```
 
-3. Creating and running your own JAR file:
-   - Follow steps 1 and 2 of the "Compiling and running from source" method.
-   - Create a JAR file:
+   **Note:** For macOS and Linux, replace the semicolon (`;`) in the classpath (`-cp`) with a colon (`:`).
 
-     ```sh
-     jar cfm JTabViz.jar MANIFEST.MF -C out .
-     ```
-
-   - Run the created JAR file:
-
-      ```sh
-      java -cp ".;libs/*;out/JTabViz.jar" src.Main
-      ```
-
-Note for Linux and MacOS: Replace `;` with `:` in the classpath (-cp) if you're using a Unix-based system:
-
-```sh
-java -cp "out:libs/*" src.Main
-```
+3. **Using the Provided Scripts:**
+   - Run the appropriate script for your operating system to compile and execute the application in one step:
+     - **macOS/Linux:** `compile_and_run_jtabviz.sh`
+     - **Windows:** `compile_and_run_jtabviz.bat`
 
 ## Data Format
 
