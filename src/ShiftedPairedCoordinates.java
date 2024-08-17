@@ -34,15 +34,28 @@ public class ShiftedPairedCoordinates extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Set the layout and background color of the main content pane
-        setLayout(new BorderLayout());
-        getContentPane().setBackground(Color.WHITE);
+        // Set up the main panel
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(Color.WHITE);
 
-        // Add the plot panel at the center
-        add(new ShiftedPairedCoordinatesPanel(), BorderLayout.CENTER);
+        // Add the plot panel
+        ShiftedPairedCoordinatesPanel plotPanel = new ShiftedPairedCoordinatesPanel();
+        int plotHeight = 800; // Fixed height for maintaining tall axes
+        int plotWidth = numPlots * 250; // Adjust width to fit all plots
 
-        // Add a legend panel at the bottom (horizontal)
-        add(createLegendPanel(), BorderLayout.SOUTH);
+        plotPanel.setPreferredSize(new Dimension(plotWidth, plotHeight));
+
+        // Add the plot panel to a scroll pane
+        JScrollPane scrollPane = new JScrollPane(plotPanel);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2)); // Minimize space around the plot
+
+        // Add the scroll pane and legend to the main panel
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
+
+        setContentPane(mainPanel);
     }
 
     private JPanel createLegendPanel() {
@@ -51,7 +64,6 @@ public class ShiftedPairedCoordinates extends JFrame {
         legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         legendPanel.setBackground(Color.WHITE);
 
-        // Add each class color and shape to the legend
         for (Map.Entry<String, Color> entry : classColors.entrySet()) {
             String className = entry.getKey();
             Color color = entry.getValue();
@@ -86,10 +98,9 @@ public class ShiftedPairedCoordinates extends JFrame {
     }
 
     private class ShiftedPairedCoordinatesPanel extends JPanel {
-        private static final int TITLE_PADDING = 20; // Add 20px padding between title and plot
+        private static final int TITLE_PADDING = 20;
 
         public ShiftedPairedCoordinatesPanel() {
-            // Set the panel's background to transparent
             setBackground(new Color(0, 0, 0, 0));
         }
 
@@ -103,11 +114,9 @@ public class ShiftedPairedCoordinates extends JFrame {
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-            // Set the background color for the entire panel to white
             g2.setColor(Color.WHITE);
             g2.fillRect(0, 0, getWidth(), getHeight());
 
-            // Draw the title above the grey background
             String title = "Shifted Paired Coordinates Plot";
             g2.setFont(TITLE_FONT);
             FontMetrics fm = g2.getFontMetrics(TITLE_FONT);
@@ -116,14 +125,12 @@ public class ShiftedPairedCoordinates extends JFrame {
             g2.setColor(Color.BLACK);
             g2.drawString(title, (getWidth() - titleWidth) / 2, titleHeight);
 
-            // Set the background color for the plot area
             g2.setColor(new Color(0xC0C0C0));
             g2.fillRect(0, titleHeight + TITLE_PADDING, getWidth(), getHeight() - titleHeight - TITLE_PADDING);
 
-            int plotWidth = getWidth() / numPlots - 10;
-            int plotHeight = getHeight() - titleHeight - TITLE_PADDING - 50; // leave space for labels and title
+            int plotWidth = getWidth() / numPlots;
+            int plotHeight = getHeight() - titleHeight - TITLE_PADDING - 50;
 
-            // Draw axes and labels first
             for (int i = 0; i < numPlots; i++) {
                 int x = i * plotWidth;
                 int attrIndex1 = i * 2;
@@ -134,7 +141,6 @@ public class ShiftedPairedCoordinates extends JFrame {
                 drawAxesAndLabels(g2, x, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2));
             }
 
-            // Draw non-selected rows' shapes and lines
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (!selectedRows.contains(row)) {
                     drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
@@ -142,14 +148,12 @@ public class ShiftedPairedCoordinates extends JFrame {
                 }
             }
 
-            // Draw selected rows' shapes
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (selectedRows.contains(row)) {
                     drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                 }
             }
 
-            // Draw selected rows' lines last (so they appear on top)
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (selectedRows.contains(row)) {
                     drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
@@ -162,12 +166,10 @@ public class ShiftedPairedCoordinates extends JFrame {
             int plotX = x + 40;
             int plotY = y + 20;
 
-            // Draw axes
             g2.setColor(Color.BLACK);
             g2.drawLine(plotX, plotY, plotX, plotY + plotSize);
             g2.drawLine(plotX, plotY + plotSize, plotX + plotSize, plotY + plotSize);
 
-            // Draw labels with consistent font
             g2.setFont(AXIS_LABEL_FONT);
             g2.setColor(Color.BLACK);
             g2.drawString(xLabel, plotX + plotSize / 2, plotY + plotSize + 20);
@@ -191,7 +193,6 @@ public class ShiftedPairedCoordinates extends JFrame {
                 int x1 = plotX1 + (int) (plotSize * normX1);
                 int y1 = plotY + plotSize - (int) (plotSize * normY1) + 20;
 
-                // Set the line color to yellow if the row is selected
                 if (selectedRows.contains(row)) {
                     g2.setColor(Color.YELLOW);
                 } else {
@@ -233,7 +234,6 @@ public class ShiftedPairedCoordinates extends JFrame {
                 int px = plotX + (int) (plotSize * normX);
                 int py = plotY + plotSize - (int) (plotSize * normY) + 20;
 
-                // Get class label, color, and shape
                 String classLabel = classLabels.get(row);
                 Color color = selectedRows.contains(row) ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
                 Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
