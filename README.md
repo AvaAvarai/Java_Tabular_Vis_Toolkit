@@ -2,6 +2,8 @@
 
 **JTabViz** is a Java-based machine learning data analysis toolkit designed for visualization and analysis of tabular machine learning data. Supports data augmentation features, users can export augmented data to explore how changes in the dataset affect their resultantly trained models. Load, view, analyze, and classify CSV data with normalization, visualization (heatmaps, Parallel, Shifted Paired, Static Circular, and Star coordinates, covariance matrix heatmap), row manipulation, cell editing, inequality-based classification rules testing, pure single-attribute region automatic discovery, feature engineering, attribute sorting, and data export.
 
+Software tested on Windows (Windows 10/11), Linux (Pop OS!), Mac OS (Sonoma).
+
 ## Analyzing Fisher Iris Benchmark Dataset
 
 These screenshots demonstrate exploration of the Fisher Iris dataset which we utilize as a benchmark.
@@ -41,8 +43,17 @@ Classifying Fisher Iris data with a single attribute for 75% of dataset.
 Visualizing the MNIST letters train data in Shifted Paired Coordinates.
 ![SPC Demo screenshot](screenshots/Mnist_Train_Demo_1.png)
 
+Visualizing the Wisconsin Breast Cancer 30 feature data in Parallel Coordinates.
+![PC demo screenshot](screenshots/WBC_30_Demo_1.png)
+
 Visualizing the Wisconsin Breast Cancer 30 feature data in Star Coordinates.
-![Star demo screenshot](screenshots/WBC_30_Demo_1.png)
+![Star demo screenshot](screenshots/WBC_30_Demo_2.png)
+
+Visualizing the Musk molecule 166 feature data in Parallel Coordinates.
+![PC demo screenshot](screenshots/Musk_166_Demo_1.png)
+
+Sorting by covariances of attribute 7 against all other features still in Parallel Coordinates.
+![PC demo screenshot](screenshots/Musk_166_Demo_2.png)
 
 ## Features
 
