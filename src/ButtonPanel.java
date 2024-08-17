@@ -173,7 +173,7 @@ public class ButtonPanel {
             }
         });
 
-        JButton covarianceSortButton = UIHelper.createButton("icons/sort_covariance.png", "Sort Columns by Covariance", e -> {
+        JButton covarianceSortButton = UIHelper.createButton("icons/sort.png", "Sort Columns by Covariance", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {

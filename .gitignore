@@ -1,3 +1,4 @@
 *.class
 *.ser
 datasets/*/
+.DS_STORE
