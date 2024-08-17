@@ -7,7 +7,7 @@ import java.awt.geom.Ellipse2D;
 import java.util.List;
 import java.util.Map;
 
-public class ShiftedPairedCoordinates extends JFrame {
+public class ShiftedPairedCoordinatesPlot extends JFrame {
 
     private List<List<Double>> data;
     private List<String> attributeNames;
@@ -21,7 +21,7 @@ public class ShiftedPairedCoordinates extends JFrame {
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
-    public ShiftedPairedCoordinates(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName) {
+    public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;

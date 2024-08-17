@@ -1657,7 +1657,7 @@ public class CsvViewer extends JFrame {
         List<Integer> selectedRows = getSelectedRowsIndices();
         selectedRows.removeIf(hiddenRows::contains);
 
-        ShiftedPairedCoordinates shiftedPairedCoordinates = new ShiftedPairedCoordinates(data, attributeNames, classColors, classShapes, classLabels, numPlots, selectedRows, getDatasetName());
+        ShiftedPairedCoordinatesPlot shiftedPairedCoordinates = new ShiftedPairedCoordinatesPlot(data, attributeNames, classColors, classShapes, classLabels, numPlots, selectedRows, getDatasetName());
         shiftedPairedCoordinates.setVisible(true);
     }
 
