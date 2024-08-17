@@ -52,8 +52,11 @@ Visualizing the Wisconsin Breast Cancer 30 feature data in Star Coordinates.
 Visualizing the Musk molecule 166 feature data in Parallel Coordinates.
 ![PC demo screenshot](screenshots/Musk_166_Demo_1.png)
 
-Sorting by covariances of attribute 7 against all other features still in Parallel Coordinates.
+Sorting by covariances of attribute v7 against all other features still in Parallel Coordinates.
 ![PC demo screenshot](screenshots/Musk_166_Demo_2.png)
+
+Hiding the classifiable cases with single attribute pure intervals which cover 5% threshold of class or dataset visualized in Parallel Coordinates.
+![PC demo screenshot](screenshots/Musk_166_Demo_3.png)
 
 ## Features
 
