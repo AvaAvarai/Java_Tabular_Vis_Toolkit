@@ -1,6 +1,9 @@
-package src;
+package src.plots;
 
 import javax.swing.*;
+
+import src.ScreenshotUtils;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.geom.Ellipse2D;

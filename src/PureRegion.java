@@ -4,13 +4,13 @@ import javax.swing.table.DefaultTableModel;
 import java.util.*;
 
 public class PureRegion {
-    String attributeName;
-    double start;
-    double end;
-    String currentClass;
-    int regionCount;
-    double percentageOfClass;
-    double percentageOfDataset;
+    private String attributeName;
+    private double start;
+    private double end;
+    private String currentClass;
+    private int regionCount;
+    private double percentageOfClass;
+    private double percentageOfDataset;
 
     public PureRegion(String attributeName, double start, double end, String currentClass,
                       int regionCount, double percentageOfClass, double percentageOfDataset) {
@@ -128,5 +128,33 @@ public class PureRegion {
         filteredRegions.removeIf(region -> region.percentageOfClass < minCoverage && region.percentageOfDataset < minCoverage);
     
         return filteredRegions;
+    }
+
+    public String getAttributeName() {
+        return attributeName;
+    }
+
+    public double getStart() {
+        return start;
+    }
+
+    public double getEnd() {
+        return end;
+    }
+
+    public String getCurrentClass() {
+        return currentClass;
+    }
+
+    public int getRegionCount() {
+        return regionCount;
+    }
+
+    public double getPercentageOfClass() {
+        return percentageOfClass;
+    }
+
+    public double getPercentageOfDataset() {
+        return percentageOfDataset;
     }
 }

@@ -1,4 +1,4 @@
-package src;
+package src.plots;
 
 import java.awt.*;
 import java.awt.geom.*;

@@ -6,6 +6,12 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
+
+import src.plots.ParallelCoordinatesPlot;
+import src.plots.ShiftedPairedCoordinatesPlot;
+import src.plots.StarCoordinatesPlot;
+import src.plots.StaticCircularCoordinatesPlot;
+
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
@@ -686,7 +692,7 @@ public class CsvViewer extends JFrame {
         Set<Integer> hiddenRows = new HashSet<>();
         for (PureRegion region : pureRegions) {
             for (int row = 0; row < totalRows; row++) {
-                String attributeName = region.attributeName;
+                String attributeName = region.getAttributeName();
                 int attributeColumnIndex = tableModel.findColumn(attributeName);
 
                 if (attributeColumnIndex != -1) {
@@ -694,7 +700,7 @@ public class CsvViewer extends JFrame {
                         double value = Double.parseDouble(tableModel.getValueAt(row, attributeColumnIndex).toString());
                         String className = tableModel.getValueAt(row, classColumnIndex).toString();
 
-                        if (value >= region.start && value < region.end && className.equals(region.currentClass)) {
+                        if (value >= region.getStart() && value < region.getEnd() && className.equals(region.getCurrentClass())) {
                             hiddenRows.add(row);
                         }
                     } catch (NumberFormatException e) {
@@ -736,7 +742,7 @@ public class CsvViewer extends JFrame {
 
         for (PureRegion region : pureRegions) {
             for (int row = 0; row < tableModel.getRowCount(); row++) {
-                String attributeName = region.attributeName;
+                String attributeName = region.getAttributeName();
                 int attributeColumnIndex = tableModel.findColumn(attributeName);
 
                 if (attributeColumnIndex != -1) {
@@ -744,7 +750,7 @@ public class CsvViewer extends JFrame {
                         double value = Double.parseDouble(tableModel.getValueAt(row, attributeColumnIndex).toString());
                         String className = tableModel.getValueAt(row, classColumnIndex).toString();
 
-                        if (value >= region.start && value < region.end && className.equals(region.currentClass)) {
+                        if (value >= region.getStart() && value < region.getEnd() && className.equals(region.getCurrentClass())) {
                             rowsToHide.add(row);
                         }
                     } catch (NumberFormatException e) {
@@ -794,7 +800,7 @@ public class CsvViewer extends JFrame {
 
         for (PureRegion region : pureRegions) {
             for (int row = 0; row < tableModel.getRowCount(); row++) {
-                String attributeName = region.attributeName;
+                String attributeName = region.getAttributeName();
                 int attributeColumnIndex = tableModel.findColumn(attributeName);
 
                 if (attributeColumnIndex != -1) {
@@ -802,7 +808,7 @@ public class CsvViewer extends JFrame {
                         double value = Double.parseDouble(tableModel.getValueAt(row, attributeColumnIndex).toString());
                         String className = tableModel.getValueAt(row, classColumnIndex).toString();
 
-                        if (value >= region.start && value < region.end && className.equals(region.currentClass)) {
+                        if (value >= region.getStart() && value < region.getEnd() && className.equals(region.getCurrentClass())) {
                             hiddenRows.add(row);
                         }
                     } catch (NumberFormatException e) {
@@ -1312,8 +1318,8 @@ public class CsvViewer extends JFrame {
         for (int i = pureRegions.size() - 1; i >= 0; i--) {
             PureRegion region = pureRegions.get(i);
             sb.append(String.format("Attribute: %s, Pure Region: %.2f <= %s < %.2f, Class: %s, Count: %d (%.2f%% of class, %.2f%% of dataset)\n",
-                    region.attributeName, region.start, region.attributeName, region.end,
-                    region.currentClass, region.regionCount, region.percentageOfClass, region.percentageOfDataset));
+                    region.getAttributeName(), region.getStart(), region.getAttributeName(), region.getEnd(),
+                    region.getCurrentClass(), region.getRegionCount(), region.getPercentageOfClass(), region.getPercentageOfDataset()));
         }
         dataHandler.updateStats(tableModel, statsTextArea);
         statsTextArea.append(sb.toString());

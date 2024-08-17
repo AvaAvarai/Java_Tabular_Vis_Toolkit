@@ -1,4 +1,4 @@
-package src;
+package src.plots;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -16,6 +16,9 @@ import org.jfree.chart.title.TextTitle;
 import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
+
+import src.PureRegion;
+import src.ScreenshotUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -285,20 +288,20 @@ public class ParallelCoordinatesPlot extends JFrame {
 
             if (pureRegions != null) {
                 for (PureRegion region : pureRegions) {
-                    int startColIndex = findColumnIndex(region.attributeName, columnNames);
+                    int startColIndex = findColumnIndex(region.getAttributeName(), columnNames);
 
                     // Ensure the startColIndex is valid
                     if (startColIndex >= 0 && startColIndex < dataset.getColumnCount()) {
                         double xCenter = domainAxis.getCategoryMiddle(startColIndex, getColumnCount(), dataArea, plot.getDomainAxisEdge());
 
-                        double startY = getNormalizedY(region.start, startColIndex, dataArea, columnMinValues, columnMaxValues);
-                        double endY = getNormalizedY(region.end, startColIndex, dataArea, columnMinValues, columnMaxValues);
+                        double startY = getNormalizedY(region.getStart(), startColIndex, dataArea, columnMinValues, columnMaxValues);
+                        double endY = getNormalizedY(region.getEnd(), startColIndex, dataArea, columnMinValues, columnMaxValues);
 
                         // Set the width of the rectangle to a fixed value of 0.1
                         double rectWidth = 0.1 * (dataArea.getWidth() / dataset.getColumnCount());
 
                         // Draw the rectangle with a fixed width
-                        g2.setPaint(new Color(classColors.get(region.currentClass).getRed(), classColors.get(region.currentClass).getGreen(), classColors.get(region.currentClass).getBlue(), 100));
+                        g2.setPaint(new Color(classColors.get(region.getCurrentClass()).getRed(), classColors.get(region.getCurrentClass()).getGreen(), classColors.get(region.getCurrentClass()).getBlue(), 100));
                         g2.fill(new Rectangle2D.Double(xCenter - rectWidth / 2, Math.min(startY, endY), rectWidth, Math.abs(startY - endY)));
                     }
                 }
