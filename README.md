@@ -58,10 +58,20 @@ Sorting by covariances of attribute v7 against all other features still in Paral
 Hiding the classifiable cases with single attribute pure intervals which cover 5% threshold of class or dataset visualized in Parallel Coordinates.
 ![PC demo screenshot](screenshots/demo/Musk_166_Demo_3.png)
 
+Visualizing the Musk molecule 166 feature data in Shifted Paired Coordinates.
+![PC demo screenshot](screenshots/demo/musk_166_Demo_4.png)
+
+Sorting by covariances of attribute v7 against all other features still in Shifted Paired Coordinates.
+![PC demo screenshot](screenshots/demo/musk_166_Demo_5.png)
+
+Hiding the classifiable cases with single attribute pure intervals which cover 5% threshold of class or dataset visualized in Shifted Paired Coordinates.
+![PC demo screenshot](screenshots/demo/musk_166_Demo_6.png)
+
 ## Features
 
 - Cross-platform support on headed platforms with Java.
 - Load and display CSV data in tabular view
+- Screenshot plots with space bar (currently works only on SPC, adding to other plots)
 - Normalize numerical columns
 - Highlight missing data
 - Covariance matrix with heatmap overlay
