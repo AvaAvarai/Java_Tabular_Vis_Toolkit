@@ -28,14 +28,14 @@ public class ParallelCoordinatesPlot extends JFrame {
     private Map<String, Shape> classShapes;
     private List<PureRegion> pureRegions;
 
-    public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex, int[] columnOrder, List<Integer> selectedRows) {
+    public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex, int[] columnOrder, List<Integer> selectedRows, Map<String, Shape> classShapes) {
         setTitle("Parallel Coordinates Plot");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         this.classColors = classColors;
-        this.classShapes = createClassShapes();
+        this.classShapes = classShapes;
 
         DefaultCategoryDataset dataset = createDataset(data, columnNames, classColumnIndex, columnOrder);
         JFreeChart chart = createChart(dataset, columnNames, selectedRows);
