@@ -63,23 +63,35 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         plot.setFixedLegendItems(legendItems);
 
-        // Adjust the category axis to increase space between the axes
+        // Adjust the category axis to reduce space between axes and at the edges
         CategoryAxis domainAxis = plot.getDomainAxis();
-        domainAxis.setCategoryMargin(0.3); // Increase space between categories
+        domainAxis.setCategoryMargin(0.01); // Reduce space between categories
+        domainAxis.setLowerMargin(0.01); // Reduce space before the first axis
+        domainAxis.setUpperMargin(0.01); // Reduce space after the last axis
 
-        // Set chart width as a multiple of the number of attributes, but without stretching components
+        // Set chart width as a multiple of the number of attributes
         int attributeCount = columnNames.length;
         int baseWidth = 150; // Adjust base width as necessary
         int chartWidth = attributeCount * baseWidth;
+
+        // Scale the title and legend based on the chart size
+        TextTitle chartTitle = chart.getTitle();
+        chartTitle.setFont(new Font("SansSerif", Font.BOLD, 18)); // Set a reasonable font size
+
+        LegendTitle legend = chart.getLegend();
+        legend.setPosition(RectangleEdge.BOTTOM);
+        legend.setItemFont(new Font("SansSerif", Font.PLAIN, 14)); // Set a reasonable font size
 
         // Wrap the chart in a JPanel
         JPanel chartPanel = new JPanel(new BorderLayout());
         ChartPanel cp = new ChartPanel(chart);
 
-        // Set the preferred size based on the attribute count
-        cp.setPreferredSize(new Dimension(chartWidth, 600));  // Height is kept constant, adjust as needed
-        cp.setMaximumDrawWidth(chartWidth);  // Prevents stretching of the chart components
-        cp.setMaximumDrawHeight(600);
+        // Set the preferred size based on the attribute count and reduce margins
+        cp.setPreferredSize(new Dimension(chartWidth, 800));
+        cp.setMaximumDrawWidth(chartWidth);
+        cp.setMaximumDrawHeight(800);
+        cp.setMinimumDrawWidth(chartWidth);
+        cp.setMinimumDrawHeight(800);
 
         chartPanel.add(cp, BorderLayout.CENTER);
 
@@ -87,6 +99,9 @@ public class ParallelCoordinatesPlot extends JFrame {
         JScrollPane scrollPane = new JScrollPane(chartPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        // Reduce space between the start of the window and the graph
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Set the scroll pane as the content pane of the JFrame
         setContentPane(scrollPane);
@@ -152,7 +167,7 @@ public class ParallelCoordinatesPlot extends JFrame {
             this.selectedRows = selectedRows;
             setDrawOutlines(true); // Ensure shapes are outlined
             setUseOutlinePaint(true);
-            setDefaultOutlinePaint(Color.BLACK); // Ensure the outlines are black
+            setSeriesOutlinePaint(0, Color.BLACK); // Ensure the outlines are black
         }
 
         @Override
