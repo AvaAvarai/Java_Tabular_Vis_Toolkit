@@ -59,13 +59,13 @@ Hiding the classifiable cases with single attribute pure intervals which cover 5
 ![PC demo screenshot](screenshots/demo/Musk_166_Demo_3.png)
 
 Visualizing the Musk molecule 166 feature data in Shifted Paired Coordinates.
-![PC demo screenshot](screenshots/demo/musk_166_Demo_4.png)
+![PC demo screenshot](screenshots/demo/Musk_166_Demo_4.png)
 
 Sorting by covariances of attribute v7 against all other features still in Shifted Paired Coordinates.
-![PC demo screenshot](screenshots/demo/musk_166_Demo_5.png)
+![PC demo screenshot](screenshots/demo/Musk_166_Demo_5.png)
 
 Hiding the classifiable cases with single attribute pure intervals which cover 5% threshold of class or dataset visualized in Shifted Paired Coordinates.
-![PC demo screenshot](screenshots/demo/musk_166_Demo_6.png)
+![PC demo screenshot](screenshots/demo/Musk_166_Demo_6.png)
 
 ## Features
 
