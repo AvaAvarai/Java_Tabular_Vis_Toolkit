@@ -65,23 +65,29 @@ public class CsvViewer extends JFrame {
         setSize(1000, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-
+    
         dataHandler = new CsvDataHandler();
         tableModel = new ReorderableTableModel();
         table = TableSetup.createTable(tableModel);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table.setRowSelectionAllowed(true);
+    
+        applyDefaultRenderer();  // Apply the default renderer immediately
+    
+        // Add ListSelectionListener and other settings
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 updateSelectedRowsLabel();
             }
         });
-
+    
+        // Add other listeners and UI components
         table.addMouseListener(new TableMouseListener(this));
         table.getTableHeader().addMouseListener(new TableMouseListener(this));
-
+    
+        // Add key listener for copy functionality
         table.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -102,48 +108,49 @@ public class CsvViewer extends JFrame {
                 }
             }
         });
-
+    
+        // Setup the rest of the UI components (buttons, panels, etc.)
         JPanel buttonPanel = ButtonPanel.createButtonPanel(this);
         add(buttonPanel, BorderLayout.NORTH);
-
+    
         statsTextArea = UIHelper.createTextArea(3, 0);
         statsScrollPane = new JScrollPane(statsTextArea);
-
+    
         tableScrollPane = new JScrollPane(table);
-
+    
         selectedRowsLabel = new JLabel("Selected rows: 0");
         bottomPanel = new JPanel(new BorderLayout());
-
+    
         thresholdSlider = new JSlider(0, 100, 5);
         thresholdSlider.setMajorTickSpacing(20);
         thresholdSlider.setMinorTickSpacing(5);
         thresholdSlider.setPaintTicks(true);
         thresholdSlider.setPaintLabels(true);
         thresholdSlider.setToolTipText("Adjust threshold percentage");
-
+    
         thresholdLabel = new JLabel("5%");
-
+    
         thresholdSlider.addChangeListener(e -> {
             int thresholdValue = thresholdSlider.getValue();
             thresholdLabel.setText(thresholdValue + "%");
             calculateAndDisplayPureRegions(thresholdValue);
         });
-
+    
         JPanel sliderPanel = new JPanel(new BorderLayout());
         sliderPanel.add(thresholdSlider, BorderLayout.CENTER);
         sliderPanel.add(thresholdLabel, BorderLayout.EAST);
-
+    
         bottomPanel.add(sliderPanel, BorderLayout.EAST);
         bottomPanel.add(selectedRowsLabel, BorderLayout.CENTER);
-
+    
         statsPanel = new JPanel(new BorderLayout());
         statsPanel.add(statsScrollPane, BorderLayout.CENTER);
-
+    
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScrollPane, statsPanel);
         splitPane.setResizeWeight(0.8);
         add(splitPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
-
+    
         generateClassShapes();
     }
     
@@ -1309,6 +1316,10 @@ public class CsvViewer extends JFrame {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                
+                // Set the default background color to #C0C0C0 for all cells
+                c.setBackground(Color.decode("#C0C0C0"));
+    
                 if (hasFocus) {
                     if (c instanceof JComponent) {
                         ((JComponent) c).setBorder(BorderFactory.createLineBorder(Color.RED, 2));
@@ -1318,6 +1329,9 @@ public class CsvViewer extends JFrame {
                         ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
                     }
                 }
+                
+                // Apply the font color
+                c.setForeground(cellTextColor);
                 return c;
             }
         });
@@ -1366,7 +1380,7 @@ public class CsvViewer extends JFrame {
                         if (classColors.containsKey(className)) {
                             c.setBackground(classColors.get(className));
                         } else {
-                            c.setBackground(Color.WHITE);
+                            c.setBackground(Color.decode("#C0C0C0")); // Default to #C0C0C0
                         }
                     } else if (isHeatmapEnabled && value != null && !value.toString().trim().isEmpty() && isNumerical[modelColumn]) {
                         try {
@@ -1375,13 +1389,13 @@ public class CsvViewer extends JFrame {
                             Color color = getColorForValue(normalizedValue);
                             c.setBackground(color);
                         } catch (NumberFormatException e) {
-                            c.setBackground(Color.WHITE);
+                            c.setBackground(Color.decode("#C0C0C0")); // Default to #C0C0C0
                         }
                     } else {
-                        c.setBackground(Color.WHITE);
+                        c.setBackground(Color.decode("#C0C0C0")); // Default to #C0C0C0
                     }
                 } else {
-                    c.setBackground(Color.WHITE); // Fallback if modelColumn is out of bounds
+                    c.setBackground(Color.decode("#C0C0C0")); // Fallback if modelColumn is out of bounds
                 }
     
                 if (hasFocus) {
@@ -1394,6 +1408,7 @@ public class CsvViewer extends JFrame {
                     }
                 }
     
+                // Apply the font color
                 c.setForeground(cellTextColor);
                 return c;
             }
@@ -1407,7 +1422,7 @@ public class CsvViewer extends JFrame {
             }
         });
         table.repaint();
-    }    
+    }
             
     public void showFontSettingsDialog() {
         JPanel panel = new JPanel(new GridLayout(0, 1));
