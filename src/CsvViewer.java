@@ -11,6 +11,9 @@ import src.plots.ParallelCoordinatesPlot;
 import src.plots.ShiftedPairedCoordinatesPlot;
 import src.plots.StarCoordinatesPlot;
 import src.plots.StaticCircularCoordinatesPlot;
+import src.utils.CovariancePairUtils;
+import src.utils.PureRegionUtils;
+import src.utils.ShapeUtils;
 
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -423,7 +426,7 @@ public class CsvViewer extends JFrame {
         List<Integer> selectedRows = getSelectedRowsIndices();
         selectedRows.removeIf(hiddenRows::contains);
     
-        List<PureRegion> pureRegions = PureRegion.calculatePureRegions(tableModel, thresholdSlider.getValue(), getClassColumnIndex());
+        List<PureRegionUtils> pureRegions = PureRegionUtils.calculatePureRegions(tableModel, thresholdSlider.getValue(), getClassColumnIndex());
 
         ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows, classShapes, getDatasetName());
         plot.setPureRegionsOverlay(pureRegions);
@@ -686,11 +689,11 @@ public class CsvViewer extends JFrame {
             return 0;
         }
 
-        List<PureRegion> pureRegions = PureRegion.calculatePureRegions(tableModel, thresholdPercentage, classColumnIndex);
+        List<PureRegionUtils> pureRegions = PureRegionUtils.calculatePureRegions(tableModel, thresholdPercentage, classColumnIndex);
 
         int totalRows = tableModel.getRowCount();
         Set<Integer> hiddenRows = new HashSet<>();
-        for (PureRegion region : pureRegions) {
+        for (PureRegionUtils region : pureRegions) {
             for (int row = 0; row < totalRows; row++) {
                 String attributeName = region.getAttributeName();
                 int attributeColumnIndex = tableModel.findColumn(attributeName);
@@ -737,10 +740,10 @@ public class CsvViewer extends JFrame {
         }
 
         int currentThreshold = thresholdSlider.getValue();
-        List<PureRegion> pureRegions = PureRegion.calculatePureRegions(tableModel, currentThreshold, classColumnIndex);
+        List<PureRegionUtils> pureRegions = PureRegionUtils.calculatePureRegions(tableModel, currentThreshold, classColumnIndex);
         Set<Integer> rowsToHide = new HashSet<>();
 
-        for (PureRegion region : pureRegions) {
+        for (PureRegionUtils region : pureRegions) {
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 String attributeName = region.getAttributeName();
                 int attributeColumnIndex = tableModel.findColumn(attributeName);
@@ -795,10 +798,10 @@ public class CsvViewer extends JFrame {
             return 0;
         }
 
-        List<PureRegion> pureRegions = PureRegion.calculatePureRegions(tableModel, threshold, classColumnIndex);
+        List<PureRegionUtils> pureRegions = PureRegionUtils.calculatePureRegions(tableModel, threshold, classColumnIndex);
         Set<Integer> hiddenRows = new HashSet<>();
 
-        for (PureRegion region : pureRegions) {
+        for (PureRegionUtils region : pureRegions) {
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 String attributeName = region.getAttributeName();
                 int attributeColumnIndex = tableModel.findColumn(attributeName);
@@ -963,22 +966,22 @@ public class CsvViewer extends JFrame {
         int selectedColumnIndex = tableModel.findColumn(selectedAttribute);
         int classColumnIndex = getClassColumnIndex();
     
-        List<CovariancePair> covariancePairs = new ArrayList<>();
+        List<CovariancePairUtils> covariancePairs = new ArrayList<>();
     
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
             if (i != selectedColumnIndex && i != classColumnIndex) {
                 double covariance = calculateCovarianceBetweenColumns(selectedColumnIndex, i);
-                covariancePairs.add(new CovariancePair(i, covariance));
+                covariancePairs.add(new CovariancePairUtils(i, covariance));
             }
         }
     
         // Sort columns based on covariance values in descending order
-        covariancePairs.sort((p1, p2) -> Double.compare(p2.covariance, p1.covariance));
+        covariancePairs.sort((p1, p2) -> Double.compare(p2.getCovariance(), p1.getCovariance()));
     
         // Reorder the columns in the table model based on sorted covariance values
         TableColumnModel columnModel = table.getColumnModel();
         for (int i = 0; i < covariancePairs.size(); i++) {
-            int fromIndex = columnModel.getColumnIndex(tableModel.getColumnName(covariancePairs.get(i).columnIndex));
+            int fromIndex = columnModel.getColumnIndex(tableModel.getColumnName(covariancePairs.get(i).getColumnIndex()));
             columnModel.moveColumn(fromIndex, i);
         }
     
@@ -1312,11 +1315,11 @@ public class CsvViewer extends JFrame {
         applyCombinedRenderer();
     }    
 
-    private void displayPureRegions(List<PureRegion> pureRegions) {
+    private void displayPureRegions(List<PureRegionUtils> pureRegions) {
         StringBuilder sb = new StringBuilder();
         sb.append("Single-Attribute Pure Regions:\n");
         for (int i = pureRegions.size() - 1; i >= 0; i--) {
-            PureRegion region = pureRegions.get(i);
+            PureRegionUtils region = pureRegions.get(i);
             sb.append(String.format("Attribute: %s, Pure Region: %.2f <= %s < %.2f, Class: %s, Count: %d (%.2f%% of class, %.2f%% of dataset)\n",
                     region.getAttributeName(), region.getStart(), region.getAttributeName(), region.getEnd(),
                     region.getCurrentClass(), region.getRegionCount(), region.getPercentageOfClass(), region.getPercentageOfDataset()));

@@ -1,6 +1,9 @@
 package src;
 
 import javax.swing.*;
+
+import src.utils.ShapeUtils;
+
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
@@ -24,14 +27,14 @@ public class ClassColorDialog extends JDialog {
         this.classColors = classColors;
         this.classShapes = classShapes;
 
-        availableShapes = new Shape[]{
+        availableShapes = new Shape[] {
                 new Ellipse2D.Double(-5, -5, 10, 10),
                 new Rectangle2D.Double(-5, -5, 10, 10),
                 new Polygon(new int[]{-5, 5, 0}, new int[]{-5, -5, 5}, 3),
                 ShapeUtils.createStar(4, 10, 5),
-                ShapeUtils.createStar(5, 10, 5),
                 ShapeUtils.createStar(6, 10, 5),
                 ShapeUtils.createStar(7, 10, 5),
+                ShapeUtils.createStar(5, 10, 5),
                 ShapeUtils.createStar(8, 10, 5)
         };
 

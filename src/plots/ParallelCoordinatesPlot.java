@@ -17,8 +17,8 @@ import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 
-import src.PureRegion;
-import src.ScreenshotUtils;
+import src.utils.PureRegionUtils;
+import src.utils.ScreenshotUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,7 +33,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
     private Map<String, Color> classColors;
     private Map<String, Shape> classShapes;
-    private List<PureRegion> pureRegions;
+    private List<PureRegionUtils> pureRegions;
 
     public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex, int[] columnOrder, List<Integer> selectedRows, Map<String, Shape> classShapes, String datasetName) {
         setTitle("Parallel Coordinates Plot");
@@ -164,7 +164,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         return chart;
     }
 
-    public void setPureRegionsOverlay(List<PureRegion> pureRegions) {
+    public void setPureRegionsOverlay(List<PureRegionUtils> pureRegions) {
         this.pureRegions = pureRegions;
         repaint();
     }
@@ -287,7 +287,7 @@ public class ParallelCoordinatesPlot extends JFrame {
             }
 
             if (pureRegions != null) {
-                for (PureRegion region : pureRegions) {
+                for (PureRegionUtils region : pureRegions) {
                     int startColIndex = findColumnIndex(region.getAttributeName(), columnNames);
 
                     // Ensure the startColIndex is valid

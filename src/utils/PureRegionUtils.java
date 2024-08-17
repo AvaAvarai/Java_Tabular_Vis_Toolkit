@@ -1,9 +1,9 @@
-package src;
+package src.utils;
 
 import javax.swing.table.DefaultTableModel;
 import java.util.*;
 
-public class PureRegion {
+public class PureRegionUtils {
     private String attributeName;
     private double start;
     private double end;
@@ -12,7 +12,7 @@ public class PureRegion {
     private double percentageOfClass;
     private double percentageOfDataset;
 
-    public PureRegion(String attributeName, double start, double end, String currentClass,
+    public PureRegionUtils(String attributeName, double start, double end, String currentClass,
                       int regionCount, double percentageOfClass, double percentageOfDataset) {
         this.attributeName = attributeName;
         this.start = start;
@@ -23,12 +23,12 @@ public class PureRegion {
         this.percentageOfDataset = percentageOfDataset;
     }
 
-    public static List<PureRegion> calculatePureRegions(DefaultTableModel tableModel, int thresholdPercentage, int classColumnIndex) {
+    public static List<PureRegionUtils> calculatePureRegions(DefaultTableModel tableModel, int thresholdPercentage, int classColumnIndex) {
         if (classColumnIndex == -1) {
             return Collections.emptyList();
         }
     
-        List<PureRegion> pureRegions = new ArrayList<>();
+        List<PureRegionUtils> pureRegions = new ArrayList<>();
         int numColumns = tableModel.getColumnCount();
         int totalRows = tableModel.getRowCount();
     
@@ -85,7 +85,7 @@ public class PureRegion {
                         double percentageOfDataset = (regionCount / (double) totalRows) * 100;
                         double expandedEnd = values.get(end - 1);
     
-                        PureRegion region = new PureRegion(
+                        PureRegionUtils region = new PureRegionUtils(
                                 attributeName, values.get(start), expandedEnd,
                                 currentClass, regionCount, percentageOfClass, percentageOfDataset
                         );
@@ -98,16 +98,16 @@ public class PureRegion {
         return filterLargestSignificantRegions(pureRegions, thresholdPercentage);
     }
 
-    private static List<PureRegion> filterLargestSignificantRegions(List<PureRegion> pureRegions, int thresholdPercentage) {
-        List<PureRegion> filteredRegions = new ArrayList<>();
+    private static List<PureRegionUtils> filterLargestSignificantRegions(List<PureRegionUtils> pureRegions, int thresholdPercentage) {
+        List<PureRegionUtils> filteredRegions = new ArrayList<>();
     
         // Sort by region size (number of cases), then by range size
-        pureRegions.sort(Comparator.comparingInt((PureRegion region) -> region.regionCount).reversed()
+        pureRegions.sort(Comparator.comparingInt((PureRegionUtils region) -> region.regionCount).reversed()
                 .thenComparingDouble(region -> region.end - region.start).reversed());
     
-        for (PureRegion regionA : pureRegions) {
+        for (PureRegionUtils regionA : pureRegions) {
             boolean isContained = false;
-            for (PureRegion regionB : filteredRegions) {
+            for (PureRegionUtils regionB : filteredRegions) {
                 // Check if regionA is entirely contained within regionB
                 if (regionA.attributeName.equals(regionB.attributeName) &&
                     regionA.currentClass.equals(regionB.currentClass) &&

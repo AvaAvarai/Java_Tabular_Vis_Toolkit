@@ -2,7 +2,7 @@ package src.plots;
 
 import javax.swing.*;
 
-import src.ScreenshotUtils;
+import src.utils.ScreenshotUtils;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
