@@ -1,36 +1,15 @@
 package src;
 
-import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.HashMap;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
-
-import src.plots.ParallelCoordinatesPlot;
-import src.plots.ShiftedPairedCoordinatesPlot;
-import src.plots.StarCoordinatesPlot;
-import src.plots.StaticCircularCoordinatesPlot;
-import src.table.NumericStringComparator;
-import src.table.ReorderableTableModel;
-import src.table.TableMouseListener;
-import src.table.TableSetup;
-import src.utils.CovariancePairUtils;
-import src.utils.PureRegionUtils;
-import src.utils.ShapeUtils;
-
-import java.awt.*;
-import java.awt.datatransfer.StringSelection;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
@@ -39,6 +18,27 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.Collections;
+import java.util.Arrays;
+
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import src.table.ReorderableTableModel;
+import src.table.TableSetup;
+import src.utils.ShapeUtils;
+import src.plots.ParallelCoordinatesPlot;
+import src.plots.ShiftedPairedCoordinatesPlot;
+import src.plots.StarCoordinatesPlot;
+import src.plots.StaticCircularCoordinatesPlot;
+import src.table.NumericStringComparator;
+import src.utils.PureRegionUtils;
+import src.utils.CovariancePairUtils;
+
+import java.awt.*;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 public class CsvViewer extends JFrame {
     public JTable table;
@@ -64,7 +64,7 @@ public class CsvViewer extends JFrame {
     public JScrollPane statsScrollPane;
     public JScrollPane tableScrollPane;
     public JSplitPane splitPane;
-    private List<Integer> hiddenRows = new ArrayList<>();
+    private List<Integer> hiddenRows;
     public JSlider thresholdSlider;
     public JLabel thresholdLabel;
     private List<String[]> originalData;
@@ -79,96 +79,48 @@ public class CsvViewer extends JFrame {
         setSize(1000, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-    
+
         dataHandler = new CsvDataHandler();
         tableModel = new ReorderableTableModel();
         table = TableSetup.createTable(tableModel);
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        table.setRowSelectionAllowed(true);
-    
-        applyDefaultRenderer();  // Apply the default renderer immediately
-    
-        // Add ListSelectionListener and other settings
-        table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                updateSelectedRowsLabel();
-            }
-        });
-    
-        // Add other listeners and UI components
-        table.addMouseListener(new TableMouseListener(this));
-        table.getTableHeader().addMouseListener(new TableMouseListener(this));
-    
-        // Add key listener for copy functionality
-        table.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_C) {
-                    if (table.getSelectedRows().length == 1)
-                        copySelectedCell();
-                    else {
-                        StringBuilder sb = new StringBuilder();
-                        for (int row : table.getSelectedRows()) {
-                            for (int col : table.getSelectedColumns()) {
-                                sb.append(table.getValueAt(row, col)).append("\t");
-                            }
-                            sb.append("\n");
-                        }
-                        StringSelection stringSelection = new StringSelection(sb.toString());
-                        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringSelection, null);
-                    }
-                }
-            }
-        });
-    
-        // Setup the rest of the UI components (buttons, panels, etc.)
-        JPanel buttonPanel = ButtonPanel.createButtonPanel(this);
+
+        CsvViewerUIHelper.setupTable(table, tableModel, this); // Moved table setup to helper
+
+        JPanel buttonPanel = CsvViewerUIHelper.createButtonPanel(this);
         add(buttonPanel, BorderLayout.NORTH);
-    
+
         statsTextArea = UIHelper.createTextArea(3, 0);
-        statsScrollPane = new JScrollPane(statsTextArea);
-    
+        statsScrollPane = CsvViewerUIHelper.createStatsScrollPane(statsTextArea);
+
         tableScrollPane = new JScrollPane(table);
-    
+
         selectedRowsLabel = new JLabel("Selected rows: 0");
-        bottomPanel = new JPanel(new BorderLayout());
-    
         thresholdSlider = new JSlider(0, 100, 5);
         thresholdSlider.setMajorTickSpacing(20);
         thresholdSlider.setMinorTickSpacing(5);
         thresholdSlider.setPaintTicks(true);
         thresholdSlider.setPaintLabels(true);
         thresholdSlider.setToolTipText("Adjust threshold percentage");
-    
+
         thresholdLabel = new JLabel("5%");
-    
         thresholdSlider.addChangeListener(e -> {
             int thresholdValue = thresholdSlider.getValue();
             thresholdLabel.setText(thresholdValue + "%");
             calculateAndDisplayPureRegions(thresholdValue);
         });
-    
-        JPanel sliderPanel = new JPanel(new BorderLayout());
-        sliderPanel.add(thresholdSlider, BorderLayout.CENTER);
-        sliderPanel.add(thresholdLabel, BorderLayout.EAST);
-    
-        bottomPanel.add(sliderPanel, BorderLayout.EAST);
-        bottomPanel.add(selectedRowsLabel, BorderLayout.CENTER);
-    
+
+        bottomPanel = CsvViewerUIHelper.createBottomPanel(selectedRowsLabel, thresholdSlider, thresholdLabel);
         statsPanel = new JPanel(new BorderLayout());
         statsPanel.add(statsScrollPane, BorderLayout.CENTER);
-    
-        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableScrollPane, statsPanel);
-        splitPane.setResizeWeight(0.8);
+
+        splitPane = CsvViewerUIHelper.createSplitPane(tableScrollPane, statsPanel);
         add(splitPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
-    
+
         generateClassShapes();
     }
     
-    private void copySelectedCell() {
+    public void copySelectedCell() {
         int row = table.getSelectedRow();
         int col = table.getSelectedColumn();
         if (row != -1 && col != -1) {
