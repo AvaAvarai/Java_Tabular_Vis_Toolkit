@@ -11,6 +11,12 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
+
+import src.managers.PureRegionManager;
+import src.managers.RendererManager;
+import src.managers.StateManager;
+import src.managers.TrigonometricColumnManager;
+import src.managers.VisualizationManager;
 import src.table.ReorderableTableModel;
 import src.table.TableSetup;
 import src.utils.ShapeUtils;

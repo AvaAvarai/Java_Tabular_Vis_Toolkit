@@ -1,4 +1,4 @@
-package src;
+package src.managers;
 
 import java.awt.Color;
 import java.awt.Shape;

@@ -1,6 +1,7 @@
-package src;
+package src.managers;
 
 import src.utils.PureRegionUtils;
+import src.CsvViewer;
 import src.table.NumericStringComparator;
 
 import javax.swing.*;
@@ -117,7 +118,7 @@ public class PureRegionManager {
         csvViewer.updateSelectedRowsLabel();
     }
 
-    void applyRowFilter() {
+    public void applyRowFilter() {
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
         sorter.setRowFilter(new RowFilter<DefaultTableModel, Integer>() {
             @Override

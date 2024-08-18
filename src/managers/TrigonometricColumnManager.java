@@ -1,4 +1,4 @@
-package src;
+package src.managers;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

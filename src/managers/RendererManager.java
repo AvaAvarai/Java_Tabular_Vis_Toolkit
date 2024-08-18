@@ -1,8 +1,11 @@
-package src;
+package src.managers;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
+
+import src.CsvViewer;
+
 import java.awt.*;
 import java.util.Map;
 

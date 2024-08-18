@@ -1,5 +1,6 @@
-package src;
+package src.managers;
 
+import src.CsvViewer;
 import src.plots.*;
 import src.utils.PureRegionUtils;
 
