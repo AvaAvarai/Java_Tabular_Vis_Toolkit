@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.HashMap;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableRowSorter;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
@@ -21,24 +20,13 @@ import java.util.Collections;
 import java.util.Arrays;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import src.table.ReorderableTableModel;
 import src.table.TableSetup;
 import src.utils.ShapeUtils;
-import src.plots.ParallelCoordinatesPlot;
-import src.plots.ShiftedPairedCoordinatesPlot;
-import src.plots.StarCoordinatesPlot;
-import src.plots.StaticCircularCoordinatesPlot;
-import src.table.NumericStringComparator;
-import src.utils.PureRegionUtils;
 import src.utils.CovariancePairUtils;
-import src.TrigonometricColumnManager;
 
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 
 public class CsvViewer extends JFrame {
     public JTable table;
@@ -75,6 +63,7 @@ public class CsvViewer extends JFrame {
     private boolean[] isNumerical;
     private TrigonometricColumnManager trigColumnManager;
     private PureRegionManager pureRegionManager;
+    private VisualizationManager visualizationManager;
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -98,6 +87,7 @@ public class CsvViewer extends JFrame {
         tableScrollPane = new JScrollPane(table);
         trigColumnManager = new TrigonometricColumnManager(table);
         pureRegionManager = new PureRegionManager(this, tableModel, statsTextArea, thresholdSlider);
+        visualizationManager = new VisualizationManager(this);
 
         selectedRowsLabel = new JLabel("Selected rows: 0");
         thresholdSlider = new JSlider(0, 100, 5);
@@ -139,6 +129,10 @@ public class CsvViewer extends JFrame {
         return !hiddenRows.isEmpty();
     }
 
+    public List<Integer> getHiddenRows() {
+        return hiddenRows;
+    }
+
     public void toggleTrigonometricColumns() {
         trigColumnManager.toggleTrigonometricColumns(
             isNormalized, 
@@ -148,80 +142,11 @@ public class CsvViewer extends JFrame {
     }
 
     public void showStarCoordinatesPlot() {
-        if (tableModel.getColumnCount() == 0) {
-            noDataLoadedError();
-            return;
-        }
-    
-        List<List<Double>> numericalData = new ArrayList<>();
-        List<String> attributeNames = new ArrayList<>();
-        List<String> classLabels = new ArrayList<>();
-    
-        int classColumnIndex = getClassColumnIndex();
-        for (int col = 0; col < tableModel.getColumnCount(); col++) {
-            if (col != classColumnIndex) {
-                boolean isNumeric = true;
-                List<Double> columnData = new ArrayList<>();
-                for (int row = 0; row < tableModel.getRowCount(); row++) {
-                    if (!hiddenRows.contains(row)) {
-                        try {
-                            columnData.add(Double.parseDouble(tableModel.getValueAt(row, col).toString()));
-                        } catch (NumberFormatException e) {
-                            isNumeric = false;
-                            break;
-                        }
-                    }
-                }
-                if (isNumeric) {
-                    numericalData.add(columnData);
-                    attributeNames.add(tableModel.getColumnName(col));
-                }
-            }
-        }
-    
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            if (!hiddenRows.contains(row)) {
-                classLabels.add((String) tableModel.getValueAt(row, classColumnIndex));
-            }
-        }
-    
-        List<Integer> selectedRows = getSelectedRowsIndices();
-        selectedRows.removeIf(hiddenRows::contains);
-    
-        StarCoordinatesPlot starCoordinatesPlot = new StarCoordinatesPlot(numericalData, attributeNames, classColors, classShapes, classLabels, selectedRows);
-        starCoordinatesPlot.setVisible(true);
+        visualizationManager.showStarCoordinatesPlot();
     }
 
     public void showRuleOverlayPlot() {
-        TableColumnModel columnModel = table.getColumnModel();
-        int columnCount = columnModel.getColumnCount();
-        String[] columnNames = new String[columnCount];
-        int[] columnOrder = new int[columnCount];
-        for (int i = 0; i < columnCount; i++) {
-            columnNames[i] = columnModel.getColumn(i).getHeaderValue().toString();
-            columnOrder[i] = table.convertColumnIndexToModel(i);
-        }
-    
-        List<String[]> data = new ArrayList<>();
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            if (!hiddenRows.contains(row)) {
-                String[] rowData = new String[columnCount];
-                for (int col = 0; col < columnCount; col++) {
-                    Object value = tableModel.getValueAt(row, col);
-                    rowData[col] = value != null ? value.toString() : "";
-                }
-                data.add(rowData);
-            }
-        }
-    
-        List<Integer> selectedRows = getSelectedRowsIndices();
-        selectedRows.removeIf(hiddenRows::contains);
-    
-        List<PureRegionUtils> pureRegions = PureRegionUtils.calculatePureRegions(tableModel, thresholdSlider.getValue(), getClassColumnIndex());
-
-        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows, classShapes, getDatasetName());
-        plot.setPureRegionsOverlay(pureRegions);
-        plot.setVisible(true);
+        visualizationManager.showRuleOverlayPlot();
     }
 
     public void insertLinearCombinationColumn() {
@@ -1168,121 +1093,15 @@ public class CsvViewer extends JFrame {
     }
 
     public void showParallelCoordinatesPlot() {
-        TableColumnModel columnModel = table.getColumnModel();
-        int columnCount = columnModel.getColumnCount();
-        String[] columnNames = new String[columnCount];
-        int[] columnOrder = new int[columnCount];
-        for (int i = 0; i < columnCount; i++) {
-            columnNames[i] = columnModel.getColumn(i).getHeaderValue().toString();
-            columnOrder[i] = table.convertColumnIndexToModel(i);
-        }
-
-        List<String[]> data = new ArrayList<>();
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            if (!hiddenRows.contains(row)) {
-                String[] rowData = new String[columnCount];
-                for (int col = 0; col < columnCount; col++) {
-                    Object value = tableModel.getValueAt(row, col);
-                    rowData[col] = value != null ? value.toString() : "";
-                }
-                data.add(rowData);
-            }
-        }
-
-        List<Integer> selectedRows = getSelectedRowsIndices();
-        selectedRows.removeIf(hiddenRows::contains);
-
-        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, classColors, getClassColumnIndex(), columnOrder, selectedRows, classShapes, getDatasetName());
-        plot.setVisible(true);
+        visualizationManager.showParallelCoordinatesPlot();
     }
 
     public void showShiftedPairedCoordinates() {
-        List<List<Double>> data = new ArrayList<>();
-        List<String> attributeNames = new ArrayList<>();
-        List<String> classLabels = new ArrayList<>();
-
-        TableColumnModel columnModel = table.getColumnModel();
-        int columnCount = columnModel.getColumnCount();
-        int[] columnOrder = new int[columnCount];
-        for (int i = 0; i < columnCount; i++) {
-            columnOrder[i] = table.convertColumnIndexToModel(i);
-        }
-
-        for (int col = 0; col < columnOrder.length; col++) {
-            boolean isNumeric = true;
-            List<Double> columnData = new ArrayList<>();
-            for (int row = 0; row < tableModel.getRowCount(); row++) {
-                if (!hiddenRows.contains(row)) {
-                    try {
-                        columnData.add(Double.parseDouble(tableModel.getValueAt(row, columnOrder[col]).toString()));
-                    } catch (NumberFormatException e) {
-                        isNumeric = false;
-                        break;
-                    }
-                }
-            }
-            if (isNumeric) {
-                data.add(columnData);
-                attributeNames.add(tableModel.getColumnName(columnOrder[col]));
-            }
-        }
-
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            if (!hiddenRows.contains(row)) {
-                classLabels.add((String) tableModel.getValueAt(row, getClassColumnIndex()));
-            }
-        }
-
-        int numPlots = (attributeNames.size() + 1) / 2;
-        List<Integer> selectedRows = getSelectedRowsIndices();
-        selectedRows.removeIf(hiddenRows::contains);
-
-        ShiftedPairedCoordinatesPlot shiftedPairedCoordinates = new ShiftedPairedCoordinatesPlot(data, attributeNames, classColors, classShapes, classLabels, numPlots, selectedRows, getDatasetName());
-        shiftedPairedCoordinates.setVisible(true);
+        visualizationManager.showShiftedPairedCoordinates();
     }
 
     public void showStaticCircularCoordinatesPlot() {
-        List<List<Double>> data = new ArrayList<>();
-        List<String> attributeNames = new ArrayList<>();
-        List<String> classLabels = new ArrayList<>();
-
-        TableColumnModel columnModel = table.getColumnModel();
-        int columnCount = columnModel.getColumnCount();
-        int[] columnOrder = new int[columnCount];
-        for (int i = 0; i < columnCount; i++) {
-            columnOrder[i] = table.convertColumnIndexToModel(i);
-        }
-
-        for (int col = 0; col < columnOrder.length; col++) {
-            boolean isNumeric = true;
-            List<Double> columnData = new ArrayList<>();
-            for (int row = 0; row < tableModel.getRowCount(); row++) {
-                if (!hiddenRows.contains(row)) {
-                    try {
-                        columnData.add(Double.parseDouble(tableModel.getValueAt(row, columnOrder[col]).toString()));
-                    } catch (NumberFormatException e) {
-                        isNumeric = false;
-                        break;
-                    }
-                }
-            }
-            if (isNumeric) {
-                data.add(columnData);
-                attributeNames.add(tableModel.getColumnName(columnOrder[col]));
-            }
-        }
-
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            if (!hiddenRows.contains(row)) {
-                classLabels.add((String) tableModel.getValueAt(row, getClassColumnIndex()));
-            }
-        }
-
-        List<Integer> selectedRows = getSelectedRowsIndices();
-        selectedRows.removeIf(hiddenRows::contains);
-
-        StaticCircularCoordinatesPlot plot = new StaticCircularCoordinatesPlot(data, attributeNames, classColors, classShapes, classLabels, selectedRows);
-        plot.setVisible(true);
+        visualizationManager.showStaticCircularCoordinatesPlot();
     }
 
     public void showRuleTesterDialog() {
@@ -1335,5 +1154,5 @@ public class CsvViewer extends JFrame {
         if (pureRegionManager != null) {
             pureRegionManager.applyRowFilter();
         }
-    }    
+    }
 }
