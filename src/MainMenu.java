@@ -26,14 +26,16 @@ public class MainMenu extends JFrame {
         JButton aboutButton = new JButton("About the Project");
         JButton openDatasetsButton = new JButton("Open Datasets Folder");
         JButton openScreenshotsButton = new JButton("Open Screenshots Folder");
+        JButton exitButton = new JButton("Exit");  // Exit button
 
         // Button panel
-        JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 10, 10));
+        JPanel buttonPanel = new JPanel(new GridLayout(6, 1, 10, 10));  // Adjusted grid layout for 6 buttons
         buttonPanel.add(startAppButton);
         buttonPanel.add(githubButton);
         buttonPanel.add(aboutButton);
         buttonPanel.add(openDatasetsButton);
         buttonPanel.add(openScreenshotsButton);
+        buttonPanel.add(exitButton);  // Added exit button
         add(buttonPanel, BorderLayout.CENTER);
 
         // Action listeners
@@ -69,6 +71,13 @@ public class MainMenu extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 openFolder("screenshots");
+            }
+        });
+
+        exitButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);  // Exit the application
             }
         });
     }
