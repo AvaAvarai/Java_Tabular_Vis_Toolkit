@@ -9,8 +9,19 @@ javac -d out -cp "libs/*" $(find src -name "*.java")
 # Copy resources to the output directory, excluding unnecessary files
 rsync -av --exclude='.DS_Store' resources/ out/
 
-# Package the compiled files and resources into a JAR
-jar cfe out/JTabViz.jar src.Main -C out .
+# Unzip the external libraries into the out directory
+for jar in libs/*.jar; do
+    unzip -o -q "$jar" -d out
+done
+
+# Remove the META-INF directory from the unzipped libraries to avoid duplicate MANIFEST.MF issues
+rm -rf out/META-INF
+
+# Create the manifest file
+echo "Main-Class: src.Main" > out/MANIFEST.MF
+
+# Package everything into a single JAR file
+jar cfm out/JTabViz.jar out/MANIFEST.MF -C out .
 
 # Run the packaged Java application
 java -jar out/JTabViz.jar
