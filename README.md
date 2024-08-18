@@ -1,55 +1,55 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-**JTabViz** is a Java-based machine learning data analysis toolkit designed for visualization and analysis of tabular machine learning data. Supports data augmentation features, users can export augmented data to explore how changes in the dataset affect their resultantly trained models. Load, view, analyze, and classify CSV data with normalization, visualization (heatmaps, Parallel, Shifted Paired, Static Circular, and Star coordinates, covariance matrix heatmap), row manipulation, cell editing, inequality-based classification rules testing, pure single-attribute region automatic discovery, feature engineering, attribute sorting, and data export.
+**JTabViz** is a Java-based machine learning data analysis toolkit designed for visualization and analysis of tabular machine learning data. It supports data augmentation, allowing users to export augmented data and explore how changes in the dataset affect their trained models. With JTabViz, you can load, view, analyze, and classify CSV data, utilizing features like normalization, various visualizations (heatmaps, Parallel Coordinates, Shifted Paired Coordinates, Static Circular Coordinates, Star Coordinates, and covariance matrix heatmaps), row manipulation, cell editing, inequality-based classification rule testing, automatic pure region discovery, feature engineering, attribute sorting, and data export.
 
-Software tested on Windows (Windows 10/11), Linux (Pop OS!), Mac OS (Sonoma).
+**Tested on:**  Windows (10/11), Linux (Pop!_OS), and macOS (Sonoma).
 
 ## Analyzing Fisher Iris Benchmark Dataset
 
-These screenshots demonstrate exploration of the Fisher Iris dataset which we utilize as a benchmark.
+Below are screenshots showcasing the exploration of the Fisher Iris dataset, which serves as a benchmark.
 
-98.67% accurate classifier exploring causal relations of the two remaining misclassified cases, one in Virginica and one in Versicolor classes, shown highlight in Shifted Paired Coordinates with the classification function duplicated for the third plot axes pair.
+**Classifier Accuracy:** Achieved 98.67% accuracy. The two remaining misclassified cases (one in the Virginica class and one in the Versicolor class) are highlighted in Shifted Paired Coordinates, with the classification function duplicated for the third plot axes pair.
 ![Demo screenshot 6](screenshots/demo/Iris_Demo_6.png)
 
-Highlighting sepal width outliers for Virginica class by rearranging axes to accentuate monotonic patterns, sorting by the desired attribute, and ctrl-clicking outlier cases to then visualize as shown here in Parallel Coordinates.
+**Outlier Discovery in PC:** Highlighted outliers for the Virginica class by rearranging axes, sorting by the desired attribute, and using ctrl-click to select and visualize outliers in Parallel Coordinates.
 ![Demo screenshot 1](screenshots/demo/Iris_Demo_1.png)
 
-Highlighting sepal length outliers for the Versicolor class which remain difficult to classify in Shifted Paired Coordinates.
+**Outlier Discovery in SPC**: Sepal Length Outliers highlighted difficult-to-classify sepal length outliers for the Versicolor class in Shifted Paired Coordinates.
 ![Demo screenshot 2](screenshots/demo/Iris_Demo_2.png)
 
-Static Circular Coordinates Demo highlighting a petal length outlier in the Virginica class.
+**Outlier Discovery is SCC:** Demonstrated a petal length outlier in the Virginica class using Static Circular Coordinates.
 ![Demo screenshot 5](screenshots/demo/Iris_Demo_5.png)
 
-Combined View Demo.
+**Combined View:** Demonstrated the combined view functionality which is modular with a multi-window paradigm.
 ![Demo screenshot 3](screenshots/demo/Iris_Demo_3.png)
 
-Outlier in Setosa sepal width attribute highlighted.
+**Outlier Discovery in Combined View:** Setosa Sepal Width Outliers highlighted an outlier in the Setosa sepal width attribute.
 ![Demo screenshot 4](screenshots/demo/Iris_Demo_4.png)
 
-Versicolor cases conflicting in petal length attibute selected and highlighted in Star Coordinates.
+**Classification Conflication Discovery:** Versicolor Petal Length Conflicts highlighted conflicting Versicolor cases in the petal length attribute using Star Coordinates.
 ![Demo screenshot 6](screenshots/demo/Iris_Demo_7.png)
 
-Sorting attributes by covariance against sepal width, highlighting four outstanding cases in PC and SPC.
+**Covariance Sorting:** Demonstrated sorting attributes by covariance against sepal width, highlighting four outstanding cases in Parallel Coordinates and Shifted Paired Coordinates.
 ![Demo screenshot 6](screenshots/demo/Iris_Demo_8.png)
 
-Rules Tester Demo.
+**Rules Tester:** Demonstrated the Rules Tester feature.
 ![Rules Tester Demo screenshot](screenshots/demo/Rules_Test_Demo_1.png)
 
-Classifying Fisher Iris data with a single attribute for 75% of dataset.
+**Single-Attribute Classification:** Demonstrated classifying Fisher Iris data with a single attribute for 75% of the dataset.
 ![Rules Tester Demo screenshot](screenshots/demo/Rules_Test_Demo_2.png)
 
 ## Analyzing Higher Dimensionality Datasets
 
-Visualizing the MNIST letters train data in Shifted Paired Coordinates.
+**MNIST Letters Train Data:** Visualized in Shifted Paired Coordinates.
 ![SPC Demo screenshot](screenshots/demo/Mnist_Train_Demo_1.png)
 
-Visualizing the Wisconsin Breast Cancer 30 feature data in Parallel Coordinates.
+**Wisconsin Breast Cancer Data (30 features):** Visualized in Parallel Coordinates and Star Coordinates.
 ![PC demo screenshot](screenshots/demo/WBC_30_Demo_1.png)
 
-Visualizing the Wisconsin Breast Cancer 30 feature data in Star Coordinates.
+Visualizing in Star Coordinates.
 ![Star demo screenshot](screenshots/demo/WBC_30_Demo_2.png)
 
-Visualizing the Musk molecule 166 feature data in Parallel Coordinates.
+**Musk Molecule Data (166 features):** Visualized in Parallel Coordinates and Shifted Paired Coordinates, with covariance sorting and pure interval visualization.
 ![PC demo screenshot](screenshots/demo/Musk_166_Demo_1.png)
 
 Sorting by covariances of attribute v7 against all other features still in Parallel Coordinates.
@@ -69,60 +69,50 @@ Hiding the classifiable cases with single attribute pure intervals which cover 5
 
 ## Features
 
-- Cross-platform support on headed platforms with Java.
-- Load and display CSV data in tabular view
-- Screenshot plots with space bar (currently works only on SPC, adding to other plots)
-- Normalize numerical columns
-- Highlight missing data
-- Covariance matrix with heatmap overlay
-- Covariance sort opens dialog, select an attribute and sort columns by the covariances of all other attributes against the selected attribute.
-- Visualize data with heatmap overlay, Parallel Coordinates (PC), Shifted Paired Coordinates (SPC), Static Circular Coordinates (SCC), Star Coordinates
-- Manipulate rows (insert, delete, clone, copy contents of selection, edit individual cell values)
-- Customize font color and highlight class fields
-- Export modified data to CSV
-- Test classification rules displaying results in Confusion Matrix
-- Serialize classification rules to reload
-- Highlight selected rows in visualization views (PC, SPC, SCC, Star)
-- Analytical single attribute pure region discovery algorithm, i.e. Attribute: petal.length, Pure Region: 0.00 <= petal.length < 0.15, Class: Setosa, Count: 50 (100.00% of class, 33.33% of dataset)
-- Rules combinable to keep largest surrounding pure rule
-- Cases classifiable with single pure attribute intervals hideable to simplify classifcation problem
-- Rule threshold slider to specify required size of rule coverage over class or total dataset.
-- Feature column insertion with direct trigonometric attribute values, i.e. arccos(attribute)
-- Feature column insertion with forward x[n+1] – x[n] and backward x[n] – x[n-1] differences between attributes wrapped in trigonometric functions:
-   This helps uncover various patterns and interactions in the data between attributes.
-  - arcsin: Highlights small differences between attributes, making it easier to detect subtle variations.
-  - arctan: Emphasizes the slope or rate of change between attributes, useful for understanding trends and gradients.
-  - arccos: Focuses on rotational relationships between attributes, revealing how one attribute rotates relative to another.
-- Overlay single attribute rule regions on Parallel Coordinates to visualize regions as shaded rectangular regions
-- Inserted columns can be deleted by double-left clicking on their header.
-- Feature column engineering with insertion of linear combination column, with custom coefficients per attribute, optionally wrapped in a trigonometric function.
-- Gradient descent search for coefficients which optimize score function designed to maximize between-class variance and minimize within-class variance (fast and automatic quality coefficient discovery.)
+- **Cross-platform support:** Runs on any platform with a Java runtime environment.
+- **CSV Data Handling:** Load and display CSV data in a tabular view.
+- **Plot Screenshots:** Capture plot screenshots using the space bar (currently available in Shifted Paired Coordinates, with plans to extend to other plots).
+- **Normalization:** Normalize numerical columns.
+- **Missing Data Highlighting:** Identify and highlight missing data.
+- **Covariance Matrix:** Display a covariance matrix with a heatmap overlay.
+- **Covariance Sorting:** Sort columns by the covariance of all attributes against a selected attribute.
+- **Multiple Visualizations:** Visualize data using heatmaps, Parallel Coordinates, Shifted Paired Coordinates, Static Circular Coordinates, and Star Coordinates.
+- **Row Manipulation:** Insert, delete, clone, copy contents, and edit individual cell values.
+- **Customization:** Customize font color, class color, class point style, and highlight class fields.
+- **Data Export:** Export modified data to CSV.
+- **Rule Testing:** Test classification rules and display results in a Confusion Matrix.
+- **Rule Serialization:** Save (only locally) and reload classification rules.
+- **Row Highlighting:** Highlight selected rows in visualization views.
+- **Pure Region Discovery:** Discover and highlight pure regions where all data points belong to the same class.
+- **Rule Combination:** Combine rules to maintain the largest surrounding pure rule.
+- **Rule Threshold Slider:** Adjust the threshold for rule coverage over a class or dataset.
+- **Feature Engineering:** Insert feature columns with direct trigonometric attribute values, such as arccos(attribute), or calculate forward/backward differences wrapped in trigonometric functions.
+- **Linear Combination Feature Engineering:** Insert linear combination columns with custom coefficients, optionally wrapped in a trigonometric function.
+- **Gradient Descent Optimization:** Automatically discover optimal coefficients for linear combination features, maximizing class separability.
 
-## Automatic Rule Discovery
-
-For classifying of data we automatically discover pure regions, intervals within a single attribute where all data points belong to the same class.
+## Rule Discovery
 
 ### Single Attribute Pure Intervals
 
-Using a sliding window algorithm we automatically identify pure intervals within individual attributes based on a single attribute. After identifying all potential pure regions, JTabViz filters them to ensure only the most significant regions are used for classification, eliminating regions which contain another or if the threshold slider is not met for total percentage of class or dataset contained.
+Using a sliding window algorithm, JTabViz *automatically* identifies pure intervals within individual attributes. Only the most significant regions are used for classification, filtered by a threshold slider to ensure coverage of a class or the dataset.
 
-## Trigonometric Differences
+### Trigonometric Differences
 
-To better analyze relationships between attributes, JTabViz applies trigonometric functions to the forward differences, backward differences, and direct attribute values. This helps uncover various patterns and interactions in the data between attributes.
+JTabViz applies trigonometric functions to forward differences, backward differences, and direct attribute values to uncover patterns and interactions in the data:
 
-- arcsin: Highlights small differences between attributes, making it easier to detect subtle variations.
-- arctan: Emphasizes the slope or rate of change between attributes, useful for understanding trends and gradients.
-- arccos: Focuses on rotational relationships between attributes, revealing how one attribute rotates relative to another.
+- sin: Emphasizes periodic or cyclic relationships between attributes, making it easier to detect recurring patterns.
+- cos: Highlights rotational or angular relationships between attributes, helping to uncover how attributes might cyclically influence each other.
+- tan: Focuses on the rate of change between attributes, useful for identifying steep trends or shifts in the data.
 
-## Feature Engineering with Linear Combinations for Data Classification
+### Application of Trigonometric Functions:
 
-### Overview
+- Forward Differences: The trigonometric functions are applied to the differences between each attribute value and the next one in the sequence. This highlights how changes from one data point to the next evolve cyclically, rotationally, or in terms of their rate of change.
+- Backward Differences: Similar to forward differences, but here the trigonometric functions are applied to the differences between each attribute value and the previous one. This can help in understanding how past values influence current trends, especially in a cyclical or rotational context.
+- Direct Attribute Values: Trigonometric functions are directly applied to the raw attribute values themselves. This approach reveals inherent periodicity, rotation, or trends in the data, independent of any sequence-based differences.
 
-In data classification, feature engineering transforms raw data into a more suitable form for building models. **JTabViz** includes a technique to create **Linear Combination Features** from existing attributes in your dataset. This method allows for the synthesis of new features that can reveal patterns and relationships not immediately visible in the original data.
+### Feature Engineering with Linear Combinations for Data Classification
 
-### What Are Linear Combination Features?
-
-A **Linear Combination Feature** is a new feature created by combining multiple existing features using a set of coefficients. It is mathematically represented as:
+JTabViz allows for the creation of **Linear Combination Features** from existing attributes, enhancing class separability, reducing dimensionality, and improving model representation. A new feature created by combining multiple existing features using a set of coefficients.
 
 New Feature} = c_1(x_1) + c_2(x_2) + ... + c_n(x_n)
 
@@ -130,59 +120,39 @@ where:
 c_1, c_2, ..., c_n are the coefficients.  
 x_1, x_2, ..., x_n are the original features.
 
-These coefficients can be manually specified or automatically optimized using gradient descent.
+These coefficients can be manually specified or *automatically* (with a low attribute count around <=30 depending on hardware) optimized using gradient descent.
 
 ### Why Use Linear Combination Features?
 
 Linear Combination Features are used to:
 
-- **Enhance Class Separability**: Combining features can create new dimensions where different classes are more distinguishable.
-- **Reduce Dimensionality**: A well-crafted linear combination can summarize the essential information of multiple features into a single feature.
-- **Improve Model Representation**: Creating new features based on the relationships between existing features can make the data more suitable for classification.
-
-This feature is inspired by the successful dynamic coordinate mappings of General Line Coordinats developed at Central Washington University.
+- **Enhance Class Separability**
+- **Reduce Dimensionality**
+- **Improve Model Representation**
 
 ### Automatic Coefficient Optimization with Gradient Descent
 
-JTabViz includes a gradient descent algorithm that automatically finds the optimal coefficients for your linear combination feature. The optimization process aims to:
-
-- **Maximize Between-Class Variance**: Increase the distance between the centers of different classes.
-- **Minimize Within-Class Variance**: Reduce the spread of data points within the same class.
-
-This approach ensures that the resulting linear combination feature is effective in separating different classes.
+JTabViz includes a gradient descent algorithm that optimizes coefficients to maximize between-class variance and minimize within-class variance, ensuring effective class separation.
 
 ### Wrapping Linear Combinations with Trigonometric Functions
 
-JTabViz allows you to apply trigonometric functions like `sin`, `cos`, or `tan`, as well as their inverses, `arcsin`, `arccos`, or `arctan`, to the linear combination feature. These transformations can reveal non-linear relationships and rotational patterns in the data, which may not be visible in the original features.
-
-For example:
-
-- **Sin**: Emphasizes periodic or cyclic relationships between features.
-- **Cos**: Highlights rotational patterns and relationships.
-- **Tan**: Focuses on the slope or rate of change between features.
-- **Arcsin**: Shows the angle whose sine is the linear combination value, often highlighting small differences.
-- **Arccos**: Represents the angle whose cosine is the linear combination value, useful for rotational relationships.
-- **Arctan**: Provides the angle whose tangent is the linear combination value, emphasizing the slope or direction.
+Apply trigonometric functions (sin, cos, tan, and their inverses) to linear combination features to reveal non-linear relationships and rotational patterns.
 
 ### Practical Example
 
-Suppose you have a dataset with features `x1`, `x2`, and `x3`, and you want to create a new feature that helps distinguish between classes. Using JTabViz, you might create a linear combination feature like:
+Suppose you have a dataset with features `x1`, `x2`, and `x3`:
 
 New Feature = 0.5(x1) + 0.3(x2) - 0.2(x3)
 
-If this linear combination is wrapped with the `cos` function, the new feature becomes:
+Wrapped with cos function:
 
 Transformed Feature = cos(0.5(x1) + 0.3(x2) - 0.2(x3))
 
-This transformed feature could provide better insight into the relationships between the features and improve the classification of data.
-
-### Summary
-
-The **Linear Combination Feature Engineering** tool in JTabViz allows you to combine existing features and optimize their relationships to create new features. This approach can help in finding derivations of the data which present classifiable patterns.
+This transformation can provide deeper insights and improve classification.
 
 ## Getting Started
 
-There are multiple ways to run JTabViz:
+There are multiple ways to run JTabViz, we suggest skipping to method 3 and utilizing the multiplatform scripts (does require a Java compiler).
 
 1. **Using the Pre-Compiled JAR File:**
    - Download the `JTabViz.jar` file and the `libs` folder.
@@ -254,10 +224,14 @@ Example CSV structure:
 
 ## Acknowledgements
 
-The user interface icons are sourced from [Font Awesome](https://fontawesome.com/search) using [fa2png tool](https://fa2png.app/).
+The user interface icons are sourced from [Font Awesome](https://fontawesome.com/search), converted using the [fa2png tool](https://fa2png.app/).
 
-The Java charts library used is [JFreeChart](https://www.jfree.org/jfreechart/).
+The charts in the application are rendered using [JFreeChart](https://www.jfree.org/jfreechart/), a Java library for chart creation.
 
 ## License
 
-The JTabViz software is completely available free of charge for use both personal and commercial under the MIT license, see the `LICENSE` for full terms and details.
+JTabViz is licensed under the MIT License, allowing free use for both personal and commercial purposes. For full terms, see the `LICENSE` file.
+
+JFreeChart is free software distributed under the GNU Lesser General Public License (LGPL), which permits use in proprietary applications. For more details, refer to the [JFreeChart licensing information](https://www.jfree.org/jfreechart/).
+
+Font Awesome Free is open-source and GPL friendly, allowing use in commercial, open-source, or almost any type of project. For more information, visit the [Font Awesome License page](https://fontawesome.com/license/free).
