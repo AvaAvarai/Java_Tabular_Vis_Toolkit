@@ -9,6 +9,8 @@ import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.List;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
@@ -155,8 +157,8 @@ public class CsvViewer extends JFrame {
             return;
         }
 
-        java.util.List<Integer> originalColumnIndices = new ArrayList<>();
-        java.util.List<Double> coefficients = new ArrayList<>();
+        List<Integer> originalColumnIndices = new ArrayList<>();
+        List<Double> coefficients = new ArrayList<>();
 
         JPanel panel = new JPanel(new GridLayout(0, 2));
 
@@ -176,6 +178,13 @@ public class CsvViewer extends JFrame {
         JComboBox<String> trigFunctionSelector = new JComboBox<>(trigOptions);
         panel.add(new JLabel("Wrap Linear Combination in:"));
         panel.add(trigFunctionSelector);
+
+        JButton optimizeButton = new JButton("Optimize Coefficients");
+        optimizeButton.addActionListener(e -> {
+            GradientDescentOptimizer optimizer = new GradientDescentOptimizer(this, 0.01, 1000, 1e-6);
+            optimizer.optimizeCoefficientsUsingGradientDescent(originalColumnIndices, coefficients, panel, (String) trigFunctionSelector.getSelectedItem());
+        });
+        panel.add(optimizeButton);
 
         JScrollPane scrollPane = new JScrollPane(panel);
         scrollPane.setPreferredSize(new Dimension(400, 300));
