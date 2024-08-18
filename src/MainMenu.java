@@ -16,9 +16,9 @@ public class MainMenu extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // TODO: Banner graphic
-        //JLabel bannerLabel = new JLabel(new ImageIcon("path/to/banner/image.png"));
-        //add(bannerLabel, BorderLayout.NORTH);
+        // Banner graphic
+        JLabel bannerLabel = new JLabel(new ImageIcon("resources/graphics/banner.png"));
+        add(bannerLabel, BorderLayout.NORTH);
 
         // Create buttons
         JButton startAppButton = new JButton("Start Application");
