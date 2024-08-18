@@ -5,10 +5,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.List;
 import javax.swing.*;
@@ -56,6 +53,7 @@ public class CsvViewer extends JFrame {
     private VisualizationManager visualizationManager;
     private GradientDescentOptimizer gradientDescentOptimizer;
     private RendererManager rendererManager;
+    private DataExporter dataExporter;
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -67,9 +65,9 @@ public class CsvViewer extends JFrame {
         dataHandler = new CsvDataHandler();
         tableModel = new ReorderableTableModel();
         table = TableSetup.createTable(tableModel);
-        
+
         rendererManager = new RendererManager(this);
-        
+
         CsvViewerUIHelper.setupTable(table, tableModel, this);
 
         JPanel buttonPanel = CsvViewerUIHelper.createButtonPanel(this);
@@ -83,6 +81,7 @@ public class CsvViewer extends JFrame {
         pureRegionManager = new PureRegionManager(this, tableModel, statsTextArea, thresholdSlider);
         visualizationManager = new VisualizationManager(this);
         gradientDescentOptimizer = new GradientDescentOptimizer(this, 0.01, 1000, 1e-6);
+        dataExporter = new DataExporter(table, tableModel);
 
         selectedRowsLabel = new JLabel("Selected rows: 0");
         thresholdSlider = new JSlider(0, 100, 5);
@@ -910,39 +909,7 @@ public class CsvViewer extends JFrame {
     }
 
     public void exportCsvFile() {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setCurrentDirectory(new java.io.File("datasets"));
-        fileChooser.setDialogTitle("Save CSV File");
-        int result = fileChooser.showSaveDialog(this);
-
-        if (result == JFileChooser.APPROVE_OPTION) {
-            String filePath = fileChooser.getSelectedFile().getAbsolutePath();
-
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
-                for (int col = 0; col < tableModel.getColumnCount(); col++) {
-                    writer.write(tableModel.getColumnName(col));
-                    if (col < tableModel.getColumnCount() - 1) {
-                        writer.write(",");
-                    }
-                }
-                writer.newLine();
-
-                for (int row = 0; row < tableModel.getRowCount(); row++) {
-                    if (!hiddenRows.contains(row)) {
-                        for (int col = 0; col < tableModel.getColumnCount(); col++) {
-                            Object value = tableModel.getValueAt(row, col);
-                            writer.write(value != null ? value.toString() : "");
-                            if (col < tableModel.getColumnCount() - 1) {
-                                writer.write(",");
-                            }
-                        }
-                        writer.newLine();
-                    }
-                }
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, "Error saving CSV file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
+        dataExporter.exportCsvFile();
     }
 
     public void showParallelCoordinatesPlot() {
