@@ -74,6 +74,7 @@ public class CsvViewer extends JFrame {
     private double[] maxValues;
     private boolean[] isNumerical;
     private TrigonometricColumnManager trigColumnManager;
+    private PureRegionManager pureRegionManager;
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -96,6 +97,7 @@ public class CsvViewer extends JFrame {
 
         tableScrollPane = new JScrollPane(table);
         trigColumnManager = new TrigonometricColumnManager(table);
+        pureRegionManager = new PureRegionManager(this, tableModel, statsTextArea, thresholdSlider);
 
         selectedRowsLabel = new JLabel("Selected rows: 0");
         thresholdSlider = new JSlider(0, 100, 5);
@@ -109,7 +111,7 @@ public class CsvViewer extends JFrame {
         thresholdSlider.addChangeListener(e -> {
             int thresholdValue = thresholdSlider.getValue();
             thresholdLabel.setText(thresholdValue + "%");
-            calculateAndDisplayPureRegions(thresholdValue);
+            pureRegionManager.calculateAndDisplayPureRegions(thresholdValue);
         });
 
         bottomPanel = CsvViewerUIHelper.createBottomPanel(selectedRowsLabel, thresholdSlider, thresholdLabel);
@@ -151,7 +153,6 @@ public class CsvViewer extends JFrame {
             return;
         }
     
-        // Extract data and column names for numerical columns
         List<List<Double>> numericalData = new ArrayList<>();
         List<String> attributeNames = new ArrayList<>();
         List<String> classLabels = new ArrayList<>();
@@ -178,18 +179,15 @@ public class CsvViewer extends JFrame {
             }
         }
     
-        // Extract class labels
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             if (!hiddenRows.contains(row)) {
                 classLabels.add((String) tableModel.getValueAt(row, classColumnIndex));
             }
         }
     
-        // Get selected rows
         List<Integer> selectedRows = getSelectedRowsIndices();
         selectedRows.removeIf(hiddenRows::contains);
     
-        // Show the Star Coordinates plot
         StarCoordinatesPlot starCoordinatesPlot = new StarCoordinatesPlot(numericalData, attributeNames, classColors, classShapes, classLabels, selectedRows);
         starCoordinatesPlot.setVisible(true);
     }
@@ -232,7 +230,6 @@ public class CsvViewer extends JFrame {
             return;
         }
     
-        // Identify original columns using the originalColumnNames list
         List<Integer> originalColumnIndices = new ArrayList<>();
         List<Double> coefficients = new ArrayList<>();
     
@@ -240,14 +237,13 @@ public class CsvViewer extends JFrame {
     
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
             String columnName = tableModel.getColumnName(i);
-            // Consider a column original if it is in the originalColumnNames list
             if (originalColumnNames.contains(columnName) && !columnName.equalsIgnoreCase("class")) {
                 originalColumnIndices.add(i);
                 JLabel label = new JLabel("Coefficient for " + columnName + ":");
-                JTextField coefficientField = new JTextField("1"); // Default coefficient is 1
+                JTextField coefficientField = new JTextField("1");
                 panel.add(label);
                 panel.add(coefficientField);
-                coefficients.add(null); // Placeholder for the coefficient
+                coefficients.add(null);
             }
         }
     
@@ -263,9 +259,8 @@ public class CsvViewer extends JFrame {
     
         panel.add(exhaustiveSearchButton);
     
-        // Wrap the panel in a JScrollPane to enable vertical scrolling
         JScrollPane scrollPane = new JScrollPane(panel);
-        scrollPane.setPreferredSize(new Dimension(400, 300)); // Adjust the size as needed
+        scrollPane.setPreferredSize(new Dimension(400, 300));
     
         int result = JOptionPane.showConfirmDialog(this, scrollPane, "Enter Coefficients for Linear Combination", JOptionPane.OK_CANCEL_OPTION);
     
@@ -279,7 +274,6 @@ public class CsvViewer extends JFrame {
                 return;
             }
     
-            // Construct the base name for the new column
             StringBuilder baseColumnNameBuilder = new StringBuilder("Linear Combination: ");
             for (int j = 0; j < originalColumnIndices.size(); j++) {
                 baseColumnNameBuilder.append(coefficients.get(j)).append(" * ").append(tableModel.getColumnName(originalColumnIndices.get(j)));
@@ -288,15 +282,12 @@ public class CsvViewer extends JFrame {
                 }
             }
     
-            // Ensure the column name is unique
             String newColumnName = getUniqueColumnName(baseColumnNameBuilder.toString());
     
             tableModel.addColumn(newColumnName);
     
-            // Format for displaying the numbers without scientific notation
             DecimalFormat decimalFormat = new DecimalFormat("#.##########################");
     
-            // Populate the new column with the computed linear combination based on original columns
             String trigFunction = (String) trigFunctionSelector.getSelectedItem();
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 double sum = 0.0;
@@ -305,12 +296,10 @@ public class CsvViewer extends JFrame {
                         Object value = tableModel.getValueAt(row, originalColumnIndices.get(j));
                         sum += coefficients.get(j) * Double.parseDouble(value.toString());
                     }
-                    // Apply the selected trigonometric function
                     sum = applyTrigFunction(sum, trigFunction);
                 } catch (NumberFormatException | NullPointerException e) {
-                    sum = Double.NaN; // Handle invalid entries with NaN
+                    sum = Double.NaN;
                 }
-                // Set the formatted value into the table
                 tableModel.setValueAt(decimalFormat.format(sum), row, tableModel.getColumnCount() - 1);
             }
     
@@ -337,7 +326,7 @@ public class CsvViewer extends JFrame {
                 return Math.atan(value);
             case "None":
             default:
-                return value; // No transformation
+                return value;
         }
     }
     
@@ -370,12 +359,11 @@ public class CsvViewer extends JFrame {
                 double value = Double.parseDouble(tableModel.getValueAt(row, originalColumnIndices.get(j)).toString());
                 sum += coefficients[j] * value;
             }
-            sum = applyTrigFunction(sum, trigFunction); // Apply the selected trigonometric function
+            sum = applyTrigFunction(sum, trigFunction);
             String className = (String) tableModel.getValueAt(row, classColumnIndex);
             classSums.computeIfAbsent(className, k -> new ArrayList<>()).add(sum);
         }
     
-        // Calculate overall mean (to be used for between-class variance)
         double overallMean = classSums.values().stream()
             .flatMapToDouble(classList -> classList.stream().mapToDouble(Double::doubleValue))
             .average().orElse(0.0);
@@ -384,43 +372,37 @@ public class CsvViewer extends JFrame {
         double withinClassVariance = 0.0;
         int totalSampleCount = tableModel.getRowCount();
     
-        // Calculate between-class and within-class variance
         for (Map.Entry<String, List<Double>> entry : classSums.entrySet()) {
             List<Double> classValues = entry.getValue();
             int classSampleCount = classValues.size();
             double classMean = classValues.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
             
-            // Between-class variance contribution
             betweenClassVariance += classSampleCount * Math.pow(classMean - overallMean, 2);
     
-            // Within-class variance
             double classVariance = classValues.stream().mapToDouble(v -> Math.pow(v - classMean, 2)).sum();
             withinClassVariance += classVariance;
         }
     
-        // Normalize variances
         betweenClassVariance /= totalSampleCount;
         withinClassVariance /= totalSampleCount;
     
-        // If within-class variance is zero, return a large value to emphasize maximal separation
         if (withinClassVariance == 0) {
             return Double.MAX_VALUE;
         }
     
-        // Maximize the separation by maximizing between-class variance and minimizing within-class variance
         return betweenClassVariance / withinClassVariance;
     }
 
     private void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel, String trigFunction) {
         for (int i = 0; i < coefficients.size(); i++) {
             if (coefficients.get(i) == null) {
-                coefficients.set(i, 1.0); // Default value
+                coefficients.set(i, 1.0);
             }
         }
     
-        double learningRate = 0.01; // Learning rate for gradient descent
-        int maxIterations = 1000; // Maximum number of iterations
-        double tolerance = 1e-6; // Tolerance for convergence
+        double learningRate = 0.01;
+        int maxIterations = 1000;
+        double tolerance = 1e-6;
         
         int n = coefficients.size();
         double[] gradients = new double[n];
@@ -428,15 +410,13 @@ public class CsvViewer extends JFrame {
         for (int iteration = 0; iteration < maxIterations; iteration++) {
             double currentScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray(), trigFunction);
     
-            // Calculate the gradient for each coefficient
             for (int i = 0; i < n; i++) {
-                coefficients.set(i, coefficients.get(i) + tolerance); // Perturb coefficient
+                coefficients.set(i, coefficients.get(i) + tolerance);
                 double newScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray(), trigFunction);
-                gradients[i] = (newScore - currentScore) / tolerance; // Estimate gradient
-                coefficients.set(i, coefficients.get(i) - tolerance); // Restore original coefficient
+                gradients[i] = (newScore - currentScore) / tolerance;
+                coefficients.set(i, coefficients.get(i) - tolerance);
             }
     
-            // Update coefficients based on gradients
             boolean hasConverged = true;
             for (int i = 0; i < n; i++) {
                 double newCoefficient = coefficients.get(i) + learningRate * gradients[i];
@@ -446,159 +426,19 @@ public class CsvViewer extends JFrame {
                 coefficients.set(i, newCoefficient);
             }
     
-            // Check for convergence
             if (hasConverged) {
                 break;
             }
         }
     
-        // Update the JTextField components in the panel with the optimized coefficients
         for (int i = 0; i < coefficients.size(); i++) {
             JTextField coefficientField = (JTextField) panel.getComponent(2 * i + 1);
             coefficientField.setText(coefficients.get(i).toString());
         }
     }
     
-    public double calculateAndDisplayPureRegions(int thresholdPercentage) {
-        int classColumnIndex = getClassColumnIndex();
-        if (classColumnIndex == -1) {
-            noDataLoadedError();
-            return 0;
-        }
-
-        List<PureRegionUtils> pureRegions = PureRegionUtils.calculatePureRegions(tableModel, thresholdPercentage, classColumnIndex);
-
-        int totalRows = tableModel.getRowCount();
-        Set<Integer> hiddenRows = new HashSet<>();
-        for (PureRegionUtils region : pureRegions) {
-            for (int row = 0; row < totalRows; row++) {
-                String attributeName = region.getAttributeName();
-                int attributeColumnIndex = tableModel.findColumn(attributeName);
-
-                if (attributeColumnIndex != -1) {
-                    try {
-                        double value = Double.parseDouble(tableModel.getValueAt(row, attributeColumnIndex).toString());
-                        String className = tableModel.getValueAt(row, classColumnIndex).toString();
-
-                        if (value >= region.getStart() && value < region.getEnd() && className.equals(region.getCurrentClass())) {
-                            hiddenRows.add(row);
-                        }
-                    } catch (NumberFormatException e) {
-                        // Skip non-numerical values
-                    }
-                }
-            }
-        }
-
-        double remainingCoverage = ((totalRows - hiddenRows.size()) / (double) totalRows) * 100.0;
-
-        displayPureRegions(pureRegions);
-        
-        return remainingCoverage;
-    }
-
     public void toggleEasyCases() {
-        if (hiddenRows.isEmpty()) {
-            hideEasyCases();
-            toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/uneasy.png", 40, 40));
-            toggleEasyCasesButton.setToolTipText("Show All Cases");
-        } else {
-            showEasyCases();
-            toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/easy.png", 40, 40));
-            toggleEasyCasesButton.setToolTipText("Show Easy Cases");
-        }
-    }
-
-    public void hideEasyCases() {
-        int classColumnIndex = getClassColumnIndex();
-        if (classColumnIndex == -1) {
-            noDataLoadedError();
-            return;
-        }
-
-        int currentThreshold = thresholdSlider.getValue();
-        List<PureRegionUtils> pureRegions = PureRegionUtils.calculatePureRegions(tableModel, currentThreshold, classColumnIndex);
-        Set<Integer> rowsToHide = new HashSet<>();
-
-        for (PureRegionUtils region : pureRegions) {
-            for (int row = 0; row < tableModel.getRowCount(); row++) {
-                String attributeName = region.getAttributeName();
-                int attributeColumnIndex = tableModel.findColumn(attributeName);
-
-                if (attributeColumnIndex != -1) {
-                    try {
-                        double value = Double.parseDouble(tableModel.getValueAt(row, attributeColumnIndex).toString());
-                        String className = tableModel.getValueAt(row, classColumnIndex).toString();
-
-                        if (value >= region.getStart() && value < region.getEnd() && className.equals(region.getCurrentClass())) {
-                            rowsToHide.add(row);
-                        }
-                    } catch (NumberFormatException e) {
-                        // Skip non-numerical values
-                    }
-                }
-            }
-        }
-
-        hiddenRows.clear();
-        hiddenRows.addAll(rowsToHide);
-        applyRowFilter();
-        updateSelectedRowsLabel();
-    }
-
-    public void showEasyCases() {
-        hiddenRows.clear();
-        applyRowFilter();
-        updateSelectedRowsLabel();
-    }
-
-    private void applyRowFilter() {
-        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
-        sorter.setRowFilter(new RowFilter<DefaultTableModel, Integer>() {
-            @Override
-            public boolean include(Entry<? extends DefaultTableModel, ? extends Integer> entry) {
-                return !hiddenRows.contains(entry.getIdentifier());
-            }
-        });
-        // Apply the custom comparator for each column
-        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            sorter.setComparator(i, new NumericStringComparator());
-        }
-        table.setRowSorter(sorter);
-        updateSelectedRowsLabel();
-    }
-
-    public int calculateRemainingCases(int threshold) {
-        int classColumnIndex = getClassColumnIndex();
-        if (classColumnIndex == -1) {
-            noDataLoadedError();
-            return 0;
-        }
-
-        List<PureRegionUtils> pureRegions = PureRegionUtils.calculatePureRegions(tableModel, threshold, classColumnIndex);
-        Set<Integer> hiddenRows = new HashSet<>();
-
-        for (PureRegionUtils region : pureRegions) {
-            for (int row = 0; row < tableModel.getRowCount(); row++) {
-                String attributeName = region.getAttributeName();
-                int attributeColumnIndex = tableModel.findColumn(attributeName);
-
-                if (attributeColumnIndex != -1) {
-                    try {
-                        double value = Double.parseDouble(tableModel.getValueAt(row, attributeColumnIndex).toString());
-                        String className = tableModel.getValueAt(row, classColumnIndex).toString();
-
-                        if (value >= region.getStart() && value < region.getEnd() && className.equals(region.getCurrentClass())) {
-                            hiddenRows.add(row);
-                        }
-                    } catch (NumberFormatException e) {
-                        // Skip non-numerical values
-                    }
-                }
-            }
-        }
-
-        return tableModel.getRowCount() - hiddenRows.size();
+        pureRegionManager.toggleEasyCases();
     }
 
     public void toggleStatsVisibility(boolean hideStats) {
@@ -646,7 +486,6 @@ public class CsvViewer extends JFrame {
     
             dataHandler.loadCsvData(filePath, tableModel, statsTextArea);
     
-            // Format each numeric value as a decimal
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 for (int col = 0; col < tableModel.getColumnCount(); col++) {
                     Object value = tableModel.getValueAt(row, col);
@@ -686,7 +525,6 @@ public class CsvViewer extends JFrame {
     
     private String formatDecimalWithoutScientificNotation(double value) {
         DecimalFormat decimalFormat = new DecimalFormat("#.##########################"); 
-        // Use this pattern to ensure no scientific notation and remove trailing zeros
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
         return decimalFormat.format(value);
     }
@@ -713,7 +551,6 @@ public class CsvViewer extends JFrame {
             return;
         }
     
-        // Get all attribute names except the class column
         List<String> attributes = new ArrayList<>();
         int classColumnIndex = getClassColumnIndex();
     
@@ -723,7 +560,6 @@ public class CsvViewer extends JFrame {
             }
         }
     
-        // Prompt user to select an attribute to sort by
         String selectedAttribute = (String) JOptionPane.showInputDialog(
                 this,
                 "Select an attribute to sort by covariance:",
@@ -752,17 +588,14 @@ public class CsvViewer extends JFrame {
             }
         }
     
-        // Sort columns based on covariance values in descending order
         covariancePairs.sort((p1, p2) -> Double.compare(p2.getCovariance(), p1.getCovariance()));
     
-        // Reorder the columns in the table model based on sorted covariance values
         TableColumnModel columnModel = table.getColumnModel();
         for (int i = 0; i < covariancePairs.size(); i++) {
             int fromIndex = columnModel.getColumnIndex(tableModel.getColumnName(covariancePairs.get(i).getColumnIndex()));
             columnModel.moveColumn(fromIndex, i);
         }
     
-        // Update the table to reflect the new order
         table.getTableHeader().repaint();
         table.repaint();
     }
@@ -790,38 +623,31 @@ public class CsvViewer extends JFrame {
         int modelColumnIndex = table.convertColumnIndexToModel(viewColumnIndex);
         int classColumnIndex = getClassColumnIndex();
     
-        // Check if the selected column is the class column
         if (modelColumnIndex == classColumnIndex) {
             JOptionPane.showMessageDialog(this, "Cannot delete the class column.", "Deletion Not Allowed", JOptionPane.WARNING_MESSAGE);
             return;
         }
     
-        // Remove the column name from the originalColumnNames
         if (originalColumnNames != null && modelColumnIndex < originalColumnNames.size()) {
             originalColumnNames.remove(modelColumnIndex);
         }
     
-        // Remove the column from the TableColumnModel
         TableColumnModel columnModel = table.getColumnModel();
         columnModel.removeColumn(columnModel.getColumn(viewColumnIndex));
     
-        // Remove the column data from the model
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             for (int col = modelColumnIndex; col < tableModel.getColumnCount() - 1; col++) {
                 tableModel.setValueAt(tableModel.getValueAt(row, col + 1), row, col);
             }
         }
     
-        // Remove the last column, which is now duplicated
         tableModel.setColumnCount(tableModel.getColumnCount() - 1);
     
-        // Update the column headers
         tableModel.setColumnIdentifiers(originalColumnNames.toArray());
     
-        // Update UI components that may rely on column data
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
-        calculateAndDisplayPureRegions(thresholdSlider.getValue());
+        pureRegionManager.calculateAndDisplayPureRegions(thresholdSlider.getValue());
     }
 
     public void toggleDataView() {
@@ -852,7 +678,6 @@ public class CsvViewer extends JFrame {
             tableModel.addRow(row);
         }
         
-        // Re-populate originalColumnNames after updating table data
         originalColumnNames = new ArrayList<>();
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
             originalColumnNames.add(tableModel.getColumnName(i));
@@ -867,7 +692,7 @@ public class CsvViewer extends JFrame {
         updateSelectedRowsLabel();
     
         currentCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length());
-        calculateAndDisplayPureRegions(thresholdSlider.getValue());
+        pureRegionManager.calculateAndDisplayPureRegions(thresholdSlider.getValue());
         statsTextArea.setCaretPosition(currentCaretPosition);
     }
 
@@ -928,7 +753,6 @@ public class CsvViewer extends JFrame {
     }
 
     public void showCovarianceMatrix() {
-        // Extract numerical data from the table
         int rowCount = tableModel.getRowCount();
         int colCount = tableModel.getColumnCount();
         List<double[]> numericalData = new ArrayList<>();
@@ -953,7 +777,6 @@ public class CsvViewer extends JFrame {
             }
         }
     
-        // Calculate the covariance matrix
         int numAttributes = numericalData.size();
         double[][] covarianceMatrix = new double[numAttributes][numAttributes];
     
@@ -968,23 +791,19 @@ public class CsvViewer extends JFrame {
             }
         }
     
-        // Capture min and max covariance values in final variables for use in the inner class
         final double finalMinCovariance = minCovariance;
         final double finalMaxCovariance = maxCovariance;
     
-        // Create a new table to display the covariance matrix
         DefaultTableModel covarianceTableModel = new DefaultTableModel();
         
-        // Add column names to the model
         covarianceTableModel.addColumn("Attributes");
         for (String columnName : columnNames) {
             covarianceTableModel.addColumn(columnName);
         }
         
-        // Add rows to the model
         for (int i = 0; i < numAttributes; i++) {
             Object[] row = new Object[numAttributes + 1];
-            row[0] = columnNames.get(i);  // Set the attribute name in the first column
+            row[0] = columnNames.get(i);
             for (int j = 0; j < numAttributes; j++) {
                 row[j + 1] = String.format("%.4f", covarianceMatrix[i][j]);
             }
@@ -994,7 +813,6 @@ public class CsvViewer extends JFrame {
         JTable covarianceTable = new JTable(covarianceTableModel);
         covarianceTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
     
-        // Apply heatmap if enabled
         if (isHeatmapEnabled) {
             covarianceTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
                 @Override
@@ -1028,15 +846,12 @@ public class CsvViewer extends JFrame {
             });
         }
     
-        // Apply font settings
         covarianceTable.setFont(table.getFont());
         covarianceTable.getTableHeader().setFont(table.getTableHeader().getFont());
     
-        // Create a scroll pane for the table
         JScrollPane scrollPane = new JScrollPane(covarianceTable);
         scrollPane.setPreferredSize(new Dimension(600, 400));
     
-        // Display the table in a dialog
         JFrame frame = new JFrame("Covariance Matrix");
         frame.add(scrollPane);
         frame.pack();
@@ -1084,7 +899,7 @@ public class CsvViewer extends JFrame {
                 return columnModel.getColumn(i).getModelIndex();
             }
         }
-        return -1; // Return -1 if the "class" column is not found
+        return -1;
     }    
 
     public void toggleClassColors() {
@@ -1092,26 +907,11 @@ public class CsvViewer extends JFrame {
         applyCombinedRenderer();
     }    
 
-    private void displayPureRegions(List<PureRegionUtils> pureRegions) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Single-Attribute Pure Regions:\n");
-        for (int i = pureRegions.size() - 1; i >= 0; i--) {
-            PureRegionUtils region = pureRegions.get(i);
-            sb.append(String.format("Attribute: %s, Pure Region: %.2f <= %s < %.2f, Class: %s, Count: %d (%.2f%% of class, %.2f%% of dataset)\n",
-                    region.getAttributeName(), region.getStart(), region.getAttributeName(), region.getEnd(),
-                    region.getCurrentClass(), region.getRegionCount(), region.getPercentageOfClass(), region.getPercentageOfDataset()));
-        }
-        dataHandler.updateStats(tableModel, statsTextArea);
-        statsTextArea.append(sb.toString());
-    }
-
     public void applyDefaultRenderer() {
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                
-                // Set the default background color to #C0C0C0 for all cells
                 c.setBackground(Color.decode("#C0C0C0"));
     
                 if (hasFocus) {
@@ -1124,7 +924,6 @@ public class CsvViewer extends JFrame {
                     }
                 }
                 
-                // Apply the font color
                 c.setForeground(cellTextColor);
                 return c;
             }
@@ -1135,20 +934,17 @@ public class CsvViewer extends JFrame {
     public void applyCombinedRenderer() {
         int numColumns = tableModel.getColumnCount();
         
-        // Reinitialize arrays to match the current number of columns
         minValues = new double[numColumns];
         maxValues = new double[numColumns];
         isNumerical = new boolean[numColumns];
         int classColumnIndex = getClassColumnIndex();
     
-        // Initialize arrays and check which columns are numerical
         for (int i = 0; i < numColumns; i++) {
             minValues[i] = Double.MAX_VALUE;
             maxValues[i] = Double.MIN_VALUE;
             isNumerical[i] = true;
         }
     
-        // Determine min and max values for numerical columns
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             for (int col = 0; col < numColumns; col++) {
                 try {
@@ -1161,7 +957,6 @@ public class CsvViewer extends JFrame {
             }
         }
     
-        // Set the cell renderer
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -1174,7 +969,7 @@ public class CsvViewer extends JFrame {
                         if (classColors.containsKey(className)) {
                             c.setBackground(classColors.get(className));
                         } else {
-                            c.setBackground(Color.decode("#C0C0C0")); // Default to #C0C0C0
+                            c.setBackground(Color.decode("#C0C0C0"));
                         }
                     } else if (isHeatmapEnabled && value != null && !value.toString().trim().isEmpty() && isNumerical[modelColumn]) {
                         try {
@@ -1183,13 +978,13 @@ public class CsvViewer extends JFrame {
                             Color color = getColorForValue(normalizedValue);
                             c.setBackground(color);
                         } catch (NumberFormatException e) {
-                            c.setBackground(Color.decode("#C0C0C0")); // Default to #C0C0C0
+                            c.setBackground(Color.decode("#C0C0C0"));
                         }
                     } else {
-                        c.setBackground(Color.decode("#C0C0C0")); // Default to #C0C0C0
+                        c.setBackground(Color.decode("#C0C0C0"));
                     }
                 } else {
-                    c.setBackground(Color.decode("#C0C0C0")); // Fallback if modelColumn is out of bounds
+                    c.setBackground(Color.decode("#C0C0C0"));
                 }
     
                 if (hasFocus) {
@@ -1202,7 +997,6 @@ public class CsvViewer extends JFrame {
                     }
                 }
     
-                // Apply the font color
                 c.setForeground(cellTextColor);
                 return c;
             }
@@ -1315,7 +1109,7 @@ public class CsvViewer extends JFrame {
         } else {
             JOptionPane.showMessageDialog(this, "Please select at least one row to delete.", "Error", JOptionPane.ERROR_MESSAGE);
         }
-        calculateAndDisplayPureRegions(thresholdSlider.getValue());
+        pureRegionManager.calculateAndDisplayPureRegions(thresholdSlider.getValue());
     }
 
     public void cloneSelectedRow() {
@@ -1518,4 +1312,28 @@ public class CsvViewer extends JFrame {
         }
         return selectedIndices;
     }
+
+    public JTable getTable() {
+        return table;
+    }
+
+    public CsvDataHandler getDataHandler() {
+        return dataHandler;
+    }
+
+    public void updateToggleEasyCasesButton(boolean show) {
+        if (show) {
+            toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/easy.png", 40, 40));
+            toggleEasyCasesButton.setToolTipText("Show Easy Cases");
+        } else {
+            toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/uneasy.png", 40, 40));
+            toggleEasyCasesButton.setToolTipText("Show All Cases");
+        }
+    }
+
+    public void applyRowFilter() {
+        if (pureRegionManager != null) {
+            pureRegionManager.applyRowFilter();
+        }
+    }    
 }
