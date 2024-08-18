@@ -16,14 +16,14 @@ public class MainMenu extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Banner graphic with padding
+        // Banner graphic without padding, resized to 150px tall
         JLabel bannerLabel = new JLabel(new ImageIcon("resources/graphics/banner.png"));
-        bannerLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+        bannerLabel.setPreferredSize(new Dimension(getWidth(), 150));
         add(bannerLabel, BorderLayout.NORTH);
 
         // Create styled buttons
         JButton startAppButton = createStyledButton("Start Application");
-        JButton githubButton = createStyledButton("GitHub");
+        JButton githubButton = createStyledButton("Visit Project GitHub");
         JButton aboutButton = createStyledButton("About the Project");
         JButton openDatasetsButton = createStyledButton("Open Datasets Folder");
         JButton openScreenshotsButton = createStyledButton("Open Screenshots Folder");
@@ -41,10 +41,10 @@ public class MainMenu extends JFrame {
         buttonPanel.add(exitButton);
         add(buttonPanel, BorderLayout.CENTER);
 
-        // Footer with styled text
+        // Footer with darker text color
         JLabel footerLabel = new JLabel("JTabViz by the CWU-VKD-LAB available for free under the MIT license, 2024.", JLabel.CENTER);
         footerLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        footerLabel.setForeground(Color.LIGHT_GRAY);
+        footerLabel.setForeground(new Color(30, 30, 30)); // Very dark gray color
         footerLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(footerLabel, BorderLayout.SOUTH);
 
@@ -128,15 +128,5 @@ public class MainMenu extends JFrame {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Failed to open folder: " + folderName, "Error", JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                MainMenu mainMenu = new MainMenu();
-                mainMenu.setVisible(true);
-            }
-        });
     }
 }
