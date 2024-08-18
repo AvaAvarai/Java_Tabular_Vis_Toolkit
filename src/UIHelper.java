@@ -1,9 +1,11 @@
 package src;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class UIHelper {
 
@@ -15,18 +17,16 @@ public class UIHelper {
     }
 
     public static ImageIcon loadIcon(String path, int width, int height) {
-        File iconFile = new File(path);
-        if (!iconFile.exists()) {
-            iconFile = new File("icons/missing.png");
-        }
-
-        if (iconFile.exists()) {
-            ImageIcon icon = new ImageIcon(iconFile.getAbsolutePath());
-            Image image = icon.getImage();
-            Image newimg = image.getScaledInstance(width, height, java.awt.Image.SCALE_SMOOTH);
-            return new ImageIcon(newimg);
-        } else {
-            System.err.println("Couldn't find file: " + path);
+        try (InputStream stream = UIHelper.class.getResourceAsStream(path)) {
+            if (stream != null) {
+                Image image = ImageIO.read(stream).getScaledInstance(width, height, Image.SCALE_SMOOTH);
+                return new ImageIcon(image);
+            } else {
+                System.err.println("Couldn't find file: " + path);
+                return null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
             return null;
         }
     }

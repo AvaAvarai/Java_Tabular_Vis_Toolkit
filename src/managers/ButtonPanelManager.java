@@ -45,11 +45,11 @@ public class ButtonPanelManager {
     }
 
     private JButton createLoadButton() {
-        return UIHelper.createButton("resources/icons/load.png", "Load CSV", e -> csvViewer.loadCsvFile());
+        return UIHelper.createButton("/icons/load.png", "Load CSV", e -> csvViewer.loadCsvFile());
     }
 
     private JButton createToggleButton() {
-        csvViewer.toggleButton = UIHelper.createButton("resources/icons/normalize.png", "Normalize", e -> {
+        csvViewer.toggleButton = UIHelper.createButton("/icons/normalize.png", "Normalize", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -60,7 +60,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createHighlightBlanksButton() {
-        return UIHelper.createButton("resources/icons/highlight.png", "Highlight Blanks", e -> {
+        return UIHelper.createButton("/icons/highlight.png", "Highlight Blanks", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -70,7 +70,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createHeatmapButton() {
-        return UIHelper.createButton("resources/icons/heatmap.png", "Show Heatmap", e -> {
+        return UIHelper.createButton("/icons/heatmap.png", "Show Heatmap", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -80,7 +80,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createCovarianceMatrixButton() {
-        return UIHelper.createButton("resources/icons/variance.png", "Show Covariance Matrix", e -> {
+        return UIHelper.createButton("/icons/variance.png", "Show Covariance Matrix", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -90,7 +90,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createFontSettingsButton() {
-        return UIHelper.createButton("resources/icons/fontcolor.png", "Font Color", e -> {
+        return UIHelper.createButton("/icons/fontcolor.png", "Font Color", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -100,7 +100,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createInsertRowButton() {
-        return UIHelper.createButton("resources/icons/insert.png", "Insert Row", e -> {
+        return UIHelper.createButton("/icons/insert.png", "Insert Row", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -110,7 +110,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createDeleteRowButton() {
-        return UIHelper.createButton("resources/icons/delete.png", "Delete Row", e -> {
+        return UIHelper.createButton("/icons/delete.png", "Delete Row", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -120,7 +120,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createCloneRowButton() {
-        return UIHelper.createButton("resources/icons/clone.png", "Clone Row", e -> {
+        return UIHelper.createButton("/icons/clone.png", "Clone Row", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -130,7 +130,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createExportButton() {
-        return UIHelper.createButton("resources/icons/export.png", "Export CSV", e -> {
+        return UIHelper.createButton("/icons/export.png", "Export CSV", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -140,7 +140,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createParallelPlotButton() {
-        return UIHelper.createButton("resources/icons/parallel.png", "Parallel Coordinates Plot", e -> {
+        return UIHelper.createButton("/icons/parallel.png", "Parallel Coordinates Plot", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -150,7 +150,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createShiftedPairedButton() {
-        return UIHelper.createButton("resources/icons/shiftedpaired.png", "Shifted Paired Coordinates Plot", e -> {
+        return UIHelper.createButton("/icons/shiftedpaired.png", "Shifted Paired Coordinates Plot", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -160,7 +160,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createStaticCircularCoordinatesButton() {
-        return UIHelper.createButton("resources/icons/staticcircular.png", "Static Circular Coordinates Plot", e -> {
+        return UIHelper.createButton("/icons/staticcircular.png", "Static Circular Coordinates Plot", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -170,7 +170,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createStarCoordinatesButton() {
-        return UIHelper.createButton("resources/icons/star.png", "Star Coordinates Plot", e -> {
+        return UIHelper.createButton("/icons/star.png", "Star Coordinates Plot", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -180,7 +180,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createCovarianceSortButton() {
-        return UIHelper.createButton("resources/icons/sort.png", "Sort Columns by Covariance", e -> {
+        return UIHelper.createButton("/icons/sort.png", "Sort Columns by Covariance", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -190,7 +190,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createClassColorButton() {
-        return UIHelper.createButton("resources/icons/classcolor.png", "Toggle Class Colors", e -> {
+        return UIHelper.createButton("/icons/classcolor.png", "Toggle Class Colors", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -200,7 +200,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createSetClassColorsButton() {
-        return UIHelper.createButton("resources/icons/setcolor.png", "Set Class Colors", e -> {
+        return UIHelper.createButton("/icons/setcolor.png", "Set Class Colors", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -210,7 +210,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createRuleTesterButton() {
-        return UIHelper.createButton("resources/icons/rule_tester.png", "Rule Tester", e -> {
+        return UIHelper.createButton("/icons/rule_tester.png", "Rule Tester", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -220,17 +220,17 @@ public class ButtonPanelManager {
     }
 
     private JButton createToggleTrigonometricButton() {
-        csvViewer.toggleTrigonometricButton = UIHelper.createButton("resources/icons/trigon.png", "Insert Trig Columns", null);
+        csvViewer.toggleTrigonometricButton = UIHelper.createButton("/icons/trigon.png", "Insert Trig Columns", null);
         csvViewer.toggleTrigonometricButton.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.toggleTrigonometricColumns();
                 if (csvViewer.areDifferenceColumnsVisible()) {
-                    csvViewer.toggleTrigonometricButton.setIcon(UIHelper.loadIcon("resources/icons/trigoff.png", 40, 40));
+                    csvViewer.toggleTrigonometricButton.setIcon(UIHelper.loadIcon("/icons/trigoff.png", 40, 40));
                     csvViewer.toggleTrigonometricButton.setToolTipText("Remove Trig Columns");
                 } else {
-                    csvViewer.toggleTrigonometricButton.setIcon(UIHelper.loadIcon("resources/icons/trigon.png", 40, 40));
+                    csvViewer.toggleTrigonometricButton.setIcon(UIHelper.loadIcon("/icons/trigon.png", 40, 40));
                     csvViewer.toggleTrigonometricButton.setToolTipText("Insert Trig Columns");
                 }
             }
@@ -239,17 +239,17 @@ public class ButtonPanelManager {
     }
 
     private JButton createToggleEasyCasesButton() {
-        csvViewer.toggleEasyCasesButton = UIHelper.createButton("resources/icons/easy.png", "Show Easy Cases", null);
+        csvViewer.toggleEasyCasesButton = UIHelper.createButton("/icons/easy.png", "Show Easy Cases", null);
         csvViewer.toggleEasyCasesButton.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.toggleEasyCases();
                 if (csvViewer.hasHiddenRows()) {
-                    csvViewer.toggleEasyCasesButton.setIcon(UIHelper.loadIcon("resources/icons/uneasy.png", 40, 40));
+                    csvViewer.toggleEasyCasesButton.setIcon(UIHelper.loadIcon("/icons/uneasy.png", 40, 40));
                     csvViewer.toggleEasyCasesButton.setToolTipText("Show All Cases");
                 } else {
-                    csvViewer.toggleEasyCasesButton.setIcon(UIHelper.loadIcon("resources/icons/easy.png", 40, 40));
+                    csvViewer.toggleEasyCasesButton.setIcon(UIHelper.loadIcon("/icons/easy.png", 40, 40));
                     csvViewer.toggleEasyCasesButton.setToolTipText("Show Non-Easy Cases");
                 }
             }
@@ -258,7 +258,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createRuleOverlayButton() {
-        return UIHelper.createButton("resources/icons/ruleplot.png", "Rule Overlay Plot", e -> {
+        return UIHelper.createButton("/icons/ruleplot.png", "Rule Overlay Plot", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -268,7 +268,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createLinearCombinationButton() {
-        return UIHelper.createButton("resources/icons/combo.png", "Insert Linear Combination Column", e -> {
+        return UIHelper.createButton("/icons/combo.png", "Insert Linear Combination Column", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {

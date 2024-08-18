@@ -16,8 +16,8 @@ public class MainMenu extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Banner graphic without padding, resized to 150px tall
-        JLabel bannerLabel = new JLabel(new ImageIcon("resources/graphics/banner.png"));
+        ImageIcon bannerIcon = new ImageIcon(getClass().getResource("/graphics/banner.png"));
+        JLabel bannerLabel = new JLabel(bannerIcon);
         bannerLabel.setPreferredSize(new Dimension(getWidth(), 150));
         add(bannerLabel, BorderLayout.NORTH);
 
