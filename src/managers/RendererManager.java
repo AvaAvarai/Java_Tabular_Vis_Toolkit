@@ -46,7 +46,7 @@ public class RendererManager {
                     }
                 } else {
                     if (c instanceof JComponent) {
-                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder()));
+                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
                     }
                 }
                 
@@ -123,7 +123,7 @@ public class RendererManager {
                     }
                 } else {
                     if (c instanceof JComponent) {
-                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder()));
+                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
                     }
                 }
     
