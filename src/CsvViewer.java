@@ -9,7 +9,6 @@ import java.util.HashMap;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
-import javax.swing.RowFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
@@ -79,7 +78,8 @@ public class CsvViewer extends JFrame {
         setSize(1000, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-
+        
+        hiddenRows = new ArrayList<>();
         dataHandler = new CsvDataHandler();
         tableModel = new ReorderableTableModel();
         table = TableSetup.createTable(tableModel);
