@@ -76,7 +76,7 @@ public class MainMenu extends JFrame {
     private void openCsvViewer() {
         // Close the main menu and open the CSV Viewer
         dispose();
-        CsvViewer csvViewer = new CsvViewer();
+        CsvViewer csvViewer = new CsvViewer(this);
         csvViewer.setVisible(true);
     }
 

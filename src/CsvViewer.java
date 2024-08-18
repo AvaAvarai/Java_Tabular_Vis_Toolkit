@@ -2,6 +2,8 @@ package src;
 
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
@@ -45,14 +47,16 @@ public class CsvViewer extends JFrame {
     private DataExporter dataExporter;
     private StateManager stateManager;
     private ButtonPanelManager buttonPanelManager;
-    private TableManager tableManager;  // New TableManager instance
+    private TableManager tableManager;
+    private MainMenu mainMenu;
 
-    public CsvViewer() {
+    public CsvViewer(MainMenu mainMenu) {
+        this.mainMenu = mainMenu;
         stateManager = new StateManager();
 
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
         setSize(1000, 600);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
         dataHandler = new CsvDataHandler();
@@ -90,6 +94,14 @@ public class CsvViewer extends JFrame {
             int thresholdValue = thresholdSlider.getValue();
             thresholdLabel.setText(thresholdValue + "%");
             pureRegionManager.calculateAndDisplayPureRegions(thresholdValue);
+        });
+
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                dispose();
+                mainMenu.setVisible(true); // Show the main menu again
+            }
         });
 
         bottomPanel = CsvViewerUIHelper.createBottomPanel(selectedRowsLabel, thresholdSlider, thresholdLabel);
