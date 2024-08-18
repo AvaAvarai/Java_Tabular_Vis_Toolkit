@@ -339,7 +339,7 @@ public class CsvViewer extends JFrame {
             generateClassShapes();
             updateSelectedRowsLabel();
 
-            toggleButton.setIcon(UIHelper.loadIcon("icons/normalize.png", 40, 40));
+            toggleButton.setIcon(UIHelper.loadIcon("resources/icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
 
             statsTextArea.setCaretPosition(0);
@@ -448,7 +448,7 @@ public class CsvViewer extends JFrame {
     }
 
     public void deleteColumn(int viewColumnIndex) {
-        tableManager.deleteColumn(viewColumnIndex);  // Delegate to TableManager
+        tableManager.deleteColumn(viewColumnIndex);
     }
 
     public void toggleDataView() {
@@ -457,13 +457,13 @@ public class CsvViewer extends JFrame {
         if (stateManager.isNormalized()) {
             tableManager.updateTableData(dataHandler.getOriginalData());
             stateManager.setNormalized(false);
-            toggleButton.setIcon(UIHelper.loadIcon("icons/normalize.png", 40, 40));
+            toggleButton.setIcon(UIHelper.loadIcon("resources/icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
         } else {
             dataHandler.normalizeOrDenormalizeData(table, statsTextArea);
             tableManager.updateTableData(dataHandler.getNormalizedData());
             stateManager.setNormalized(true);
-            toggleButton.setIcon(UIHelper.loadIcon("icons/denormalize.png", 40, 40));
+            toggleButton.setIcon(UIHelper.loadIcon("resources/icons/denormalize.png", 40, 40));
             toggleButton.setToolTipText("Default");
         }
 
@@ -854,10 +854,10 @@ public class CsvViewer extends JFrame {
 
     public void updateToggleEasyCasesButton(boolean show) {
         if (show) {
-            toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/easy.png", 40, 40));
+            toggleEasyCasesButton.setIcon(UIHelper.loadIcon("resources/icons/easy.png", 40, 40));
             toggleEasyCasesButton.setToolTipText("Show Easy Cases");
         } else {
-            toggleEasyCasesButton.setIcon(UIHelper.loadIcon("icons/uneasy.png", 40, 40));
+            toggleEasyCasesButton.setIcon(UIHelper.loadIcon("resources/icons/uneasy.png", 40, 40));
             toggleEasyCasesButton.setToolTipText("Show All Cases");
         }
     }
