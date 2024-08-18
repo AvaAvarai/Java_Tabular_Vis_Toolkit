@@ -9,6 +9,9 @@ javac -d out -cp "libs/*" $(find src -name "*.java")
 # Copy resources to the output directory, excluding unnecessary files
 rsync -av --exclude='.DS_Store' resources/ out/
 
+# Copy the README.md file to the output directory
+cp README.md out/
+
 # Unzip the external libraries into the out directory
 for jar in libs/*.jar; do
     unzip -o -q "$jar" -d out

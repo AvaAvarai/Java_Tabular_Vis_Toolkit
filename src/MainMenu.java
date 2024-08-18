@@ -1,13 +1,15 @@
 package src;
 
 import javax.swing.*;
-import javax.swing.plaf.metal.MetalButtonUI;
 import java.awt.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import javax.swing.plaf.metal.MetalButtonUI;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
 import java.net.URI;
 
 public class MainMenu extends JFrame {
@@ -161,8 +163,29 @@ public class MainMenu extends JFrame {
     }
 
     private void showAboutDialog() {
-        JOptionPane.showMessageDialog(this, "JTabViz: A Java-based toolkit for visualizing and analyzing tabular machine learning data.", 
-            "About the Project", JOptionPane.INFORMATION_MESSAGE);
+        try {
+            // Get the README.md file from the JAR
+            InputStream inputStream = getClass().getResourceAsStream("/README.md");
+    
+            // Create a temporary file to write the content to
+            File tempFile = File.createTempFile("README", ".md");
+            tempFile.deleteOnExit();
+    
+            // Write the input stream to the temporary file
+            try (FileOutputStream outputStream = new FileOutputStream(tempFile)) {
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+            }
+    
+            // Open the temporary file with the default associated application
+            Desktop.getDesktop().open(tempFile);
+    
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Failed to open README.md.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void openFolder(String folderName) {
