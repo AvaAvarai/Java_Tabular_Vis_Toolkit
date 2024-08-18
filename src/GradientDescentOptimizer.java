@@ -7,6 +7,11 @@ import java.util.HashMap;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+/**
+ * The GradientDescentOptimizer class provides functionality to optimize the coefficients
+ * for a linear combination of features using the gradient descent algorithm. This optimization
+ * aims to maximize the separability between classes in a dataset.
+ */
 public class GradientDescentOptimizer {
 
     private final CsvViewer csvViewer;
@@ -14,6 +19,14 @@ public class GradientDescentOptimizer {
     private final int maxIterations;
     private final double tolerance;
 
+    /**
+     * Constructs a GradientDescentOptimizer with the specified parameters.
+     *
+     * @param csvViewer the CsvViewer instance that manages the data and UI.
+     * @param learningRate the learning rate for the gradient descent algorithm.
+     * @param maxIterations the maximum number of iterations for the optimization process.
+     * @param tolerance the tolerance for convergence in the optimization process.
+     */
     public GradientDescentOptimizer(CsvViewer csvViewer, double learningRate, int maxIterations, double tolerance) {
         this.csvViewer = csvViewer;
         this.learningRate = learningRate;
@@ -21,6 +34,15 @@ public class GradientDescentOptimizer {
         this.tolerance = tolerance;
     }
 
+    /**
+     * Optimizes the coefficients for the linear combination using gradient descent.
+     * The optimized coefficients are then updated in the provided JPanel.
+     *
+     * @param originalColumnIndices the list of indices corresponding to the original columns in the dataset.
+     * @param coefficients the list of coefficients to be optimized.
+     * @param panel the JPanel containing the UI components for coefficient inputs.
+     * @param trigFunction the trigonometric function to apply to the linear combination.
+     */
     public void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel, String trigFunction) {
         initializeCoefficients(coefficients);
 
@@ -54,6 +76,11 @@ public class GradientDescentOptimizer {
         updatePanelFields(coefficients, panel);
     }
 
+    /**
+     * Initializes the coefficients to a default value of 1.0 if they are not already set.
+     *
+     * @param coefficients the list of coefficients to initialize.
+     */
     private void initializeCoefficients(List<Double> coefficients) {
         for (int i = 0; i < coefficients.size(); i++) {
             if (coefficients.get(i) == null) {
@@ -62,6 +89,15 @@ public class GradientDescentOptimizer {
         }
     }
 
+    /**
+     * Evaluates the class separability using the specified coefficients and trigonometric function.
+     * The separability is measured as the ratio of between-class variance to within-class variance.
+     *
+     * @param originalColumnIndices the list of indices corresponding to the original columns in the dataset.
+     * @param coefficients the array of coefficients for the linear combination.
+     * @param trigFunction the trigonometric function to apply to the linear combination.
+     * @return the class separability score.
+     */
     private double evaluateClassSeparation(List<Integer> originalColumnIndices, double[] coefficients, String trigFunction) {
         Map<String, List<Double>> classSums = new HashMap<>();
         int classColumnIndex = csvViewer.getClassColumnIndex();
@@ -106,6 +142,13 @@ public class GradientDescentOptimizer {
         return betweenClassVariance / withinClassVariance;
     }
 
+    /**
+     * Applies the specified trigonometric function to a given value.
+     *
+     * @param value the value to which the trigonometric function is applied.
+     * @param trigFunction the trigonometric function to apply.
+     * @return the result of applying the trigonometric function to the value.
+     */
     private double applyTrigFunction(double value, String trigFunction) {
         switch (trigFunction) {
             case "cos":
@@ -126,6 +169,12 @@ public class GradientDescentOptimizer {
         }
     }
 
+    /**
+     * Updates the text fields in the provided JPanel with the optimized coefficients.
+     *
+     * @param coefficients the list of optimized coefficients.
+     * @param panel the JPanel containing the text fields to update.
+     */
     private void updatePanelFields(List<Double> coefficients, JPanel panel) {
         for (int i = 0; i < coefficients.size(); i++) {
             JTextField coefficientField = (JTextField) panel.getComponent(2 * i + 1);
