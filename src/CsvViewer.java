@@ -45,6 +45,7 @@ public class CsvViewer extends JFrame {
     private DataExporter dataExporter;
     private StateManager stateManager;
     private ButtonPanelManager buttonPanelManager;
+    private TableManager tableManager;  // New TableManager instance
 
     public CsvViewer() {
         stateManager = new StateManager();
@@ -59,6 +60,7 @@ public class CsvViewer extends JFrame {
         table = TableSetup.createTable(tableModel);
 
         rendererManager = new RendererManager(this);
+        tableManager = new TableManager(this, tableModel);  // Initialize TableManager
 
         CsvViewerUIHelper.setupTable(table, tableModel, this);
 
@@ -123,7 +125,7 @@ public class CsvViewer extends JFrame {
         trigColumnManager.toggleTrigonometricColumns(
             stateManager.isNormalized(),
             () -> dataHandler.normalizeOrDenormalizeData(table, statsTextArea),
-            () -> updateTableData(dataHandler.getNormalizedData())
+            () -> tableManager.updateTableData(dataHandler.getNormalizedData())
         );
     }
 
@@ -434,47 +436,20 @@ public class CsvViewer extends JFrame {
     }
 
     public void deleteColumn(int viewColumnIndex) {
-        int modelColumnIndex = table.convertColumnIndexToModel(viewColumnIndex);
-        int classColumnIndex = getClassColumnIndex();
-
-        if (modelColumnIndex == classColumnIndex) {
-            JOptionPane.showMessageDialog(this, "Cannot delete the class column.", "Deletion Not Allowed", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        if (stateManager.getOriginalColumnNames() != null && modelColumnIndex < stateManager.getOriginalColumnNames().size()) {
-            stateManager.getOriginalColumnNames().remove(modelColumnIndex);
-        }
-
-        TableColumnModel columnModel = table.getColumnModel();
-        columnModel.removeColumn(columnModel.getColumn(viewColumnIndex));
-
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            for (int col = modelColumnIndex; col < tableModel.getColumnCount() - 1; col++) {
-                tableModel.setValueAt(tableModel.getValueAt(row, col + 1), row, col);
-            }
-        }
-
-        tableModel.setColumnCount(tableModel.getColumnCount() - 1);
-
-        tableModel.setColumnIdentifiers(stateManager.getOriginalColumnNames().toArray());
-
-        dataHandler.updateStats(tableModel, statsTextArea);
-        updateSelectedRowsLabel();
-        pureRegionManager.calculateAndDisplayPureRegions(thresholdSlider.getValue());
+        tableManager.deleteColumn(viewColumnIndex);  // Delegate to TableManager
     }
 
     public void toggleDataView() {
         int currentCaretPosition = statsTextArea.getCaretPosition();
 
         if (stateManager.isNormalized()) {
-            updateTableData(dataHandler.getOriginalData());
+            tableManager.updateTableData(dataHandler.getOriginalData());
             stateManager.setNormalized(false);
             toggleButton.setIcon(UIHelper.loadIcon("icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
         } else {
             dataHandler.normalizeOrDenormalizeData(table, statsTextArea);
-            updateTableData(dataHandler.getNormalizedData());
+            tableManager.updateTableData(dataHandler.getNormalizedData());
             stateManager.setNormalized(true);
             toggleButton.setIcon(UIHelper.loadIcon("icons/denormalize.png", 40, 40));
             toggleButton.setToolTipText("Default");
@@ -485,47 +460,11 @@ public class CsvViewer extends JFrame {
     }
 
     public void updateTableData(java.util.List<String[]> data) {
-        int currentCaretPosition = statsTextArea.getCaretPosition();
-
-        tableModel.setRowCount(0);
-        for (String[] row : data) {
-            tableModel.addRow(row);
-        }
-
-        java.util.List<String> originalColumnNames = new ArrayList<>();
-        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            originalColumnNames.add(tableModel.getColumnName(i));
-        }
-        stateManager.setOriginalColumnNames(originalColumnNames);
-
-        if (stateManager.isHeatmapEnabled() || stateManager.isClassColorEnabled()) {
-            rendererManager.applyCombinedRenderer();
-        } else {
-            rendererManager.applyDefaultRenderer();
-        }
-        dataHandler.updateStats(tableModel, statsTextArea);
-        updateSelectedRowsLabel();
-
-        currentCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length());
-        pureRegionManager.calculateAndDisplayPureRegions(thresholdSlider.getValue());
-        statsTextArea.setCaretPosition(currentCaretPosition);
+        tableManager.updateTableData(data);  // Delegate to TableManager
     }
 
     public void highlightBlanks() {
-        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (value == null || value.toString().trim().isEmpty()) {
-                    c.setBackground(Color.YELLOW);
-                } else {
-                    c.setBackground(Color.WHITE);
-                }
-                c.setForeground(stateManager.getCellTextColor());
-                return c;
-            }
-        });
-        table.repaint();
+        tableManager.highlightBlanks();  // Delegate to TableManager
     }
 
     public void toggleHeatmap() {
@@ -939,5 +878,25 @@ public class CsvViewer extends JFrame {
 
     public boolean isClassColorEnabled() {
         return stateManager.isClassColorEnabled();
+    }
+
+    public StateManager getStateManager() {
+        return stateManager;
+    }
+
+    public RendererManager getRendererManager() {
+        return rendererManager;
+    }
+
+    public PureRegionManager getPureRegionManager() {
+        return pureRegionManager;
+    }
+
+    public JTextArea getStatsTextArea() {
+        return statsTextArea;
+    }
+
+    public JSlider getThresholdSlider() {
+        return thresholdSlider;
     }
 }
