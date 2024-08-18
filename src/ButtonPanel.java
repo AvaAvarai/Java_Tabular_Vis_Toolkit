@@ -123,7 +123,7 @@ public class ButtonPanel {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.toggleTrigonometricColumns();
-                if (csvViewer.areDifferenceColumnsVisible) {
+                if (csvViewer.areDifferenceColumnsVisible()) {
                     csvViewer.toggleTrigonometricButton.setIcon(UIHelper.loadIcon("icons/trigoff.png", 40, 40));
                     csvViewer.toggleTrigonometricButton.setToolTipText("Remove Trig Columns");
                 } else {

@@ -34,7 +34,7 @@ public class RendererManager {
                     }
                 }
                 
-                c.setForeground(csvViewer.cellTextColor);
+                c.setForeground(csvViewer.getCellTextColor());
                 return c;
             }
         });
@@ -74,14 +74,14 @@ public class RendererManager {
                 int modelColumn = table.convertColumnIndexToModel(column);
     
                 if (modelColumn >= 0 && modelColumn < numColumns) {
-                    if (csvViewer.isClassColorEnabled && modelColumn == classColumnIndex) {
+                    if (csvViewer.isClassColorEnabled() && modelColumn == classColumnIndex) {
                         String className = (String) value;
-                        if (csvViewer.classColors.containsKey(className)) {
-                            c.setBackground(csvViewer.classColors.get(className));
+                        if (csvViewer.getClassColors().containsKey(className)) {
+                            c.setBackground(csvViewer.getClassColors().get(className));
                         } else {
                             c.setBackground(Color.decode("#C0C0C0"));
                         }
-                    } else if (csvViewer.isHeatmapEnabled && value != null && !value.toString().trim().isEmpty() && isNumerical[modelColumn]) {
+                    } else if (csvViewer.isHeatmapEnabled() && value != null && !value.toString().trim().isEmpty() && isNumerical[modelColumn]) {
                         try {
                             double val = Double.parseDouble(value.toString());
                             double normalizedValue = (val - minValues[modelColumn]) / (maxValues[modelColumn] - minValues[modelColumn]);
@@ -107,7 +107,7 @@ public class RendererManager {
                     }
                 }
     
-                c.setForeground(csvViewer.cellTextColor);
+                c.setForeground(csvViewer.getCellTextColor());
                 return c;
             }
     
