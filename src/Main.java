@@ -5,8 +5,8 @@ import javax.swing.SwingUtilities;
 public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            CsvViewer viewer = new CsvViewer();
-            viewer.setVisible(true);
+            MainMenu mainMenu = new MainMenu();
+            mainMenu.setVisible(true);
         });
     }
 }
