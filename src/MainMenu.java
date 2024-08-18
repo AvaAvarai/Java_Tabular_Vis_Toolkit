@@ -22,7 +22,7 @@ public class MainMenu extends JFrame {
 
         // Create buttons
         JButton startAppButton = new JButton("Start Application");
-        JButton githubButton = new JButton("GitHub");
+        JButton githubButton = new JButton("Project GitHub");
         JButton aboutButton = new JButton("About the Project");
         JButton openDatasetsButton = new JButton("Open Datasets Folder");
         JButton openScreenshotsButton = new JButton("Open Screenshots Folder");
@@ -37,6 +37,12 @@ public class MainMenu extends JFrame {
         buttonPanel.add(openScreenshotsButton);
         buttonPanel.add(exitButton);  // Added exit button
         add(buttonPanel, BorderLayout.CENTER);
+
+        // Footer
+        JLabel footerLabel = new JLabel("JTabViz by the CWU-VKD-LAB available for free under the MIT license, 2024.", JLabel.CENTER);
+        footerLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        footerLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));  // Adds some padding around the footer text
+        add(footerLabel, BorderLayout.SOUTH);
 
         // Action listeners
         startAppButton.addActionListener(new ActionListener() {
