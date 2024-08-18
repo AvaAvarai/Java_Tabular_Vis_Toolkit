@@ -1,6 +1,7 @@
 package src;
 
 import javax.swing.*;
+import javax.swing.plaf.metal.MetalButtonUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,7 +12,7 @@ public class MainMenu extends JFrame {
 
     public MainMenu() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit - Main Menu");
-        setSize(600, 400);
+        setSize(600, 450);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -29,10 +30,10 @@ public class MainMenu extends JFrame {
         JButton openScreenshotsButton = createStyledButton("Open Screenshots Folder");
         JButton exitButton = createStyledButton("Exit");
 
-        // Button panel with background color
+        // Button panel with darker background color
         JPanel buttonPanel = new JPanel(new GridLayout(6, 1, 10, 10));
-        buttonPanel.setBackground(Color.DARK_GRAY);
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // Padding around the buttons
+        buttonPanel.setBackground(Color.DARK_GRAY); // Darker background color for the button panel
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         buttonPanel.add(startAppButton);
         buttonPanel.add(githubButton);
         buttonPanel.add(aboutButton);
@@ -42,9 +43,9 @@ public class MainMenu extends JFrame {
         add(buttonPanel, BorderLayout.CENTER);
 
         // Footer with darker text color
-        JLabel footerLabel = new JLabel("JTabViz by the CWU-VKD-LAB available for free under the MIT license, 2024.", JLabel.CENTER);
-        footerLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        footerLabel.setForeground(new Color(30, 30, 30)); // Very dark gray color
+        JLabel footerLabel = new JLabel("JTabViz is developed by the CWU-VKD-LAB and is available for free under the MIT license as of August 2024.", JLabel.CENTER);
+        footerLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+        footerLabel.setForeground(new Color(30, 30, 30));
         footerLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(footerLabel, BorderLayout.SOUTH);
 
@@ -93,12 +94,39 @@ public class MainMenu extends JFrame {
     }
 
     private JButton createStyledButton(String text) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.BOLD, 14));
-        button.setForeground(Color.WHITE);
-        button.setBackground(new Color(45, 45, 45));
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                // Custom painting for rounded corners
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 30, 30); // Rounded corners
+                super.paintComponent(g);
+            }
+
+            @Override
+            public void setContentAreaFilled(boolean b) {
+                // Do not fill content area for custom painting
+            }
+        };
+
+        button.setFont(new Font("Arial", Font.BOLD, 16));
+        button.setForeground(Color.BLACK);
+        button.setBackground(new Color(200, 200, 200));
         button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createLineBorder(Color.GRAY, 2));
+        button.setOpaque(false);
+        button.setUI(new MetalButtonUI() {
+            protected Color getDisabledTextColor() {
+                return Color.BLACK;
+            }
+
+            protected void paintButtonPressed(Graphics g, AbstractButton b) {
+                g.setColor(b.getBackground().darker());
+                g.fillRoundRect(0, 0, b.getWidth(), b.getHeight(), 30, 30); // Rounded corners on press
+            }
+        });
+
         return button;
     }
 
