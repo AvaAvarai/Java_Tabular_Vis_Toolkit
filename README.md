@@ -4,6 +4,8 @@
 
 **Tested on:**  Windows (10/11), Linux (Pop!_OS), and macOS (Sonoma).
 
+To get started quickly, please see the [Getting Started](#getting-started) section, method 3.
+
 ## Analyzing Fisher Iris Benchmark Dataset
 
 Below are screenshots showcasing the exploration of the Fisher Iris dataset, which serves as a benchmark.
@@ -152,7 +154,7 @@ This transformation can provide deeper insights and improve classification.
 
 ## Getting Started
 
-There are multiple ways to run JTabViz, we suggest skipping to method 3 and utilizing the multiplatform scripts (does require a Java compiler).
+There are multiple ways to run JTabViz, but we suggest using method 3 for simplicity and cross-platform compatibility (requires a Java compiler).
 
 1. **Using the Pre-Compiled JAR File:**
    - Download the `JTabViz.jar` file and the `libs` folder.
@@ -187,32 +189,38 @@ There are multiple ways to run JTabViz, we suggest skipping to method 3 and util
 
 3. **Using the Provided Scripts:**
    - Run the appropriate script for your operating system to compile and execute the application in one step:
-     - **macOS/Linux:** `compile_and_run_jtabviz.sh`
-     - **Windows:** `compile_and_run_jtabviz.bat`
+     - **macOS/Linux:** `compile_and_run_mac_linux.sh`
+     - **Windows:** `compile_and_run_windows.bat`
 
-## Data Format
+   to compile, package, and execute the new jar in one step:
+     - **macOS/Linux:** `compile_and_package_mac_linux.sh`
+     - **Windows:** to be added shortly.
 
-JTabViz accepts data in CSV (Comma-Separated Values) format. Here are the key points about the expected data format:
+## Dataset File Format
 
-1. File Extension: The data file should have a .csv extension.
+JTabViz accepts datasets in CSV (Comma-Separated Values) file format. Here are the key points about the expected data format:
+
+1. File Extension: The data file should have a *.csv* extension.
 
 2. Data Types:
    - Numerical data is preferred for optimal visualization and analysis.
-   - Non-numerical data and blank fields are also accepted.
+   - Non-numerical (categorical) data and blank fields are also accepted.
 
 3. Class Column:
    - A column representing the class or category of each data point is expected.
    - This column can appear in any position.
-   - Should be titled 'class' (case-insensitive, so 'Class' or 'CLASS' are also acceptable).
+   - Should be titled *'class'* (case-insensitive, so 'Class' or 'CLASS' are also acceptable).
    - The class column is used for color-coding and shape assignment in various visualizations.
 
 4. Header Row:
-   - The first row of the CSV file should contain column names.
+   - The first row of the CSV file should contain column (attribute) names.
 
 5. Delimiter:
    - Values should be separated by commas.
 
-Example CSV structure:
+### Example Dataset
+
+dataset structure:
 
 | x1    | x2    | x3    | x4    | x5    | class |
 |-------|-------|-------|-------|-------|-------|
@@ -222,13 +230,22 @@ Example CSV structure:
 | 9.99  | 8.88  | 7.77  | 6.66  | 5.55  | C     |
 | 1.23  | 4.56  | 7.89  | 2.34  | 5.67  | B     |
 
+example.csv:
+
+x1, x2, x3, x4, x5, class,  
+3.14, 2.71, 1.41, 0.58, 1.73, A,  
+2.22, 4.44, 3.33, 1.11, 5.55, B,  
+0.87, 1.23, 3.45, 5.67, 7.89, A,  
+9.99, 8.88, 7.77, 6.66, 5.55, C,  
+1.23, 4.56, 7.89, 2.34, 5.67, B
+
 ## Acknowledgements
 
 The user interface icons are sourced from [Font Awesome](https://fontawesome.com/search), converted using the [fa2png tool](https://fa2png.app/).
 
 The charts in the application are rendered using [JFreeChart](https://www.jfree.org/jfreechart/), a Java library for chart creation.
 
-## License
+## License Information
 
 JTabViz is licensed under the MIT License, allowing free use for both personal and commercial purposes. For full terms, see the `LICENSE` file.
 
