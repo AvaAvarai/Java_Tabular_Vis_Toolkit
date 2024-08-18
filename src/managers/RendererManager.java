@@ -9,6 +9,10 @@ import src.CsvViewer;
 import java.awt.*;
 import java.util.Map;
 
+/**
+ * The RendererManager class manages the rendering of table cells in the CsvViewer application.
+ * It applies specific rendering logic to handle color coding for numerical data and class-based categories.
+ */
 public class RendererManager {
 
     private final CsvViewer csvViewer;
@@ -16,10 +20,19 @@ public class RendererManager {
     private double[] maxValues;
     private boolean[] isNumerical;
 
+    /**
+     * Constructs a RendererManager for the given CsvViewer instance.
+     *
+     * @param csvViewer The CsvViewer instance that this RendererManager will manage renderers for.
+     */
     public RendererManager(CsvViewer csvViewer) {
         this.csvViewer = csvViewer;
     }
 
+    /**
+     * Applies the default renderer to the JTable. This renderer assigns a uniform background color to all cells
+     * and adds a red border to cells that have focus. This is used when no special rendering is required.
+     */
     public void applyDefaultRenderer() {
         csvViewer.table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
@@ -33,7 +46,7 @@ public class RendererManager {
                     }
                 } else {
                     if (c instanceof JComponent) {
-                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
+                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder()));
                     }
                 }
                 
@@ -44,6 +57,10 @@ public class RendererManager {
         csvViewer.table.repaint();
     }
 
+    /**
+     * Applies a renderer that combines heatmap coloring for numerical data and class-based coloring for categorical data.
+     * This method calculates the min and max values for each numerical column and adjusts cell backgrounds based on these values.
+     */
     public void applyCombinedRenderer() {
         int numColumns = csvViewer.tableModel.getColumnCount();
         
@@ -106,7 +123,7 @@ public class RendererManager {
                     }
                 } else {
                     if (c instanceof JComponent) {
-                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
+                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder()));
                     }
                 }
     
@@ -114,6 +131,12 @@ public class RendererManager {
                 return c;
             }
     
+            /**
+             * Generates a color based on the normalized value between 0 and 1.
+             * 
+             * @param value A normalized value between 0 and 1 representing the relative position of a data point within its range.
+             * @return A color gradient from blue (low values) to red (high values).
+             */
             private Color getColorForValue(double value) {
                 int red = (int) (255 * value);
                 int blue = 255 - red;
