@@ -1,9 +1,11 @@
-package src;
+package src.table;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.*;
 import javax.swing.table.JTableHeader;
+
+import src.CsvViewer;
 
 public class TableMouseListener extends MouseAdapter {
     private CsvViewer csvViewer;

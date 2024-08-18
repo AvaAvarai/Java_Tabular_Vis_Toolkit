@@ -13,6 +13,7 @@ import src.plots.StarCoordinatesPlot;
 import src.plots.StaticCircularCoordinatesPlot;
 import src.table.NumericStringComparator;
 import src.table.ReorderableTableModel;
+import src.table.TableMouseListener;
 import src.table.TableSetup;
 import src.utils.CovariancePairUtils;
 import src.utils.PureRegionUtils;
