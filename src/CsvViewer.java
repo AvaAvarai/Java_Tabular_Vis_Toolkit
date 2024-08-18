@@ -64,6 +64,7 @@ public class CsvViewer extends JFrame {
     private TrigonometricColumnManager trigColumnManager;
     private PureRegionManager pureRegionManager;
     private VisualizationManager visualizationManager;
+    private GradientDescentOptimizer gradientDescentOptimizer;
 
     public CsvViewer() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
@@ -88,6 +89,7 @@ public class CsvViewer extends JFrame {
         trigColumnManager = new TrigonometricColumnManager(table);
         pureRegionManager = new PureRegionManager(this, tableModel, statsTextArea, thresholdSlider);
         visualizationManager = new VisualizationManager(this);
+        gradientDescentOptimizer = new GradientDescentOptimizer(this, 0.01, 1000, 1e-6);
 
         selectedRowsLabel = new JLabel("Selected rows: 0");
         thresholdSlider = new JSlider(0, 100, 5);
@@ -179,7 +181,7 @@ public class CsvViewer extends JFrame {
     
         JButton exhaustiveSearchButton = new JButton("Gradient Descent Search");
         exhaustiveSearchButton.addActionListener(e -> {
-            optimizeCoefficientsUsingGradientDescent(originalColumnIndices, coefficients, panel, (String) trigFunctionSelector.getSelectedItem());
+            gradientDescentOptimizer.optimizeCoefficientsUsingGradientDescent(originalColumnIndices, coefficients, panel, (String) trigFunctionSelector.getSelectedItem());
         });
     
         panel.add(exhaustiveSearchButton);
@@ -318,50 +320,6 @@ public class CsvViewer extends JFrame {
         return betweenClassVariance / withinClassVariance;
     }
 
-    private void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel, String trigFunction) {
-        for (int i = 0; i < coefficients.size(); i++) {
-            if (coefficients.get(i) == null) {
-                coefficients.set(i, 1.0);
-            }
-        }
-    
-        double learningRate = 0.01;
-        int maxIterations = 1000;
-        double tolerance = 1e-6;
-        
-        int n = coefficients.size();
-        double[] gradients = new double[n];
-    
-        for (int iteration = 0; iteration < maxIterations; iteration++) {
-            double currentScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray(), trigFunction);
-    
-            for (int i = 0; i < n; i++) {
-                coefficients.set(i, coefficients.get(i) + tolerance);
-                double newScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray(), trigFunction);
-                gradients[i] = (newScore - currentScore) / tolerance;
-                coefficients.set(i, coefficients.get(i) - tolerance);
-            }
-    
-            boolean hasConverged = true;
-            for (int i = 0; i < n; i++) {
-                double newCoefficient = coefficients.get(i) + learningRate * gradients[i];
-                if (Math.abs(newCoefficient - coefficients.get(i)) > tolerance) {
-                    hasConverged = false;
-                }
-                coefficients.set(i, newCoefficient);
-            }
-    
-            if (hasConverged) {
-                break;
-            }
-        }
-    
-        for (int i = 0; i < coefficients.size(); i++) {
-            JTextField coefficientField = (JTextField) panel.getComponent(2 * i + 1);
-            coefficientField.setText(coefficients.get(i).toString());
-        }
-    }
-    
     public void toggleEasyCases() {
         pureRegionManager.toggleEasyCases();
     }
@@ -683,7 +641,7 @@ public class CsvViewer extends JFrame {
         List<double[]> numericalData = new ArrayList<>();
         List<String> columnNames = new ArrayList<>();
         
-        for (int col = 0; col < colCount; col++) {
+        for (int col = 0; colCount > col; col++) {
             boolean isNumeric = true;
             double[] columnData = new double[rowCount];
             
