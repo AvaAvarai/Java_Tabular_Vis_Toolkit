@@ -8,7 +8,7 @@ import java.io.File;
 import java.net.URI;
 
 public class MainMenu extends JFrame {
-    
+
     public MainMenu() {
         setTitle("JTabViz: Java Tabular Visualization Toolkit - Main Menu");
         setSize(600, 400);
@@ -16,32 +16,36 @@ public class MainMenu extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
-        // Banner graphic
+        // Banner graphic with padding
         JLabel bannerLabel = new JLabel(new ImageIcon("resources/graphics/banner.png"));
+        bannerLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         add(bannerLabel, BorderLayout.NORTH);
 
-        // Create buttons
-        JButton startAppButton = new JButton("Start Application");
-        JButton githubButton = new JButton("Project GitHub");
-        JButton aboutButton = new JButton("About the Project");
-        JButton openDatasetsButton = new JButton("Open Datasets Folder");
-        JButton openScreenshotsButton = new JButton("Open Screenshots Folder");
-        JButton exitButton = new JButton("Exit");  // Exit button
+        // Create styled buttons
+        JButton startAppButton = createStyledButton("Start Application");
+        JButton githubButton = createStyledButton("GitHub");
+        JButton aboutButton = createStyledButton("About the Project");
+        JButton openDatasetsButton = createStyledButton("Open Datasets Folder");
+        JButton openScreenshotsButton = createStyledButton("Open Screenshots Folder");
+        JButton exitButton = createStyledButton("Exit");
 
-        // Button panel
-        JPanel buttonPanel = new JPanel(new GridLayout(6, 1, 10, 10));  // Adjusted grid layout for 6 buttons
+        // Button panel with background color
+        JPanel buttonPanel = new JPanel(new GridLayout(6, 1, 10, 10));
+        buttonPanel.setBackground(Color.DARK_GRAY);
+        buttonPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // Padding around the buttons
         buttonPanel.add(startAppButton);
         buttonPanel.add(githubButton);
         buttonPanel.add(aboutButton);
         buttonPanel.add(openDatasetsButton);
         buttonPanel.add(openScreenshotsButton);
-        buttonPanel.add(exitButton);  // Added exit button
+        buttonPanel.add(exitButton);
         add(buttonPanel, BorderLayout.CENTER);
 
-        // Footer
+        // Footer with styled text
         JLabel footerLabel = new JLabel("JTabViz by the CWU-VKD-LAB available for free under the MIT license, 2024.", JLabel.CENTER);
         footerLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-        footerLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));  // Adds some padding around the footer text
+        footerLabel.setForeground(Color.LIGHT_GRAY);
+        footerLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(footerLabel, BorderLayout.SOUTH);
 
         // Action listeners
@@ -83,9 +87,19 @@ public class MainMenu extends JFrame {
         exitButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.exit(0);  // Exit the application
+                System.exit(0);
             }
         });
+    }
+
+    private JButton createStyledButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 14));
+        button.setForeground(Color.WHITE);
+        button.setBackground(new Color(45, 45, 45));
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createLineBorder(Color.GRAY, 2));
+        return button;
     }
 
     private void openCsvViewer() {
