@@ -2,13 +2,10 @@ package src.managers;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableColumnModel;
 
 import src.CsvViewer;
 
 import java.awt.*;
-import java.util.Map;
-
 /**
  * The RendererManager class manages the rendering of table cells in the CsvViewer application.
  * It applies specific rendering logic to handle color coding for numerical data and class-based categories.

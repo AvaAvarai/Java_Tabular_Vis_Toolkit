@@ -3,16 +3,13 @@ package src;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
 public class DataExporter {
-    private JTable table;
     private DefaultTableModel tableModel;
 
-    public DataExporter(JTable table, DefaultTableModel tableModel) {
-        this.table = table;
+    public DataExporter(DefaultTableModel tableModel) {
         this.tableModel = tableModel;
     }
 

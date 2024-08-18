@@ -17,7 +17,8 @@ public class StarCoordinatesPlot extends JFrame {
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
-    private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
+    // TODO: label axes radially, spread center point outwards in a unit circle
+    // private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
     public StarCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows) {
         this.data = data;

@@ -79,7 +79,7 @@ public class CsvViewer extends JFrame {
         trigColumnManager = new TrigonometricColumnManager(table);
         pureRegionManager = new PureRegionManager(this, tableModel, statsTextArea, thresholdSlider);
         visualizationManager = new VisualizationManager(this);
-        dataExporter = new DataExporter(table, tableModel);
+        dataExporter = new DataExporter(tableModel);
 
         selectedRowsLabel = new JLabel("Selected rows: 0");
         thresholdSlider = new JSlider(0, 100, 5);
