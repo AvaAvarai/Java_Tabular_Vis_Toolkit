@@ -1,4 +1,4 @@
-package src;
+package src.table;
 
 import java.util.Comparator;
 

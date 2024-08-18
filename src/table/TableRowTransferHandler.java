@@ -1,6 +1,7 @@
-package src;
+package src.table;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;

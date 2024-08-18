@@ -1,4 +1,4 @@
-package src;
+package src.table;
 import javax.swing.table.DefaultTableModel;
 import java.util.Vector;
 

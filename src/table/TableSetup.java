@@ -1,4 +1,4 @@
-package src;
+package src.table;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
