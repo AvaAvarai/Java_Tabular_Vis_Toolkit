@@ -6,13 +6,15 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
+import src.managers.ButtonPanelManager;
 import src.table.ReorderableTableModel;
 import src.table.TableMouseListener;
 
 public class CsvViewerUIHelper {
 
     public static JPanel createButtonPanel(CsvViewer viewer) {
-        return ButtonPanel.createButtonPanel(viewer);
+        ButtonPanelManager buttonPanelManager = new ButtonPanelManager(viewer);
+        return buttonPanelManager.createButtonPanel();
     }
 
     public static JScrollPane createStatsScrollPane(JTextArea statsTextArea) {

@@ -12,11 +12,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
 
-import src.managers.PureRegionManager;
-import src.managers.RendererManager;
-import src.managers.StateManager;
-import src.managers.TrigonometricColumnManager;
-import src.managers.VisualizationManager;
+import src.managers.*;
 import src.table.ReorderableTableModel;
 import src.table.TableSetup;
 import src.utils.ShapeUtils;
@@ -48,6 +44,7 @@ public class CsvViewer extends JFrame {
     private RendererManager rendererManager;
     private DataExporter dataExporter;
     private StateManager stateManager;
+    private ButtonPanelManager buttonPanelManager;
 
     public CsvViewer() {
         stateManager = new StateManager();
@@ -65,7 +62,8 @@ public class CsvViewer extends JFrame {
 
         CsvViewerUIHelper.setupTable(table, tableModel, this);
 
-        JPanel buttonPanel = CsvViewerUIHelper.createButtonPanel(this);
+        buttonPanelManager = new ButtonPanelManager(this);
+        JPanel buttonPanel = buttonPanelManager.createButtonPanel();
         add(buttonPanel, BorderLayout.NORTH);
 
         statsTextArea = UIHelper.createTextArea(3, 0);
