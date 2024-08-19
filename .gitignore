@@ -3,5 +3,4 @@
 datasets/*/
 screenshots/export/*
 .DS_STORE
-out/*/
-out/MANIFEST.MF
+out/*

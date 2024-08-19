@@ -3,6 +3,7 @@ package src.plots;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Map;
 
@@ -17,8 +18,7 @@ public class StarCoordinatesPlot extends JFrame {
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
-    // TODO: label axes radially, spread center point outwards in a unit circle
-    // private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
+    private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
     public StarCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows) {
         this.data = data;
@@ -49,15 +49,15 @@ public class StarCoordinatesPlot extends JFrame {
         legendPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
         legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         legendPanel.setBackground(Color.WHITE);
-    
+
         for (Map.Entry<String, Color> entry : classColors.entrySet()) {
             String className = entry.getKey();
             Color color = entry.getValue();
             Shape shape = classShapes.get(className);
-    
+
             JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             colorLabelPanel.setBackground(Color.WHITE);
-    
+
             JLabel shapeLabel = new JLabel() {
                 @Override
                 protected void paintComponent(Graphics g) {
@@ -70,18 +70,18 @@ public class StarCoordinatesPlot extends JFrame {
                 }
             };
             shapeLabel.setPreferredSize(new Dimension(50, 50));
-    
+
             JLabel label = new JLabel(className);
             label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-    
+
             colorLabelPanel.add(shapeLabel);
             colorLabelPanel.add(label);
-    
+
             legendPanel.add(colorLabelPanel);
         }
-    
+
         return legendPanel;
-    }    
+    }
 
     private class StarCoordinatesPanel extends JPanel {
         private static final int TITLE_PADDING = 20;
@@ -125,6 +125,22 @@ public class StarCoordinatesPlot extends JFrame {
             // Number of attributes excluding the class column
             int numAttributes = attributeNames.size();
             double angleIncrement = 2 * Math.PI / numAttributes;
+
+            Point2D.Double[] attributePositions = new Point2D.Double[numAttributes];
+
+            // Calculate positions on the circumference for each attribute
+            for (int i = 0; i < numAttributes; i++) {
+                double angle = i * angleIncrement - Math.PI / 2;  // Start at the top (12 o'clock)
+                int labelRadius = plotSize / 2 + 40; // Adjusted for better visibility
+                double x = centerX + labelRadius * Math.cos(angle);
+                double y = centerY + labelRadius * Math.sin(angle);
+                attributePositions[i] = new Point2D.Double(x, y);
+
+                // Draw attribute labels
+                g2.setFont(AXIS_LABEL_FONT); // Use the defined font for axis labels
+                g2.setColor(Color.BLACK); // Set label color to black
+                drawCenteredString(g2, attributeNames.get(i), (int) x, (int) y);
+            }
 
             // Draw the star coordinates for each data point
             for (int row = 0; row < data.get(0).size(); row++) {
@@ -177,6 +193,13 @@ public class StarCoordinatesPlot extends JFrame {
 
         private double getMax(List<Double> data) {
             return data.stream().max(Double::compare).orElse(Double.NaN);
+        }
+
+        private void drawCenteredString(Graphics2D g2, String text, int x, int y) {
+            FontMetrics metrics = g2.getFontMetrics(g2.getFont());
+            int width = metrics.stringWidth(text);
+            int height = metrics.getHeight();
+            g2.drawString(text, x - width / 2, y + height / 4); // Slight adjustment for better centering
         }
     }
 }
