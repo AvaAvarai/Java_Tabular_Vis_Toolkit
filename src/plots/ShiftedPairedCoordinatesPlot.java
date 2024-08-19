@@ -1,14 +1,12 @@
 package src.plots;
 
 import javax.swing.*;
-
-import src.utils.ScreenshotUtils;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.geom.Ellipse2D;
 import java.util.List;
 import java.util.Map;
+import src.utils.ScreenshotUtils;
 
 public class ShiftedPairedCoordinatesPlot extends JFrame {
 
@@ -19,12 +17,9 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     private List<String> classLabels;
     private int numPlots;
     private List<Integer> selectedRows;
+    private JTable table; // Reference to the table
 
-    // Font settings
-    private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
-    private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
-
-    public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName) {
+    public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -32,30 +27,27 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.numPlots = numPlots;
         this.selectedRows = selectedRows;
+        this.table = table; // Initialize the table reference
 
         setTitle("Shifted Paired Coordinates");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Set up the main panel
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(Color.WHITE);
 
-        // Add the plot panel
         ShiftedPairedCoordinatesPanel plotPanel = new ShiftedPairedCoordinatesPanel();
-        int plotHeight = 800; // Fixed height for maintaining tall axes
-        int plotWidth = numPlots * 250; // Adjust width to fit all plots
+        int plotHeight = 800;
+        int plotWidth = numPlots * 250;
 
         plotPanel.setPreferredSize(new Dimension(plotWidth, plotHeight));
 
-        // Add the plot panel to a scroll pane
         JScrollPane scrollPane = new JScrollPane(plotPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2)); // Minimize space around the plot
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-        // Add a key listener for the space bar to save a screenshot
         scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
         scrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
             @Override
@@ -64,11 +56,9 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             }
         });
 
-        // Ensure the JFrame is focusable to capture key events
         setFocusable(true);
         requestFocusInWindow();
 
-        // Add the scroll pane and legend to the main panel
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
 
@@ -135,8 +125,8 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             g2.fillRect(0, 0, getWidth(), getHeight());
 
             String title = "Shifted Paired Coordinates Plot";
-            g2.setFont(TITLE_FONT);
-            FontMetrics fm = g2.getFontMetrics(TITLE_FONT);
+            g2.setFont(new Font("SansSerif", Font.BOLD, 24));
+            FontMetrics fm = g2.getFontMetrics();
             int titleWidth = fm.stringWidth(title);
             int titleHeight = fm.getHeight();
             g2.setColor(Color.BLACK);
@@ -158,20 +148,24 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                 drawAxesAndLabels(g2, x, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2));
             }
 
-            for (int row = 0; row < data.get(0).size(); row++) {
+            // Draw rows in the order they are listed in the table
+            for (int i = 0; i < table.getRowCount(); i++) {
+                int row = table.convertRowIndexToModel(i); // Use the current sort order
                 if (!selectedRows.contains(row)) {
                     drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                     drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                 }
             }
 
-            for (int row = 0; row < data.get(0).size(); row++) {
+            for (int i = 0; i < table.getRowCount(); i++) {
+                int row = table.convertRowIndexToModel(i);
                 if (selectedRows.contains(row)) {
                     drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                 }
             }
 
-            for (int row = 0; row < data.get(0).size(); row++) {
+            for (int i = 0; i < table.getRowCount(); i++) {
+                int row = table.convertRowIndexToModel(i);
                 if (selectedRows.contains(row)) {
                     drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                 }
@@ -187,7 +181,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             g2.drawLine(plotX, plotY, plotX, plotY + plotSize);
             g2.drawLine(plotX, plotY + plotSize, plotX + plotSize, plotY + plotSize);
 
-            g2.setFont(AXIS_LABEL_FONT);
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 16));
             g2.setColor(Color.BLACK);
             g2.drawString(xLabel, plotX + plotSize / 2, plotY + plotSize + 20);
             g2.drawString(yLabel, plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);

@@ -138,7 +138,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
 
-        ShiftedPairedCoordinatesPlot shiftedPairedCoordinates = new ShiftedPairedCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, numPlots, selectedRows, csvViewer.getDatasetName());
+        ShiftedPairedCoordinatesPlot shiftedPairedCoordinates = new ShiftedPairedCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, numPlots, selectedRows, csvViewer.getDatasetName(), csvViewer.getTable());
         shiftedPairedCoordinates.setVisible(true);
     }
 
