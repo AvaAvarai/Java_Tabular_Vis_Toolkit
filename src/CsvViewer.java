@@ -8,8 +8,8 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.text.DecimalFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -478,6 +478,13 @@ public class CsvViewer extends JFrame {
 
         currentCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length());
         statsTextArea.setCaretPosition(currentCaretPosition);
+
+        // Refresh the heatmap if it is enabled
+        if (stateManager.isHeatmapEnabled()) {
+            rendererManager.applyCombinedRenderer();
+            // repaint
+            table.repaint();
+        }
     }
 
     public void updateTableData(java.util.List<String[]> data) {
