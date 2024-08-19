@@ -24,6 +24,10 @@ public class ParallelCoordinatesPlot extends JFrame {
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
+    // Spacing settings
+    private static final int TITLE_PADDING = 20;
+    private static final int AXIS_LABEL_PADDING = 30; // Space below plot for labels
+
     public ParallelCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName) {
         this.data = data;
         this.attributeNames = attributeNames;
@@ -44,7 +48,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         // Add the plot panel
         ParallelCoordinatesPanel plotPanel = new ParallelCoordinatesPanel();
-        plotPanel.setPreferredSize(new Dimension(numAttributes * 150, 600));
+        plotPanel.setPreferredSize(new Dimension(numAttributes * 150, 600 + AXIS_LABEL_PADDING));
 
         // Add the plot panel to a scroll pane
         JScrollPane scrollPane = new JScrollPane(plotPanel);
@@ -112,8 +116,6 @@ public class ParallelCoordinatesPlot extends JFrame {
     }
 
     private class ParallelCoordinatesPanel extends JPanel {
-        private static final int TITLE_PADDING = 20;
-
         public ParallelCoordinatesPanel() {
             setBackground(new Color(0xC0C0C0));
         }
@@ -143,7 +145,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
             // Calculate plot area dimensions
             int plotAreaY = titleHeight + TITLE_PADDING;
-            int plotAreaHeight = getHeight() - plotAreaY;
+            int plotAreaHeight = getHeight() - plotAreaY - AXIS_LABEL_PADDING;
 
             // Set the background color for the plot area
             g2.setColor(new Color(0xC0C0C0));
@@ -171,7 +173,7 @@ public class ParallelCoordinatesPlot extends JFrame {
             }
 
             // Draw attribute labels
-            drawAttributeLabels(g2, axisSpacing, margin, plotAreaHeight);
+            drawAttributeLabels(g2, axisSpacing, margin, plotAreaY + plotAreaHeight + AXIS_LABEL_PADDING);
         }
 
         private void drawAxisLines(Graphics2D g2, int axisSpacing, int margin, int plotAreaY, int plotAreaHeight) {
@@ -213,14 +215,13 @@ public class ParallelCoordinatesPlot extends JFrame {
             }
         }
 
-        private void drawAttributeLabels(Graphics2D g2, int axisSpacing, int margin, int plotAreaHeight) {
+        private void drawAttributeLabels(Graphics2D g2, int axisSpacing, int margin, int labelY) {
             g2.setFont(AXIS_LABEL_FONT);
             g2.setColor(Color.BLACK);
 
             for (int i = 0; i < numAttributes; i++) {
                 int x = margin + i * axisSpacing;
-                int y = plotAreaHeight + 20;
-                g2.drawString(attributeNames.get(i), x - g2.getFontMetrics().stringWidth(attributeNames.get(i)) / 2, y);
+                g2.drawString(attributeNames.get(i), x - g2.getFontMetrics().stringWidth(attributeNames.get(i)) / 2, labelY);
             }
         }
     }
