@@ -21,20 +21,24 @@ public class VisualizationManager {
             csvViewer.noDataLoadedError();
             return;
         }
-
+    
         List<List<Double>> numericalData = new ArrayList<>();
         List<String> attributeNames = new ArrayList<>();
         List<String> classLabels = new ArrayList<>();
-
+    
         int classColumnIndex = csvViewer.getClassColumnIndex();
-        for (int col = 0; col < csvViewer.tableModel.getColumnCount(); col++) {
-            if (col != classColumnIndex) {
+        TableColumnModel columnModel = csvViewer.table.getColumnModel();
+    
+        // Respect the order of attributes as in the JTable (tabular view)
+        for (int col = 0; col < columnModel.getColumnCount(); col++) {
+            int modelIndex = csvViewer.table.convertColumnIndexToModel(col);
+            if (modelIndex != classColumnIndex) {
                 boolean isNumeric = true;
                 List<Double> columnData = new ArrayList<>();
                 for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
                     if (!csvViewer.getHiddenRows().contains(row)) {
                         try {
-                            columnData.add(Double.parseDouble(csvViewer.tableModel.getValueAt(row, col).toString()));
+                            columnData.add(Double.parseDouble(csvViewer.tableModel.getValueAt(row, modelIndex).toString()));
                         } catch (NumberFormatException e) {
                             isNumeric = false;
                             break;
@@ -43,24 +47,24 @@ public class VisualizationManager {
                 }
                 if (isNumeric) {
                     numericalData.add(columnData);
-                    attributeNames.add(csvViewer.tableModel.getColumnName(col));
+                    attributeNames.add(csvViewer.tableModel.getColumnName(modelIndex));
                 }
             }
         }
-
+    
         for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
             if (!csvViewer.getHiddenRows().contains(row)) {
                 classLabels.add((String) csvViewer.tableModel.getValueAt(row, classColumnIndex));
             }
         }
-
+    
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
-
+    
         StarCoordinatesPlot starCoordinatesPlot = new StarCoordinatesPlot(numericalData, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows);
         starCoordinatesPlot.setVisible(true);
     }
-
+    
     public void showRuleOverlayPlot() {
         TableColumnModel columnModel = csvViewer.table.getColumnModel();
         int columnCount = columnModel.getColumnCount();
