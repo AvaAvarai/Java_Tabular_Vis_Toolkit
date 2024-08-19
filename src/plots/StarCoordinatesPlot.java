@@ -2,10 +2,12 @@ package src.plots;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Map;
+import src.utils.ScreenshotUtils;
 
 public class StarCoordinatesPlot extends JFrame {
 
@@ -15,18 +17,20 @@ public class StarCoordinatesPlot extends JFrame {
     private Map<String, Shape> classShapes;
     private List<String> classLabels;
     private List<Integer> selectedRows;
+    private String datasetName;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
-    public StarCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows) {
+    public StarCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
+        this.datasetName = datasetName;
 
         setTitle("Star Coordinates Plot");
         setSize(800, 800);
@@ -38,10 +42,26 @@ public class StarCoordinatesPlot extends JFrame {
         getContentPane().setBackground(Color.WHITE);
 
         // Add the plot panel at the center
-        add(new StarCoordinatesPanel(), BorderLayout.CENTER);
+        StarCoordinatesPanel plotPanel = new StarCoordinatesPanel();
+        plotPanel.setPreferredSize(new Dimension(600, 600));
+        JScrollPane scrollPane = new JScrollPane(plotPanel);
+        add(scrollPane, BorderLayout.CENTER);
 
         // Add a legend panel at the bottom (horizontal)
         add(createLegendPanel(), BorderLayout.SOUTH);
+
+        // Add a key listener for the space bar to save a screenshot
+        scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
+        scrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "StarCoordinates", datasetName);
+            }
+        });
+
+        // Ensure the JFrame is focusable to capture key events
+        setFocusable(true);
+        requestFocusInWindow();
     }
 
     private JPanel createLegendPanel() {
