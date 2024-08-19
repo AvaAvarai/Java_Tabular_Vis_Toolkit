@@ -243,12 +243,8 @@ x1, x2, x3, x4, x5, class,
 
 The user interface icons are sourced from [Font Awesome](https://fontawesome.com/search), converted using the [fa2png tool](https://fa2png.app/).
 
-The charts in the application are rendered using [JFreeChart](https://www.jfree.org/jfreechart/), a Java library for chart creation.
-
 ## License Information
 
 JTabViz is licensed under the MIT License, allowing free use for both personal and commercial purposes. For full terms, see the `LICENSE` file.
-
-JFreeChart is free software distributed under the GNU Lesser General Public License (LGPL), which permits use in proprietary applications. For more details, refer to the [JFreeChart licensing information](https://www.jfree.org/jfreechart/).
 
 Font Awesome Free is open-source and GPL friendly, allowing use in commercial, open-source, or almost any type of project. For more information, visit the [Font Awesome License page](https://fontawesome.com/license/free).

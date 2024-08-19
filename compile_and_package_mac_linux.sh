@@ -4,18 +4,13 @@
 mkdir -p out
 
 # Compile all Java files in the src directory and its subdirectories
-javac -d out -cp "libs/*" $(find src -name "*.java")
+javac -d out $(find src -name "*.java")
 
 # Copy resources to the output directory, excluding unnecessary files
 rsync -av --exclude='.DS_Store' resources/ out/
 
 # Copy the README.md file to the output directory
 cp README.md out/
-
-# Unzip the external libraries into the out directory
-for jar in libs/*.jar; do
-    unzip -o -q "$jar" -d out
-done
 
 # Remove the META-INF directory from the unzipped libraries to avoid duplicate MANIFEST.MF issues
 rm -rf out/META-INF
