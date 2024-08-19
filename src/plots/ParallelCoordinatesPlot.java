@@ -1,111 +1,56 @@
 package src.plots;
 
-import org.jfree.chart.ChartFactory;
-import org.jfree.chart.ChartPanel;
-import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.CategoryAxis;
-import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.axis.ValueAxis;
-import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.renderer.category.CategoryItemRendererState;
-import org.jfree.chart.renderer.category.LineAndShapeRenderer;
-import org.jfree.chart.LegendItem;
-import org.jfree.chart.LegendItemCollection;
-import org.jfree.chart.title.LegendTitle;
-import org.jfree.chart.title.TextTitle;
-import org.jfree.chart.ui.RectangleEdge;
-import org.jfree.data.category.CategoryDataset;
-import org.jfree.data.category.DefaultCategoryDataset;
-
-import src.utils.PureRegionUtils;
-import src.utils.ScreenshotUtils;
-
 import javax.swing.*;
+import src.utils.ScreenshotUtils;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
-import java.awt.geom.Rectangle2D;
-import java.util.*;
+import java.awt.geom.Point2D;
 import java.util.List;
+import java.util.Map;
 
 public class ParallelCoordinatesPlot extends JFrame {
 
+    private List<List<Double>> data;
+    private List<String> attributeNames;
     private Map<String, Color> classColors;
     private Map<String, Shape> classShapes;
-    private List<PureRegionUtils> pureRegions;
+    private List<String> classLabels;
+    private List<Integer> selectedRows;
+    private int numAttributes;
 
-    public ParallelCoordinatesPlot(List<String[]> data, String[] columnNames, Map<String, Color> classColors, int classColumnIndex, int[] columnOrder, List<Integer> selectedRows, Map<String, Shape> classShapes, String datasetName) {
+    // Font settings
+    private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
+    private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
+
+    public ParallelCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName) {
+        this.data = data;
+        this.attributeNames = attributeNames;
+        this.classColors = classColors;
+        this.classShapes = classShapes;
+        this.classLabels = classLabels;
+        this.selectedRows = selectedRows;
+        this.numAttributes = attributeNames.size();
+
         setTitle("Parallel Coordinates Plot");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        this.classColors = classColors;
-        this.classShapes = classShapes;
+        // Set up the main panel
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(Color.WHITE);
 
-        DefaultCategoryDataset dataset = createDataset(data, columnNames, classColumnIndex, columnOrder);
-        JFreeChart chart = createChart(dataset, columnNames);
+        // Add the plot panel
+        ParallelCoordinatesPanel plotPanel = new ParallelCoordinatesPanel();
+        plotPanel.setPreferredSize(new Dimension(numAttributes * 150, 600));
 
-        CategoryPlot plot = (CategoryPlot) chart.getPlot();
-        LineAndShapeRenderer renderer = new CustomRenderer(dataset, columnNames, selectedRows);
-        plot.setRenderer(renderer);
-
-        // Manually create a custom legend
-        LegendItemCollection legendItems = new LegendItemCollection();
-        Set<String> addedClasses = new HashSet<>();
-
-        for (String className : classColors.keySet()) {
-            if (!addedClasses.contains(className)) {
-                Shape shape = classShapes.get(className);
-                Paint paint = classColors.get(className);
-                LegendItem item = new LegendItem(className, "", "", "", shape, paint, new BasicStroke(1.0f), paint);
-                legendItems.add(item);
-                addedClasses.add(className);
-            }
-        }
-
-        plot.setFixedLegendItems(legendItems);
-
-        // Adjust the category axis to reduce space between axes and at the edges
-        CategoryAxis domainAxis = plot.getDomainAxis();
-        domainAxis.setCategoryMargin(0.01); // Reduce space between categories
-        domainAxis.setLowerMargin(0.01); // Reduce space before the first axis
-        domainAxis.setUpperMargin(0.01); // Reduce space after the last axis
-
-        // Set chart width as a multiple of the number of attributes
-        int attributeCount = columnNames.length;
-        int baseWidth = 150; // Adjust base width as necessary
-        int chartWidth = attributeCount * baseWidth;
-
-        // Scale the title and legend based on the chart size
-        TextTitle chartTitle = chart.getTitle();
-        chartTitle.setFont(new Font("SansSerif", Font.BOLD, 18)); // Set a reasonable font size
-
-        LegendTitle legend = chart.getLegend();
-        legend.setPosition(RectangleEdge.BOTTOM);
-        legend.setItemFont(new Font("SansSerif", Font.PLAIN, 14)); // Set a reasonable font size
-
-        // Wrap the chart in a JPanel
-        JPanel chartPanel = new JPanel(new BorderLayout());
-        ChartPanel cp = new ChartPanel(chart);
-
-        // Set the preferred size based on the attribute count and reduce margins
-        cp.setPreferredSize(new Dimension(chartWidth, 800));
-        cp.setMaximumDrawWidth(chartWidth);
-        cp.setMaximumDrawHeight(800);
-        cp.setMinimumDrawWidth(chartWidth);
-        cp.setMinimumDrawHeight(800);
-
-        chartPanel.add(cp, BorderLayout.CENTER);
-
-        // Add the chart panel to a JScrollPane
-        JScrollPane scrollPane = new JScrollPane(chartPanel);
+        // Add the plot panel to a scroll pane
+        JScrollPane scrollPane = new JScrollPane(plotPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-
-        // Reduce space between the start of the window and the graph
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2)); // Minimize space around the plot
 
         // Add a key listener for the space bar to save a screenshot
         scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
@@ -120,230 +65,163 @@ public class ParallelCoordinatesPlot extends JFrame {
         setFocusable(true);
         requestFocusInWindow();
 
-        // Set the scroll pane as the content pane of the JFrame
-        setContentPane(scrollPane);
+        // Add the scroll pane and legend to the main panel
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
+
+        setContentPane(mainPanel);
     }
 
-    private DefaultCategoryDataset createDataset(List<String[]> data, String[] columnNames, int classColumnIndex, int[] columnOrder) {
-        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+    private JPanel createLegendPanel() {
+        JPanel legendPanel = new JPanel();
+        legendPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        legendPanel.setBackground(Color.WHITE);
 
-        for (int i = 0; i < data.size(); i++) {
-            String[] row = data.get(i);
-            String className = row[classColumnIndex];
-            String seriesName = className + " - Row " + i;
+        for (Map.Entry<String, Color> entry : classColors.entrySet()) {
+            String className = entry.getKey();
+            Color color = entry.getValue();
+            Shape shape = classShapes.get(className);
 
-            for (int j = 0; j < columnOrder.length; j++) {
-                if (columnOrder[j] != classColumnIndex) {
-                    try {
-                        double value = Double.parseDouble(row[columnOrder[j]]);
-                        dataset.addValue(value, seriesName, columnNames[j]);
-                    } catch (NumberFormatException e) {
-                        // Handle non-numeric data
-                    }
-                }
-            }
-        }
+            JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            colorLabelPanel.setBackground(Color.WHITE);
 
-        return dataset;
-    }
-
-    private JFreeChart createChart(DefaultCategoryDataset dataset, String[] columnNames) {
-        JFreeChart chart = ChartFactory.createLineChart(
-                "Parallel Coordinates Plot", // chart title
-                "Attribute", // domain axis label
-                "", // range axis label (removed)
-                dataset);
-
-        CategoryPlot plot = (CategoryPlot) chart.getPlot();
-        plot.setDomainAxis(new CategoryAxis());
-        NumberAxis rangeAxis = new NumberAxis();
-        rangeAxis.setVisible(false); // Hide the range axis
-        plot.setRangeAxis(rangeAxis);
-        plot.setRangeGridlinesVisible(false); // Remove the background grid lines
-
-        return chart;
-    }
-
-    public void setPureRegionsOverlay(List<PureRegionUtils> pureRegions) {
-        this.pureRegions = pureRegions;
-        repaint();
-    }
-
-    private class CustomRenderer extends LineAndShapeRenderer {
-
-        private final CategoryDataset dataset;
-        private final String[] columnNames;
-        private final List<Integer> selectedRows;
-        private List<Integer> drawOrder;
-        private final Map<Integer, Double> columnMinValues = new HashMap<>();
-        private final Map<Integer, Double> columnMaxValues = new HashMap<>();
-
-        public CustomRenderer(CategoryDataset dataset, String[] columnNames, List<Integer> selectedRows) {
-            this.dataset = dataset;
-            this.columnNames = columnNames;
-            this.selectedRows = selectedRows;
-            setDrawOutlines(true); // Ensure shapes are outlined
-            setUseOutlinePaint(true);
-            setSeriesOutlinePaint(0, Color.BLACK); // Ensure the outlines are black
-        }
-
-        @Override
-        public void drawItem(Graphics2D g2, CategoryItemRendererState state, Rectangle2D dataArea, CategoryPlot plot, CategoryAxis domainAxis, ValueAxis rangeAxis, CategoryDataset dataset, int row, int column, int pass) {
-            if (pass != 1) return;  // Ensure we only draw on the second pass (shapes and lines).
-
-            if (drawOrder == null) {
-                drawOrder = new ArrayList<>();
-                for (int i = 0; i < dataset.getRowCount(); i++) {
-                    if (!selectedRows.contains(i)) {
-                        drawOrder.add(i);
-                    }
-                }
-                drawOrder.addAll(selectedRows);
-
-                // Calculate min and max values for each column
-                for (int col = 0; col < dataset.getColumnCount(); col++) {
-                    double min = Double.MAX_VALUE;
-                    double max = Double.MIN_VALUE;
-                    for (int r = 0; r < dataset.getRowCount(); r++) {
-                        double value = dataset.getValue(r, col).doubleValue();
-                        min = Math.min(min, value);
-                        max = Math.max(max, value);
-                    }
-                    columnMinValues.put(col, min);
-                    columnMaxValues.put(col, max);
-                }
-            }
-
-            int actualRow = drawOrder.get(row);
-
-            // Draw the lines in the order of the tabular view
-            if (column > 0) {
-                double x1 = domainAxis.getCategoryMiddle(column - 1, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                double y1 = getNormalizedY(actualRow, column - 1, dataArea);
-
-                double x2 = domainAxis.getCategoryMiddle(column, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                double y2 = getNormalizedY(actualRow, column, dataArea);
-
-                if (selectedRows.contains(actualRow)) {
-                    g2.setPaint(Color.YELLOW);
-                } else {
-                    g2.setPaint(getItemPaint(actualRow, column));
-                }
-                g2.setStroke(new BasicStroke(1.0f)); // Keep line thickness constant
-                g2.draw(new Line2D.Double(x1, y1, x2, y2));
-            }
-
-            // Draw the scatterplot shapes in the order of the tabular view
-            if (column == dataset.getColumnCount() - 1) {
-                for (int col = 0; col < dataset.getColumnCount(); col++) {
-                    double x = domainAxis.getCategoryMiddle(col, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                    double y = getNormalizedY(actualRow, col, dataArea);
-
-                    // Draw the shapes in yellow if the row is selected
-                    if (selectedRows.contains(actualRow)) {
-                        g2.setPaint(Color.YELLOW);
-                    } else {
-                        g2.setPaint(getItemPaint(actualRow, col));
-                    }
-
-                    Shape shape = getItemShape(actualRow, col);
-                    g2.translate(x, y);
+            JLabel shapeLabel = new JLabel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    Graphics2D g2 = (Graphics2D) g;
+                    g2.setColor(color);
+                    g2.translate(32, 20);
+                    g2.scale(2, 2);
                     g2.fill(shape);
-                    g2.setStroke(new BasicStroke(1.0f)); // Keep outline thickness constant
-                    g2.draw(shape); // Draw outline
-                    g2.translate(-x, -y);
                 }
-            }
+            };
+            shapeLabel.setPreferredSize(new Dimension(40, 40));
 
-            // If selected rows are not empty, we want to draw the lines again
-            if (selectedRows.size() != 0) {
-                if (column > 0) {
-                    double x1 = domainAxis.getCategoryMiddle(column - 1, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                    double y1 = getNormalizedY(actualRow, column - 1, dataArea);
+            JLabel label = new JLabel(className);
+            label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
 
-                    double x2 = domainAxis.getCategoryMiddle(column, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                    double y2 = getNormalizedY(actualRow, column, dataArea);
+            colorLabelPanel.add(shapeLabel);
+            colorLabelPanel.add(label);
 
-                    if (selectedRows.contains(actualRow)) {
-                        g2.setPaint(Color.YELLOW);
-                    } else {
-                        // Don't draw
-                        return;
-                    }
-                    g2.setStroke(new BasicStroke(1.0f)); // Keep line thickness constant
-                    g2.draw(new Line2D.Double(x1, y1, x2, y2));
-                }
-            }
-
-            if (actualRow == 0 && column == 0) {
-                // Draw the parallel lines (axes) manually first
-                for (int i = 0; i < dataset.getColumnCount(); i++) {
-                    double x = domainAxis.getCategoryMiddle(i, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-                    g2.setPaint(Color.BLACK);
-                    g2.setStroke(new BasicStroke(1.0f)); // Use 1.0f for a thin line
-                    Line2D line = new Line2D.Double(x, dataArea.getMinY(), x, dataArea.getMaxY());
-                    g2.draw(line);
-                }
-            }
-
-            if (pureRegions != null) {
-                for (PureRegionUtils region : pureRegions) {
-                    int startColIndex = findColumnIndex(region.getAttributeName(), columnNames);
-
-                    // Ensure the startColIndex is valid
-                    if (startColIndex >= 0 && startColIndex < dataset.getColumnCount()) {
-                        double xCenter = domainAxis.getCategoryMiddle(startColIndex, getColumnCount(), dataArea, plot.getDomainAxisEdge());
-
-                        double startY = getNormalizedY(region.getStart(), startColIndex, dataArea, columnMinValues, columnMaxValues);
-                        double endY = getNormalizedY(region.getEnd(), startColIndex, dataArea, columnMinValues, columnMaxValues);
-
-                        // Set the width of the rectangle to a fixed value of 0.1
-                        double rectWidth = 0.1 * (dataArea.getWidth() / dataset.getColumnCount());
-
-                        // Draw the rectangle with a fixed width
-                        g2.setPaint(new Color(classColors.get(region.getCurrentClass()).getRed(), classColors.get(region.getCurrentClass()).getGreen(), classColors.get(region.getCurrentClass()).getBlue(), 100));
-                        g2.fill(new Rectangle2D.Double(xCenter - rectWidth / 2, Math.min(startY, endY), rectWidth, Math.abs(startY - endY)));
-                    }
-                }
-            }
+            legendPanel.add(colorLabelPanel);
         }
 
-        private double getNormalizedY(int row, int column, Rectangle2D dataArea) {
-            double value = dataset.getValue(row, column).doubleValue();
-            double min = columnMinValues.get(column);
-            double max = columnMaxValues.get(column);
-            double normalizedValue = (value - min) / (max - min);
-            return dataArea.getMaxY() - (normalizedValue * dataArea.getHeight());
-        }
+        return legendPanel;
+    }
 
-        private double getNormalizedY(double value, int column, Rectangle2D dataArea, Map<Integer, Double> minValues, Map<Integer, Double> maxValues) {
-            double min = minValues.get(column);
-            double max = maxValues.get(column);
-            double normalizedValue = (value - min) / (max - min);
-            return dataArea.getMaxY() - (normalizedValue * dataArea.getHeight());
-        }
+    private class ParallelCoordinatesPanel extends JPanel {
+        private static final int TITLE_PADDING = 20;
 
-        private int findColumnIndex(String columnName, String[] columnNames) {
-            for (int i = 0; i < columnNames.length; i++) {
-                if (columnNames[i].equalsIgnoreCase(columnName)) {
-                    return i;
-                }
-            }
-            return -1;
+        public ParallelCoordinatesPanel() {
+            setBackground(new Color(0xC0C0C0));
         }
 
         @Override
-        public Paint getItemPaint(int row, int column) {
-            String seriesKey = (String) getPlot().getDataset().getRowKey(row);
-            String className = seriesKey.contains(" - ") ? seriesKey.split(" - ")[0] : seriesKey;
-            return classColors.getOrDefault(className, Color.BLACK);
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (data == null || attributeNames == null) {
+                return;
+            }
+
+            Graphics2D g2 = (Graphics2D) g;
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            // Set the background color for the entire panel to white
+            g2.setColor(Color.WHITE);
+            g2.fillRect(0, 0, getWidth(), getHeight());
+
+            // Draw the title above the grey background
+            String title = "Parallel Coordinates Plot";
+            g2.setFont(TITLE_FONT);
+            FontMetrics fm = g2.getFontMetrics(TITLE_FONT);
+            int titleWidth = fm.stringWidth(title);
+            int titleHeight = fm.getHeight();
+            g2.setColor(Color.BLACK);
+            g2.drawString(title, (getWidth() - titleWidth) / 2, titleHeight);
+
+            // Calculate plot area dimensions
+            int plotAreaY = titleHeight + TITLE_PADDING;
+            int plotAreaHeight = getHeight() - plotAreaY;
+
+            // Set the background color for the plot area
+            g2.setColor(new Color(0xC0C0C0));
+            g2.fillRect(0, plotAreaY, getWidth(), plotAreaHeight);
+
+            // Calculate axis spacing and centering
+            int margin = 50;
+            int axisSpacing = (getWidth() - 2 * margin) / (numAttributes - 1);
+
+            // Draw axis lines
+            drawAxisLines(g2, axisSpacing, margin, plotAreaY, plotAreaHeight);
+
+            // Draw the parallel coordinates for each data point
+            for (int row = 0; row < data.get(0).size(); row++) {
+                if (!selectedRows.contains(row)) {
+                    drawParallelCoordinates(g2, row, axisSpacing, margin, plotAreaY, plotAreaHeight);
+                }
+            }
+
+            // Highlight selected rows
+            for (int row = 0; row < data.get(0).size(); row++) {
+                if (selectedRows.contains(row)) {
+                    drawParallelCoordinates(g2, row, axisSpacing, margin, plotAreaY, plotAreaHeight);
+                }
+            }
+
+            // Draw attribute labels
+            drawAttributeLabels(g2, axisSpacing, margin, plotAreaHeight);
         }
 
-        @Override
-        public Shape getItemShape(int row, int column) {
-            String seriesKey = (String) getPlot().getDataset().getRowKey(row);
-            String className = seriesKey.contains(" - ") ? seriesKey.split(" - ")[0] : seriesKey;
-            return classShapes.getOrDefault(className, new Ellipse2D.Double(-3, -3, 6, 6));
+        private void drawAxisLines(Graphics2D g2, int axisSpacing, int margin, int plotAreaY, int plotAreaHeight) {
+            g2.setColor(Color.BLACK);
+            for (int i = 0; i < numAttributes; i++) {
+                int x = margin + i * axisSpacing;
+                g2.draw(new Line2D.Double(x, plotAreaY, x, plotAreaY + plotAreaHeight));
+            }
+        }
+
+        private void drawParallelCoordinates(Graphics2D g2, int row, int axisSpacing, int margin, int plotAreaY, int plotAreaHeight) {
+            Point2D.Double[] points = new Point2D.Double[numAttributes];
+
+            for (int i = 0; i < numAttributes; i++) {
+                double value = data.get(i).get(row);
+                double minValue = data.get(i).stream().min(Double::compare).orElse(0.0);
+                double maxValue = data.get(i).stream().max(Double::compare).orElse(1.0);
+                double normalizedValue = (value - minValue) / (maxValue - minValue);
+
+                double x = margin + i * axisSpacing;
+                double y = plotAreaHeight - (normalizedValue * plotAreaHeight) + plotAreaY;
+
+                points[i] = new Point2D.Double(x, y);
+            }
+
+            String classLabel = classLabels.get(row);
+            Color color = selectedRows.contains(row) ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+            g2.setColor(color);
+
+            for (int i = 0; i < numAttributes - 1; i++) {
+                g2.draw(new Line2D.Double(points[i], points[i + 1]));
+            }
+
+            // Draw the shapes at the points
+            for (int i = 0; i < numAttributes; i++) {
+                g2.translate(points[i].x, points[i].y);  // Move the origin to the point location
+                g2.fill(classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6))); // Draw the shape
+                g2.translate(-points[i].x, -points[i].y); // Move back the origin
+            }
+        }
+
+        private void drawAttributeLabels(Graphics2D g2, int axisSpacing, int margin, int plotAreaHeight) {
+            g2.setFont(AXIS_LABEL_FONT);
+            g2.setColor(Color.BLACK);
+
+            for (int i = 0; i < numAttributes; i++) {
+                int x = margin + i * axisSpacing;
+                int y = plotAreaHeight + 20;
+                g2.drawString(attributeNames.get(i), x - g2.getFontMetrics().stringWidth(attributeNames.get(i)) / 2, y);
+            }
         }
     }
 }
