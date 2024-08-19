@@ -61,35 +61,29 @@ public class CsvViewer extends JFrame {
     public CsvViewer(MainMenu mainMenu) {
         this.mainMenu = mainMenu;
         stateManager = new StateManager();
-
+    
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
         setSize(1000, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
-
+    
         dataHandler = new CsvDataHandler();
         tableModel = new ReorderableTableModel();
         table = TableSetup.createTable(tableModel);
-
+    
         rendererManager = new RendererManager(this);
         tableManager = new TableManager(this, tableModel);  // Initialize TableManager
-
+    
         CsvViewerUIHelper.setupTable(table, tableModel, this);
-
+    
         buttonPanelManager = new ButtonPanelManager(this);
         JPanel buttonPanel = buttonPanelManager.createButtonPanel();
         add(buttonPanel, BorderLayout.NORTH);
-
+    
         statsTextArea = UIHelper.createTextArea(3, 0);
         statsScrollPane = CsvViewerUIHelper.createStatsScrollPane(statsTextArea);
-
-        tableScrollPane = new JScrollPane(table);
-        trigColumnManager = new TrigonometricColumnManager(table);
-        pureRegionManager = new PureRegionManager(this, tableModel, statsTextArea, thresholdSlider);
-        visualizationManager = new VisualizationManager(this);
-        dataExporter = new DataExporter(tableModel);
-
-        selectedRowsLabel = new JLabel("Selected rows: 0");
+    
+        // Initialize the thresholdSlider before PureRegionManager
         thresholdSlider = new JSlider(0, 100, 5);
         thresholdSlider.setMajorTickSpacing(20);
         thresholdSlider.setMinorTickSpacing(5);
@@ -97,13 +91,20 @@ public class CsvViewer extends JFrame {
         thresholdSlider.setPaintLabels(true);
         thresholdSlider.setToolTipText("Adjust threshold percentage");
 
+        tableScrollPane = new JScrollPane(table);
+        trigColumnManager = new TrigonometricColumnManager(table);
+        pureRegionManager = new PureRegionManager(this, tableModel, statsTextArea, thresholdSlider);
+        visualizationManager = new VisualizationManager(this);
+        dataExporter = new DataExporter(tableModel);
+        selectedRowsLabel = new JLabel("Selected rows: 0");
+    
         thresholdLabel = new JLabel("5%");
         thresholdSlider.addChangeListener(e -> {
             int thresholdValue = thresholdSlider.getValue();
             thresholdLabel.setText(thresholdValue + "%");
             pureRegionManager.calculateAndDisplayPureRegions(thresholdValue);
         });
-
+    
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -112,17 +113,17 @@ public class CsvViewer extends JFrame {
                 mainMenu.setVisible(true);
             }
         });
-
+    
         bottomPanel = CsvViewerUIHelper.createBottomPanel(selectedRowsLabel, thresholdSlider, thresholdLabel);
         statsPanel = new JPanel(new BorderLayout());
         statsPanel.add(statsScrollPane, BorderLayout.CENTER);
-
+    
         splitPane = CsvViewerUIHelper.createSplitPane(tableScrollPane, statsPanel);
         add(splitPane, BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
-
+    
         generateClassShapes();
-    }
+    }    
 
     public void copySelectedCell() {
         int row = table.getSelectedRow();
