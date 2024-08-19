@@ -1,10 +1,12 @@
 package src.plots;
 
-import java.awt.*;
-import java.awt.geom.*;
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.geom.*;
 import java.util.List;
 import java.util.Map;
+import src.utils.ScreenshotUtils;
 
 public class StaticCircularCoordinatesPlot extends JFrame {
     private List<List<Double>> data;
@@ -14,12 +16,13 @@ public class StaticCircularCoordinatesPlot extends JFrame {
     private List<String> classLabels;
     private List<Integer> selectedRows;
     private int numAttributes;
+    private String datasetName;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
-    public StaticCircularCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows) {
+    public StaticCircularCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -27,19 +30,38 @@ public class StaticCircularCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
         this.numAttributes = attributeNames.size();
+        this.datasetName = datasetName;
+
         setTitle("Static Circular Coordinates");
         setSize(800, 800);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setLocationRelativeTo(null);
 
         // Set the layout and background color of the main content pane
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
 
         // Add the plot panel at the center
-        add(new StaticCircularCoordinatesPanel(), BorderLayout.CENTER);
+        StaticCircularCoordinatesPanel plotPanel = new StaticCircularCoordinatesPanel();
+        plotPanel.setPreferredSize(new Dimension(600, 600));
+        JScrollPane scrollPane = new JScrollPane(plotPanel);
+        add(scrollPane, BorderLayout.CENTER);
 
         // Add a legend panel at the bottom (horizontal)
         add(createLegendPanel(), BorderLayout.SOUTH);
+
+        // Add a key listener for the space bar to save a screenshot
+        scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
+        scrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "StaticCircularCoordinates", datasetName);
+            }
+        });
+
+        // Ensure the JFrame is focusable to capture key events
+        setFocusable(true);
+        requestFocusInWindow();
     }
 
     private JPanel createLegendPanel() {

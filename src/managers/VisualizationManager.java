@@ -182,7 +182,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
 
-        StaticCircularCoordinatesPlot plot = new StaticCircularCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows);
+        StaticCircularCoordinatesPlot plot = new StaticCircularCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName());
         plot.setVisible(true);
     }
 
