@@ -9,7 +9,13 @@ import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.List;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collections;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -101,8 +107,9 @@ public class CsvViewer extends JFrame {
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
+                closeAllOwnedWindows();
                 dispose();
-                mainMenu.setVisible(true); // Show the main menu again
+                mainMenu.setVisible(true);
             }
         });
 
@@ -409,6 +416,12 @@ public class CsvViewer extends JFrame {
 
         if (selectedAttribute != null) {
             sortColumnsByCovariance(selectedAttribute);
+        }
+    }
+    
+    private void closeAllOwnedWindows() {
+        for (Window window : getOwnerlessWindows()) {
+            window.dispose();
         }
     }
 
