@@ -831,52 +831,52 @@ public class CsvViewer extends JFrame {
     }
 
     public void calculateAndInsertSlopesAndDistances() {
-        TableColumnModel columnModel = table.getColumnModel();
         List<Integer> numericColumnIndices = new ArrayList<>();
-        int numColumns = tableModel.getColumnCount();
-    
-        // Collect indices of numeric columns in order
+        int numColumns = table.getColumnModel().getColumnCount(); // Use the column model to get current visible order
+        
+        // Collect indices of numeric columns in the current column order
         for (int i = 0; i < numColumns; i++) {
-            if (isColumnNumeric(i)) {
-                numericColumnIndices.add(i);
+            int modelIndex = table.convertColumnIndexToModel(i); // Get the actual model index
+            if (isColumnNumeric(modelIndex)) {
+                numericColumnIndices.add(modelIndex);
             }
         }
-    
+        
         int numPairs = numericColumnIndices.size() / 4; // Calculate the number of complete pairs (4 columns per pair)
         if (numPairs == 0 && numericColumnIndices.size() >= 2) {
             // If there's at least two numeric columns, allow 1 pair with padding
             numPairs = 1;
         }
-    
+        
         // For each group of 4 numeric columns, calculate slope and distance
         for (int i = 0; i < numPairs; i++) {
             int colIndex1 = numericColumnIndices.get(i * 4);
             int colIndex2 = numericColumnIndices.get(i * 4 + 1);
             int colIndex3 = numericColumnIndices.get(i * 4 + 2);
             int colIndex4 = numericColumnIndices.get(i * 4 + 3);
-    
+        
             // In case of fewer columns, duplicate the last one
             if (numericColumnIndices.size() < 4) {
                 colIndex3 = colIndex1;
                 colIndex4 = colIndex2;
             }
-    
+        
             String slopeColumnName = getUniqueColumnName("Slope(" + tableModel.getColumnName(colIndex1) + ":" + tableModel.getColumnName(colIndex2) + "," + tableModel.getColumnName(colIndex3) + ":" + tableModel.getColumnName(colIndex4) + ")");
             String distanceColumnName = getUniqueColumnName("Distance(" + tableModel.getColumnName(colIndex1) + ":" + tableModel.getColumnName(colIndex2) + "," + tableModel.getColumnName(colIndex3) + ":" + tableModel.getColumnName(colIndex4) + ")");
-    
+        
             tableModel.addColumn(distanceColumnName);
             tableModel.addColumn(slopeColumnName);
-    
+        
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 try {
                     double value1 = Double.parseDouble(tableModel.getValueAt(row, colIndex1).toString());
                     double value2 = Double.parseDouble(tableModel.getValueAt(row, colIndex2).toString());
                     double value3 = Double.parseDouble(tableModel.getValueAt(row, colIndex3).toString());
                     double value4 = Double.parseDouble(tableModel.getValueAt(row, colIndex4).toString());
-    
+        
                     double slope = (value4 - value2) / (value3 - value1); // Calculate slope
                     double distance = Math.sqrt(Math.pow(value3 - value1, 2) + Math.pow(value4 - value2, 2)); // Calculate distance
-    
+        
                     tableModel.setValueAt(String.format("%.4f", slope), row, tableModel.findColumn(slopeColumnName));
                     tableModel.setValueAt(String.format("%.4f", distance), row, tableModel.findColumn(distanceColumnName));
                 } catch (NumberFormatException | NullPointerException e) {
