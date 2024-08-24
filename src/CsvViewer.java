@@ -837,7 +837,7 @@ public class CsvViewer extends JFrame {
         // Collect indices of numeric columns in the current column order
         for (int i = 0; i < numColumns; i++) {
             int modelIndex = table.convertColumnIndexToModel(i); // Get the actual model index
-            if (isColumnNumeric(modelIndex)) {
+            if (isColumnNumeric(modelIndex) && stateManager.getOriginalColumnNames().contains(tableModel.getColumnName(modelIndex))) {
                 numericColumnIndices.add(modelIndex);
             }
         }
