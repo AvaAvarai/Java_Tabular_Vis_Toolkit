@@ -90,6 +90,7 @@ Hiding the classifiable cases with single attribute pure intervals which cover 5
 - **Rule Threshold Slider:** Adjust the threshold for rule coverage over a class or dataset.
 - **Feature Engineering:** Insert feature columns with direct trigonometric attribute values, such as arccos(attribute), or calculate forward/backward differences wrapped in trigonometric functions.
 - **Linear Combination Feature Engineering:** Insert linear combination columns with custom coefficients, optionally wrapped in a trigonometric function.
+- **Slope Distance Feature Engineering:** Insert slope-distance values for the attributes as paired columns, duplicate last column as needed when missing required attribute count.
 - **Gradient Descent Optimization:** Automatically discover optimal coefficients for linear combination features, maximizing class separability.
 
 ## Rule Discovery
@@ -151,6 +152,20 @@ Wrapped with cos function:
 Transformed Feature = cos(0.5(x1) + 0.3(x2) - 0.2(x3))
 
 This transformation can provide deeper insights and improve classification.
+
+### Feature Engineering with Slope-Distance
+
+JTabViz can insert columns of features engineered with slope and distance calculations to explore relationships between pairs of numeric attributes:
+
+Slope: Measures the rate of change between two attributes, calculated as:
+`slope = (Y2 − Y1) / (X2 − X1)`
+
+Distance: Represents the Euclidean distance between two points in 2D space, calculated as:
+`distance = (X2 − X1)^2 + (Y2 − Y1)^2`
+
+Attribute Pairing: Attributes are paired sequentially. If there are an odd number of columns, the last one is duplicated to complete the pair.
+
+These features help identify patterns, clusters, or anomalies, in the data.
 
 ## Getting Started
 
