@@ -40,14 +40,21 @@ public class UIHelper {
         button.setContentAreaFilled(false);
         button.setToolTipText(toolTip);
         button.addActionListener(actionListener);
-
+    
+        ImageIcon icon = null;
         if (iconPath != null && !iconPath.isEmpty()) {
-            ImageIcon icon = loadIcon(iconPath, 40, 40);
-            if (icon != null) {
-                button.setIcon(icon);
-            }
+            icon = loadIcon(iconPath, 40, 40);
         }
-
+    
+        if (icon == null) {
+            // Fallback to "missing.png" if the desired icon is not found
+            icon = loadIcon("/icons/missing.png", 40, 40);
+        }
+    
+        if (icon != null) {
+            button.setIcon(icon);
+        }
+    
         return button;
-    }
+    }    
 }

@@ -27,7 +27,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.numPlots = numPlots;
         this.selectedRows = selectedRows;
-        this.table = table; // Initialize the table reference
+        this.table = table;
 
         setTitle("Shifted Paired Coordinates");
         setSize(800, 600);
@@ -189,11 +189,6 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
 
         private void drawRow(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight) {
             int numAttributes = attributeNames.size();
-            StringBuilder output = new StringBuilder();
-        
-            // Get the class label for the current row
-            String classLabel = classLabels.get(row);
-            output.append("Class: ").append(classLabel);
         
             for (int i = 0; i < numPlots; i++) {
                 int attrIndex1 = i * 2;
@@ -225,24 +220,10 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         
                     int x2 = plotX2 + (int) (plotSize * normX2);
                     int y2 = plotY + plotSize - (int) (plotSize * normY2) + 20;
-        
-                    // Calculate slope and distance
-                    double slope = (double) (y2 - y1) / (x2 - x1);
-                    double distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-        
-                    // Append the calculated values to the output string
-                    output.append(", slope((").append(attributeNames.get(attrIndex1)).append(", ").append(attributeNames.get(attrIndex2)).append("), (")
-                        .append(attributeNames.get(nextAttrIndex1)).append(", ").append(attributeNames.get(nextAttrIndex2)).append(")) = ").append(String.format("%.4f", slope));
-        
-                    output.append(", dist((").append(attributeNames.get(attrIndex1)).append(", ").append(attributeNames.get(attrIndex2)).append("), (")
-                        .append(attributeNames.get(nextAttrIndex1)).append(", ").append(attributeNames.get(nextAttrIndex2)).append(")) = ").append(String.format("%.4f", distance));
-        
+                    
                     g2.drawLine(x1, y1, x2, y2);
                 }
             }
-        
-            // Print the output string for the current row
-            System.out.println(output.toString());
         }
 
         private void drawScatterPlot(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight) {

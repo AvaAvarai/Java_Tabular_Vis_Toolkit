@@ -40,6 +40,7 @@ public class ButtonPanelManager {
         buttonPanel.add(createToggleEasyCasesButton());
         buttonPanel.add(createRuleOverlayButton());
         buttonPanel.add(createLinearCombinationButton());
+        buttonPanel.add(createSlopesAndDistancesButton());
 
         return buttonPanel;
     }
@@ -88,6 +89,16 @@ public class ButtonPanelManager {
             }
         });
     }
+
+    private JButton createSlopesAndDistancesButton() {
+        return UIHelper.createButton("/icons/slopes_distances.png", "Insert Slopes and Distances", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showCalculateSlopesAndDistancesDialog();
+            }
+        });
+    }    
 
     private JButton createFontSettingsButton() {
         return UIHelper.createButton("/icons/fontcolor.png", "Font Color", e -> {
