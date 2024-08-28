@@ -13,14 +13,14 @@ public class DecisionTree {
     private static final String RIGHT_CHILD = "RIGHT_CHILD";
     private static final String LEFT_CHILD = "LEFT_CHILD";
 
-    private static class TreeNode {
+    public static class TreeNode {
         public Function<String[], Boolean> question;
         public String questionText;
-        private boolean isLeaf;
-        private TreeNode left;
-        private TreeNode right;
-        private String prediction;
-        private int caseCount; // Number of cases in this node
+        public boolean isLeaf;
+        public TreeNode left;
+        public TreeNode right;
+        public String prediction;
+        public int caseCount;
     }    
 
     private TreeNode root;
@@ -180,5 +180,9 @@ public class DecisionTree {
             printTreeNode(node.left, level + 1);
             printTreeNode(node.right, level + 1);
         }
-    }    
+    }
+
+    public TreeNode getRoot() {
+        return root;
+    }     
 }

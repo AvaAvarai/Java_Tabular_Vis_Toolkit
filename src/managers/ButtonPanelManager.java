@@ -3,6 +3,7 @@ package src.managers;
 import src.CsvViewer;
 import src.DecisionTree;
 import src.UIHelper;
+import src.plots.DecisionTreeVisualizationPanel;
 
 import javax.swing.*;
 
@@ -50,6 +51,20 @@ public class ButtonPanelManager {
         return buttonPanel;
     }
 
+    private void showDecisionTreeVisualization(DecisionTree.TreeNode root, List<String> attributeNames) {
+        JFrame frame = new JFrame("Decision Tree Visualization");
+        DecisionTreeVisualizationPanel treePanel = new DecisionTreeVisualizationPanel(root, attributeNames);
+
+        JScrollPane scrollPane = new JScrollPane(treePanel);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+
+        frame.add(scrollPane);
+        frame.setSize(800, 600);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setVisible(true);
+    }
+
     private JButton createDTButton() {
         return UIHelper.createButton("/icons/decisiontree.png", "Decision Tree", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
@@ -62,12 +77,12 @@ public class ButtonPanelManager {
                 }
                 int labelColumnIndex = data.get(0).length - 1; // Assuming last column is the class label
                 List<String[]> processedData = processCsvData(data, labelColumnIndex);
-    
+
                 DecisionTree decisionTree = new DecisionTree(processedData, attributeNames, labelColumnIndex);
-                decisionTree.printDecisionTree();  // Prints the tree to the console
+                showDecisionTreeVisualization(decisionTree.getRoot(), attributeNames);
             }
         });
-    }        
+    }     
     
     private List<String[]> processCsvData(List<String[]> data, int labelColumnIndex) {
         List<String[]> processedData = new ArrayList<>();
