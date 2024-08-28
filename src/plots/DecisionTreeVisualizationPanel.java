@@ -4,6 +4,7 @@ import src.DecisionTree;
 import java.util.List;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.*;
 
 public class DecisionTreeVisualizationPanel extends JPanel {
 
@@ -12,24 +13,64 @@ public class DecisionTreeVisualizationPanel extends JPanel {
     private static final int BASE_NODE_HEIGHT = 60;  // Base vertical space between nodes
     private static final int NODE_HORIZONTAL_PADDING = 10;
     private static final int NODE_VERTICAL_PADDING = 5;
-    private static final int NODE_SPACING = 20;  // Spacing between nodes
+    private double zoomFactor = 0.5;  // Start zoomed out
+    private int translateX = 0;
+    private int translateY = 0;
+    private int treeWidth;
+    private int treeHeight;
+    private Point lastMousePos;
 
     public DecisionTreeVisualizationPanel(DecisionTree.TreeNode root, List<String> attributeNames) {
         this.root = root;
         this.attributeNames = attributeNames;
         setPreferredSize(new Dimension(800, 600));  // Set a default size
+        addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                lastMousePos = e.getPoint();
+                setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
+            }
+            public void mouseReleased(MouseEvent e) {
+                setCursor(Cursor.getDefaultCursor());
+            }
+        });
+        addMouseMotionListener(new MouseMotionAdapter() {
+            public void mouseDragged(MouseEvent e) {
+                int dx = e.getX() - lastMousePos.x;
+                int dy = e.getY() - lastMousePos.y;
+                translateX += dx;
+                translateY += dy;
+                lastMousePos = e.getPoint();
+                repaint();
+            }
+        });
+        addMouseWheelListener(new MouseWheelListener() {
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                double zoomChange = -0.05 * e.getPreciseWheelRotation();
+                zoomFactor = Math.max(0.1, Math.min(2.0, zoomFactor + zoomChange));
+                repaint();
+            }
+        });
         SwingUtilities.invokeLater(this::adjustPanelSize);  // Adjust size after component is fully initialized
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D) g.create();
+        
+        // Center the tree
+        int centerX = getWidth() / 2 - (int)(treeWidth * zoomFactor / 2) + translateX;
+        int centerY = getHeight() / 2 - (int)(treeHeight * zoomFactor / 2) + translateY;
+        g2d.translate(centerX, centerY);
+        
+        g2d.scale(zoomFactor, zoomFactor);
         if (root != null) {
-            drawTree(g, root, getWidth() / 2, 50);
+            drawTree(g2d, root, treeWidth / 2, 50);
         }
+        g2d.dispose();
     }
 
-    private void drawTree(Graphics g, DecisionTree.TreeNode node, int x, int y) {
+    private void drawTree(Graphics2D g, DecisionTree.TreeNode node, int x, int y) {
         if (node != null) {
             g.setFont(new Font("Arial", Font.PLAIN, 12));
             String mainText = node.isLeaf ? node.prediction : node.questionText;
@@ -56,7 +97,7 @@ public class DecisionTreeVisualizationPanel extends JPanel {
             if (!node.isLeaf) {
                 int leftWidth = calculateSubtreeWidth(node.left);
                 int rightWidth = calculateSubtreeWidth(node.right);
-                int totalWidth = leftWidth + rightWidth + NODE_SPACING;
+                int totalWidth = leftWidth + rightWidth;
 
                 int leftX = x - totalWidth / 2 + leftWidth / 2;
                 int rightX = x + totalWidth / 2 - rightWidth / 2;
@@ -94,11 +135,11 @@ public class DecisionTreeVisualizationPanel extends JPanel {
         }
         if (node.isLeaf) {
             Rectangle bounds = calculateNodeBounds(null, node.prediction, "(" + node.caseCount + " cases)");
-            return bounds.width + NODE_SPACING; // Add spacing between leaves
+            return bounds.width; // Add spacing between leaves
         }
         int leftWidth = calculateSubtreeWidth(node.left);
         int rightWidth = calculateSubtreeWidth(node.right);
-        return leftWidth + rightWidth + NODE_SPACING;
+        return leftWidth + rightWidth;
     }
 
     private int getTreeDepth(DecisionTree.TreeNode node) {
@@ -110,10 +151,11 @@ public class DecisionTreeVisualizationPanel extends JPanel {
 
     private void adjustPanelSize() {
         int treeDepth = getTreeDepth(root);
-        int treeWidth = calculateSubtreeWidth(root);
+        treeWidth = calculateSubtreeWidth(root);
+        treeHeight = (treeDepth + 1) * (BASE_NODE_HEIGHT + 50);
 
         int panelWidth = Math.max(800, treeWidth + 100);
-        int panelHeight = Math.max(600, (treeDepth + 1) * (BASE_NODE_HEIGHT + 50)) + 100;
+        int panelHeight = Math.max(600, treeHeight + 100);
 
         setPreferredSize(new Dimension(panelWidth, panelHeight));
         revalidate();
