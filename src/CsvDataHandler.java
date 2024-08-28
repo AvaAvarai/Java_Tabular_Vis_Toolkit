@@ -48,6 +48,10 @@ public class CsvDataHandler {
             denormalizeData(table, statsTextArea);
         }
     }
+    
+    public boolean isDataNormalized() {
+        return isNormalized;
+    }
 
     private void normalizeData(JTable table, JTextArea statsTextArea) {
         if (originalData.isEmpty()) {

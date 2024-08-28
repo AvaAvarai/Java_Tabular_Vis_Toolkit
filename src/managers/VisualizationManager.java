@@ -250,14 +250,12 @@ public class VisualizationManager {
 
     public void showDecisionTreeVisualization() {
 
-        List<String[]> data = csvViewer.getDataHandler().getOriginalData();
         List<String> attributeNames = new ArrayList<>();
         for (int i = 0; i < csvViewer.getTable().getColumnCount(); i++) {
             attributeNames.add(csvViewer.getTable().getColumnName(i));
         }
-        int labelColumnIndex = data.get(0).length - 1; // Assuming last column is the class label TODO: Make this dynamic
-
-        DecisionTree decisionTree = new DecisionTree(csvViewer.getDataHandler().getOriginalData(), attributeNames, labelColumnIndex);
+        int labelColumnIndex = csvViewer.getClassColumnIndex();
+        DecisionTree decisionTree = new DecisionTree(csvViewer.getDataHandler().isDataNormalized() ? csvViewer.getDataHandler().getNormalizedData() : csvViewer.getDataHandler().getOriginalData(), attributeNames, labelColumnIndex);
         TreeNode root = decisionTree.getRoot();
         JFrame frame = new JFrame("Decision Tree Visualization");
         DecisionTreeVisualizationPanel treePanel = new DecisionTreeVisualizationPanel(root, attributeNames, csvViewer.getClassColors());
