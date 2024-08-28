@@ -20,11 +20,14 @@ public class DecisionTree {
         private TreeNode left;
         private TreeNode right;
         private String prediction;
+        private int caseCount; // Number of cases in this node
     }    
 
     private TreeNode root;
+    private List<String> attributeNames;
 
-    public DecisionTree(List<String[]> data, int labelColumnIndex) {
+    public DecisionTree(List<String[]> data, List<String> attributeNames, int labelColumnIndex) {
+        this.attributeNames = attributeNames;
         this.root = buildTree(data, labelColumnIndex);
     }
 
@@ -33,6 +36,7 @@ public class DecisionTree {
             TreeNode leaf = new TreeNode();
             leaf.isLeaf = true;
             leaf.prediction = data.get(0)[labelColumnIndex];
+            leaf.caseCount = data.size(); // Track the number of cases
             return leaf;
         }
 
@@ -58,6 +62,7 @@ public class DecisionTree {
             TreeNode leaf = new TreeNode();
             leaf.isLeaf = true;
             leaf.prediction = mostCommonLabel(data, labelColumnIndex);
+            leaf.caseCount = data.size(); // Track the number of cases
             return leaf;
         }
 
@@ -76,7 +81,7 @@ public class DecisionTree {
 
         TreeNode node = new TreeNode();
         node.question = question;
-        node.questionText = "Is column " + bestIndex + " <= " + bestValue + "?";
+        node.questionText = "Is " + attributeNames.get(bestIndex) + " <= " + bestValue + "?";
         node.left = buildTree(partitions.get(LEFT_CHILD), labelColumnIndex);
         node.right = buildTree(partitions.get(RIGHT_CHILD), labelColumnIndex);
 
@@ -169,7 +174,7 @@ public class DecisionTree {
 
     private void printTreeNode(TreeNode node, int level) {
         if (node.isLeaf) {
-            System.out.println("  ".repeat(level) + "Predict: " + node.prediction);
+            System.out.println("  ".repeat(level) + "Predict: " + node.prediction + " (" + node.caseCount + " cases)");
         } else {
             System.out.println("  ".repeat(level) + "Q: " + node.questionText);
             printTreeNode(node.left, level + 1);

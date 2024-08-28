@@ -56,14 +56,18 @@ public class ButtonPanelManager {
                 csvViewer.noDataLoadedError();
             } else {
                 List<String[]> data = csvViewer.getDataHandler().getOriginalData();
+                List<String> attributeNames = new ArrayList<>();
+                for (int i = 0; i < csvViewer.getTable().getColumnCount(); i++) {
+                    attributeNames.add(csvViewer.getTable().getColumnName(i));
+                }
                 int labelColumnIndex = data.get(0).length - 1; // Assuming last column is the class label
                 List<String[]> processedData = processCsvData(data, labelColumnIndex);
     
-                DecisionTree decisionTree = new DecisionTree(processedData, labelColumnIndex);
+                DecisionTree decisionTree = new DecisionTree(processedData, attributeNames, labelColumnIndex);
                 decisionTree.printDecisionTree();  // Prints the tree to the console
             }
         });
-    }    
+    }        
     
     private List<String[]> processCsvData(List<String[]> data, int labelColumnIndex) {
         List<String[]> processedData = new ArrayList<>();
