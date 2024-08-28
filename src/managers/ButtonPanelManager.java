@@ -51,59 +51,15 @@ public class ButtonPanelManager {
         return buttonPanel;
     }
 
-    private void showDecisionTreeVisualization(DecisionTree.TreeNode root, List<String> attributeNames) {
-        JFrame frame = new JFrame("Decision Tree Visualization");
-        DecisionTreeVisualizationPanel treePanel = new DecisionTreeVisualizationPanel(root, attributeNames);
-
-        JScrollPane scrollPane = new JScrollPane(treePanel);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-
-        frame.add(scrollPane);
-        frame.setSize(800, 600);
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setVisible(true);
-    }
-
     private JButton createDTButton() {
-        return UIHelper.createButton("/icons/decisiontree.png", "Decision Tree", e -> {
+        return UIHelper.createButton("/icons/dt.png", "Decision Tree", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
-                List<String[]> data = csvViewer.getDataHandler().getOriginalData();
-                List<String> attributeNames = new ArrayList<>();
-                for (int i = 0; i < csvViewer.getTable().getColumnCount(); i++) {
-                    attributeNames.add(csvViewer.getTable().getColumnName(i));
-                }
-                int labelColumnIndex = data.get(0).length - 1; // Assuming last column is the class label
-                List<String[]> processedData = processCsvData(data, labelColumnIndex);
-
-                DecisionTree decisionTree = new DecisionTree(processedData, attributeNames, labelColumnIndex);
-                showDecisionTreeVisualization(decisionTree.getRoot(), attributeNames);
+                csvViewer.showDecisionTreeVisualization();
             }
         });
     }     
-    
-    private List<String[]> processCsvData(List<String[]> data, int labelColumnIndex) {
-        List<String[]> processedData = new ArrayList<>();
-        for (String[] row : data) {
-            String[] processedRow = new String[row.length];
-            for (int i = 0; i < row.length; i++) {
-                if (i != labelColumnIndex) {
-                    try {
-                        Double.parseDouble(row[i]); // Ensure it's numerical
-                        processedRow[i] = row[i]; // Store as string
-                    } catch (NumberFormatException e) {
-                        processedRow[i] = "NaN";  // Handle non-numeric data appropriately
-                    }
-                } else {
-                    processedRow[i] = row[i]; // Leave the label as a String
-                }
-            }
-            processedData.add(processedRow);
-        }
-        return processedData;
-    }         
 
     private JButton createLoadButton() {
         return UIHelper.createButton("/icons/load.png", "Load CSV", e -> csvViewer.loadCsvFile());

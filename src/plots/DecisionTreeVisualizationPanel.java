@@ -2,6 +2,7 @@ package src.plots;
 
 import src.DecisionTree;
 import java.util.List;
+import java.util.Map;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -10,6 +11,7 @@ public class DecisionTreeVisualizationPanel extends JPanel {
 
     private final DecisionTree.TreeNode root;
     private final List<String> attributeNames;
+    private final Map<String, Color> classColors;
     private static final int BASE_NODE_HEIGHT = 60;  // Base vertical space between nodes
     private static final int NODE_HORIZONTAL_PADDING = 10;
     private static final int NODE_VERTICAL_PADDING = 5;
@@ -20,9 +22,10 @@ public class DecisionTreeVisualizationPanel extends JPanel {
     private int treeHeight;
     private Point lastMousePos;
 
-    public DecisionTreeVisualizationPanel(DecisionTree.TreeNode root, List<String> attributeNames) {
+    public DecisionTreeVisualizationPanel(DecisionTree.TreeNode root, List<String> attributeNames, Map<String, Color> classColors) {
         this.root = root;
         this.attributeNames = attributeNames;
+        this.classColors = classColors;
         setPreferredSize(new Dimension(800, 600));  // Set a default size
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -81,7 +84,11 @@ public class DecisionTreeVisualizationPanel extends JPanel {
             int nodeHeight = nodeBounds.height;
 
             // Draw node background
-            g.setColor(Color.WHITE);
+            if (node.isLeaf && classColors.containsKey(node.prediction)) {
+                g.setColor(classColors.get(node.prediction));
+            } else {
+                g.setColor(Color.WHITE);
+            }
             g.fillRect(x - nodeWidth / 2, y, nodeWidth, nodeHeight);
             g.setColor(Color.BLACK);
             g.drawRect(x - nodeWidth / 2, y, nodeWidth, nodeHeight);

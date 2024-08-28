@@ -924,6 +924,10 @@ public class CsvViewer extends JFrame {
         visualizationManager.showStaticCircularCoordinatesPlot();
     }
 
+    public void showDecisionTreeVisualization() {
+        visualizationManager.showDecisionTreeVisualization();
+    }
+
     public void showRuleTesterDialog() {
         RuleTesterDialog ruleTesterDialog = new RuleTesterDialog(this, tableModel);
         ruleTesterDialog.setVisible(true);
