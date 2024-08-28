@@ -1,6 +1,5 @@
 package src.managers;
 
-import src.CsvDataHandler;
 import src.CsvViewer;
 import src.DecisionTree;
 import src.DecisionTree.TreeNode;
@@ -12,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class VisualizationManager {
 
@@ -96,6 +94,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
 
+        // TODO: will we keep this feature as we are not using it currently and moving towards decision tree space visualization?
         List<PureRegionUtils> pureRegions = PureRegionUtils.calculatePureRegions(csvViewer.tableModel, csvViewer.thresholdSlider.getValue(), csvViewer.getClassColumnIndex());
 
         //ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(data, columnNames, csvViewer.getClassColors(), csvViewer.getClassColumnIndex(), columnOrder, selectedRows, csvViewer.getClassShapes(), csvViewer.getDatasetName());

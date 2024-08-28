@@ -1,14 +1,9 @@
 package src.managers;
 
 import src.CsvViewer;
-import src.DecisionTree;
 import src.UIHelper;
-import src.plots.DecisionTreeVisualizationPanel;
 
 import javax.swing.*;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.awt.*;
 
 public class ButtonPanelManager {
