@@ -220,7 +220,8 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         
                     int x2 = plotX2 + (int) (plotSize * normX2);
                     int y2 = plotY + plotSize - (int) (plotSize * normY2) + 20;
-                    
+                    // set class color TODO: lift up in function to be less repetitive and hacky
+                    g2.setColor(classColors.get(classLabels.get(row)));
                     g2.drawLine(x1, y1, x2, y2);
                 }
             }
