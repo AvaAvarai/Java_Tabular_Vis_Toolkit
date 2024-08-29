@@ -63,7 +63,7 @@ public class CsvViewer extends JFrame {
         stateManager = new StateManager();
     
         setTitle("JTabViz: Java Tabular Visualization Toolkit");
-        setSize(1100, 600);
+        setSize(1200, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
     
@@ -972,6 +972,10 @@ public class CsvViewer extends JFrame {
             toggleEasyCasesButton.setIcon(UIHelper.loadIcon("/icons/uneasy.png", 40, 40));
             toggleEasyCasesButton.setToolTipText("Show All Cases");
         }
+    }
+
+    public void showConcentricCoordinatesPlot() {
+        visualizationManager.showConcentricCoordinatesPlot();
     }
 
     public void applyRowFilter() {

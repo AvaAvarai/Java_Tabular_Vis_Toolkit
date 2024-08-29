@@ -269,4 +269,53 @@ public class VisualizationManager {
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
     }
+
+    public void showConcentricCoordinatesPlot() {
+        if (csvViewer.tableModel.getColumnCount() == 0) {
+            csvViewer.noDataLoadedError();
+            return;
+        }
+
+        List<List<Double>> data = new ArrayList<>();
+        List<String> attributeNames = new ArrayList<>();
+        List<String> classLabels = new ArrayList<>();
+
+        TableColumnModel columnModel = csvViewer.table.getColumnModel();
+        int columnCount = columnModel.getColumnCount();
+        int[] columnOrder = new int[columnCount];
+        for (int i = 0; i < columnCount; i++) {
+            columnOrder[i] = csvViewer.table.convertColumnIndexToModel(i);
+        }
+
+        for (int col = 0; col < columnOrder.length; col++) {
+            boolean isNumeric = true;
+            List<Double> columnData = new ArrayList<>();
+            for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
+                if (!csvViewer.getHiddenRows().contains(row)) {
+                    try {
+                        columnData.add(Double.parseDouble(csvViewer.tableModel.getValueAt(row, columnOrder[col]).toString()));
+                    } catch (NumberFormatException e) {
+                        isNumeric = false;
+                        break;
+                    }
+                }
+            }
+            if (isNumeric) {
+                data.add(columnData);
+                attributeNames.add(csvViewer.tableModel.getColumnName(columnOrder[col]));
+            }
+        }
+
+        for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
+            if (!csvViewer.getHiddenRows().contains(row)) {
+                classLabels.add((String) csvViewer.tableModel.getValueAt(row, csvViewer.getClassColumnIndex()));
+            }
+        }
+
+        List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
+        selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
+
+        ConcentricCoordinatesPlot plot = new ConcentricCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName());
+        plot.setVisible(true);
+    }
 }

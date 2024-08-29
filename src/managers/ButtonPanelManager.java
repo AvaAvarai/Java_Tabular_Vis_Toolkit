@@ -42,8 +42,19 @@ public class ButtonPanelManager {
         buttonPanel.add(createLinearCombinationButton());
         buttonPanel.add(createSlopesAndDistancesButton());
         buttonPanel.add(createDTButton());
+        buttonPanel.add(createConcentricCoordinatesButton());
 
         return buttonPanel;
+    }
+
+    private JButton createConcentricCoordinatesButton() {
+        return UIHelper.createButton("/icons/concentric.png", "Concentric Coordinates Plot", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showConcentricCoordinatesPlot();
+            }
+        });
     }
 
     private JButton createDTButton() {
