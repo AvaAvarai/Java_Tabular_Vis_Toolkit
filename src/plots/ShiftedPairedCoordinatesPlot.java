@@ -151,23 +151,15 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             // Draw rows in the order they are listed in the table
             for (int i = 0; i < table.getRowCount(); i++) {
                 int row = table.convertRowIndexToModel(i); // Use the current sort order
-                if (!selectedRows.contains(row)) {
-                    drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
-                    drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
-                }
+                drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
+                drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
             }
 
+            // Draw highlighted rows on top
             for (int i = 0; i < table.getRowCount(); i++) {
                 int row = table.convertRowIndexToModel(i);
                 if (selectedRows.contains(row)) {
-                    drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
-                }
-            }
-
-            for (int i = 0; i < table.getRowCount(); i++) {
-                int row = table.convertRowIndexToModel(i);
-                if (selectedRows.contains(row)) {
-                    drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
+                    drawHighlightedRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                 }
             }
         }
@@ -188,7 +180,19 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         }
 
         private void drawRow(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight) {
+            drawRowHelper(g2, row, plotY, plotWidth, plotHeight, false);
+        }
+
+        private void drawHighlightedRow(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight) {
+            drawRowHelper(g2, row, plotY, plotWidth, plotHeight, true);
+        }
+
+        private void drawRowHelper(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight, boolean isHighlighted) {
             int numAttributes = attributeNames.size();
+            String classLabel = classLabels.get(row);
+            Color color = isHighlighted ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+            Stroke originalStroke = g2.getStroke();
+            g2.setStroke(isHighlighted ? new BasicStroke(2) : originalStroke);
         
             for (int i = 0; i < numPlots; i++) {
                 int attrIndex1 = i * 2;
@@ -220,11 +224,12 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         
                     int x2 = plotX2 + (int) (plotSize * normX2);
                     int y2 = plotY + plotSize - (int) (plotSize * normY2) + 20;
-                    // set class color TODO: lift up in function to be less repetitive and hacky
-                    g2.setColor(classColors.get(classLabels.get(row)));
+                    
+                    g2.setColor(color);
                     g2.drawLine(x1, y1, x2, y2);
                 }
             }
+            g2.setStroke(originalStroke);
         }
 
         private void drawScatterPlot(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight) {
