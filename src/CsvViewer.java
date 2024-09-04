@@ -209,15 +209,9 @@ public class CsvViewer extends JFrame {
                 return;
             }
 
-            StringBuilder baseColumnNameBuilder = new StringBuilder("Linear Combination: ");
-            for (int j = 0; j < originalColumnIndices.size(); j++) {
-                baseColumnNameBuilder.append(coefficients.get(j)).append(" * ").append(tableModel.getColumnName(originalColumnIndices.get(j)));
-                if (j < originalColumnIndices.size() - 1) {
-                    baseColumnNameBuilder.append(" + ");
-                }
-            }
+            String baseColumnNameBuilder = new StringBuilder("LC#"+(tableModel.getColumnCount()-originalColumnIndices.size())).toString();
 
-            String newColumnName = getUniqueColumnName(baseColumnNameBuilder.toString());
+            String newColumnName = getUniqueColumnName(baseColumnNameBuilder);
 
             tableModel.addColumn(newColumnName);
 
