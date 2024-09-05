@@ -18,6 +18,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private Map<String, Shape> classShapes;
     private List<String> classLabels;
     private List<Integer> selectedRows;
+    private double globalMaxValue;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -31,6 +32,12 @@ public class ConcentricCoordinatesPlot extends JFrame {
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
+
+        // Calculate the global maximum value across all attributes
+        this.globalMaxValue = data.stream()
+            .flatMap(List::stream)
+            .max(Double::compare)
+            .orElse(1.0);
 
         setTitle("Concentric Coordinates Plot");
         setSize(800, 600);
@@ -183,9 +190,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
             for (int i = 0; i < numAttributes; i++) {
                 double value = data.get(i).get(row);
-                double minValue = data.get(i).stream().min(Double::compare).orElse(0.0);
-                double maxValue = data.get(i).stream().max(Double::compare).orElse(1.0);
-                double normalizedValue = (value - minValue) / (maxValue - minValue);
+                double normalizedValue = value / globalMaxValue;
 
                 // Adjust so that 0 (min value) is at the top (12 o'clock position)
                 double angle = -Math.PI / 2 + normalizedValue * 2 * Math.PI;
