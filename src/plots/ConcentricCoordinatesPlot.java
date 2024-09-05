@@ -22,6 +22,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
+    private static final int TITLE_PADDING = 20;
 
     public ConcentricCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName) {
         this.data = data;
@@ -111,7 +112,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
     private class ConcentricCoordinatesPanel extends JPanel {
         public ConcentricCoordinatesPanel() {
-            setBackground(Color.WHITE);
+            setBackground(new Color(0, 0, 0, 0));
         }
 
         @Override
@@ -137,10 +138,14 @@ public class ConcentricCoordinatesPlot extends JFrame {
             g2.setColor(Color.BLACK);
             g2.drawString(title, (getWidth() - titleWidth) / 2, titleHeight);
 
+            // Fill the plot area with light grey background
+            g2.setColor(new Color(0xC0C0C0));
+            g2.fillRect(0, titleHeight + TITLE_PADDING, getWidth(), getHeight() - titleHeight - TITLE_PADDING);
+
             // Calculate center and radius for the plot
             int centerX = getWidth() / 2;
-            int centerY = getHeight() / 2;
-            int maxRadius = Math.min(centerX, centerY) - 50; // Leave some padding
+            int centerY = (getHeight() - titleHeight - TITLE_PADDING) / 2 + titleHeight + TITLE_PADDING;
+            int maxRadius = Math.min(centerX, (getHeight() - titleHeight - TITLE_PADDING) / 2) - 50; // Leave some padding
 
             // Draw concentric axes
             drawConcentricAxes(g2, centerX, centerY, maxRadius);
