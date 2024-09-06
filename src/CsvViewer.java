@@ -871,11 +871,19 @@ public class CsvViewer extends JFrame {
                     double slope = (value4 - value2) / (value3 - value1); // Calculate slope
                     double distance = Math.sqrt(Math.pow(value3 - value1, 2) + Math.pow(value4 - value2, 2)); // Calculate distance
         
+                    // Check for NaN, infinity, or other indeterminate forms
+                    if (Double.isNaN(slope) || Double.isInfinite(slope)) {
+                        slope = 0;
+                    }
+                    if (Double.isNaN(distance) || Double.isInfinite(distance)) {
+                        distance = 0;
+                    }
+        
                     tableModel.setValueAt(String.format("%.4f", slope), row, tableModel.findColumn(slopeColumnName));
                     tableModel.setValueAt(String.format("%.4f", distance), row, tableModel.findColumn(distanceColumnName));
                 } catch (NumberFormatException | NullPointerException e) {
-                    tableModel.setValueAt("NaN", row, tableModel.findColumn(slopeColumnName));
-                    tableModel.setValueAt("NaN", row, tableModel.findColumn(distanceColumnName));
+                    tableModel.setValueAt("0.0000", row, tableModel.findColumn(slopeColumnName));
+                    tableModel.setValueAt("0.0000", row, tableModel.findColumn(distanceColumnName));
                 }
             }
         }
