@@ -2,10 +2,12 @@ package src.managers;
 
 import src.CsvViewer;
 import src.table.ReorderableTableModel;
+import src.table.NumericStringComparator;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -45,6 +47,13 @@ public class TableManager {
         currentCaretPosition = Math.min(currentCaretPosition, csvViewer.getStatsTextArea().getText().length());
         csvViewer.getPureRegionManager().calculateAndDisplayPureRegions(csvViewer.getThresholdSlider().getValue());
         csvViewer.getStatsTextArea().setCaretPosition(currentCaretPosition);
+
+        // Apply NumericStringComparator to all columns
+        TableRowSorter<ReorderableTableModel> sorter = new TableRowSorter<>(tableModel);
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            sorter.setComparator(i, new NumericStringComparator());
+        }
+        csvViewer.getTable().setRowSorter(sorter);
     }
 
     public void deleteColumn(int viewColumnIndex) {
