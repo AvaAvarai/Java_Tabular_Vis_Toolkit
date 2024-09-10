@@ -19,6 +19,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private List<String> classLabels;
     private List<Integer> selectedRows;
     private int numAttributes;
+    private double globalMaxValue;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -36,6 +37,13 @@ public class ParallelCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
         this.numAttributes = attributeNames.size();
+
+        // Calculate global max value
+        this.globalMaxValue = data.stream()
+            .flatMap(List::stream)
+            .mapToDouble(Double::doubleValue)
+            .max()
+            .orElse(1.0);
 
         setTitle("Parallel Coordinates Plot");
         setSize(800, 600);
@@ -189,9 +197,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
             for (int i = 0; i < numAttributes; i++) {
                 double value = data.get(i).get(row);
-                double minValue = data.get(i).stream().min(Double::compare).orElse(0.0);
-                double maxValue = data.get(i).stream().max(Double::compare).orElse(1.0);
-                double normalizedValue = (value - minValue) / (maxValue - minValue);
+                double normalizedValue = value / globalMaxValue;
 
                 double x = margin + i * axisSpacing;
                 double y = plotAreaHeight - (normalizedValue * plotAreaHeight) + plotAreaY;
