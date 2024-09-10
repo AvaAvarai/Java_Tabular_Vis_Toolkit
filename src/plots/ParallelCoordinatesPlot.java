@@ -20,6 +20,8 @@ public class ParallelCoordinatesPlot extends JFrame {
     private List<Integer> selectedRows;
     private int numAttributes;
     private double globalMaxValue;
+    private double globalMinValue;
+    private double axisMinValue; // New variable to store the minimum value for axes
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -38,12 +40,20 @@ public class ParallelCoordinatesPlot extends JFrame {
         this.selectedRows = selectedRows;
         this.numAttributes = attributeNames.size();
 
-        // Calculate global max value
+        // Calculate global max and min values
         this.globalMaxValue = data.stream()
             .flatMap(List::stream)
             .mapToDouble(Double::doubleValue)
             .max()
             .orElse(1.0);
+        this.globalMinValue = data.stream()
+            .flatMap(List::stream)
+            .mapToDouble(Double::doubleValue)
+            .min()
+            .orElse(0.0);
+
+        // Set the axis minimum value
+        this.axisMinValue = (globalMinValue < 0) ? globalMinValue : 0;
 
         setTitle("Parallel Coordinates Plot");
         setSize(800, 600);
@@ -197,7 +207,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
             for (int i = 0; i < numAttributes; i++) {
                 double value = data.get(i).get(row);
-                double normalizedValue = value / globalMaxValue;
+                double normalizedValue = (value - axisMinValue) / (globalMaxValue - axisMinValue);
 
                 double x = margin + i * axisSpacing;
                 double y = plotAreaHeight - (normalizedValue * plotAreaHeight) + plotAreaY;
