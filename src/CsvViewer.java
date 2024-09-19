@@ -165,15 +165,15 @@ public class CsvViewer extends JFrame {
             return;
         }
 
-        List<Integer> originalColumnIndices = new ArrayList<>();
+        List<Integer> columnIndices = new ArrayList<>();
         List<Double> coefficients = new ArrayList<>();
 
         JPanel panel = new JPanel(new GridLayout(0, 2));
 
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
             String columnName = tableModel.getColumnName(i);
-            if (stateManager.getOriginalColumnNames().contains(columnName) && !columnName.equalsIgnoreCase("class")) {
-                originalColumnIndices.add(i);
+            if (!columnName.equalsIgnoreCase("class")) {
+                columnIndices.add(i);
                 JLabel label = new JLabel("Coefficient for " + columnName + ":");
                 JTextField coefficientField = new JTextField("1");
                 panel.add(label);
@@ -190,7 +190,7 @@ public class CsvViewer extends JFrame {
         JButton optimizeButton = new JButton("Optimize Coefficients");
         optimizeButton.addActionListener(e -> {
             GradientDescentOptimizer optimizer = new GradientDescentOptimizer(this, 0.01, 1000, 1e-6);
-            optimizer.optimizeCoefficientsUsingGradientDescent(originalColumnIndices, coefficients, panel, (String) trigFunctionSelector.getSelectedItem());
+            optimizer.optimizeCoefficientsUsingGradientDescent(columnIndices, coefficients, panel, (String) trigFunctionSelector.getSelectedItem());
         });
         panel.add(optimizeButton);
 
@@ -209,7 +209,7 @@ public class CsvViewer extends JFrame {
                 return;
             }
 
-            String baseColumnNameBuilder = new StringBuilder("LC#"+(tableModel.getColumnCount()-originalColumnIndices.size())).toString();
+            String baseColumnNameBuilder = new StringBuilder("LC#"+(tableModel.getColumnCount()-columnIndices.size())).toString();
 
             String newColumnName = getUniqueColumnName(baseColumnNameBuilder);
 
@@ -221,8 +221,8 @@ public class CsvViewer extends JFrame {
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 double sum = 0.0;
                 try {
-                    for (int j = 0; j < originalColumnIndices.size(); j++) {
-                        Object value = tableModel.getValueAt(row, originalColumnIndices.get(j));
+                    for (int j = 0; j < columnIndices.size(); j++) {
+                        Object value = tableModel.getValueAt(row, columnIndices.get(j));
                         sum += coefficients.get(j) * Double.parseDouble(value.toString());
                     }
                     sum = applyTrigFunction(sum, trigFunction);
