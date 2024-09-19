@@ -826,51 +826,40 @@ public class CsvViewer extends JFrame {
 
     public void calculateAndInsertSlopesAndDistances() {
         List<Integer> numericColumnIndices = new ArrayList<>();
-        int numColumns = table.getColumnModel().getColumnCount(); // Use the column model to get current visible order
+        int numColumns = table.getColumnModel().getColumnCount();
         
         // Collect indices of numeric columns in the current column order
         for (int i = 0; i < numColumns; i++) {
-            int modelIndex = table.convertColumnIndexToModel(i); // Get the actual model index
+            int modelIndex = table.convertColumnIndexToModel(i);
             if (isColumnNumeric(modelIndex) && stateManager.getOriginalColumnNames().contains(tableModel.getColumnName(modelIndex))) {
                 numericColumnIndices.add(modelIndex);
             }
         }
         
-        int numPairs = numericColumnIndices.size() / 4; // Calculate the number of complete pairs (4 columns per pair)
-        if (numPairs == 0 && numericColumnIndices.size() >= 2) {
-            // If there's at least two numeric columns, allow 1 pair with padding
-            numPairs = 1;
+        if (numericColumnIndices.size() < 2) {
+            JOptionPane.showMessageDialog(this, "At least two numeric columns are required to calculate slopes and distances.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
         
-        // For each group of 4 numeric columns, calculate slope and distance
-        for (int i = 0; i < numPairs; i++) {
-            int colIndex1 = numericColumnIndices.get(i * 4);
-            int colIndex2 = numericColumnIndices.get(i * 4 + 1);
-            int colIndex3 = numericColumnIndices.get(i * 4 + 2);
-            int colIndex4 = numericColumnIndices.get(i * 4 + 3);
-        
-            // In case of fewer columns, duplicate the last one
-            if (numericColumnIndices.size() < 4) {
-                colIndex3 = colIndex1;
-                colIndex4 = colIndex2;
-            }
-        
-            String slopeColumnName = getUniqueColumnName("Slope(" + tableModel.getColumnName(colIndex1) + ":" + tableModel.getColumnName(colIndex2) + "," + tableModel.getColumnName(colIndex3) + ":" + tableModel.getColumnName(colIndex4) + ")");
-            String distanceColumnName = getUniqueColumnName("Distance(" + tableModel.getColumnName(colIndex1) + ":" + tableModel.getColumnName(colIndex2) + "," + tableModel.getColumnName(colIndex3) + ":" + tableModel.getColumnName(colIndex4) + ")");
-        
-            tableModel.addColumn(distanceColumnName);
+        // Calculate slope and distance for each pair of adjacent columns
+        for (int i = 0; i < numericColumnIndices.size() - 1; i++) {
+            int colIndex1 = numericColumnIndices.get(i);
+            int colIndex2 = numericColumnIndices.get(i + 1);
+            
+            String slopeColumnName = getUniqueColumnName("Slope(" + tableModel.getColumnName(colIndex1) + ":" + tableModel.getColumnName(colIndex2) + ")");
+            String distanceColumnName = getUniqueColumnName("Distance(" + tableModel.getColumnName(colIndex1) + ":" + tableModel.getColumnName(colIndex2) + ")");
+            
             tableModel.addColumn(slopeColumnName);
-        
+            tableModel.addColumn(distanceColumnName);
+            
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 try {
                     double value1 = Double.parseDouble(tableModel.getValueAt(row, colIndex1).toString());
                     double value2 = Double.parseDouble(tableModel.getValueAt(row, colIndex2).toString());
-                    double value3 = Double.parseDouble(tableModel.getValueAt(row, colIndex3).toString());
-                    double value4 = Double.parseDouble(tableModel.getValueAt(row, colIndex4).toString());
-        
-                    double slope = (value4 - value2) / (value3 - value1); // Calculate slope
-                    double distance = Math.sqrt(Math.pow(value3 - value1, 2) + Math.pow(value4 - value2, 2)); // Calculate distance
-        
+                    
+                    double slope = Math.atan2(value2 - value1, 1.0); // Calculate the angle of the line (slant of the polyline)
+                    double distance = value2 - value1; // Terms subtracted
+                    
                     // Check for NaN, infinity, or other indeterminate forms
                     if (Double.isNaN(slope) || Double.isInfinite(slope)) {
                         slope = 0;
@@ -878,7 +867,7 @@ public class CsvViewer extends JFrame {
                     if (Double.isNaN(distance) || Double.isInfinite(distance)) {
                         distance = 0;
                     }
-        
+                    
                     tableModel.setValueAt(String.format("%.4f", slope), row, tableModel.findColumn(slopeColumnName));
                     tableModel.setValueAt(String.format("%.4f", distance), row, tableModel.findColumn(distanceColumnName));
                 } catch (NumberFormatException | NullPointerException e) {
@@ -887,7 +876,41 @@ public class CsvViewer extends JFrame {
                 }
             }
         }
-    
+        
+        // Calculate slope and distance between last and first column
+        int lastColIndex = numericColumnIndices.get(numericColumnIndices.size() - 1);
+        int firstColIndex = numericColumnIndices.get(0);
+        
+        String slopeColumnName = getUniqueColumnName("Slope(" + tableModel.getColumnName(lastColIndex) + ":" + tableModel.getColumnName(firstColIndex) + ")");
+        String distanceColumnName = getUniqueColumnName("Distance(" + tableModel.getColumnName(lastColIndex) + ":" + tableModel.getColumnName(firstColIndex) + ")");
+        
+        tableModel.addColumn(slopeColumnName);
+        tableModel.addColumn(distanceColumnName);
+        
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            try {
+                double value1 = Double.parseDouble(tableModel.getValueAt(row, lastColIndex).toString());
+                double value2 = Double.parseDouble(tableModel.getValueAt(row, firstColIndex).toString());
+                
+                double slope = Math.atan2(value2 - value1, 1.0); // Calculate the angle of the line (slant of the polyline)
+                double distance = value2 - value1; // Terms subtracted
+                
+                // Check for NaN, infinity, or other indeterminate forms
+                if (Double.isNaN(slope) || Double.isInfinite(slope)) {
+                    slope = 0;
+                }
+                if (Double.isNaN(distance) || Double.isInfinite(distance)) {
+                    distance = 0;
+                }
+                
+                tableModel.setValueAt(String.format("%.4f", slope), row, tableModel.findColumn(slopeColumnName));
+                tableModel.setValueAt(String.format("%.4f", distance), row, tableModel.findColumn(distanceColumnName));
+            } catch (NumberFormatException | NullPointerException e) {
+                tableModel.setValueAt("0.0000", row, tableModel.findColumn(slopeColumnName));
+                tableModel.setValueAt("0.0000", row, tableModel.findColumn(distanceColumnName));
+            }
+        }
+        
         dataHandler.updateStats(tableModel, statsTextArea);
         updateSelectedRowsLabel();
     }
