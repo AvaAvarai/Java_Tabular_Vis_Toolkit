@@ -18,6 +18,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private Map<String, Shape> classShapes;
     private List<String> classLabels;
     private List<Integer> selectedRows;
+    private List<Integer> hiddenRows;
     private double globalMaxValue;
 
     // Font settings
@@ -25,13 +26,14 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
     private static final int TITLE_PADDING = 20;
 
-    public ConcentricCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName) {
+    public ConcentricCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, List<Integer> hiddenRows, String datasetName) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
+        this.hiddenRows = hiddenRows;
 
         // Calculate the global maximum value across all attributes
         this.globalMaxValue = data.stream()
@@ -159,14 +161,14 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
             // Draw the concentric coordinates for each data point
             for (int row = 0; row < data.get(0).size(); row++) {
-                if (!selectedRows.contains(row)) {
+                if (!selectedRows.contains(row) && !hiddenRows.contains(row)) {
                     drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
                 }
             }
 
             // Highlight selected rows
             for (int row = 0; row < data.get(0).size(); row++) {
-                if (selectedRows.contains(row)) {
+                if (selectedRows.contains(row) && !hiddenRows.contains(row)) {
                     drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
                 }
             }
