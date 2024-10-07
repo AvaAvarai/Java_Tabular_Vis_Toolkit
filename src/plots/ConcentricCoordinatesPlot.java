@@ -161,20 +161,14 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
             // Draw the concentric coordinates for each data point
             for (int row = 0; row < data.get(0).size(); row++) {
-                if (!selectedRows.contains(row) && !hiddenRows.contains(row)) {
-                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-                }
-            }
-
-            // Highlight selected rows
-            for (int row = 0; row < data.get(0).size(); row++) {
-                if (selectedRows.contains(row) && !hiddenRows.contains(row)) {
-                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-                }
+                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
             }
 
             // Draw attribute labels
             drawAttributeLabels(g2, centerX, centerY, maxRadius);
+
+            // Draw highlights for selected rows
+            drawHighlights(g2, centerX, centerY, maxRadius);
         }
 
         private void drawConcentricAxes(Graphics2D g2, int centerX, int centerY, int maxRadius) {
@@ -204,10 +198,11 @@ public class ConcentricCoordinatesPlot extends JFrame {
             }
 
             String classLabel = classLabels.get(row);
-            Color color = selectedRows.contains(row) ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+            Color color = classColors.getOrDefault(classLabel, Color.BLACK);
             g2.setColor(color);
 
             // Draw lines connecting the points across the concentric circles
+            g2.setStroke(new BasicStroke(1.0f));
             for (int i = 0; i < numAttributes; i++) {
                 int nextIndex = (i + 1) % numAttributes;
                 g2.draw(new Line2D.Double(points[i], points[nextIndex]));
@@ -216,8 +211,45 @@ public class ConcentricCoordinatesPlot extends JFrame {
             // Draw the shapes at the points
             for (int i = 0; i < numAttributes; i++) {
                 g2.translate(points[i].x, points[i].y);  // Move the origin to the point location
-                g2.fill(classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6))); // Draw the shape
+                Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
+                g2.fill(shape);
                 g2.translate(-points[i].x, -points[i].y); // Move back the origin
+            }
+        }
+
+        private void drawHighlights(Graphics2D g2, int centerX, int centerY, int maxRadius) {
+            g2.setColor(Color.YELLOW);
+            g2.setStroke(new BasicStroke(2.0f));
+
+            for (int row : selectedRows) {
+                int numAttributes = attributeNames.size();
+                Point2D.Double[] points = new Point2D.Double[numAttributes];
+
+                for (int i = 0; i < numAttributes; i++) {
+                    double value = data.get(i).get(row);
+                    double normalizedValue = value / globalMaxValue;
+
+                    double angle = -Math.PI / 2 + normalizedValue * 2 * Math.PI;
+                    int currentRadius = (i + 1) * (maxRadius / numAttributes);
+                    double x = centerX + currentRadius * Math.cos(angle);
+                    double y = centerY + currentRadius * Math.sin(angle);
+
+                    points[i] = new Point2D.Double(x, y);
+                }
+
+                // Draw lines connecting the points across the concentric circles
+                for (int i = 0; i < numAttributes; i++) {
+                    int nextIndex = (i + 1) % numAttributes;
+                    g2.draw(new Line2D.Double(points[i], points[nextIndex]));
+                }
+
+                // Draw the shapes at the points
+                for (int i = 0; i < numAttributes; i++) {
+                    g2.translate(points[i].x, points[i].y);
+                    Shape shape = classShapes.getOrDefault(classLabels.get(row), new Ellipse2D.Double(-4.5, -4.5, 9, 9));
+                    g2.fill(shape);
+                    g2.translate(-points[i].x, -points[i].y);
+                }
             }
         }
 
@@ -229,7 +261,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
             for (int i = 0; i < numAttributes; i++) {
                 int currentRadius = (i + 1) * (maxRadius / numAttributes);
                 
-                // Place labels at the top of each concentric circle (12 o'clock position)
+                // labels at the top of each concentric circle (12 o'clock position)
                 int x = centerX;
                 int y = centerY - currentRadius - 10; // Offset by 10 pixels above the circle
 
