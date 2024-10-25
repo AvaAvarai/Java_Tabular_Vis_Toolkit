@@ -1,9 +1,13 @@
 @echo off
+
 REM Create the output directory if it doesn't exist
 if not exist out (
     mkdir out
 )
+
+REM Copy all resources to the output directory if they don't exist
 xcopy /E /I /Y resources\graphics out\graphics
+xcopy /E /I /Y resources\icons out\icons
 
 REM Compile all Java files explicitly
 echo Compiling Java files...
