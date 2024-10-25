@@ -3,6 +3,7 @@ REM Create the output directory if it doesn't exist
 if not exist out (
     mkdir out
 )
+xcopy /E /I /Y resources\graphics out\graphics
 
 REM Compile all Java files explicitly
 echo Compiling Java files...
