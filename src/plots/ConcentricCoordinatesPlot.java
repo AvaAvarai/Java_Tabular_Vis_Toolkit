@@ -20,12 +20,13 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private List<Integer> selectedRows;
     private List<Integer> hiddenRows;
     private double globalMaxValue;
+    private ConcentricCoordinatesPanel plotPanel;
+    private double piAdjustment = 0.05;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
     private static final int TITLE_PADDING = 20;
-    private static final double ADJUSTED_PI = Math.PI - 0.05;
 
     public ConcentricCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, List<Integer> hiddenRows, String datasetName) {
         this.data = data;
@@ -52,7 +53,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
         mainPanel.setBackground(Color.WHITE);
 
         // Add the plot panel
-        ConcentricCoordinatesPanel plotPanel = new ConcentricCoordinatesPanel();
+        plotPanel = new ConcentricCoordinatesPanel();
         plotPanel.setPreferredSize(new Dimension(800, 600));
 
         // Add the plot panel to a scroll pane
@@ -70,13 +71,30 @@ public class ConcentricCoordinatesPlot extends JFrame {
             }
         });
 
+        // Create slider panel
+        JPanel sliderPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        sliderPanel.setBackground(Color.WHITE);
+        JLabel sliderLabel = new JLabel("PI Adjustment: ");
+        JSlider piSlider = new JSlider(JSlider.HORIZONTAL, 0, 360*2, 5);
+        piSlider.setMajorTickSpacing(20);
+        piSlider.setMinorTickSpacing(5);
+        piSlider.setPaintTicks(true);
+        piSlider.setPaintLabels(true);
+        piSlider.addChangeListener(e -> {
+            piAdjustment = piSlider.getValue() / 100.0;
+            plotPanel.repaint();
+        });
+        sliderPanel.add(sliderLabel);
+        sliderPanel.add(piSlider);
+
         // Ensure the JFrame is focusable to capture key events
         setFocusable(true);
         requestFocusInWindow();
 
-        // Add the scroll pane and legend to the main panel
+        // Add components to main panel
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
+        mainPanel.add(sliderPanel, BorderLayout.NORTH);
 
         setContentPane(mainPanel);
     }
@@ -190,7 +208,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 double normalizedValue = value / globalMaxValue;
 
                 // Adjust so that 0 (min value) is at the top (12 o'clock position)
-                double angle = -ADJUSTED_PI / 2 + normalizedValue * 2 * ADJUSTED_PI;
+                double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment);
                 int currentRadius = (i + 1) * (maxRadius / numAttributes);
                 double x = centerX + currentRadius * Math.cos(angle);
                 double y = centerY + currentRadius * Math.sin(angle);
@@ -230,7 +248,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     double value = data.get(i).get(row);
                     double normalizedValue = value / globalMaxValue;
 
-                    double angle = -ADJUSTED_PI / 2 + normalizedValue * 2 * ADJUSTED_PI;
+                    double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment);
                     int currentRadius = (i + 1) * (maxRadius / numAttributes);
                     double x = centerX + currentRadius * Math.cos(angle);
                     double y = centerY + currentRadius * Math.sin(angle);
