@@ -25,6 +25,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
     private static final int TITLE_PADDING = 20;
+    private static final double ADJUSTED_PI = Math.PI - 0.05;
 
     public ConcentricCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, List<Integer> hiddenRows, String datasetName) {
         this.data = data;
@@ -189,7 +190,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 double normalizedValue = value / globalMaxValue;
 
                 // Adjust so that 0 (min value) is at the top (12 o'clock position)
-                double angle = -Math.PI / 2 + normalizedValue * 2 * Math.PI;
+                double angle = -ADJUSTED_PI / 2 + normalizedValue * 2 * ADJUSTED_PI;
                 int currentRadius = (i + 1) * (maxRadius / numAttributes);
                 double x = centerX + currentRadius * Math.cos(angle);
                 double y = centerY + currentRadius * Math.sin(angle);
@@ -229,11 +230,11 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     double value = data.get(i).get(row);
                     double normalizedValue = value / globalMaxValue;
 
-                    double angle = -Math.PI / 2 + normalizedValue * 2 * Math.PI;
+                    double angle = -ADJUSTED_PI / 2 + normalizedValue * 2 * ADJUSTED_PI;
                     int currentRadius = (i + 1) * (maxRadius / numAttributes);
                     double x = centerX + currentRadius * Math.cos(angle);
                     double y = centerY + currentRadius * Math.sin(angle);
-
+                    
                     points[i] = new Point2D.Double(x, y);
                 }
 
