@@ -22,6 +22,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private double globalMaxValue;
     private ConcentricCoordinatesPanel plotPanel;
     private double piAdjustment = 0.05;
+    private boolean showLabels = true;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -71,9 +72,11 @@ public class ConcentricCoordinatesPlot extends JFrame {
             }
         });
 
-        // Create slider panel
-        JPanel sliderPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        sliderPanel.setBackground(Color.WHITE);
+        // Create control panel for slider and toggle
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        controlPanel.setBackground(Color.WHITE);
+        
+        // Add PI adjustment slider
         JLabel sliderLabel = new JLabel("PI Adjustment: ");
         JSlider piSlider = new JSlider(JSlider.HORIZONTAL, 0, 360*2, 5);
         piSlider.setMajorTickSpacing(20);
@@ -84,8 +87,17 @@ public class ConcentricCoordinatesPlot extends JFrame {
             piAdjustment = piSlider.getValue() / 100.0;
             plotPanel.repaint();
         });
-        sliderPanel.add(sliderLabel);
-        sliderPanel.add(piSlider);
+
+        // Add label toggle button
+        JToggleButton labelToggle = new JToggleButton("Show Labels", true);
+        labelToggle.addActionListener(e -> {
+            showLabels = labelToggle.isSelected();
+            plotPanel.repaint();
+        });
+
+        controlPanel.add(sliderLabel);
+        controlPanel.add(piSlider);
+        controlPanel.add(labelToggle);
 
         // Ensure the JFrame is focusable to capture key events
         setFocusable(true);
@@ -94,7 +106,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
         // Add components to main panel
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
-        mainPanel.add(sliderPanel, BorderLayout.NORTH);
+        mainPanel.add(controlPanel, BorderLayout.NORTH);
 
         setContentPane(mainPanel);
     }
@@ -183,8 +195,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
             }
 
-            // Draw attribute labels
-            drawAttributeLabels(g2, centerX, centerY, maxRadius);
+            // Draw attribute labels if enabled
+            if (showLabels) {
+                drawAttributeLabels(g2, centerX, centerY, maxRadius);
+            }
 
             // Draw highlights for selected rows
             drawHighlights(g2, centerX, centerY, maxRadius);
