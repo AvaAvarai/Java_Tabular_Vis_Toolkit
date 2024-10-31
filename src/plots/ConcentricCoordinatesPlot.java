@@ -23,6 +23,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private ConcentricCoordinatesPanel plotPanel;
     private double piAdjustment = 0.05;
     private boolean showLabels = true;
+    private boolean closeLoop = true;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -95,9 +96,17 @@ public class ConcentricCoordinatesPlot extends JFrame {
             plotPanel.repaint();
         });
 
+        // Add loop toggle button
+        JToggleButton loopToggle = new JToggleButton("Close Loop", true);
+        loopToggle.addActionListener(e -> {
+            closeLoop = loopToggle.isSelected();
+            plotPanel.repaint();
+        });
+
         controlPanel.add(sliderLabel);
         controlPanel.add(piSlider);
         controlPanel.add(labelToggle);
+        controlPanel.add(loopToggle);
 
         // Ensure the JFrame is focusable to capture key events
         setFocusable(true);
@@ -236,9 +245,13 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
             // Draw lines connecting the points across the concentric circles
             g2.setStroke(new BasicStroke(1.0f));
-            for (int i = 0; i < numAttributes; i++) {
-                int nextIndex = (i + 1) % numAttributes;
-                g2.draw(new Line2D.Double(points[i], points[nextIndex]));
+            for (int i = 0; i < numAttributes - 1; i++) {
+                g2.draw(new Line2D.Double(points[i], points[i + 1]));
+            }
+            
+            // Draw the line connecting last and first point only if closeLoop is true
+            if (closeLoop) {
+                g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
             }
 
             // Draw the shapes at the points
@@ -271,9 +284,13 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 }
 
                 // Draw lines connecting the points across the concentric circles
-                for (int i = 0; i < numAttributes; i++) {
-                    int nextIndex = (i + 1) % numAttributes;
-                    g2.draw(new Line2D.Double(points[i], points[nextIndex]));
+                for (int i = 0; i < numAttributes - 1; i++) {
+                    g2.draw(new Line2D.Double(points[i], points[i + 1]));
+                }
+                
+                // Draw the line connecting last and first point only if closeLoop is true
+                if (closeLoop) {
+                    g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
                 }
 
                 // Draw the shapes at the points
