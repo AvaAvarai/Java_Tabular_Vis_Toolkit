@@ -192,11 +192,12 @@ public class ConcentricCoordinatesPlot extends JFrame {
         });
 
         // Add concentric mode toggle button
-        JToggleButton concentricToggle = new JToggleButton("Concentric Mode", true);
+        JToggleButton concentricToggle = new JToggleButton("Freeform Mode", false);
         concentricToggle.addActionListener(e -> {
-            concentricMode = concentricToggle.isSelected();
+            concentricMode = !concentricToggle.isSelected();
+            concentricToggle.setText(concentricMode ? "Freeform Mode" : "Concentric Mode");
             if (!concentricMode) {
-                // Initialize axis positions when switching to non-concentric mode
+                // Initialize axis positions when switching to freeform mode
                 int centerX = plotPanel.getWidth() / 2;
                 int centerY = plotPanel.getHeight() / 2;
                 int maxRadius = Math.min(centerX, centerY) - 50;
