@@ -160,17 +160,19 @@ public class ConcentricCoordinatesPlot extends JFrame {
         globalControlPanel.setBackground(Color.WHITE);
         
         JLabel sliderLabel = new JLabel("PI Adjustment: ");
-        JSlider piSlider = new JSlider(JSlider.HORIZONTAL, 0, 360*2, 5);
+        JSlider piSlider = new JSlider(JSlider.HORIZONTAL, -360*2, 360*2, 5);
         piSlider.setMajorTickSpacing(360);
         piSlider.setMinorTickSpacing(0);
         piSlider.setPaintTicks(true);
         piSlider.setPaintLabels(true);
         // use an array of labels to make sure the labels are aligned properly
-        String[] labels = {"0", "2π", "4π"};
+        String[] labels = {"-2π", "-π", "0", "π", "2π"};
         Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
+        labelTable.put(-720, new JLabel("-2π"));
+        labelTable.put(-360, new JLabel("-π"));
         labelTable.put(0, new JLabel("0"));
-        labelTable.put(360, new JLabel("2π"));
-        labelTable.put(720, new JLabel("4π"));
+        labelTable.put(360, new JLabel("π"));
+        labelTable.put(720, new JLabel("2π"));
         piSlider.setLabelTable(labelTable);
         piSlider.addChangeListener(e -> {
             piAdjustment = piSlider.getValue() / 100.0;
