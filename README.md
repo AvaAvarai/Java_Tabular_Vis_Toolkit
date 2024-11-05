@@ -2,6 +2,8 @@
 
 **JTabViz** is a Java-based multiplatform toolkit for machine learning (ML) data analysis, designed for the visualization and analysis of multidimensional (n-D) tabular ML data. It supports data augmentation, allowing users to explore how dataset changes impact trained models. Users can load CSV data to view, analyze, and classify with features like normalization, General Line Coordinates visualizations (Parallel Coordinates, Shifted Paired Coordinates, Static Circular Coordinates, Star Coordinates), tabular heatmaps, covariance matrix heatmaps, row manipulation, cell editing, classification rule testing with confusion matrices, automatic pure region discovery, feature engineering using slope and distance calculations, linear combination features (including trigonometric wrapping, forward/backward differences, and various trigonometric values), optimal coefficient computation for linear combinations, attribute sorting, and data export.
 
+[![Demo Video](https://img.youtube.com/vi/j0_zpYPt_n8/0.jpg)](https://www.youtube.com/watch?v=j0_zpYPt_n8)
+
 **Tested on:**  Windows (10/11), Linux (Pop!_OS), and macOS (Sonoma).
 
 To get started quickly, please see the [Getting Started](#getting-started) section, method 3.
