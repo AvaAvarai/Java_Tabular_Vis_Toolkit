@@ -62,7 +62,7 @@ public class CsvViewer extends JFrame {
         this.mainMenu = mainMenu;
         stateManager = new StateManager();
     
-        setTitle("JTabViz: Java Tabular Visualization Toolkit");
+        setTitle("JTabViz Csv Viewer");
         setSize(1200, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);

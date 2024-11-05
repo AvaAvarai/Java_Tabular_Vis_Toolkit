@@ -19,22 +19,26 @@ public class MainMenu extends JFrame {
     private static final Color BUTTON_COLOR = new Color(70, 130, 180);
     private static final Color BUTTON_HOVER_COLOR = new Color(100, 149, 237);
     private static final Color TEXT_COLOR = Color.WHITE;
+    private static final Color FRAME_COLOR = new Color(100, 100, 100);
     private static final int CORNER_RADIUS = 15;
+    private static final int FRAME_THICKNESS = 4;
 
     public MainMenu() {
-        setTitle("JTabViz: Java Tabular Visualization Toolkit");
-        setSize(600, 600);
+        setTitle("JTabViz Main Menu");
+        setSize(500, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(0, 20));
 
-        // Create gradient background panel
+        // Create gradient background panel with frame
         JPanel backgroundPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                
+                // Draw gradient background
                 GradientPaint gp = new GradientPaint(0, 0, BACKGROUND_COLOR_TOP, 
                                                     0, getHeight(), BACKGROUND_COLOR_BOTTOM);
                 g2d.setPaint(gp);
@@ -53,7 +57,7 @@ public class MainMenu extends JFrame {
         }
         JLabel bannerLabel = new JLabel(bannerIcon);
         bannerLabel.setPreferredSize(new Dimension(getWidth(), 200));
-        bannerLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+        bannerLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         add(bannerLabel, BorderLayout.NORTH);
 
         // Create modern styled buttons
@@ -65,6 +69,18 @@ public class MainMenu extends JFrame {
         JButton exitButton = createModernButton("Exit", loadIcon("/graphics/exit.png"));
 
         // Button panel with modern layout
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BorderLayout());
+        centerPanel.setOpaque(false);
+
+        // Subtitle
+        JLabel subTitleLabel = new JLabel("Java Tabular Visualization Toolkit", JLabel.CENTER);
+        subTitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        subTitleLabel.setForeground(new Color(200, 200, 200));
+        subTitleLabel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+        centerPanel.add(subTitleLabel, BorderLayout.NORTH);
+
+        // Button panel
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
         buttonPanel.setOpaque(false);
@@ -78,7 +94,8 @@ public class MainMenu extends JFrame {
         addButtonWithSpacing(buttonPanel, openScreenshotsButton);
         addButtonWithSpacing(buttonPanel, exitButton);
 
-        add(buttonPanel, BorderLayout.CENTER);
+        centerPanel.add(buttonPanel, BorderLayout.CENTER);
+        add(centerPanel, BorderLayout.CENTER);
 
         // Modern footer
         JLabel footerLabel = new JLabel("© 2024 CWU-VKD-LAB | MIT License", JLabel.CENTER);
@@ -94,6 +111,20 @@ public class MainMenu extends JFrame {
         openDatasetsButton.addActionListener(e -> openFolder("datasets"));
         openScreenshotsButton.addActionListener(e -> openFolder("screenshots"));
         exitButton.addActionListener(e -> System.exit(0));
+
+        // Draw frame on glass pane
+        setGlassPane(new JComponent() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setColor(FRAME_COLOR);
+                g2d.setStroke(new BasicStroke(FRAME_THICKNESS));
+                g2d.drawRect(FRAME_THICKNESS/2, FRAME_THICKNESS/2, 
+                            getWidth()-FRAME_THICKNESS, getHeight()-FRAME_THICKNESS);
+            }
+        });
+        getGlassPane().setVisible(true);
     }
 
     private ImageIcon loadIcon(String path) {
