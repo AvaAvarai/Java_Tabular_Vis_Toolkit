@@ -34,13 +34,17 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private boolean showLabels = true;
     private boolean closeLoop = true;
     private boolean concentricMode = true;
+    private Map<String, Boolean> normalizeAttributes = new HashMap<>();
     private Map<String, Double> attributeRotations = new HashMap<>();
     private Map<String, Boolean> attributeDirections = new HashMap<>();
     private Map<String, Point> axisPositions = new HashMap<>();
+    private Map<String, Double> attributeMinValues = new HashMap<>();
+    private Map<String, Double> attributeMaxValues = new HashMap<>();
     private String draggedAxis = null;
     private Set<String> hiddenClasses = new HashSet<>();
     private Map<String, JSlider> attributeSliders = new HashMap<>();
     private Map<String, JCheckBox> attributeToggles = new HashMap<>();
+    private Map<String, JCheckBox> normalizeToggles = new HashMap<>();
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -56,10 +60,21 @@ public class ConcentricCoordinatesPlot extends JFrame {
         this.selectedRows = selectedRows;
         this.hiddenRows = hiddenRows;
 
-        // Initialize rotation values and directions for each attribute
+        // Initialize rotation values, directions and normalization for each attribute
         for (String attribute : attributeNames) {
             attributeRotations.put(attribute, 0.0);
             attributeDirections.put(attribute, true);
+            normalizeAttributes.put(attribute, true);
+        }
+
+        // Calculate min and max values for each attribute
+        for (int i = 0; i < attributeNames.size(); i++) {
+            String attribute = attributeNames.get(i);
+            List<Double> attributeValues = data.get(i);
+            double min = attributeValues.stream().min(Double::compare).orElse(0.0);
+            double max = attributeValues.stream().max(Double::compare).orElse(1.0);
+            attributeMinValues.put(attribute, min);
+            attributeMaxValues.put(attribute, max);
         }
 
         // Calculate the global maximum value across all attributes
@@ -222,11 +237,11 @@ public class ConcentricCoordinatesPlot extends JFrame {
         
         controlPanel.add(globalControlPanel);
 
-        // Add individual attribute rotation sliders and direction toggles
+        // Add individual attribute rotation sliders, direction toggles, and normalization toggles
         JPanel attributeSlidersPanel = new JPanel();
         attributeSlidersPanel.setLayout(new BoxLayout(attributeSlidersPanel, BoxLayout.Y_AXIS));
         attributeSlidersPanel.setBackground(Color.WHITE);
-        attributeSlidersPanel.setBorder(BorderFactory.createTitledBorder("Attribute Rotations"));
+        attributeSlidersPanel.setBorder(BorderFactory.createTitledBorder("Attribute Controls"));
 
         for (String attribute : attributeNames) {
             JPanel sliderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -249,9 +264,17 @@ public class ConcentricCoordinatesPlot extends JFrame {
             });
             attributeToggles.put(attribute, directionToggle);
             
+            JCheckBox normalizeToggle = new JCheckBox("Normalize", true);
+            normalizeToggle.addActionListener(e -> {
+                normalizeAttributes.put(attribute, normalizeToggle.isSelected());
+                plotPanel.repaint();
+            });
+            normalizeToggles.put(attribute, normalizeToggle);
+            
             sliderPanel.add(label);
             sliderPanel.add(slider);
             sliderPanel.add(directionToggle);
+            sliderPanel.add(normalizeToggle);
             attributeSlidersPanel.add(sliderPanel);
         }
 
@@ -516,10 +539,18 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
             for (int i = 0; i < numAttributes; i++) {
                 double value = data.get(i).get(row);
-                double normalizedValue = value / globalMaxValue;
+                double normalizedValue;
+                
+                String attribute = attributeNames.get(i);
+                if (normalizeAttributes.get(attribute)) {
+                    double min = attributeMinValues.get(attribute);
+                    double max = attributeMaxValues.get(attribute);
+                    normalizedValue = (value - min) / (max - min);
+                } else {
+                    normalizedValue = value / globalMaxValue;
+                }
                 
                 // Apply direction toggle
-                String attribute = attributeNames.get(i);
                 if (!attributeDirections.get(attribute)) {
                     normalizedValue = 1.0 - normalizedValue;
                 }
@@ -581,10 +612,18 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
                 for (int i = 0; i < numAttributes; i++) {
                     double value = data.get(i).get(row);
-                    double normalizedValue = value / globalMaxValue;
+                    double normalizedValue;
+                    
+                    String attribute = attributeNames.get(i);
+                    if (normalizeAttributes.get(attribute)) {
+                        double min = attributeMinValues.get(attribute);
+                        double max = attributeMaxValues.get(attribute);
+                        normalizedValue = (value - min) / (max - min);
+                    } else {
+                        normalizedValue = value / globalMaxValue;
+                    }
                     
                     // Apply direction toggle
-                    String attribute = attributeNames.get(i);
                     if (!attributeDirections.get(attribute)) {
                         normalizedValue = 1.0 - normalizedValue;
                     }
