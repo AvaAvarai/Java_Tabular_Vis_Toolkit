@@ -27,6 +27,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private double piAdjustment = 0.05;
     private boolean showLabels = true;
     private boolean closeLoop = true;
+    private boolean concentricMode = true;
     private Map<String, Double> attributeRotations = new HashMap<>();
 
     // Font settings
@@ -123,10 +124,18 @@ public class ConcentricCoordinatesPlot extends JFrame {
             plotPanel.repaint();
         });
 
+        // Add concentric mode toggle button
+        JToggleButton concentricToggle = new JToggleButton("Concentric Mode", true);
+        concentricToggle.addActionListener(e -> {
+            concentricMode = concentricToggle.isSelected();
+            plotPanel.repaint();
+        });
+
         globalControlPanel.add(sliderLabel);
         globalControlPanel.add(piSlider);
         globalControlPanel.add(labelToggle);
         globalControlPanel.add(loopToggle);
+        globalControlPanel.add(concentricToggle);
         
         controlPanel.add(globalControlPanel);
 
@@ -244,7 +253,11 @@ public class ConcentricCoordinatesPlot extends JFrame {
             int maxRadius = Math.min(centerX, (getHeight() - titleHeight - TITLE_PADDING) / 2) - 50;
 
             // Draw concentric axes
-            drawConcentricAxes(g2, centerX, centerY, maxRadius);
+            if (concentricMode) {
+                drawConcentricAxes(g2, centerX, centerY, maxRadius);
+            } else {
+                drawIndividualAxes(g2, centerX, centerY, maxRadius);
+            }
 
             // Draw the concentric coordinates for each data point
             for (int row = 0; row < data.get(0).size(); row++) {
@@ -269,6 +282,17 @@ public class ConcentricCoordinatesPlot extends JFrame {
             }
         }
 
+        private void drawIndividualAxes(Graphics2D g2, int centerX, int centerY, int maxRadius) {
+            g2.setColor(Color.BLACK);
+            int numAttributes = attributeNames.size();
+            int spacing = maxRadius / (numAttributes + 1);
+            
+            for (int i = 0; i < numAttributes; i++) {
+                int x = centerX + (i - numAttributes/2) * spacing * 2;
+                g2.draw(new Ellipse2D.Double(x - spacing, centerY - spacing, spacing * 2, spacing * 2));
+            }
+        }
+
         private void drawConcentricCoordinates(Graphics2D g2, int row, int centerX, int centerY, int maxRadius) {
             int numAttributes = attributeNames.size();
             Point2D.Double[] points = new Point2D.Double[numAttributes];
@@ -281,18 +305,25 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 double attributeRotation = attributeRotations.get(attributeNames.get(i));
                 double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment) + attributeRotation;
                 
-                int currentRadius = (i + 1) * (maxRadius / numAttributes);
-                double x = centerX + currentRadius * Math.cos(angle);
-                double y = centerY + currentRadius * Math.sin(angle);
-
-                points[i] = new Point2D.Double(x, y);
+                if (concentricMode) {
+                    int currentRadius = (i + 1) * (maxRadius / numAttributes);
+                    double x = centerX + currentRadius * Math.cos(angle);
+                    double y = centerY + currentRadius * Math.sin(angle);
+                    points[i] = new Point2D.Double(x, y);
+                } else {
+                    int spacing = maxRadius / (numAttributes + 1);
+                    int x = centerX + (i - numAttributes/2) * spacing * 2;
+                    double pointX = x + spacing * Math.cos(angle);
+                    double pointY = centerY + spacing * Math.sin(angle);
+                    points[i] = new Point2D.Double(pointX, pointY);
+                }
             }
 
             String classLabel = classLabels.get(row);
             Color color = classColors.getOrDefault(classLabel, Color.BLACK);
             g2.setColor(color);
 
-            // Draw lines connecting the points across the concentric circles
+            // Draw lines connecting the points across the circles
             g2.setStroke(new BasicStroke(1.0f));
             for (int i = 0; i < numAttributes - 1; i++) {
                 g2.draw(new Line2D.Double(points[i], points[i + 1]));
@@ -326,11 +357,18 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     double attributeRotation = attributeRotations.get(attributeNames.get(i));
                     double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment) + attributeRotation;
                     
-                    int currentRadius = (i + 1) * (maxRadius / numAttributes);
-                    double x = centerX + currentRadius * Math.cos(angle);
-                    double y = centerY + currentRadius * Math.sin(angle);
-                    
-                    points[i] = new Point2D.Double(x, y);
+                    if (concentricMode) {
+                        int currentRadius = (i + 1) * (maxRadius / numAttributes);
+                        double x = centerX + currentRadius * Math.cos(angle);
+                        double y = centerY + currentRadius * Math.sin(angle);
+                        points[i] = new Point2D.Double(x, y);
+                    } else {
+                        int spacing = maxRadius / (numAttributes + 1);
+                        int x = centerX + (i - numAttributes/2) * spacing * 2;
+                        double pointX = x + spacing * Math.cos(angle);
+                        double pointY = centerY + spacing * Math.sin(angle);
+                        points[i] = new Point2D.Double(pointX, pointY);
+                    }
                 }
 
                 for (int i = 0; i < numAttributes - 1; i++) {
@@ -356,16 +394,21 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
             int numAttributes = attributeNames.size();
             for (int i = 0; i < numAttributes; i++) {
-                int currentRadius = (i + 1) * (maxRadius / numAttributes);
-                
-                // Apply rotation to label position
-                double attributeRotation = attributeRotations.get(attributeNames.get(i));
-                double labelAngle = -(Math.PI / 2) + attributeRotation; // Start from top (12 o'clock)
-                
-                int x = centerX + (int)((currentRadius + 20) * Math.cos(labelAngle));
-                int y = centerY + (int)((currentRadius + 20) * Math.sin(labelAngle));
-
-                g2.drawString(attributeNames.get(i), x, y);
+                if (concentricMode) {
+                    int currentRadius = (i + 1) * (maxRadius / numAttributes);
+                    
+                    // Apply rotation to label position
+                    double attributeRotation = attributeRotations.get(attributeNames.get(i));
+                    double labelAngle = -(Math.PI / 2) + attributeRotation; // Start from top (12 o'clock)
+                    
+                    int x = centerX + (int)((currentRadius + 20) * Math.cos(labelAngle));
+                    int y = centerY + (int)((currentRadius + 20) * Math.sin(labelAngle));
+                    g2.drawString(attributeNames.get(i), x, y);
+                } else {
+                    int spacing = maxRadius / (numAttributes + 1);
+                    int x = centerX + (i - numAttributes/2) * spacing * 2;
+                    g2.drawString(attributeNames.get(i), x - 20, centerY - spacing - 10);
+                }
             }
         }
     }
