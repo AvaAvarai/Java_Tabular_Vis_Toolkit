@@ -39,6 +39,8 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private Map<String, Point> axisPositions = new HashMap<>();
     private String draggedAxis = null;
     private Set<String> hiddenClasses = new HashSet<>();
+    private Map<String, JSlider> attributeSliders = new HashMap<>();
+    private Map<String, JCheckBox> attributeToggles = new HashMap<>();
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -196,6 +198,17 @@ public class ConcentricCoordinatesPlot extends JFrame {
         optimizeButton.addActionListener(e -> {
             if (!concentricMode) {
                 optimizeAxesLayout();
+                // Update UI controls to match optimized settings
+                for (String attribute : attributeNames) {
+                    // Update rotation sliders
+                    double rotation = attributeRotations.get(attribute);
+                    int degrees = (int)(rotation * 180 / Math.PI);
+                    attributeSliders.get(attribute).setValue(degrees);
+                    
+                    // Update direction toggles
+                    boolean direction = attributeDirections.get(attribute);
+                    attributeToggles.get(attribute).setSelected(!direction);
+                }
                 plotPanel.repaint();
             }
         });
@@ -227,12 +240,14 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 attributeRotations.put(attribute, slider.getValue() * Math.PI / 180);
                 plotPanel.repaint();
             });
+            attributeSliders.put(attribute, slider);
             
             JCheckBox directionToggle = new JCheckBox("Reverse", false);
             directionToggle.addActionListener(e -> {
                 attributeDirections.put(attribute, !directionToggle.isSelected());
                 plotPanel.repaint();
             });
+            attributeToggles.put(attribute, directionToggle);
             
             sliderPanel.add(label);
             sliderPanel.add(slider);
