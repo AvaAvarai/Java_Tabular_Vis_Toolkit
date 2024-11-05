@@ -9,6 +9,8 @@ import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Map;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Arrays;
@@ -29,6 +31,8 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private boolean closeLoop = true;
     private boolean concentricMode = true;
     private Map<String, Double> attributeRotations = new HashMap<>();
+    private Map<String, Point> axisPositions = new HashMap<>();
+    private String draggedAxis = null;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -67,6 +71,42 @@ public class ConcentricCoordinatesPlot extends JFrame {
         // Add the plot panel
         plotPanel = new ConcentricCoordinatesPanel();
         plotPanel.setPreferredSize(new Dimension(800, 600));
+
+        // Add mouse listeners for axis dragging
+        plotPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (!concentricMode) {
+                    Point clickPoint = e.getPoint();
+                    // Check if click is near any axis center
+                    for (String attribute : attributeNames) {
+                        Point axisCenter = axisPositions.get(attribute);
+                        if (axisCenter != null) {
+                            if (clickPoint.distance(axisCenter) < 20) {
+                                draggedAxis = attribute;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                draggedAxis = null;
+            }
+        });
+
+        plotPanel.addMouseMotionListener(new MouseAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                if (!concentricMode && draggedAxis != null) {
+                    Point newPos = e.getPoint();
+                    axisPositions.put(draggedAxis, newPos);
+                    plotPanel.repaint();
+                }
+            }
+        });
 
         // Add the plot panel to a scroll pane
         JScrollPane scrollPane = new JScrollPane(plotPanel);
@@ -128,6 +168,19 @@ public class ConcentricCoordinatesPlot extends JFrame {
         JToggleButton concentricToggle = new JToggleButton("Concentric Mode", true);
         concentricToggle.addActionListener(e -> {
             concentricMode = concentricToggle.isSelected();
+            if (!concentricMode) {
+                // Initialize axis positions when switching to non-concentric mode
+                int centerX = plotPanel.getWidth() / 2;
+                int centerY = plotPanel.getHeight() / 2;
+                int maxRadius = Math.min(centerX, centerY) - 50;
+                int numAttributes = attributeNames.size();
+                int spacing = maxRadius / (numAttributes + 1);
+                
+                for (int i = 0; i < attributeNames.size(); i++) {
+                    int x = centerX + (i - numAttributes/2) * spacing * 2;
+                    axisPositions.put(attributeNames.get(i), new Point(x, centerY));
+                }
+            }
             plotPanel.repaint();
         });
 
@@ -288,8 +341,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
             int spacing = maxRadius / (numAttributes + 1);
             
             for (int i = 0; i < numAttributes; i++) {
-                int x = centerX + (i - numAttributes/2) * spacing * 2;
-                g2.draw(new Ellipse2D.Double(x - spacing, centerY - spacing, spacing * 2, spacing * 2));
+                String attribute = attributeNames.get(i);
+                Point pos = axisPositions.getOrDefault(attribute, 
+                    new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
+                g2.draw(new Ellipse2D.Double(pos.x - spacing, pos.y - spacing, spacing * 2, spacing * 2));
             }
         }
 
@@ -312,9 +367,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     points[i] = new Point2D.Double(x, y);
                 } else {
                     int spacing = maxRadius / (numAttributes + 1);
-                    int x = centerX + (i - numAttributes/2) * spacing * 2;
-                    double pointX = x + spacing * Math.cos(angle);
-                    double pointY = centerY + spacing * Math.sin(angle);
+                    Point pos = axisPositions.getOrDefault(attributeNames.get(i),
+                        new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
+                    double pointX = pos.x + spacing * Math.cos(angle);
+                    double pointY = pos.y + spacing * Math.sin(angle);
                     points[i] = new Point2D.Double(pointX, pointY);
                 }
             }
@@ -364,9 +420,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
                         points[i] = new Point2D.Double(x, y);
                     } else {
                         int spacing = maxRadius / (numAttributes + 1);
-                        int x = centerX + (i - numAttributes/2) * spacing * 2;
-                        double pointX = x + spacing * Math.cos(angle);
-                        double pointY = centerY + spacing * Math.sin(angle);
+                        Point pos = axisPositions.getOrDefault(attributeNames.get(i),
+                            new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
+                        double pointX = pos.x + spacing * Math.cos(angle);
+                        double pointY = pos.y + spacing * Math.sin(angle);
                         points[i] = new Point2D.Double(pointX, pointY);
                     }
                 }
@@ -406,8 +463,9 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     g2.drawString(attributeNames.get(i), x, y);
                 } else {
                     int spacing = maxRadius / (numAttributes + 1);
-                    int x = centerX + (i - numAttributes/2) * spacing * 2;
-                    g2.drawString(attributeNames.get(i), x - 20, centerY - spacing - 10);
+                    Point pos = axisPositions.getOrDefault(attributeNames.get(i),
+                        new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
+                    g2.drawString(attributeNames.get(i), pos.x - 20, pos.y - spacing - 10);
                 }
             }
         }
