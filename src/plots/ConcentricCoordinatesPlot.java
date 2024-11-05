@@ -9,6 +9,9 @@ import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Map;
 import java.awt.event.ActionEvent;
+import java.util.HashMap;
+import java.util.Hashtable;
+import java.util.Arrays;
 
 public class ConcentricCoordinatesPlot extends JFrame {
 
@@ -24,6 +27,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private double piAdjustment = 0.05;
     private boolean showLabels = true;
     private boolean closeLoop = true;
+    private Map<String, Double> attributeRotations = new HashMap<>();
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -39,6 +43,11 @@ public class ConcentricCoordinatesPlot extends JFrame {
         this.selectedRows = selectedRows;
         this.hiddenRows = hiddenRows;
 
+        // Initialize rotation values for each attribute
+        for (String attribute : attributeNames) {
+            attributeRotations.put(attribute, 0.0);
+        }
+
         // Calculate the global maximum value across all attributes
         this.globalMaxValue = data.stream()
             .flatMap(List::stream)
@@ -46,7 +55,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
             .orElse(1.0);
 
         setTitle("Concentric Coordinates Plot");
-        setSize(800, 600);
+        setSize(800, 800); // Increased height to accommodate sliders
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -62,7 +71,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
         JScrollPane scrollPane = new JScrollPane(plotPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2)); // Minimize space around the plot
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Add a key listener for the space bar to save a screenshot
         scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
@@ -73,17 +82,28 @@ public class ConcentricCoordinatesPlot extends JFrame {
             }
         });
 
-        // Create control panel for slider and toggle
-        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        // Create control panel for sliders and toggles
+        JPanel controlPanel = new JPanel();
+        controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
         controlPanel.setBackground(Color.WHITE);
         
         // Add PI adjustment slider
+        JPanel globalControlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        globalControlPanel.setBackground(Color.WHITE);
+        
         JLabel sliderLabel = new JLabel("PI Adjustment: ");
         JSlider piSlider = new JSlider(JSlider.HORIZONTAL, 0, 360*2, 5);
-        piSlider.setMajorTickSpacing(20);
-        piSlider.setMinorTickSpacing(5);
+        piSlider.setMajorTickSpacing(360);
+        piSlider.setMinorTickSpacing(0);
         piSlider.setPaintTicks(true);
         piSlider.setPaintLabels(true);
+        // use an array of labels to make sure the labels are aligned properly
+        String[] labels = {"0", "2π", "4π"};
+        Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
+        labelTable.put(0, new JLabel("0"));
+        labelTable.put(360, new JLabel("2π"));
+        labelTable.put(720, new JLabel("4π"));
+        piSlider.setLabelTable(labelTable);
         piSlider.addChangeListener(e -> {
             piAdjustment = piSlider.getValue() / 100.0;
             plotPanel.repaint();
@@ -103,10 +123,37 @@ public class ConcentricCoordinatesPlot extends JFrame {
             plotPanel.repaint();
         });
 
-        controlPanel.add(sliderLabel);
-        controlPanel.add(piSlider);
-        controlPanel.add(labelToggle);
-        controlPanel.add(loopToggle);
+        globalControlPanel.add(sliderLabel);
+        globalControlPanel.add(piSlider);
+        globalControlPanel.add(labelToggle);
+        globalControlPanel.add(loopToggle);
+        
+        controlPanel.add(globalControlPanel);
+
+        // Add individual attribute rotation sliders
+        JPanel attributeSlidersPanel = new JPanel();
+        attributeSlidersPanel.setLayout(new BoxLayout(attributeSlidersPanel, BoxLayout.Y_AXIS));
+        attributeSlidersPanel.setBackground(Color.WHITE);
+        attributeSlidersPanel.setBorder(BorderFactory.createTitledBorder("Attribute Rotations"));
+
+        for (String attribute : attributeNames) {
+            JPanel sliderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            sliderPanel.setBackground(Color.WHITE);
+            JLabel label = new JLabel(attribute + ": ");
+            JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 360, 0);
+            slider.setPreferredSize(new Dimension(200, 40));
+            slider.addChangeListener(e -> {
+                attributeRotations.put(attribute, slider.getValue() * Math.PI / 180);
+                plotPanel.repaint();
+            });
+            sliderPanel.add(label);
+            sliderPanel.add(slider);
+            attributeSlidersPanel.add(sliderPanel);
+        }
+
+        JScrollPane sliderScrollPane = new JScrollPane(attributeSlidersPanel);
+        sliderScrollPane.setPreferredSize(new Dimension(300, 150));
+        controlPanel.add(sliderScrollPane);
 
         // Ensure the JFrame is focusable to capture key events
         setFocusable(true);
@@ -194,7 +241,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
             // Calculate center and radius for the plot
             int centerX = getWidth() / 2;
             int centerY = (getHeight() - titleHeight - TITLE_PADDING) / 2 + titleHeight + TITLE_PADDING;
-            int maxRadius = Math.min(centerX, (getHeight() - titleHeight - TITLE_PADDING) / 2) - 50; // Leave some padding
+            int maxRadius = Math.min(centerX, (getHeight() - titleHeight - TITLE_PADDING) / 2) - 50;
 
             // Draw concentric axes
             drawConcentricAxes(g2, centerX, centerY, maxRadius);
@@ -230,8 +277,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 double value = data.get(i).get(row);
                 double normalizedValue = value / globalMaxValue;
 
-                // Adjust so that 0 (min value) is at the top (12 o'clock position)
-                double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment);
+                // Apply both global and individual attribute rotations
+                double attributeRotation = attributeRotations.get(attributeNames.get(i));
+                double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment) + attributeRotation;
+                
                 int currentRadius = (i + 1) * (maxRadius / numAttributes);
                 double x = centerX + currentRadius * Math.cos(angle);
                 double y = centerY + currentRadius * Math.sin(angle);
@@ -249,17 +298,16 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 g2.draw(new Line2D.Double(points[i], points[i + 1]));
             }
             
-            // Draw the line connecting last and first point only if closeLoop is true
             if (closeLoop) {
                 g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
             }
 
             // Draw the shapes at the points
             for (int i = 0; i < numAttributes; i++) {
-                g2.translate(points[i].x, points[i].y);  // Move the origin to the point location
+                g2.translate(points[i].x, points[i].y);
                 Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
                 g2.fill(shape);
-                g2.translate(-points[i].x, -points[i].y); // Move back the origin
+                g2.translate(-points[i].x, -points[i].y);
             }
         }
 
@@ -275,7 +323,9 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     double value = data.get(i).get(row);
                     double normalizedValue = value / globalMaxValue;
 
-                    double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment);
+                    double attributeRotation = attributeRotations.get(attributeNames.get(i));
+                    double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment) + attributeRotation;
+                    
                     int currentRadius = (i + 1) * (maxRadius / numAttributes);
                     double x = centerX + currentRadius * Math.cos(angle);
                     double y = centerY + currentRadius * Math.sin(angle);
@@ -283,17 +333,14 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     points[i] = new Point2D.Double(x, y);
                 }
 
-                // Draw lines connecting the points across the concentric circles
                 for (int i = 0; i < numAttributes - 1; i++) {
                     g2.draw(new Line2D.Double(points[i], points[i + 1]));
                 }
                 
-                // Draw the line connecting last and first point only if closeLoop is true
                 if (closeLoop) {
                     g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
                 }
 
-                // Draw the shapes at the points
                 for (int i = 0; i < numAttributes; i++) {
                     g2.translate(points[i].x, points[i].y);
                     Shape shape = classShapes.getOrDefault(classLabels.get(row), new Ellipse2D.Double(-4.5, -4.5, 9, 9));
@@ -311,9 +358,12 @@ public class ConcentricCoordinatesPlot extends JFrame {
             for (int i = 0; i < numAttributes; i++) {
                 int currentRadius = (i + 1) * (maxRadius / numAttributes);
                 
-                // labels at the top of each concentric circle (12 o'clock position)
-                int x = centerX;
-                int y = centerY - currentRadius - 10; // Offset by 10 pixels above the circle
+                // Apply rotation to label position
+                double attributeRotation = attributeRotations.get(attributeNames.get(i));
+                double labelAngle = -(Math.PI / 2) + attributeRotation; // Start from top (12 o'clock)
+                
+                int x = centerX + (int)((currentRadius + 20) * Math.cos(labelAngle));
+                int y = centerY + (int)((currentRadius + 20) * Math.sin(labelAngle));
 
                 g2.drawString(attributeNames.get(i), x, y);
             }
