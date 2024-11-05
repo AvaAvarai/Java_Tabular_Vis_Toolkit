@@ -86,7 +86,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
             .max(Double::compare)
             .orElse(1.0);
 
-        setTitle("Concentric Coordinates Plot");
+        setTitle("Circle Coordinates Plot (" + datasetName + ")");
         setSize(800, 800); // Increased height to accommodate sliders
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -677,7 +677,8 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment) + attributeRotation;
                     
                     if (concentricMode) {
-                        int currentRadius = (i + 1) * (maxRadius / numAttributes);
+                        double radius = attributeRadii.get(attribute);
+                        int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * radius);
                         double x = centerX + currentRadius * Math.cos(angle);
                         double y = centerY + currentRadius * Math.sin(angle);
                         points[i] = new Point2D.Double(x, y);
@@ -685,8 +686,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
                         int spacing = maxRadius / (numAttributes + 1);
                         Point pos = axisPositions.getOrDefault(attributeNames.get(i),
                             new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
-                        double pointX = pos.x + spacing * Math.cos(angle);
-                        double pointY = pos.y + spacing * Math.sin(angle);
+                        double radius = attributeRadii.get(attribute);
+                        int adjustedSpacing = (int)(spacing * radius);
+                        double pointX = pos.x + adjustedSpacing * Math.cos(angle);
+                        double pointY = pos.y + adjustedSpacing * Math.sin(angle);
                         points[i] = new Point2D.Double(pointX, pointY);
                     }
                 }
