@@ -40,9 +40,11 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private Map<String, Point> axisPositions = new HashMap<>();
     private Map<String, Double> attributeMinValues = new HashMap<>();
     private Map<String, Double> attributeMaxValues = new HashMap<>();
+    private Map<String, Double> attributeRadii = new HashMap<>(); // Added for circle sizes
     private String draggedAxis = null;
     private Set<String> hiddenClasses = new HashSet<>();
     private Map<String, JSlider> attributeSliders = new HashMap<>();
+    private Map<String, JSlider> radiusSliders = new HashMap<>(); // Added for radius control
     private Map<String, JCheckBox> attributeToggles = new HashMap<>();
     private Map<String, JCheckBox> normalizeToggles = new HashMap<>();
 
@@ -60,11 +62,12 @@ public class ConcentricCoordinatesPlot extends JFrame {
         this.selectedRows = selectedRows;
         this.hiddenRows = hiddenRows;
 
-        // Initialize rotation values, directions and normalization for each attribute
+        // Initialize rotation values, directions, radii and normalization for each attribute
         for (String attribute : attributeNames) {
             attributeRotations.put(attribute, 0.0);
             attributeDirections.put(attribute, true);
             normalizeAttributes.put(attribute, true);
+            attributeRadii.put(attribute, 1.0); // Initialize all radii to 1.0
         }
 
         // Calculate min and max values for each attribute
@@ -223,6 +226,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     // Update direction toggles
                     boolean direction = attributeDirections.get(attribute);
                     attributeToggles.get(attribute).setSelected(!direction);
+                    
+                    // Update radius sliders
+                    double radius = attributeRadii.get(attribute);
+                    radiusSliders.get(attribute).setValue((int)(radius * 100));
                 }
                 plotPanel.repaint();
             }
@@ -237,7 +244,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
         
         controlPanel.add(globalControlPanel);
 
-        // Add individual attribute rotation sliders, direction toggles, and normalization toggles
+        // Add individual attribute rotation sliders, radius sliders, direction toggles, and normalization toggles
         JPanel attributeSlidersPanel = new JPanel();
         attributeSlidersPanel.setLayout(new BoxLayout(attributeSlidersPanel, BoxLayout.Y_AXIS));
         attributeSlidersPanel.setBackground(Color.WHITE);
@@ -249,13 +256,23 @@ public class ConcentricCoordinatesPlot extends JFrame {
             
             JLabel label = new JLabel(attribute + ": ");
             
-            JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 360, 0);
-            slider.setPreferredSize(new Dimension(200, 40));
-            slider.addChangeListener(e -> {
-                attributeRotations.put(attribute, slider.getValue() * Math.PI / 180);
+            // Rotation slider
+            JSlider rotationSlider = new JSlider(JSlider.HORIZONTAL, 0, 360, 0);
+            rotationSlider.setPreferredSize(new Dimension(200, 40));
+            rotationSlider.addChangeListener(e -> {
+                attributeRotations.put(attribute, rotationSlider.getValue() * Math.PI / 180);
                 plotPanel.repaint();
             });
-            attributeSliders.put(attribute, slider);
+            attributeSliders.put(attribute, rotationSlider);
+            
+            // Radius slider
+            JSlider radiusSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);
+            radiusSlider.setPreferredSize(new Dimension(200, 40));
+            radiusSlider.addChangeListener(e -> {
+                attributeRadii.put(attribute, radiusSlider.getValue() / 100.0);
+                plotPanel.repaint();
+            });
+            radiusSliders.put(attribute, radiusSlider);
             
             JCheckBox directionToggle = new JCheckBox("Reverse", false);
             directionToggle.addActionListener(e -> {
@@ -272,7 +289,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
             normalizeToggles.put(attribute, normalizeToggle);
             
             sliderPanel.add(label);
-            sliderPanel.add(slider);
+            sliderPanel.add(new JLabel("Rotation:"));
+            sliderPanel.add(rotationSlider);
+            sliderPanel.add(new JLabel("Radius:"));
+            sliderPanel.add(radiusSlider);
             sliderPanel.add(directionToggle);
             sliderPanel.add(normalizeToggle);
             attributeSlidersPanel.add(sliderPanel);
@@ -328,7 +348,24 @@ public class ConcentricCoordinatesPlot extends JFrame {
             // Set optimized direction based on correlations
             boolean shouldReverse = calculateShouldReverse(indices.get(i), correlations);
             attributeDirections.put(attribute, !shouldReverse);
+            
+            // Set optimized radius based on correlation strength
+            double avgCorrelation = calculateAverageCorrelation(indices.get(i), correlations);
+            double radius = Math.abs(avgCorrelation); // Scale radius between 0.0 and 1.0
+            attributeRadii.put(attribute, radius);
         }
+    }
+    
+    private double calculateAverageCorrelation(int attrIndex, double[][] correlations) {
+        double sum = 0;
+        int count = 0;
+        for (int i = 0; i < correlations.length; i++) {
+            if (i != attrIndex) {
+                sum += Math.abs(correlations[attrIndex][i]);
+                count++;
+            }
+        }
+        return count > 0 ? sum / count : 0;
     }
     
     private double[][] calculateCorrelationMatrix() {
@@ -514,8 +551,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
         private void drawConcentricAxes(Graphics2D g2, int centerX, int centerY, int maxRadius) {
             g2.setColor(Color.BLACK);
             int numAttributes = attributeNames.size();
-            for (int i = 1; i <= numAttributes; i++) {
-                int currentRadius = i * (maxRadius / numAttributes);
+            for (int i = 0; i < numAttributes; i++) {
+                String attribute = attributeNames.get(i);
+                double radius = attributeRadii.get(attribute);
+                int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * radius);
                 g2.draw(new Ellipse2D.Double(centerX - currentRadius, centerY - currentRadius, 2 * currentRadius, 2 * currentRadius));
             }
         }
@@ -529,7 +568,9 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 String attribute = attributeNames.get(i);
                 Point pos = axisPositions.getOrDefault(attribute, 
                     new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
-                g2.draw(new Ellipse2D.Double(pos.x - spacing, pos.y - spacing, spacing * 2, spacing * 2));
+                double radius = attributeRadii.get(attribute);
+                int adjustedSpacing = (int)(spacing * radius);
+                g2.draw(new Ellipse2D.Double(pos.x - adjustedSpacing, pos.y - adjustedSpacing, adjustedSpacing * 2, adjustedSpacing * 2));
             }
         }
 
@@ -560,7 +601,8 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment) + attributeRotation;
                 
                 if (concentricMode) {
-                    int currentRadius = (i + 1) * (maxRadius / numAttributes);
+                    double radius = attributeRadii.get(attribute);
+                    int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * radius);
                     double x = centerX + currentRadius * Math.cos(angle);
                     double y = centerY + currentRadius * Math.sin(angle);
                     points[i] = new Point2D.Double(x, y);
@@ -568,8 +610,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     int spacing = maxRadius / (numAttributes + 1);
                     Point pos = axisPositions.getOrDefault(attributeNames.get(i),
                         new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
-                    double pointX = pos.x + spacing * Math.cos(angle);
-                    double pointY = pos.y + spacing * Math.sin(angle);
+                    double radius = attributeRadii.get(attribute);
+                    int adjustedSpacing = (int)(spacing * radius);
+                    double pointX = pos.x + adjustedSpacing * Math.cos(angle);
+                    double pointY = pos.y + adjustedSpacing * Math.sin(angle);
                     points[i] = new Point2D.Double(pointX, pointY);
                 }
             }
