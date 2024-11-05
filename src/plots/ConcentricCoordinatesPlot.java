@@ -16,6 +16,8 @@ import java.util.Hashtable;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ConcentricCoordinatesPlot extends JFrame {
 
@@ -36,6 +38,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private Map<String, Boolean> attributeDirections = new HashMap<>();
     private Map<String, Point> axisPositions = new HashMap<>();
     private String draggedAxis = null;
+    private Set<String> hiddenClasses = new HashSet<>();
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -369,6 +372,20 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
             JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             colorLabelPanel.setBackground(Color.WHITE);
+            colorLabelPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            colorLabelPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (hiddenClasses.contains(className)) {
+                        hiddenClasses.remove(className);
+                        colorLabelPanel.setBackground(Color.WHITE);
+                    } else {
+                        hiddenClasses.add(className);
+                        colorLabelPanel.setBackground(Color.LIGHT_GRAY);
+                    }
+                    plotPanel.repaint();
+                }
+            });
 
             JLabel shapeLabel = new JLabel() {
                 @Override
@@ -441,7 +458,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
             // Draw the concentric coordinates for each data point
             for (int row = 0; row < data.get(0).size(); row++) {
-                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+                String classLabel = classLabels.get(row);
+                if (!hiddenClasses.contains(classLabel)) {
+                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+                }
             }
 
             // Draw attribute labels if enabled
@@ -536,6 +556,11 @@ public class ConcentricCoordinatesPlot extends JFrame {
             g2.setStroke(new BasicStroke(2.0f));
 
             for (int row : selectedRows) {
+                String classLabel = classLabels.get(row);
+                if (hiddenClasses.contains(classLabel)) {
+                    continue;
+                }
+
                 int numAttributes = attributeNames.size();
                 Point2D.Double[] points = new Point2D.Double[numAttributes];
 
