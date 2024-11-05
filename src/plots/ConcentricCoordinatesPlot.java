@@ -14,6 +14,8 @@ import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class ConcentricCoordinatesPlot extends JFrame {
 
@@ -31,6 +33,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private boolean closeLoop = true;
     private boolean concentricMode = true;
     private Map<String, Double> attributeRotations = new HashMap<>();
+    private Map<String, Boolean> attributeDirections = new HashMap<>();
     private Map<String, Point> axisPositions = new HashMap<>();
     private String draggedAxis = null;
 
@@ -48,9 +51,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
         this.selectedRows = selectedRows;
         this.hiddenRows = hiddenRows;
 
-        // Initialize rotation values for each attribute
+        // Initialize rotation values and directions for each attribute
         for (String attribute : attributeNames) {
             attributeRotations.put(attribute, 0.0);
+            attributeDirections.put(attribute, true);
         }
 
         // Calculate the global maximum value across all attributes
@@ -184,15 +188,25 @@ public class ConcentricCoordinatesPlot extends JFrame {
             plotPanel.repaint();
         });
 
+        // Add optimize axes button
+        JButton optimizeButton = new JButton("Optimize Axes");
+        optimizeButton.addActionListener(e -> {
+            if (!concentricMode) {
+                optimizeAxesLayout();
+                plotPanel.repaint();
+            }
+        });
+
         globalControlPanel.add(sliderLabel);
         globalControlPanel.add(piSlider);
         globalControlPanel.add(labelToggle);
         globalControlPanel.add(loopToggle);
         globalControlPanel.add(concentricToggle);
+        globalControlPanel.add(optimizeButton);
         
         controlPanel.add(globalControlPanel);
 
-        // Add individual attribute rotation sliders
+        // Add individual attribute rotation sliders and direction toggles
         JPanel attributeSlidersPanel = new JPanel();
         attributeSlidersPanel.setLayout(new BoxLayout(attributeSlidersPanel, BoxLayout.Y_AXIS));
         attributeSlidersPanel.setBackground(Color.WHITE);
@@ -201,15 +215,25 @@ public class ConcentricCoordinatesPlot extends JFrame {
         for (String attribute : attributeNames) {
             JPanel sliderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             sliderPanel.setBackground(Color.WHITE);
+            
             JLabel label = new JLabel(attribute + ": ");
+            
             JSlider slider = new JSlider(JSlider.HORIZONTAL, 0, 360, 0);
             slider.setPreferredSize(new Dimension(200, 40));
             slider.addChangeListener(e -> {
                 attributeRotations.put(attribute, slider.getValue() * Math.PI / 180);
                 plotPanel.repaint();
             });
+            
+            JCheckBox directionToggle = new JCheckBox("Reverse", false);
+            directionToggle.addActionListener(e -> {
+                attributeDirections.put(attribute, !directionToggle.isSelected());
+                plotPanel.repaint();
+            });
+            
             sliderPanel.add(label);
             sliderPanel.add(slider);
+            sliderPanel.add(directionToggle);
             attributeSlidersPanel.add(sliderPanel);
         }
 
@@ -227,6 +251,109 @@ public class ConcentricCoordinatesPlot extends JFrame {
         mainPanel.add(controlPanel, BorderLayout.NORTH);
 
         setContentPane(mainPanel);
+    }
+
+    private void optimizeAxesLayout() {
+        int centerX = plotPanel.getWidth() / 2;
+        int centerY = plotPanel.getHeight() / 2;
+        int maxRadius = Math.min(centerX, centerY) - 50;
+        int numAttributes = attributeNames.size();
+        
+        // Calculate correlation matrix between attributes
+        double[][] correlations = calculateCorrelationMatrix();
+        
+        // Create list of attribute indices to optimize
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < numAttributes; i++) {
+            indices.add(i);
+        }
+        
+        // Optimize attribute order based on correlations
+        optimizeAttributeOrder(indices, correlations);
+        
+        // Position axes based on optimized order
+        for (int i = 0; i < numAttributes; i++) {
+            String attribute = attributeNames.get(indices.get(i));
+            double angle = 2 * Math.PI * i / numAttributes;
+            
+            // Set optimized position
+            int x = centerX + (int)(maxRadius * 0.6 * Math.cos(angle));
+            int y = centerY + (int)(maxRadius * 0.6 * Math.sin(angle));
+            axisPositions.put(attribute, new Point(x, y));
+            
+            // Set optimized rotation
+            attributeRotations.put(attribute, angle);
+            
+            // Set optimized direction based on correlations
+            boolean shouldReverse = calculateShouldReverse(indices.get(i), correlations);
+            attributeDirections.put(attribute, !shouldReverse);
+        }
+    }
+    
+    private double[][] calculateCorrelationMatrix() {
+        int n = attributeNames.size();
+        double[][] correlations = new double[n][n];
+        
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                List<Double> attr1 = data.get(i);
+                List<Double> attr2 = data.get(j);
+                correlations[i][j] = calculateCorrelation(attr1, attr2);
+            }
+        }
+        
+        return correlations;
+    }
+    
+    private double calculateCorrelation(List<Double> x, List<Double> y) {
+        int n = x.size();
+        double sumX = 0, sumY = 0, sumXY = 0;
+        double sumX2 = 0, sumY2 = 0;
+        
+        for (int i = 0; i < n; i++) {
+            sumX += x.get(i);
+            sumY += y.get(i);
+            sumXY += x.get(i) * y.get(i);
+            sumX2 += x.get(i) * x.get(i);
+            sumY2 += y.get(i) * y.get(i);
+        }
+        
+        double numerator = n * sumXY - sumX * sumY;
+        double denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+        
+        return denominator == 0 ? 0 : numerator / denominator;
+    }
+    
+    private void optimizeAttributeOrder(List<Integer> indices, double[][] correlations) {
+        // Simple greedy algorithm to place highly correlated attributes adjacent to each other
+        for (int i = 1; i < indices.size(); i++) {
+            int bestIndex = i;
+            double bestCorrelation = Math.abs(correlations[indices.get(i-1)][indices.get(i)]);
+            
+            for (int j = i + 1; j < indices.size(); j++) {
+                double correlation = Math.abs(correlations[indices.get(i-1)][indices.get(j)]);
+                if (correlation > bestCorrelation) {
+                    bestCorrelation = correlation;
+                    bestIndex = j;
+                }
+            }
+            
+            if (bestIndex != i) {
+                Collections.swap(indices, i, bestIndex);
+            }
+        }
+    }
+    
+    private boolean calculateShouldReverse(int attrIndex, double[][] correlations) {
+        // Count negative correlations with other attributes
+        int negativeCount = 0;
+        for (int i = 0; i < correlations.length; i++) {
+            if (i != attrIndex && correlations[attrIndex][i] < 0) {
+                negativeCount++;
+            }
+        }
+        // Reverse if more than half correlations are negative
+        return negativeCount > correlations.length / 2;
     }
 
     private JPanel createLegendPanel() {
@@ -355,6 +482,12 @@ public class ConcentricCoordinatesPlot extends JFrame {
             for (int i = 0; i < numAttributes; i++) {
                 double value = data.get(i).get(row);
                 double normalizedValue = value / globalMaxValue;
+                
+                // Apply direction toggle
+                String attribute = attributeNames.get(i);
+                if (!attributeDirections.get(attribute)) {
+                    normalizedValue = 1.0 - normalizedValue;
+                }
 
                 // Apply both global and individual attribute rotations
                 double attributeRotation = attributeRotations.get(attributeNames.get(i));
@@ -409,6 +542,12 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 for (int i = 0; i < numAttributes; i++) {
                     double value = data.get(i).get(row);
                     double normalizedValue = value / globalMaxValue;
+                    
+                    // Apply direction toggle
+                    String attribute = attributeNames.get(i);
+                    if (!attributeDirections.get(attribute)) {
+                        normalizedValue = 1.0 - normalizedValue;
+                    }
 
                     double attributeRotation = attributeRotations.get(attributeNames.get(i));
                     double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment) + attributeRotation;
