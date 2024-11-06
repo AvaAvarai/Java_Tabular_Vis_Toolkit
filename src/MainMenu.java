@@ -28,7 +28,7 @@ public class MainMenu extends JFrame {
         setSize(500, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout(0, 20));
+        setLayout(new BorderLayout(0, 0));
 
         // Create gradient background panel with frame
         JPanel backgroundPanel = new JPanel() {
@@ -45,7 +45,7 @@ public class MainMenu extends JFrame {
                 g2d.fillRect(0, 0, getWidth(), getHeight());
             }
         };
-        backgroundPanel.setLayout(new BorderLayout(0, 20));
+        backgroundPanel.setLayout(new BorderLayout(0, 0));
         setContentPane(backgroundPanel);
 
         // Banner
@@ -75,9 +75,10 @@ public class MainMenu extends JFrame {
 
         // Subtitle
         JLabel subTitleLabel = new JLabel("Java Tabular Visualization Toolkit", JLabel.CENTER);
-        subTitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        subTitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 28));
         subTitleLabel.setForeground(new Color(200, 200, 200));
-        subTitleLabel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+        subTitleLabel.setBorder(BorderFactory.createEmptyBorder(5, 20, 15, 20)); // Reduced top padding
+
         centerPanel.add(subTitleLabel, BorderLayout.NORTH);
 
         // Button panel
