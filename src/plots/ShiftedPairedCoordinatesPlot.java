@@ -409,7 +409,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         private static final int TITLE_PADDING = 20;
 
         public ShiftedPairedCoordinatesPanel() {
-            setBackground(new Color(0, 0, 0, 0));
+            setBackground(Color.WHITE);
         }
 
         @Override
@@ -424,7 +424,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             g2.scale(zoomLevel, zoomLevel);
 
             g2.setColor(Color.WHITE);
-            g2.fillRect(0, 0, getWidth(), getHeight());
+            g2.fillRect(0, 0, (int)(getWidth()/zoomLevel), (int)(getHeight()/zoomLevel));
 
             String title = "Shifted Paired Coordinates Plot";
             g2.setFont(new Font("SansSerif", Font.BOLD, 24));
@@ -435,7 +435,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             g2.drawString(title, (getWidth() - titleWidth) / 2, titleHeight);
 
             g2.setColor(new Color(0xC0C0C0));
-            g2.fillRect(0, titleHeight + TITLE_PADDING, getWidth(), getHeight() - titleHeight - TITLE_PADDING);
+            g2.fillRect(0, titleHeight + TITLE_PADDING, (int)(getWidth()/zoomLevel), (int)((getHeight() - titleHeight - TITLE_PADDING)/zoomLevel));
 
             int plotWidth = getWidth() / numPlots;
             int plotHeight = getHeight() - titleHeight - TITLE_PADDING - 50;
