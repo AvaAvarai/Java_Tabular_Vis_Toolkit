@@ -26,9 +26,12 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     private JTable table;
     private Map<Integer, Point> plotOffsets;
     private Integer draggedPlot;
+    private Point dragStartPoint;
+    private Point dragStartOffset;
     private ShiftedPairedCoordinatesPanel plotPanel;
     private Map<String, Double> axisScales; // Store scale factor for each axis
     private Map<String, Boolean> axisDirections; // Store direction for each axis (true = normal, false = inverted)
+    private double zoomLevel = 1.0; // Added zoom level
 
     public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table) {
         this.data = data;
@@ -64,6 +67,21 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
 
         // Create horizontal control panel for axis settings
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        
+        // Add zoom slider
+        JPanel zoomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        zoomPanel.setBorder(BorderFactory.createTitledBorder("Zoom"));
+        JSlider zoomSlider = new JSlider(JSlider.HORIZONTAL, 50, 200, 100);
+        zoomSlider.setPreferredSize(new Dimension(100, 20));
+        zoomSlider.addChangeListener(e -> {
+            zoomLevel = zoomSlider.getValue() / 100.0;
+            plotPanel.setPreferredSize(new Dimension((int)(numPlots * 250 * zoomLevel), (int)(800 * zoomLevel)));
+            plotPanel.revalidate();
+            plotPanel.repaint();
+        });
+        zoomPanel.add(new JLabel("Zoom:"));
+        zoomPanel.add(zoomSlider);
+        controlPanel.add(zoomPanel);
         
         // Add axis controls for each attribute
         for (String attr : attributeNames) {
@@ -108,30 +126,28 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         plotPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                int plotWidth = getWidth() / numPlots;
+                int plotWidth = (int)(getWidth() / numPlots * zoomLevel);
                 draggedPlot = e.getX() / plotWidth;
+                dragStartPoint = e.getPoint();
+                dragStartOffset = plotOffsets.get(draggedPlot);
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
                 draggedPlot = null;
+                dragStartPoint = null;
+                dragStartOffset = null;
             }
         });
 
         plotPanel.addMouseMotionListener(new MouseAdapter() {
-            private Point lastPoint;
-
             @Override
             public void mouseDragged(MouseEvent e) {
-                if (draggedPlot != null) {
-                    Point currentOffset = plotOffsets.get(draggedPlot);
-                    if (lastPoint != null) {
-                        int dx = e.getX() - lastPoint.x;
-                        int dy = e.getY() - lastPoint.y;
-                        plotOffsets.put(draggedPlot, new Point(currentOffset.x + dx, currentOffset.y + dy));
-                        plotPanel.repaint();
-                    }
-                    lastPoint = e.getPoint();
+                if (draggedPlot != null && dragStartPoint != null && dragStartOffset != null) {
+                    int dx = e.getX() - dragStartPoint.x;
+                    int dy = e.getY() - dragStartPoint.y;
+                    plotOffsets.put(draggedPlot, new Point(dragStartOffset.x + dx, dragStartOffset.y + dy));
+                    plotPanel.repaint();
                 }
             }
         });
@@ -166,18 +182,19 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     }
 
     private void optimizeAxesPlacement() {
-        // Calculate class separation scores for each attribute pair
-        List<CorrelationPair> correlations = new ArrayList<>();
-        for (int i = 0; i < data.size() - 1; i++) {
-            for (int j = i + 1; j < data.size(); j++) {
+        // Calculate correlations between all pairs of attributes
+        List<AttributePair> pairs = new ArrayList<>();
+        for (int i = 0; i < attributeNames.size(); i++) {
+            for (int j = i + 1; j < attributeNames.size(); j++) {
                 double correlation = calculateCorrelation(data.get(i), data.get(j));
                 double classSeparation = calculateClassSeparation(data.get(i), data.get(j));
-                correlations.add(new CorrelationPair(i, j, correlation, classSeparation));
+                pairs.add(new AttributePair(i, j, correlation, classSeparation));
             }
         }
 
-        // Sort by combined score (correlation and class separation)
-        Collections.sort(correlations, Comparator.comparingDouble(p -> -(Math.abs(p.correlation) + p.classSeparation)));
+        // Sort pairs by absolute correlation strength
+        Collections.sort(pairs, (a, b) -> Double.compare(Math.abs(b.correlation) + b.classSeparation, 
+                                                       Math.abs(a.correlation) + a.classSeparation));
 
         // Reset plot offsets
         plotOffsets.clear();
@@ -185,21 +202,20 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             plotOffsets.put(i, new Point(0, 0));
         }
 
-        // Optimize axis scales and directions based on correlations and class separation
-        for (CorrelationPair pair : correlations) {
+        // Optimize scales and directions based on correlations
+        for (AttributePair pair : pairs) {
             String attr1 = attributeNames.get(pair.attr1);
             String attr2 = attributeNames.get(pair.attr2);
-            
-            // If correlation is negative or class separation suggests inversion
-            boolean shouldInvert = pair.correlation < 0 || pair.classSeparation < 0;
-            if (shouldInvert) {
+
+            // Set axis directions based on correlation sign
+            if (pair.correlation < 0) {
                 axisDirections.put(attr1, !axisDirections.get(attr1));
             }
-            
-            // Scale axes based on combined score
-            double scale = Math.abs(pair.correlation) + Math.abs(pair.classSeparation);
-            axisScales.put(attr1, Math.max(0.5, Math.min(2.0, scale)));
-            axisScales.put(attr2, Math.max(0.5, Math.min(2.0, scale)));
+
+            // Set axis scales based on correlation strength and class separation
+            double scale = Math.min(2.0, Math.abs(pair.correlation) + pair.classSeparation);
+            axisScales.put(attr1, scale);
+            axisScales.put(attr2, scale);
         }
 
         plotPanel.repaint();
@@ -273,13 +289,13 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             .orElse(0);
     }
 
-    private static class CorrelationPair {
+    private static class AttributePair {
         int attr1;
         int attr2;
         double correlation;
         double classSeparation;
 
-        CorrelationPair(int attr1, int attr2, double correlation, double classSeparation) {
+        AttributePair(int attr1, int attr2, double correlation, double classSeparation) {
             this.attr1 = attr1;
             this.attr2 = attr2;
             this.correlation = correlation;
@@ -357,12 +373,12 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             g2.setColor(new Color(0xC0C0C0));
             g2.fillRect(0, titleHeight + TITLE_PADDING, getWidth(), getHeight() - titleHeight - TITLE_PADDING);
 
-            int plotWidth = getWidth() / numPlots;
-            int plotHeight = getHeight() - titleHeight - TITLE_PADDING - 50;
+            int plotWidth = (int)(getWidth() / numPlots * zoomLevel);
+            int plotHeight = (int)((getHeight() - titleHeight - TITLE_PADDING - 50) * zoomLevel);
 
             for (int i = 0; i < numPlots; i++) {
                 Point offset = plotOffsets.get(i);
-                int x = i * plotWidth + offset.x;
+                int x = (int)(i * plotWidth + offset.x);
                 int y = titleHeight + TITLE_PADDING + 10 + offset.y;
                 int attrIndex1 = i * 2;
                 int attrIndex2 = (i * 2) + 1;
@@ -389,7 +405,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         }
 
         private void drawAxesAndLabels(Graphics2D g2, int x, int y, int width, int height, String xLabel, String yLabel) {
-            int plotSize = Math.min(width, height) - 40;
+            int plotSize = (int)(Math.min(width, height) - 40);
             int plotX = x + 40;
             int plotY = y + 20;
 
@@ -438,8 +454,8 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                 boolean dir1 = axisDirections.get(attr1);
                 boolean dir2 = axisDirections.get(attr2);
         
-                int plotX1 = i * plotWidth + 40 + offset.x;
-                int plotSize = Math.min(plotWidth, plotHeight) - 40;
+                int plotX1 = (int)(i * plotWidth * zoomLevel) + 40 + offset.x;
+                int plotSize = (int)(Math.min(plotWidth, plotHeight) - 40);
         
                 double normX1 = (data.get(attrIndex1).get(row) - getMin(data.get(attrIndex1))) / (getMax(data.get(attrIndex1)) - getMin(data.get(attrIndex1)));
                 double normY1 = (data.get(attrIndex2).get(row) - getMin(data.get(attrIndex2))) / (getMax(data.get(attrIndex2)) - getMin(data.get(attrIndex2)));
@@ -465,7 +481,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                     boolean nextDir1 = axisDirections.get(nextAttr1);
                     boolean nextDir2 = axisDirections.get(nextAttr2);
         
-                    int plotX2 = (i + 1) * plotWidth + 40 + nextOffset.x;
+                    int plotX2 = (int)((i + 1) * plotWidth * zoomLevel) + 40 + nextOffset.x;
         
                     double normX2 = (data.get(nextAttrIndex1).get(row) - getMin(data.get(nextAttrIndex1))) / (getMax(data.get(nextAttrIndex1)) - getMin(data.get(nextAttrIndex1)));
                     double normY2 = (data.get(nextAttrIndex2).get(row) - getMin(data.get(nextAttrIndex2))) / (getMax(data.get(nextAttrIndex2)) - getMin(data.get(nextAttrIndex2)));
@@ -499,8 +515,8 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                 boolean dir1 = axisDirections.get(attr1);
                 boolean dir2 = axisDirections.get(attr2);
 
-                int plotX = i * plotWidth + 40 + offset.x;
-                int plotSize = Math.min(plotWidth, plotHeight) - 40;
+                int plotX = (int)(i * plotWidth * zoomLevel) + 40 + offset.x;
+                int plotSize = (int)(Math.min(plotWidth, plotHeight) - 40);
 
                 double normX = (data.get(attrIndex1).get(row) - getMin(data.get(attrIndex1))) / (getMax(data.get(attrIndex1)) - getMin(data.get(attrIndex1)));
                 double normY = (data.get(attrIndex2).get(row) - getMin(data.get(attrIndex2))) / (getMax(data.get(attrIndex2)) - getMin(data.get(attrIndex2)));
