@@ -182,7 +182,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     }
 
     private void optimizeAxesPlacement() {
-        // Calculate correlations between all pairs of attributes
+        // Calculate correlations and class separations between all pairs of attributes
         List<AttributePair> pairs = new ArrayList<>();
         for (int i = 0; i < attributeNames.size(); i++) {
             for (int j = i + 1; j < attributeNames.size(); j++) {
@@ -192,30 +192,61 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             }
         }
 
-        // Sort pairs by absolute correlation strength
+        // Sort pairs by absolute correlation strength and class separation
         Collections.sort(pairs, (a, b) -> Double.compare(Math.abs(b.correlation) + b.classSeparation, 
                                                        Math.abs(a.correlation) + a.classSeparation));
 
-        // Reset plot offsets
+        // Reset plot offsets and create a list of used attributes
         plotOffsets.clear();
-        for (int i = 0; i < numPlots; i++) {
-            plotOffsets.put(i, new Point(0, 0));
+        Set<Integer> usedAttributes = new HashSet<>();
+        List<Integer> attributeOrder = new ArrayList<>();
+
+        // Place pairs with strongest relationships first
+        for (AttributePair pair : pairs) {
+            if (!usedAttributes.contains(pair.attr1) && !usedAttributes.contains(pair.attr2)) {
+                attributeOrder.add(pair.attr1);
+                attributeOrder.add(pair.attr2);
+                usedAttributes.add(pair.attr1);
+                usedAttributes.add(pair.attr2);
+            }
         }
 
-        // Optimize scales and directions based on correlations
-        for (AttributePair pair : pairs) {
-            String attr1 = attributeNames.get(pair.attr1);
-            String attr2 = attributeNames.get(pair.attr2);
-
-            // Set axis directions based on correlation sign
-            if (pair.correlation < 0) {
-                axisDirections.put(attr1, !axisDirections.get(attr1));
+        // Add any remaining attributes
+        for (int i = 0; i < attributeNames.size(); i++) {
+            if (!usedAttributes.contains(i)) {
+                attributeOrder.add(i);
             }
+        }
 
-            // Set axis scales based on correlation strength and class separation
-            double scale = Math.min(2.0, Math.abs(pair.correlation) + pair.classSeparation);
-            axisScales.put(attr1, scale);
-            axisScales.put(attr2, scale);
+        // If odd number of attributes, duplicate the last one
+        if (attributeOrder.size() % 2 != 0) {
+            attributeOrder.add(attributeOrder.get(attributeOrder.size() - 1));
+        }
+
+        // Optimize scales, directions, and positions based on relationships
+        for (int i = 0; i < attributeOrder.size() - 1; i += 2) {
+            int attr1 = attributeOrder.get(i);
+            int attr2 = attributeOrder.get(i + 1);
+            int plotIndex = i / 2;
+
+            // Calculate optimal position
+            int yOffset = (int)(50 * Math.sin(plotIndex * Math.PI / 2));
+            plotOffsets.put(plotIndex, new Point(0, yOffset));
+
+            // Set scales based on data distribution and relationships
+            String attrName1 = attributeNames.get(attr1);
+            String attrName2 = attributeNames.get(attr2);
+            double correlation = calculateCorrelation(data.get(attr1), data.get(attr2));
+            double separation = calculateClassSeparation(data.get(attr1), data.get(attr2));
+
+            // Scale based on both correlation and class separation from 0.0 to 1.0
+            double scale = Math.min(1.0, Math.abs(correlation) + separation);
+            axisScales.put(attrName1, scale);
+            axisScales.put(attrName2, scale);
+
+            // Set directions based on correlation sign
+            axisDirections.put(attrName1, correlation >= 0);
+            axisDirections.put(attrName2, true);
         }
 
         plotPanel.repaint();
