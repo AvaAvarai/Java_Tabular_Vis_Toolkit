@@ -24,14 +24,14 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     private int numPlots;
     private List<Integer> selectedRows;
     private JTable table;
-    private Map<Integer, Point> plotOffsets;
+    private Map<Integer, Point> plotOffsets; // Stores x,y offsets for each plot
     private Integer draggedPlot;
     private Point dragStartPoint;
     private Point dragStartOffset;
     private ShiftedPairedCoordinatesPanel plotPanel;
-    private Map<String, Double> axisScales; // Store scale factor for each axis
-    private Map<String, Boolean> axisDirections; // Store direction for each axis (true = normal, false = inverted)
-    private double zoomLevel = 1.0; // Added zoom level
+    private Map<String, Double> axisScales;
+    private Map<String, Boolean> axisDirections;
+    private double zoomLevel = 1.0;
 
     public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table) {
         this.data = data;
@@ -49,7 +49,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
 
         // Initialize plot offsets and axis properties
         for (int i = 0; i < numPlots; i++) {
-            plotOffsets.put(i, new Point(0, 0));
+            plotOffsets.put(i, new Point(0, 0)); // Initialize with no offset
         }
         
         for (String attr : attributeNames) {
@@ -58,7 +58,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         }
 
         setTitle("Shifted Paired Coordinates");
-        setSize(1000, 800); // Increased size to accommodate controls
+        setSize(1000, 800);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -144,6 +144,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (draggedPlot != null && dragStartPoint != null && dragStartOffset != null) {
+                    // Allow both x and y movement
                     int dx = e.getX() - dragStartPoint.x;
                     int dy = e.getY() - dragStartPoint.y;
                     plotOffsets.put(draggedPlot, new Point(dragStartOffset.x + dx, dragStartOffset.y + dy));
@@ -464,7 +465,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                 if (!dir2) normY1 = 1 - normY1;
         
                 int x1 = plotX1 + (int) (plotSize * normX1 * scale1);
-                int y1 = plotY + plotSize - (int) (plotSize * normY1 * scale2);
+                int y1 = plotY + plotSize - (int) (plotSize * normY1 * scale2) + offset.y;
         
                 if (i + 1 < numPlots) {
                     Point nextOffset = plotOffsets.get(i + 1);
@@ -490,7 +491,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                     if (!nextDir2) normY2 = 1 - normY2;
         
                     int x2 = plotX2 + (int) (plotSize * normX2 * nextScale1);
-                    int y2 = plotY + plotSize - (int) (plotSize * normY2 * nextScale2);
+                    int y2 = plotY + plotSize - (int) (plotSize * normY2 * nextScale2) + nextOffset.y;
                     
                     g2.setColor(color);
                     g2.drawLine(x1, y1, x2, y2);
@@ -525,7 +526,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                 if (!dir2) normY = 1 - normY;
 
                 int px = plotX + (int) (plotSize * normX * scale1);
-                int py = plotY + plotSize - (int) (plotSize * normY * scale2);
+                int py = plotY + plotSize - (int) (plotSize * normY * scale2) + offset.y;
 
                 String classLabel = classLabels.get(row);
                 Color color = selectedRows.contains(row) ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
