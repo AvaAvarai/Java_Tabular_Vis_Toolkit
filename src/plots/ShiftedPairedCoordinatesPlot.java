@@ -35,6 +35,9 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     private Map<String, Boolean> axisDirections;
     private double zoomLevel = 1.0;
     private Set<String> hiddenClasses; // Track which classes are hidden
+    private boolean showSlopes = false; // Toggle for slope visualization
+    private Map<Integer, Double> slopeValues; // Store calculated slopes for each line segment
+    private JScrollPane mainScrollPane; // Store reference to main scroll pane
 
     public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table) {
         this.data = data;
@@ -50,6 +53,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         this.axisScales = new HashMap<>();
         this.axisDirections = new HashMap<>();
         this.hiddenClasses = new HashSet<>();
+        this.slopeValues = new HashMap<>();
 
         // Initialize plot offsets and axis properties
         for (int i = 0; i < numPlots; i++) {
@@ -71,6 +75,14 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
 
         // Create horizontal control panel for axis settings
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        
+        // Add slope visualization toggle
+        JToggleButton slopeToggle = new JToggleButton("Show Slopes");
+        slopeToggle.addActionListener(e -> {
+            showSlopes = slopeToggle.isSelected();
+            plotPanel.repaint();
+        });
+        controlPanel.add(slopeToggle);
         
         // Add zoom slider
         JPanel zoomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -159,23 +171,24 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         buttonPanel.add(optimizeButton);
         controlPanel.add(buttonPanel);
 
-        JScrollPane scrollPane = new JScrollPane(plotPanel);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        mainScrollPane = new JScrollPane(plotPanel);
+        mainScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        mainScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        mainScrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-        scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
-        scrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
+        // Add spacebar shortcut to save screenshot of whole plot
+        getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
+        getRootPane().getActionMap().put("saveScreenshot", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "ShiftedPairedCoordinates", datasetName);
+                ScreenshotUtils.captureAndSaveScreenshot(mainScrollPane, "ShiftedPairedCoordinates", datasetName);
             }
         });
 
         setFocusable(true);
         requestFocusInWindow();
 
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(mainScrollPane, BorderLayout.CENTER);
         mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
 
         setContentPane(mainPanel);
@@ -250,6 +263,9 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         }
 
         plotPanel.repaint();
+        
+        // Request focus after optimization to ensure keyboard shortcuts still work
+        requestFocusInWindow();
     }
 
     private double calculateCorrelation(List<Double> x, List<Double> y) {
@@ -544,7 +560,21 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                     int x2 = plotX2 + (int) (plotSize * normX2 * nextScale1);
                     int y2 = plotY + plotSize - (int) (plotSize * normY2 * nextScale2) + nextOffset.y;
                     
-                    g2.setColor(color);
+                    // Calculate slope between points
+                    double slope = (y2 - y1) / (double)(x2 - x1);
+                    int lineKey = row * numPlots + i;
+                    slopeValues.put(lineKey, slope);
+                    
+                    if (showSlopes) {
+                        // Map slope to color (red for positive, blue for negative)
+                        float hue = slope > 0 ? 0.0f : 0.6f; // Red or blue
+                        float saturation = Math.min(1.0f, Math.abs((float)slope) / 5.0f);
+                        Color slopeColor = Color.getHSBColor(hue, saturation, 1.0f);
+                        g2.setColor(slopeColor);
+                    } else {
+                        g2.setColor(color);
+                    }
+                    
                     g2.drawLine(x1, y1, x2, y2);
                 }
             }
