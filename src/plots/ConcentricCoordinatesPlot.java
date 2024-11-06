@@ -47,6 +47,8 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private Map<String, JSlider> radiusSliders = new HashMap<>(); // Added for radius control
     private Map<String, JCheckBox> attributeToggles = new HashMap<>();
     private Map<String, JCheckBox> normalizeToggles = new HashMap<>();
+    private double zoomLevel = 1.0;
+    private JScrollPane plotScrollPane;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -136,17 +138,17 @@ public class ConcentricCoordinatesPlot extends JFrame {
         });
 
         // Add the plot panel to a scroll pane
-        JScrollPane scrollPane = new JScrollPane(plotPanel);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        plotScrollPane = new JScrollPane(plotPanel);
+        plotScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        plotScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        plotScrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
         // Add a key listener for the space bar to save a screenshot
-        scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
-        scrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
+        plotScrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
+        plotScrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "ConcentricCoordinates", datasetName);
+                ScreenshotUtils.captureAndSaveScreenshot(plotScrollPane, "ConcentricCoordinates", datasetName);
             }
         });
 
@@ -159,6 +161,43 @@ public class ConcentricCoordinatesPlot extends JFrame {
         JPanel globalControlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         globalControlPanel.setBackground(Color.WHITE);
         
+        // Add zoom slider
+        JLabel zoomLabel = new JLabel("Zoom: ");
+        JSlider zoomSlider = new JSlider(JSlider.HORIZONTAL, 50, 200, 100);
+        zoomSlider.setMajorTickSpacing(50);
+        zoomSlider.setMinorTickSpacing(10);
+        zoomSlider.setPaintTicks(true);
+        zoomSlider.setPaintLabels(true);
+        Hashtable<Integer, JLabel> zoomLabels = new Hashtable<>();
+        zoomLabels.put(50, new JLabel("50%"));
+        zoomLabels.put(100, new JLabel("100%"));
+        zoomLabels.put(150, new JLabel("150%"));
+        zoomLabels.put(200, new JLabel("200%"));
+        zoomSlider.setLabelTable(zoomLabels);
+        zoomSlider.addChangeListener(e -> {
+            zoomLevel = zoomSlider.getValue() / 100.0;
+            
+            // Calculate center point
+            int centerX = plotPanel.getWidth() / 2;
+            int centerY = plotPanel.getHeight() / 2;
+            
+            // Set preferred size centered around the middle
+            int newWidth = (int)(800 * zoomLevel);
+            int newHeight = (int)(600 * zoomLevel);
+            plotPanel.setPreferredSize(new Dimension(newWidth, newHeight));
+            
+            // Adjust scroll position to keep center point
+            JViewport viewport = plotScrollPane.getViewport();
+            Point p = viewport.getViewPosition();
+            p.x = (newWidth - viewport.getWidth()) / 2;
+            p.y = (newHeight - viewport.getHeight()) / 2;
+            viewport.setViewPosition(p);
+            
+            plotPanel.revalidate();
+            plotScrollPane.revalidate();
+            plotPanel.repaint();
+        });
+
         JLabel sliderLabel = new JLabel("PI Adjustment: ");
         JSlider piSlider = new JSlider(JSlider.HORIZONTAL, -360*2, 360*2, 5);
         piSlider.setMajorTickSpacing(360);
@@ -238,6 +277,8 @@ public class ConcentricCoordinatesPlot extends JFrame {
             }
         });
 
+        globalControlPanel.add(zoomLabel);
+        globalControlPanel.add(zoomSlider);
         globalControlPanel.add(sliderLabel);
         globalControlPanel.add(piSlider);
         globalControlPanel.add(labelToggle);
@@ -310,7 +351,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
         requestFocusInWindow();
 
         // Add components to main panel
-        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(plotScrollPane, BorderLayout.CENTER);
         mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
         mainPanel.add(controlPanel, BorderLayout.NORTH);
 
@@ -504,6 +545,16 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Get the center point of the viewport
+            Rectangle viewRect = plotScrollPane.getViewport().getViewRect();
+            int centerX = viewRect.x + viewRect.width / 2;
+            int centerY = viewRect.y + viewRect.height / 2;
+            
+            // Translate to center before scaling
+            g2.translate(centerX, centerY);
+            g2.scale(zoomLevel, zoomLevel);
+            g2.translate(-centerX, -centerY);
 
             // Set the background color for the entire panel to white
             g2.setColor(Color.WHITE);
@@ -523,8 +574,8 @@ public class ConcentricCoordinatesPlot extends JFrame {
             g2.fillRect(0, titleHeight + TITLE_PADDING, getWidth(), getHeight() - titleHeight - TITLE_PADDING);
 
             // Calculate center and radius for the plot
-            int centerX = getWidth() / 2;
-            int centerY = (getHeight() - titleHeight - TITLE_PADDING) / 2 + titleHeight + TITLE_PADDING;
+            centerX = getWidth() / 2;
+            centerY = (getHeight() - titleHeight - TITLE_PADDING) / 2 + titleHeight + TITLE_PADDING;
             int maxRadius = Math.min(centerX, (getHeight() - titleHeight - TITLE_PADDING) / 2) - 50;
 
             // Draw concentric axes
