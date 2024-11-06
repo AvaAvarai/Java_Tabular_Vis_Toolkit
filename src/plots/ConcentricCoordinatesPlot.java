@@ -277,6 +277,17 @@ public class ConcentricCoordinatesPlot extends JFrame {
             }
         });
 
+        // Add global normalization toggle
+        JToggleButton normalizeAllToggle = new JToggleButton("Normalize All", true);
+        normalizeAllToggle.addActionListener(e -> {
+            boolean normalizeAll = normalizeAllToggle.isSelected();
+            for (String attribute : attributeNames) {
+                normalizeAttributes.put(attribute, normalizeAll);
+                normalizeToggles.get(attribute).setSelected(normalizeAll);
+            }
+            plotPanel.repaint();
+        });
+
         globalControlPanel.add(zoomLabel);
         globalControlPanel.add(zoomSlider);
         globalControlPanel.add(sliderLabel);
@@ -285,6 +296,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
         globalControlPanel.add(loopToggle);
         globalControlPanel.add(concentricToggle);
         globalControlPanel.add(optimizeButton);
+        globalControlPanel.add(normalizeAllToggle);
         
         controlPanel.add(globalControlPanel);
 
