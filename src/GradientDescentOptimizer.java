@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -18,6 +19,7 @@ public class GradientDescentOptimizer {
     private final double learningRate;
     private final int maxIterations;
     private final double tolerance;
+    private final Random random = new Random();
 
     /**
      * Constructs a GradientDescentOptimizer with the specified parameters.
@@ -43,8 +45,8 @@ public class GradientDescentOptimizer {
      * @param panel the JPanel containing the UI components for coefficient inputs.
      * @param trigFunction the trigonometric function to apply to the linear combination.
      */
-    public void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel, String trigFunction) {
-        initializeCoefficients(coefficients);
+    public void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel, String trigFunction, String initializationType, double flatValue, double minRange, double maxRange) {
+        initializeCoefficients(coefficients, initializationType, flatValue, minRange, maxRange);
 
         int n = coefficients.size();
         double[] gradients = new double[n];
@@ -77,14 +79,28 @@ public class GradientDescentOptimizer {
     }
 
     /**
-     * Initializes the coefficients to a default value of 1.0 if they are not already set.
+     * Initializes coefficients with either a flat value or random values within a range.
      *
-     * @param coefficients the list of coefficients to initialize.
+     * @param coefficients the list of coefficients to initialize
+     * @param initializationType "flat" or "random"
+     * @param flatValue the value to use for flat initialization
+     * @param minRange minimum value for random initialization
+     * @param maxRange maximum value for random initialization
      */
-    private void initializeCoefficients(List<Double> coefficients) {
+    private void initializeCoefficients(List<Double> coefficients, String initializationType, 
+            double flatValue, double minRange, double maxRange) {
         for (int i = 0; i < coefficients.size(); i++) {
             if (coefficients.get(i) == null) {
-                coefficients.set(i, 1.0);
+                switch (initializationType) {
+                    case "random":
+                        double randomValue = minRange + (maxRange - minRange) * random.nextDouble();
+                        coefficients.set(i, randomValue);
+                        break;
+                    case "flat":
+                    default:
+                        coefficients.set(i, flatValue);
+                        break;
+                }
             }
         }
     }

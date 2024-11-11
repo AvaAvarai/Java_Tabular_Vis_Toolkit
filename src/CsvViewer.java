@@ -182,6 +182,36 @@ public class CsvViewer extends JFrame {
             }
         }
 
+        String[] initTypes = {"Flat Value", "Random Range"};
+        JComboBox<String> initTypeCombo = new JComboBox<>(initTypes);
+        panel.add(new JLabel("Initialization Type:"));
+        panel.add(initTypeCombo);
+
+        JLabel flatValueLabel = new JLabel("Flat Value:");
+        JTextField flatValueField = new JTextField("1.0");
+        panel.add(flatValueLabel);
+        panel.add(flatValueField);
+
+        JLabel minRangeLabel = new JLabel("Min Range:");
+        JTextField minRangeField = new JTextField("0.0");
+        JLabel maxRangeLabel = new JLabel("Max Range:");
+        JTextField maxRangeField = new JTextField("1.0");
+
+        panel.add(minRangeLabel);
+        panel.add(minRangeField);
+        panel.add(maxRangeLabel);
+        panel.add(maxRangeField);
+
+        initTypeCombo.addActionListener(e -> {
+            boolean isRandom = initTypeCombo.getSelectedItem().equals("Random Range");
+            minRangeField.setEnabled(isRandom);
+            maxRangeField.setEnabled(isRandom);
+            flatValueField.setEnabled(!isRandom);
+        });
+        
+        minRangeField.setEnabled(false);
+        maxRangeField.setEnabled(false);
+
         String[] trigOptions = {"None", "cos", "sin", "tan", "arccos", "arcsin", "arctan"};
         JComboBox<String> trigFunctionSelector = new JComboBox<>(trigOptions);
         panel.add(new JLabel("Wrap Linear Combination in:"));
@@ -189,8 +219,37 @@ public class CsvViewer extends JFrame {
 
         JButton optimizeButton = new JButton("Optimize Coefficients");
         optimizeButton.addActionListener(e -> {
-            GradientDescentOptimizer optimizer = new GradientDescentOptimizer(this, 0.01, 1000, 1e-6);
-            optimizer.optimizeCoefficientsUsingGradientDescent(columnIndices, coefficients, panel, (String) trigFunctionSelector.getSelectedItem());
+            try {
+                String initType = initTypeCombo.getSelectedItem().toString();
+                double flatValue = Double.parseDouble(flatValueField.getText());
+                double minRange = Double.parseDouble(minRangeField.getText());
+                double maxRange = Double.parseDouble(maxRangeField.getText());
+                
+                if (initType.equals("Random Range") && minRange >= maxRange) {
+                    JOptionPane.showMessageDialog(this, 
+                        "Min range must be less than max range", 
+                        "Invalid Range", 
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                GradientDescentOptimizer optimizer = new GradientDescentOptimizer(this, 0.01, 1000, 1e-6);
+                optimizer.optimizeCoefficientsUsingGradientDescent(
+                    columnIndices, 
+                    coefficients, 
+                    panel, 
+                    (String) trigFunctionSelector.getSelectedItem(),
+                    initType.equals("Random Range") ? "random" : "flat",
+                    flatValue,
+                    minRange,
+                    maxRange
+                );
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, 
+                    "Please enter valid numbers for initialization values", 
+                    "Invalid Input", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
         });
         panel.add(optimizeButton);
 
