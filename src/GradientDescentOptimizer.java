@@ -45,7 +45,7 @@ public class GradientDescentOptimizer {
      * @param panel the JPanel containing the UI components for coefficient inputs.
      * @param trigFunction the trigonometric function to apply to the linear combination.
      */
-    public void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel, String trigFunction, String initializationType, double flatValue, double minRange, double maxRange) {
+    public void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel, String trigFunction, String initializationType, double flatValue, double minRange, double maxRange, double coeffMin, double coeffMax) {
         initializeCoefficients(coefficients, initializationType, flatValue, minRange, maxRange);
 
         int n = coefficients.size();
@@ -64,6 +64,8 @@ public class GradientDescentOptimizer {
             boolean hasConverged = true;
             for (int i = 0; i < n; i++) {
                 double newCoefficient = coefficients.get(i) + learningRate * gradients[i];
+                newCoefficient = Math.max(coeffMin, Math.min(coeffMax, newCoefficient));
+                
                 if (Math.abs(newCoefficient - coefficients.get(i)) > tolerance) {
                     hasConverged = false;
                 }

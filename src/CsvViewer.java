@@ -202,6 +202,17 @@ public class CsvViewer extends JFrame {
         panel.add(maxRangeLabel);
         panel.add(maxRangeField);
 
+        // Add coefficient range controls
+        JLabel coeffMinLabel = new JLabel("Coefficient Min:");
+        JTextField coeffMinField = new JTextField("-1.0");
+        JLabel coeffMaxLabel = new JLabel("Coefficient Max:");
+        JTextField coeffMaxField = new JTextField("1.0");
+
+        panel.add(coeffMinLabel);
+        panel.add(coeffMinField);
+        panel.add(coeffMaxLabel);
+        panel.add(coeffMaxField);
+
         initTypeCombo.addActionListener(e -> {
             boolean isRandom = initTypeCombo.getSelectedItem().equals("Random Range");
             minRangeField.setEnabled(isRandom);
@@ -224,11 +235,21 @@ public class CsvViewer extends JFrame {
                 double flatValue = Double.parseDouble(flatValueField.getText());
                 double minRange = Double.parseDouble(minRangeField.getText());
                 double maxRange = Double.parseDouble(maxRangeField.getText());
+                double coeffMin = Double.parseDouble(coeffMinField.getText());
+                double coeffMax = Double.parseDouble(coeffMaxField.getText());
                 
                 if (initType.equals("Random Range") && minRange >= maxRange) {
                     JOptionPane.showMessageDialog(this, 
                         "Min range must be less than max range", 
                         "Invalid Range", 
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (coeffMin >= coeffMax) {
+                    JOptionPane.showMessageDialog(this,
+                        "Coefficient minimum must be less than maximum",
+                        "Invalid Coefficient Range",
                         JOptionPane.ERROR_MESSAGE);
                     return;
                 }
@@ -242,11 +263,13 @@ public class CsvViewer extends JFrame {
                     initType.equals("Random Range") ? "random" : "flat",
                     flatValue,
                     minRange,
-                    maxRange
+                    maxRange,
+                    coeffMin,
+                    coeffMax
                 );
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, 
-                    "Please enter valid numbers for initialization values", 
+                    "Please enter valid numbers for all fields", 
                     "Invalid Input", 
                     JOptionPane.ERROR_MESSAGE);
             }
