@@ -10,22 +10,26 @@ import javax.swing.JTextField;
 
 /**
  * The GradientDescentOptimizer class provides functionality to optimize the coefficients
- * for a linear combination of features using the gradient descent algorithm. This optimization
- * aims to maximize the separability between classes in a dataset.
+ * for a linear combination of features using the gradient descent algorithm with adaptive learning rate.
+ * This optimization aims to maximize the separability between classes in a dataset.
  */
 public class GradientDescentOptimizer {
 
     private final CsvViewer csvViewer;
-    private final double learningRate;
+    private double learningRate; // Changed to non-final to allow adaptation
     private final int maxIterations;
     private final double tolerance;
     private final Random random = new Random();
+    private final double learningRateDecay = 0.95; // Learning rate decay factor
+    private final double learningRateIncrease = 1.05; // Learning rate increase factor
+    private final double minLearningRate = 0.0001; // Minimum learning rate
+    private final double maxLearningRate = 1.0; // Maximum learning rate
 
     /**
      * Constructs a GradientDescentOptimizer with the specified parameters.
      *
      * @param csvViewer the CsvViewer instance that manages the data and UI.
-     * @param learningRate the learning rate for the gradient descent algorithm.
+     * @param learningRate the initial learning rate for the gradient descent algorithm.
      * @param maxIterations the maximum number of iterations for the optimization process.
      * @param tolerance the tolerance for convergence in the optimization process.
      */
@@ -37,7 +41,7 @@ public class GradientDescentOptimizer {
     }
 
     /**
-     * Optimizes the coefficients for the linear combination using gradient descent.
+     * Optimizes the coefficients for the linear combination using gradient descent with adaptive learning rate.
      * The optimized coefficients are then updated in the provided JPanel.
      *
      * @param originalColumnIndices the list of indices corresponding to the original columns in the dataset.
@@ -50,9 +54,20 @@ public class GradientDescentOptimizer {
 
         int n = coefficients.size();
         double[] gradients = new double[n];
+        double previousScore = Double.NEGATIVE_INFINITY;
 
         for (int iteration = 0; iteration < maxIterations; iteration++) {
             double currentScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray(), trigFunction);
+
+            // Adapt learning rate based on score improvement
+            if (currentScore > previousScore) {
+                // If score improved, increase learning rate
+                learningRate = Math.min(maxLearningRate, learningRate * learningRateIncrease);
+            } else {
+                // If score didn't improve, decrease learning rate
+                learningRate = Math.max(minLearningRate, learningRate * learningRateDecay);
+            }
+            previousScore = currentScore;
 
             for (int i = 0; i < n; i++) {
                 coefficients.set(i, coefficients.get(i) + tolerance);
