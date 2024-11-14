@@ -277,7 +277,7 @@ public class CsvViewer extends JFrame {
         panel.add(optimizeButton);
 
         JScrollPane scrollPane = new JScrollPane(panel);
-        scrollPane.setPreferredSize(new Dimension(400, 300));
+        scrollPane.setPreferredSize(new Dimension(400, 400));
 
         int result = JOptionPane.showConfirmDialog(this, scrollPane, "Enter Coefficients for Linear Combination", JOptionPane.OK_CANCEL_OPTION);
 
