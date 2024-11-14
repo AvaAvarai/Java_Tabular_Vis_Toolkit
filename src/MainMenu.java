@@ -5,9 +5,6 @@ import java.awt.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import javax.swing.plaf.metal.MetalButtonUI;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URI;
@@ -24,7 +21,7 @@ public class MainMenu extends JFrame {
     private static final int FRAME_THICKNESS = 4;
 
     public MainMenu() {
-        setTitle("JTabViz Main Menu");
+        setTitle("Main Menu");
         setSize(500, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -39,8 +36,7 @@ public class MainMenu extends JFrame {
                 g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                 
                 // Draw gradient background
-                GradientPaint gp = new GradientPaint(0, 0, BACKGROUND_COLOR_TOP, 
-                                                    0, getHeight(), BACKGROUND_COLOR_BOTTOM);
+                GradientPaint gp = new GradientPaint(0, 0, BACKGROUND_COLOR_TOP, 0, getHeight(), BACKGROUND_COLOR_BOTTOM);
                 g2d.setPaint(gp);
                 g2d.fillRect(0, 0, getWidth(), getHeight());
             }
@@ -61,12 +57,12 @@ public class MainMenu extends JFrame {
         add(bannerLabel, BorderLayout.NORTH);
 
         // Create modern styled buttons with aligned icons
-        JButton startAppButton = createModernButton("     Start Application", UIHelper.loadIcon("/icons/start.png", 20, 20));
-        JButton githubButton = createModernButton("     GitHub Repository", UIHelper.loadIcon("/icons/github.png", 20, 20));
-        JButton aboutButton = createModernButton("     About JTabViz", UIHelper.loadIcon("/icons/about.png", 20, 20));
-        JButton openDatasetsButton = createModernButton("     Datasets", UIHelper.loadIcon("/icons/folder.png", 20, 20));
-        JButton openScreenshotsButton = createModernButton("     Screenshots", UIHelper.loadIcon("/icons/image.png", 20, 20));
-        JButton exitButton = createModernButton("     Exit", UIHelper.loadIcon("/icons/exit.png", 20, 20));
+        JButton startAppButton = createModernButton("Start Application", UIHelper.loadIcon("/icons/start.png", 20, 20));
+        JButton githubButton = createModernButton("GitHub Repository", UIHelper.loadIcon("/icons/github.png", 20, 20));
+        JButton aboutButton = createModernButton("About JTabViz", UIHelper.loadIcon("/icons/about.png", 20, 20));
+        JButton openDatasetsButton = createModernButton("Datasets", UIHelper.loadIcon("/icons/folder.png", 20, 20));
+        JButton openScreenshotsButton = createModernButton("Screenshots", UIHelper.loadIcon("/icons/image.png", 20, 20));
+        JButton exitButton = createModernButton("Exit", UIHelper.loadIcon("/icons/exit.png", 20, 20));
 
         // Button panel with modern layout
         JPanel centerPanel = new JPanel();
@@ -145,15 +141,34 @@ public class MainMenu extends JFrame {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(getBackground());
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), CORNER_RADIUS, CORNER_RADIUS);
-                super.paintComponent(g2);
                 g2.dispose();
+                
+                // Draw text and icon after background
+                super.paintComponent(g);
             }
         };
 
         if (icon != null) {
-            button.setIcon(icon);
-            button.setIconTextGap(10);
-            button.setHorizontalAlignment(SwingConstants.LEFT);
+            // Create a panel to hold icon and text
+            JPanel buttonPanel = new JPanel(new BorderLayout());
+            buttonPanel.setOpaque(false);
+            
+            // Add padding on left and right to center the content
+            buttonPanel.add(Box.createHorizontalStrut(40), BorderLayout.WEST);
+            
+            JLabel iconLabel = new JLabel(icon);
+            iconLabel.setForeground(TEXT_COLOR);
+            buttonPanel.add(iconLabel, BorderLayout.WEST);
+            
+            JLabel textLabel = new JLabel(text, SwingConstants.CENTER);
+            textLabel.setForeground(TEXT_COLOR);
+            buttonPanel.add(textLabel, BorderLayout.CENTER);
+            
+            buttonPanel.add(Box.createHorizontalStrut(40), BorderLayout.EAST);
+            
+            button.setLayout(new BorderLayout());
+            button.add(buttonPanel);
+            button.setText("");
         }
 
         button.setFont(new Font("Segoe UI", Font.BOLD, 14));
