@@ -440,6 +440,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             int plotWidth = getWidth() / numPlots;
             int plotHeight = getHeight() - titleHeight - TITLE_PADDING - 50;
 
+            // Draw axes first
             for (int i = 0; i < numPlots; i++) {
                 Point offset = plotOffsets.get(i);
                 int x = i * plotWidth + offset.x;
@@ -452,22 +453,23 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                 drawAxesAndLabels(g2, x, y, plotWidth, plotHeight, attributeNames.get(attrIndex1), attributeNames.get(attrIndex2));
             }
 
-            // Draw rows in the order they are listed in the table
+            // Draw non-highlighted rows first
             for (int i = 0; i < table.getRowCount(); i++) {
-                int row = table.convertRowIndexToModel(i); // Use the current sort order
+                int row = table.convertRowIndexToModel(i);
                 String classLabel = classLabels.get(row);
-                if (!hiddenClasses.contains(classLabel)) {
+                if (!selectedRows.contains(row) && !hiddenClasses.contains(classLabel)) {
                     drawRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                     drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                 }
             }
 
-            // Draw highlighted rows on top
+            // Draw highlighted rows last
             for (int i = 0; i < table.getRowCount(); i++) {
                 int row = table.convertRowIndexToModel(i);
                 String classLabel = classLabels.get(row);
                 if (selectedRows.contains(row) && !hiddenClasses.contains(classLabel)) {
                     drawHighlightedRow(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
+                    drawScatterPlot(g2, row, titleHeight + TITLE_PADDING + 10, plotWidth, plotHeight);
                 }
             }
         }
