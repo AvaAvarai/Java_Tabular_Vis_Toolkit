@@ -225,11 +225,11 @@ public class StaticCircularCoordinatesPlot extends JFrame {
 
                 // Draw tick marks if enabled
                 if (showTicks) {
-                    double tickLength = 10;
-                    double tickStartX = centerX + radius * Math.cos(angle);
-                    double tickStartY = centerY + radius * Math.sin(angle);
-                    double tickEndX = centerX + (radius + tickLength) * Math.cos(angle);
-                    double tickEndY = centerY + (radius + tickLength) * Math.sin(angle);
+                    double tickLength = 20; // use -half for start of axis and +half for end of axis
+                    double tickStartX = centerX + (radius - tickLength/2) * Math.cos(angle);
+                    double tickStartY = centerY + (radius - tickLength/2) * Math.sin(angle);
+                    double tickEndX = centerX + (radius + tickLength/2) * Math.cos(angle);
+                    double tickEndY = centerY + (radius + tickLength/2) * Math.sin(angle);
                     g2.drawLine((int)tickStartX, (int)tickStartY, (int)tickEndX, (int)tickEndY);
                 }
             }
@@ -244,6 +244,9 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             // Draw selected rows last (highlighted in yellow)
             for (int row : selectedRows) {
                 if (!hiddenClasses.contains(classLabels.get(row))) {
+                    // Draw highlight twice as thick by drawing three times
+                    drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, true);
+                    drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, true);
                     drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, true);
                 }
             }
