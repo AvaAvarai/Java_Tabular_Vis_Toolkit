@@ -16,6 +16,7 @@ public class CsvDataHandler {
     private List<String[]> originalData = new ArrayList<>();
     private List<String[]> normalizedData = new ArrayList<>();
     private boolean isNormalized = false;
+    private String normalizationType = "minmax"; // Default to min-max
 
     public void loadCsvData(String filePath, DefaultTableModel tableModel, JTextArea statsTextArea) {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -65,24 +66,60 @@ public class CsvDataHandler {
                 int numColumns = originalData.get(0).length;
                 double[] minValues = new double[numColumns];
                 double[] maxValues = new double[numColumns];
+                double[] means = new double[numColumns];
+                double[] stdDevs = new double[numColumns];
                 boolean[] isNumerical = new boolean[numColumns];
+                int[] counts = new int[numColumns];
     
-                // Initialize min and max values, and check if columns are numerical
+                // Initialize arrays
                 for (int i = 0; i < numColumns; i++) {
                     minValues[i] = Double.MAX_VALUE;
                     maxValues[i] = Double.MIN_VALUE;
+                    means[i] = 0.0;
+                    stdDevs[i] = 0.0;
                     isNumerical[i] = true;
+                    counts[i] = 0;
                 }
     
-                // Calculate min and max for each column
+                // First pass - calculate min, max and means
                 for (String[] row : originalData) {
                     for (int j = 0; j < numColumns; j++) {
                         try {
                             double value = Double.parseDouble(row[j]);
                             if (value < minValues[j]) minValues[j] = value;
                             if (value > maxValues[j]) maxValues[j] = value;
+                            means[j] += value;
+                            counts[j]++;
                         } catch (NumberFormatException e) {
                             isNumerical[j] = false;
+                        }
+                    }
+                }
+
+                // Calculate means
+                for (int j = 0; j < numColumns; j++) {
+                    if (isNumerical[j] && counts[j] > 0) {
+                        means[j] /= counts[j];
+                    }
+                }
+
+                // Second pass - calculate standard deviations for z-score
+                if (normalizationType.equals("zscore")) {
+                    for (String[] row : originalData) {
+                        for (int j = 0; j < numColumns; j++) {
+                            if (isNumerical[j]) {
+                                try {
+                                    double value = Double.parseDouble(row[j]);
+                                    stdDevs[j] += Math.pow(value - means[j], 2);
+                                } catch (NumberFormatException ignored) {}
+                            }
+                        }
+                    }
+                    
+                    // Finalize standard deviations
+                    for (int j = 0; j < numColumns; j++) {
+                        if (isNumerical[j] && counts[j] > 0) {
+                            stdDevs[j] = Math.sqrt(stdDevs[j] / counts[j]);
                         }
                     }
                 }
@@ -93,9 +130,18 @@ public class CsvDataHandler {
                     String[] normalizedRow = new String[numColumns];
                     for (int j = 0; j < numColumns; j++) {
                         if (isNumerical[j]) {
-                            double value = Double.parseDouble(row[j]);
-                            double normalizedValue = (value - minValues[j]) / (maxValues[j] - minValues[j]);
-                            normalizedRow[j] = String.valueOf(normalizedValue);
+                            try {
+                                double value = Double.parseDouble(row[j]);
+                                double normalizedValue;
+                                if (normalizationType.equals("minmax")) {
+                                    normalizedValue = (value - minValues[j]) / (maxValues[j] - minValues[j]);
+                                } else { // zscore
+                                    normalizedValue = stdDevs[j] != 0 ? (value - means[j]) / stdDevs[j] : 0;
+                                }
+                                normalizedRow[j] = String.valueOf(normalizedValue);
+                            } catch (NumberFormatException e) {
+                                normalizedRow[j] = row[j];
+                            }
                         } else {
                             normalizedRow[j] = row[j]; // Retain original value for non-numeric columns
                         }
@@ -268,5 +314,9 @@ public class CsvDataHandler {
         originalData.clear();
         normalizedData.clear();
         isNormalized = false;
+    }
+
+    public void setNormalizationType(String type) {
+        this.normalizationType = type;
     }
 }

@@ -47,6 +47,7 @@ public class CsvViewer extends JFrame {
     public JSplitPane splitPane;
     public JSlider thresholdSlider;
     public JLabel thresholdLabel;
+    public JPopupMenu normalizationMenu;
 
     private TrigonometricColumnManager trigColumnManager;
     private PureRegionManager pureRegionManager;
@@ -90,6 +91,35 @@ public class CsvViewer extends JFrame {
         thresholdSlider.setPaintTicks(true);
         thresholdSlider.setPaintLabels(true);
         thresholdSlider.setToolTipText("Adjust threshold percentage");
+
+        // Initialize normalization menu
+        normalizationMenu = new JPopupMenu();
+        JMenuItem minMaxItem = new JMenuItem("Min-Max Normalization");
+        JMenuItem zScoreItem = new JMenuItem("Z-Score Normalization");
+        minMaxItem.addActionListener(e -> {
+            stateManager.setNormalizationType("minmax");
+            toggleDataView();
+            normalizationMenu.setVisible(false);
+            dataHandler.setNormalizationType("minmax");
+            dataHandler.normalizeOrDenormalizeData(table, statsTextArea);
+            stateManager.setNormalized(true);
+            toggleButton.setIcon(UIHelper.loadIcon("/icons/denormalize.png", 40, 40));
+            toggleButton.setToolTipText("Denormalize");
+        });
+        
+        zScoreItem.addActionListener(e -> {
+            stateManager.setNormalizationType("zscore"); 
+            toggleDataView();
+            normalizationMenu.setVisible(false);
+            dataHandler.setNormalizationType("zscore");
+            dataHandler.normalizeOrDenormalizeData(table, statsTextArea);
+            stateManager.setNormalized(true);
+            toggleButton.setIcon(UIHelper.loadIcon("/icons/denormalize.png", 40, 40));
+            toggleButton.setToolTipText("Denormalize");
+        });
+
+        normalizationMenu.add(minMaxItem);
+        normalizationMenu.add(zScoreItem);
 
         tableScrollPane = new JScrollPane(table);
         trigColumnManager = new TrigonometricColumnManager(table);
@@ -559,11 +589,7 @@ public class CsvViewer extends JFrame {
             toggleButton.setIcon(UIHelper.loadIcon("/icons/normalize.png", 40, 40));
             toggleButton.setToolTipText("Normalize");
         } else {
-            dataHandler.normalizeOrDenormalizeData(table, statsTextArea);
-            tableManager.updateTableData(dataHandler.getNormalizedData());
-            stateManager.setNormalized(true);
-            toggleButton.setIcon(UIHelper.loadIcon("/icons/denormalize.png", 40, 40));
-            toggleButton.setToolTipText("Default");
+            normalizationMenu.show(toggleButton, 0, toggleButton.getHeight());
         }
 
         currentCaretPosition = Math.min(currentCaretPosition, statsTextArea.getText().length());

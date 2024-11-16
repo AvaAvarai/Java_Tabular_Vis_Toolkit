@@ -11,6 +11,7 @@ public class StateManager {
     private String datasetName;
     private List<String> originalColumnNames;
     private boolean normalized;
+    private String normalizationType;
     private boolean heatmapEnabled;
     private boolean classColorEnabled;
     private List<Integer> hiddenRows;
@@ -23,6 +24,7 @@ public class StateManager {
         this.datasetName = "";
         this.originalColumnNames = new ArrayList<>();
         this.normalized = false;
+        this.normalizationType = "minmax";
         this.heatmapEnabled = false;
         this.classColorEnabled = false;
         this.hiddenRows = new ArrayList<>();
@@ -35,6 +37,7 @@ public class StateManager {
     public void clearState() {
         originalColumnNames.clear();
         normalized = false;
+        normalizationType = "minmax";
         heatmapEnabled = false;
         classColorEnabled = false;
         hiddenRows.clear();
@@ -66,6 +69,14 @@ public class StateManager {
 
     public void setNormalized(boolean normalized) {
         this.normalized = normalized;
+    }
+
+    public String getNormalizationType() {
+        return normalizationType;
+    }
+
+    public void setNormalizationType(String normalizationType) {
+        this.normalizationType = normalizationType;
     }
 
     public boolean isHeatmapEnabled() {
