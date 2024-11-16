@@ -1,12 +1,23 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-**JTabViz** is a Java-based multiplatform toolkit for machine learning (ML) data analysis, designed for the visualization and analysis of multidimensional (n-D) tabular ML data. It supports data augmentation, allowing users to explore how dataset changes impact trained models. Users can load CSV data to view, analyze, and classify with features like normalization, General Line Coordinates visualizations (Parallel Coordinates, Shifted Paired Coordinates, Static Circular Coordinates, Star Coordinates), tabular heatmaps, covariance matrix heatmaps, row manipulation, cell editing, classification rule testing with confusion matrices, automatic pure region discovery, feature engineering using slope and distance calculations, linear combination features (including trigonometric wrapping, forward/backward differences, and various trigonometric values), optimal coefficient computation for linear combinations, attribute sorting, and data export.
+**JTabViz** is a Java-based multiplatform toolkit for machine learning (ML) data analysis, designed for the visualization and analysis of multidimensional (n-D) tabular ML data. It supports data augmentation, allowing users to explore how dataset changes impact trained models. Users can load CSV data to view, analyze, and classify with features like normalization, General Line Coordinates visualizations, tabular heatmaps, covariance matrix heatmaps, row manipulation, cell editing, classification rule testing with confusion matrices, automatic pure region discovery, feature engineering using slope and distance calculations, weighted sum features; including trigonometric wrapping, forward/backward differences, and various trigonometric values, optimal coefficient computation for weighted sums, attribute sorting, and data export.
 
 [![Demo Video](https://img.youtube.com/vi/j0_zpYPt_n8/0.jpg)](https://www.youtube.com/watch?v=j0_zpYPt_n8)
 
 **Tested on:**  Windows (10/11), Linux (Pop!_OS), and macOS (Sonoma).
 
 To get started quickly, please see the [Getting Started](#getting-started) section, method 3.
+
+## General Line Coordinates Used
+
+General Line Coordinates (GLCs) generalize Cartesian Coordinates to n-D space, with a subcategory being 2-D GLCs that is n-D to 2-D graph construction algorithms, losslessly and reversibly visualizing all attributes and classes of the n-D data in 2-D space while preserving distance relationships between points. In this software, we implement the following GLCs:
+
+- Parallel Coordinates (PC) - Drawing all coordinate axes in 2D located parallel to each other.
+- Shifted Paired Coordinates (SPC) - Drawing each pair of attributes in 2D as a shifted cartesian plane, connecting cases with polylines.
+- Static Circular Coordinates (SCC) - Drawing all coordinate axes in 2D as a circle, connecting cases with polylines, circle can be made a polygon or a circle.
+- Star Coordinates (SC) - Drawing all coordinate axes in 2D as a star shape, connecting cases with polylines.
+- Concentric Coordinates (CC) - Drawing all coordinate axes in 2D as a series of circles nested within each other, connecting cases with polylines, circles can be made freeform or concentric.
+- Line Coordinates (LC) - Drawing all coordinate axes in 2D located one after another on a single straight line.
 
 ## Analyzing Fisher Iris Benchmark Dataset
 
@@ -91,7 +102,7 @@ Hiding the classifiable cases with single attribute pure intervals which cover 5
 - **Rule Combination:** Combine rules to maintain the largest surrounding pure rule.
 - **Rule Threshold Slider:** Adjust the threshold for rule coverage over a class or dataset.
 - **Feature Engineering:** Insert feature columns with direct trigonometric attribute values, such as arccos(attribute), or calculate forward/backward differences wrapped in trigonometric functions.
-- **Linear Combination Feature Engineering:** Insert linear combination columns with custom coefficients, optionally wrapped in a trigonometric function.
+- **Weighted Sum Feature Engineering:** Insert a weighted sum column with custom coefficients, optionally wrapped in a trigonometric function.
 - **Slope Distance Feature Engineering:** Insert slope-distance values for the attributes as paired columns, duplicate last column as needed when missing required attribute count.
 - **Gradient Descent Optimization:** Automatically discover optimal coefficients for linear combination features, maximizing class separability.
 
@@ -109,13 +120,13 @@ JTabViz applies trigonometric functions to forward differences, backward differe
 - cos: Highlights rotational or angular relationships between attributes, helping to uncover how attributes might cyclically influence each other.
 - tan: Focuses on the rate of change between attributes, useful for identifying steep trends or shifts in the data.
 
-### Application of Trigonometric Functions:
+### Application of Trigonometric Functions
 
 - Forward Differences: The trigonometric functions are applied to the differences between each attribute value and the next one in the sequence. This highlights how changes from one data point to the next evolve cyclically, rotationally, or in terms of their rate of change.
 - Backward Differences: Similar to forward differences, but here the trigonometric functions are applied to the differences between each attribute value and the previous one. This can help in understanding how past values influence current trends, especially in a cyclical or rotational context.
 - Direct Attribute Values: Trigonometric functions are directly applied to the raw attribute values themselves. This approach reveals inherent periodicity, rotation, or trends in the data, independent of any sequence-based differences.
 
-### Feature Engineering with Linear Combinations for Data Classification
+### Feature Engineering with Weighted Sum for Data Classification
 
 JTabViz allows for the creation of **Linear Combination Features** from existing attributes, enhancing class separability, reducing dimensionality, and improving model representation. A new feature created by combining multiple existing features using a set of coefficients.
 
@@ -125,21 +136,11 @@ where:
 c_1, c_2, ..., c_n are the coefficients.  
 x_1, x_2, ..., x_n are the original features.
 
-These coefficients can be manually specified or *automatically* (with a low attribute count around <=30 depending on hardware) optimized using gradient descent.
-
-### Why Use Linear Combination Features?
-
-Linear Combination Features are used to:
-
-- **Enhance Class Separability**
-- **Reduce Dimensionality**
-- **Improve Model Representation**
-
 ### Automatic Coefficient Optimization with Gradient Descent
 
 JTabViz includes a gradient descent algorithm that optimizes coefficients to maximize between-class variance and minimize within-class variance, ensuring effective class separation.
 
-### Wrapping Linear Combinations with Trigonometric Functions
+### Wrapping Weighted Sum with Trigonometric Functions
 
 Apply trigonometric functions (sin, cos, tan, and their inverses) to linear combination features to reveal non-linear relationships and rotational patterns.
 
