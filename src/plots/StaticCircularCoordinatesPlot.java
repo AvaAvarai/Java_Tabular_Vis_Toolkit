@@ -21,6 +21,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
     private Set<String> hiddenClasses = new HashSet<>(); // Track hidden classes
     private boolean showTicks = false; // Track if ticks should be shown
     private boolean showLabels = true; // Track if labels should be shown
+    private boolean usePolygon = false; // Track if polygon should be used instead of circle
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -81,6 +82,14 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             repaint();
         });
         controlPanel.add(labelToggle);
+
+        // Add polygon toggle
+        JToggleButton polygonToggle = new JToggleButton("Use Polygon");
+        polygonToggle.addActionListener(e -> {
+            usePolygon = polygonToggle.isSelected();
+            repaint();
+        });
+        controlPanel.add(polygonToggle);
 
         add(controlPanel, BorderLayout.NORTH);
 
@@ -199,10 +208,22 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             double angleStep = 2 * Math.PI / numAttributes;
 
             Point2D.Double[] attributePositions = new Point2D.Double[numAttributes];
+            int[] xPoints = new int[numAttributes];
+            int[] yPoints = new int[numAttributes];
 
-            // Draw the circular axis
+            // Draw the circular axis or polygon
             g2.setColor(Color.BLACK);
-            g2.draw(new Ellipse2D.Double(centerX - radius, centerY - radius, 2 * radius, 2 * radius));
+            for (int i = 0; i < numAttributes; i++) {
+                double angle = i * angleStep - Math.PI / 2;
+                xPoints[i] = (int)(centerX + radius * Math.cos(angle));
+                yPoints[i] = (int)(centerY + radius * Math.sin(angle));
+            }
+            
+            if (usePolygon) {
+                g2.drawPolygon(xPoints, yPoints, numAttributes);
+            } else {
+                g2.draw(new Ellipse2D.Double(centerX - radius, centerY - radius, 2 * radius, 2 * radius));
+            }
 
             // Calculate positions on the circumference for each attribute
             for (int i = 0; i < numAttributes; i++) {
@@ -237,7 +258,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             // Draw non-selected rows first
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (!selectedRows.contains(row) && !hiddenClasses.contains(classLabels.get(row))) {
-                    drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, false);
+                    drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, xPoints, yPoints, false);
                 }
             }
 
@@ -245,14 +266,14 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             for (int row : selectedRows) {
                 if (!hiddenClasses.contains(classLabels.get(row))) {
                     // Draw highlight twice as thick by drawing three times
-                    drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, true);
-                    drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, true);
-                    drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, true);
+                    drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, xPoints, yPoints, true);
+                    drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, xPoints, yPoints, true);
+                    drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, xPoints, yPoints, true);
                 }
             }
         }
 
-        private void drawRow(Graphics2D g2, int row, Point2D.Double[] attributePositions, int centerX, int centerY, int radius, double angleStep, boolean isSelected) {
+        private void drawRow(Graphics2D g2, int row, Point2D.Double[] attributePositions, int centerX, int centerY, int radius, double angleStep, int[] xPoints, int[] yPoints, boolean isSelected) {
             Point2D.Double[] points = new Point2D.Double[numAttributes];
             String classLabel = classLabels.get(row);
             Color color = isSelected ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
@@ -263,13 +284,21 @@ public class StaticCircularCoordinatesPlot extends JFrame {
                 double value = data.get(i).get(row);
                 double minValue = data.get(i).stream().min(Double::compare).orElse(0.0);
                 double maxValue = data.get(i).stream().max(Double::compare).orElse(1.0);
-        
-                // Calculate the corresponding angle based on value directly between the min and max
-                double angleOffset = (value - minValue) / (maxValue - minValue) * angleStep;
-        
-                double x = centerX + radius * Math.cos(i * angleStep + angleOffset - Math.PI / 2);
-                double y = centerY + radius * Math.sin(i * angleStep + angleOffset - Math.PI / 2);
-                points[i] = new Point2D.Double(x, y);
+                double normalizedValue = (value - minValue) / (maxValue - minValue);
+                
+                if (usePolygon) {
+                    // For polygon mode, interpolate along the straight line between vertices
+                    int nextIndex = (i + 1) % numAttributes;
+                    double x = xPoints[i] + normalizedValue * (xPoints[nextIndex] - xPoints[i]);
+                    double y = yPoints[i] + normalizedValue * (yPoints[nextIndex] - yPoints[i]);
+                    points[i] = new Point2D.Double(x, y);
+                } else {
+                    // For circle mode, use angle-based positioning
+                    double angleOffset = normalizedValue * angleStep;
+                    double x = centerX + radius * Math.cos(i * angleStep + angleOffset - Math.PI / 2);
+                    double y = centerY + radius * Math.sin(i * angleStep + angleOffset - Math.PI / 2);
+                    points[i] = new Point2D.Double(x, y);
+                }
             }
         
             // Connect points with Bezier curves
