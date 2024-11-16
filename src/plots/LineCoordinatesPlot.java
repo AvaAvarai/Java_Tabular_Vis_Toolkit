@@ -202,7 +202,7 @@ public class LineCoordinatesPlot extends JFrame {
 
     private class LineCoordinatesPanel extends JPanel {
         public LineCoordinatesPanel() {
-            setBackground(Color.WHITE);
+            setBackground(new Color(0xC0C0C0));
             setPreferredSize(new Dimension(800, 600));
 
             addMouseListener(new MouseAdapter() {
