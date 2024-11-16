@@ -2,10 +2,10 @@ package src.plots;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.*;
 import java.awt.geom.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import src.utils.ScreenshotUtils;
 
 public class StaticCircularCoordinatesPlot extends JFrame {
@@ -17,6 +17,10 @@ public class StaticCircularCoordinatesPlot extends JFrame {
     private List<Integer> selectedRows;
     private int numAttributes;
     private String datasetName;
+    private int curveHeight = 50; // Default curve height
+    private Set<String> hiddenClasses = new HashSet<>(); // Track hidden classes
+    private boolean showTicks = false; // Track if ticks should be shown
+    private boolean showLabels = true; // Track if labels should be shown
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -46,6 +50,39 @@ public class StaticCircularCoordinatesPlot extends JFrame {
         plotPanel.setPreferredSize(new Dimension(600, 600));
         JScrollPane scrollPane = new JScrollPane(plotPanel);
         add(scrollPane, BorderLayout.CENTER);
+
+        // Create a control panel for curve height and tick toggle
+        JPanel controlPanel = new JPanel(new FlowLayout());
+        controlPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        // Add curve height control
+        JPanel curvePanel = new JPanel(new BorderLayout());
+        curvePanel.setBorder(BorderFactory.createTitledBorder("Curve Height"));
+        JSlider curveSlider = new JSlider(0, 100, 50);
+        curveSlider.addChangeListener(e -> {
+            curveHeight = curveSlider.getValue();
+            repaint();
+        });
+        curvePanel.add(curveSlider);
+        controlPanel.add(curvePanel);
+
+        // Add tick marks toggle
+        JToggleButton tickToggle = new JToggleButton("Show Tick Marks");
+        tickToggle.addActionListener(e -> {
+            showTicks = tickToggle.isSelected();
+            repaint();
+        });
+        controlPanel.add(tickToggle);
+
+        // Add label visibility toggle
+        JToggleButton labelToggle = new JToggleButton("Show Labels", true);
+        labelToggle.addActionListener(e -> {
+            showLabels = labelToggle.isSelected();
+            repaint();
+        });
+        controlPanel.add(labelToggle);
+
+        add(controlPanel, BorderLayout.NORTH);
 
         // Add a legend panel at the bottom (horizontal)
         add(createLegendPanel(), BorderLayout.SOUTH);
@@ -78,13 +115,14 @@ public class StaticCircularCoordinatesPlot extends JFrame {
 
             JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             colorLabelPanel.setBackground(Color.WHITE);
+            colorLabelPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
             JLabel shapeLabel = new JLabel() {
                 @Override
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
                     Graphics2D g2 = (Graphics2D) g;
-                    g2.setColor(color);
+                    g2.setColor(hiddenClasses.contains(className) ? Color.LIGHT_GRAY : color);
                     g2.translate(32, 20);
                     g2.scale(2, 2);
                     g2.fill(shape);
@@ -94,6 +132,18 @@ public class StaticCircularCoordinatesPlot extends JFrame {
 
             JLabel label = new JLabel(className);
             label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
+
+            colorLabelPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (hiddenClasses.contains(className)) {
+                        hiddenClasses.remove(className);
+                    } else {
+                        hiddenClasses.add(className);
+                    }
+                    repaint();
+                }
+            });
 
             colorLabelPanel.add(shapeLabel);
             colorLabelPanel.add(label);
@@ -167,21 +217,35 @@ public class StaticCircularCoordinatesPlot extends JFrame {
                 double y = centerY + labelradius2 * Math.sin(angle);
                 attributePositions[i] = new Point2D.Double(x, y);
 
-                // Draw attribute labels
-                g2.setFont(AXIS_LABEL_FONT); // Use the defined font for axis labels
-                g2.drawString(attributeNames.get(i), (int) x, (int) y);
+                // Draw attribute labels if enabled
+                if (showLabels) {
+                    g2.setFont(AXIS_LABEL_FONT); // Use the defined font for axis labels
+                    g2.drawString(attributeNames.get(i), (int) x, (int) y);
+                }
+
+                // Draw tick marks if enabled
+                if (showTicks) {
+                    double tickLength = 10;
+                    double tickStartX = centerX + radius * Math.cos(angle);
+                    double tickStartY = centerY + radius * Math.sin(angle);
+                    double tickEndX = centerX + (radius + tickLength) * Math.cos(angle);
+                    double tickEndY = centerY + (radius + tickLength) * Math.sin(angle);
+                    g2.drawLine((int)tickStartX, (int)tickStartY, (int)tickEndX, (int)tickEndY);
+                }
             }
 
             // Draw non-selected rows first
             for (int row = 0; row < data.get(0).size(); row++) {
-                if (!selectedRows.contains(row)) {
+                if (!selectedRows.contains(row) && !hiddenClasses.contains(classLabels.get(row))) {
                     drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, false);
                 }
             }
 
             // Draw selected rows last (highlighted in yellow)
             for (int row : selectedRows) {
-                drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, true);
+                if (!hiddenClasses.contains(classLabels.get(row))) {
+                    drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, true);
+                }
             }
         }
 
@@ -205,12 +269,42 @@ public class StaticCircularCoordinatesPlot extends JFrame {
                 points[i] = new Point2D.Double(x, y);
             }
         
-            // Connect points sequentially with class color or yellow if selected
+            // Connect points with Bezier curves
             g2.setColor(color);
             for (int i = 0; i < numAttributes - 1; i++) {
-                g2.draw(new Line2D.Double(points[i], points[i + 1]));
+                Point2D.Double p1 = points[i];
+                Point2D.Double p2 = points[i + 1];
+                
+                // Calculate control points towards the center
+                double ctrlX1 = centerX + (p1.x - centerX) * (1 - curveHeight/100.0);
+                double ctrlY1 = centerY + (p1.y - centerY) * (1 - curveHeight/100.0);
+                double ctrlX2 = centerX + (p2.x - centerX) * (1 - curveHeight/100.0);
+                double ctrlY2 = centerY + (p2.y - centerY) * (1 - curveHeight/100.0);
+                
+                CubicCurve2D curve = new CubicCurve2D.Double(
+                    p1.x, p1.y,
+                    ctrlX1, ctrlY1,
+                    ctrlX2, ctrlY2,
+                    p2.x, p2.y
+                );
+                g2.draw(curve);
             }
-            g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
+            
+            // Connect last point to first point
+            Point2D.Double p1 = points[numAttributes - 1];
+            Point2D.Double p2 = points[0];
+            double ctrlX1 = centerX + (p1.x - centerX) * (1 - curveHeight/100.0);
+            double ctrlY1 = centerY + (p1.y - centerY) * (1 - curveHeight/100.0);
+            double ctrlX2 = centerX + (p2.x - centerX) * (1 - curveHeight/100.0);
+            double ctrlY2 = centerY + (p2.y - centerY) * (1 - curveHeight/100.0);
+            
+            CubicCurve2D curve = new CubicCurve2D.Double(
+                p1.x, p1.y,
+                ctrlX1, ctrlY1,
+                ctrlX2, ctrlY2,
+                p2.x, p2.y
+            );
+            g2.draw(curve);
         
             // Draw the shapes at the points
             for (int i = 0; i < numAttributes; i++) {
