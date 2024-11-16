@@ -1160,4 +1160,8 @@ public class CsvViewer extends JFrame {
     public JSlider getThresholdSlider() {
         return thresholdSlider;
     }
+
+    public void showLineCoordinatesPlot() {
+        visualizationManager.showLineCoordinatesPlot();
+    }
 }

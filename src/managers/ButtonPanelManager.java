@@ -43,6 +43,7 @@ public class ButtonPanelManager {
         buttonPanel.add(createSlopesAndDistancesButton());
         buttonPanel.add(createDTButton());
         buttonPanel.add(createConcentricCoordinatesButton());
+        buttonPanel.add(createLineCoordinatesButton());
 
         return buttonPanel;
     }
@@ -306,6 +307,16 @@ public class ButtonPanelManager {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.insertLinearCombinationColumn();
+            }
+        });
+    }
+
+    private JButton createLineCoordinatesButton() {
+        return UIHelper.createButton("/icons/line.png", "Line Coordinates Plot", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showLineCoordinatesPlot();
             }
         });
     }
