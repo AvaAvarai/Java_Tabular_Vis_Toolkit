@@ -26,6 +26,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private double globalMinValue;
     private double axisMinValue; // New variable to store the minimum value for axes
     private Map<String, Boolean> hiddenClasses; // Map to keep track of hidden classes
+    private Map<String, Boolean> axisDirections; // Map to keep track of axis directions
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -44,6 +45,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         this.selectedRows = selectedRows;
         this.numAttributes = attributeNames.size();
         this.hiddenClasses = new HashMap<>(); // Initialize hiddenClasses map
+        this.axisDirections = new HashMap<>(); // Initialize axisDirections map
 
         // Calculate global max and min values
         this.globalMaxValue = data.stream()
@@ -94,9 +96,28 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         // Add the scroll pane and legend to the main panel
         mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(createControlPanel(), BorderLayout.NORTH);
         mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
 
         setContentPane(mainPanel);
+    }
+
+    private JPanel createControlPanel() {
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        controlPanel.setBackground(Color.WHITE);
+
+        // Add axis direction toggle buttons
+        for (String attributeName : attributeNames) {
+            JToggleButton axisDirectionToggle = new JToggleButton(attributeName + " Axis Direction");
+            axisDirectionToggle.addActionListener(e -> {
+                boolean isToggled = axisDirectionToggle.isSelected();
+                axisDirections.put(attributeName, isToggled);
+                repaint();
+            });
+            controlPanel.add(axisDirectionToggle);
+        }
+
+        return controlPanel;
     }
 
     private JPanel createLegendPanel() {
@@ -119,7 +140,7 @@ public class ParallelCoordinatesPlot extends JFrame {
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
                     Graphics2D g2 = (Graphics2D) g;
-                    g2.setColor(hiddenClasses.containsKey(className) ? Color.LIGHT_GRAY : color);
+                    g2.setColor(hiddenClasses.getOrDefault(className, false) ? Color.LIGHT_GRAY : color);
                     g2.translate(32, 20);
                     g2.scale(2, 2);
                     g2.fill(shape);
@@ -129,14 +150,12 @@ public class ParallelCoordinatesPlot extends JFrame {
 
             JLabel label = new JLabel(className);
             label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-
-            colorLabelPanel.add(shapeLabel);
-            colorLabelPanel.add(label);
+            label.setForeground(hiddenClasses.getOrDefault(className, false) ? Color.LIGHT_GRAY : Color.BLACK);
 
             colorLabelPanel.addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
-                    if (hiddenClasses.containsKey(className)) {
+                    if (hiddenClasses.getOrDefault(className, false)) {
                         hiddenClasses.remove(className);
                     } else {
                         hiddenClasses.put(className, true);
@@ -144,6 +163,9 @@ public class ParallelCoordinatesPlot extends JFrame {
                     repaint();
                 }
             });
+
+            colorLabelPanel.add(shapeLabel);
+            colorLabelPanel.add(label);
 
             legendPanel.add(colorLabelPanel);
         }
@@ -226,6 +248,11 @@ public class ParallelCoordinatesPlot extends JFrame {
             for (int i = 0; i < numAttributes; i++) {
                 double value = data.get(i).get(row);
                 double normalizedValue = (value - axisMinValue) / (globalMaxValue - axisMinValue);
+
+                // Adjust for axis direction
+                if (axisDirections.containsKey(attributeNames.get(i)) && axisDirections.get(attributeNames.get(i))) {
+                    normalizedValue = 1 - normalizedValue; // Flip the direction
+                }
 
                 double x = margin + i * axisSpacing;
                 double y = plotAreaHeight - (normalizedValue * plotAreaHeight) + plotAreaY;

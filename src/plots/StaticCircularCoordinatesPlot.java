@@ -59,7 +59,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
         // Add curve height control
         JPanel curvePanel = new JPanel(new BorderLayout());
         curvePanel.setBorder(BorderFactory.createTitledBorder("Curve Height"));
-        JSlider curveSlider = new JSlider(0, 100, 50);
+        JSlider curveSlider = new JSlider(-100, 100, 50);
         curveSlider.addChangeListener(e -> {
             curveHeight = curveSlider.getValue();
             repaint();
