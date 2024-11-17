@@ -70,6 +70,8 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         // Add the plot panel
         ParallelCoordinatesPanel plotPanel = new ParallelCoordinatesPanel();
+        plotPanel.setPreferredSize(new Dimension(attributeNames.size() * 150, 600)); // Adjust to fit all axes horizontally
+
         JScrollPane scrollPane = new JScrollPane(plotPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
@@ -90,10 +92,13 @@ public class ParallelCoordinatesPlot extends JFrame {
         setContentPane(mainPanel);
     }
 
-    private JPanel createControlPanel() {
+    private JScrollPane createControlPanel() {
+        // Create a panel to hold the buttons
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel.setBackground(Color.WHITE);
-
+        controlPanel.setPreferredSize(new Dimension(attributeNames.size() * 150, 50));
+    
+        // Add axis direction toggle buttons for each attribute
         for (String attributeName : attributeNames) {
             JToggleButton axisDirectionToggle = new JToggleButton(attributeName + " Axis Direction");
             axisDirectionToggle.addActionListener(e -> {
@@ -103,9 +108,16 @@ public class ParallelCoordinatesPlot extends JFrame {
             });
             controlPanel.add(axisDirectionToggle);
         }
-
-        return controlPanel;
-    }
+    
+        // Wrap the control panel in a scroll pane for horizontal scrolling
+        JScrollPane scrollPane = new JScrollPane(controlPanel);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER); // No vertical scrolling needed
+        scrollPane.setBorder(BorderFactory.createEmptyBorder()); // Optional: remove borders for a clean look
+    
+        // Return the scroll pane instead of the plain control panel
+        return scrollPane;
+    }    
 
     private JPanel createLegendPanel() {
         JPanel legendPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
