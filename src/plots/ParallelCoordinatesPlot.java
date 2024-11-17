@@ -3,85 +3,78 @@ package src.plots;
 import javax.swing.*;
 import src.utils.ScreenshotUtils;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
-import java.awt.geom.Point2D;
+import java.awt.event.*;
+import java.awt.geom.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 
 public class ParallelCoordinatesPlot extends JFrame {
 
-    private List<List<Double>> data;
-    private List<String> attributeNames;
-    private Map<String, Color> classColors;
-    private Map<String, Shape> classShapes;
-    private List<String> classLabels;
-    private List<Integer> selectedRows;
-    private int numAttributes;
-    private double globalMaxValue;
-    private double globalMinValue;
-    private double axisMinValue; // New variable to store the minimum value for axes
-    private Map<String, Boolean> hiddenClasses; // Map to keep track of hidden classes
-    private Map<String, Boolean> axisDirections; // Map to keep track of axis directions
+    private final List<List<Double>> data;
+    private final List<String> attributeNames;
+    private final Map<String, Color> classColors;
+    private final Map<String, Shape> classShapes;
+    private final List<String> classLabels;
+    private final List<Integer> selectedRows;
+    private final Map<String, Boolean> hiddenClasses;
+    private final Map<String, Boolean> axisDirections;
+    private final Map<String, Point2D.Double> axisPositions;
+    private String draggedAxis = null;
+    private final double globalMaxValue;
+    private final double globalMinValue;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
+    private static final int AXIS_HEIGHT = 400;
 
-    // Spacing settings
-    private static final int TITLE_PADDING = 20;
-    private static final int AXIS_LABEL_PADDING = 30; // Space below plot for labels
-
-    public ParallelCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName) {
+    public ParallelCoordinatesPlot(List<List<Double>> data, List<String> attributeNames,
+                                   Map<String, Color> classColors, Map<String, Shape> classShapes,
+                                   List<String> classLabels, List<Integer> selectedRows, String datasetName) {
         this.data = data;
-        this.attributeNames = attributeNames;
+        this.attributeNames = new ArrayList<>(attributeNames);
         this.classColors = classColors;
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
-        this.numAttributes = attributeNames.size();
-        this.hiddenClasses = new HashMap<>(); // Initialize hiddenClasses map
-        this.axisDirections = new HashMap<>(); // Initialize axisDirections map
+        this.hiddenClasses = new HashMap<>();
+        this.axisDirections = new HashMap<>();
+        this.axisPositions = new HashMap<>();
 
         // Calculate global max and min values
         this.globalMaxValue = data.stream()
-            .flatMap(List::stream)
-            .mapToDouble(Double::doubleValue)
-            .max()
-            .orElse(1.0);
+                .flatMap(List::stream)
+                .mapToDouble(Double::doubleValue)
+                .max()
+                .orElse(1.0);
         this.globalMinValue = data.stream()
-            .flatMap(List::stream)
-            .mapToDouble(Double::doubleValue)
-            .min()
-            .orElse(0.0);
+                .flatMap(List::stream)
+                .mapToDouble(Double::doubleValue)
+                .min()
+                .orElse(0.0);
 
-        // Set the axis minimum value
-        this.axisMinValue = (globalMinValue < 0) ? globalMinValue : 0;
+        // Initialize axis positions
+        int startX = 100;
+        int spacing = 150;
+        for (int i = 0; i < attributeNames.size(); i++) {
+            axisPositions.put(attributeNames.get(i), new Point2D.Double(startX + i * spacing, 100));
+        }
 
         setTitle("Parallel Coordinates Plot");
         setSize(800, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Set up the main panel
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(Color.WHITE);
 
         // Add the plot panel
         ParallelCoordinatesPanel plotPanel = new ParallelCoordinatesPanel();
-        plotPanel.setPreferredSize(new Dimension(numAttributes * 150, 600 + AXIS_LABEL_PADDING));
-
-        // Add the plot panel to a scroll pane
         JScrollPane scrollPane = new JScrollPane(plotPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2)); // Minimize space around the plot
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-        // Add a key listener for the space bar to save a screenshot
         scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
         scrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
             @Override
@@ -90,11 +83,6 @@ public class ParallelCoordinatesPlot extends JFrame {
             }
         });
 
-        // Ensure the JFrame is focusable to capture key events
-        setFocusable(true);
-        requestFocusInWindow();
-
-        // Add the scroll pane and legend to the main panel
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         mainPanel.add(createControlPanel(), BorderLayout.NORTH);
         mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
@@ -106,7 +94,6 @@ public class ParallelCoordinatesPlot extends JFrame {
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel.setBackground(Color.WHITE);
 
-        // Add axis direction toggle buttons
         for (String attributeName : attributeNames) {
             JToggleButton axisDirectionToggle = new JToggleButton(attributeName + " Axis Direction");
             axisDirectionToggle.addActionListener(e -> {
@@ -121,8 +108,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     }
 
     private JPanel createLegendPanel() {
-        JPanel legendPanel = new JPanel();
-        legendPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+        JPanel legendPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         legendPanel.setBackground(Color.WHITE);
 
@@ -166,7 +152,6 @@ public class ParallelCoordinatesPlot extends JFrame {
 
             colorLabelPanel.add(shapeLabel);
             colorLabelPanel.add(label);
-
             legendPanel.add(colorLabelPanel);
         }
 
@@ -174,122 +159,159 @@ public class ParallelCoordinatesPlot extends JFrame {
     }
 
     private class ParallelCoordinatesPanel extends JPanel {
+        private final List<String> visualOrder; // Tracks the visual order of the axes
+    
         public ParallelCoordinatesPanel() {
             setBackground(new Color(0xC0C0C0));
+    
+            // Initialize the visual order of the axes (matches attributeNames initially)
+            visualOrder = new ArrayList<>(attributeNames);
+    
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    for (String attributeName : visualOrder) {
+                        Point2D.Double pos = axisPositions.get(attributeName);
+                        if (Math.abs(e.getX() - pos.x) < 10) {
+                            draggedAxis = attributeName;
+                            break;
+                        }
+                    }
+                }
+    
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    if (draggedAxis != null) {
+                        // Reorder the visual order based on the updated X positions
+                        visualOrder.sort(Comparator.comparingDouble(attr -> axisPositions.get(attr).x));
+                    }
+                    draggedAxis = null;
+                    repaint();
+                }
+            });
+    
+            addMouseMotionListener(new MouseMotionAdapter() {
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    if (draggedAxis != null) {
+                        Point2D.Double pos = axisPositions.get(draggedAxis);
+                        pos.x = e.getX();
+                        repaint();
+                    }
+                }
+            });
         }
-
+    
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            if (data == null || attributeNames == null) {
-                return;
-            }
-
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            // Set the background color for the entire panel to white
+    
+            // Draw the title on white background
             g2.setColor(Color.WHITE);
-            g2.fillRect(0, 0, getWidth(), getHeight());
-
-            // Draw the title above the grey background
-            String title = "Parallel Coordinates Plot";
+            g2.fillRect(0, 0, getWidth(), 50); // Assuming 50 as the height for the title
             g2.setFont(TITLE_FONT);
-            FontMetrics fm = g2.getFontMetrics(TITLE_FONT);
-            int titleWidth = fm.stringWidth(title);
+            FontMetrics fm = g2.getFontMetrics();
+            int titleWidth = fm.stringWidth("Parallel Coordinates Plot");
             int titleHeight = fm.getHeight();
-            g2.setColor(Color.BLACK);
-            g2.drawString(title, (getWidth() - titleWidth) / 2, titleHeight);
-
-            // Calculate plot area dimensions
-            int plotAreaY = titleHeight + TITLE_PADDING;
-            int plotAreaHeight = getHeight() - plotAreaY - AXIS_LABEL_PADDING;
-
-            // Set the background color for the plot area
+            g2.setColor(Color.BLACK); // Set text color to black
+            g2.drawString("Parallel Coordinates Plot", (getWidth() - titleWidth) / 2, titleHeight);
+            
+            // Draw the plot on c0c0c0 background
             g2.setColor(new Color(0xC0C0C0));
-            g2.fillRect(0, plotAreaY, getWidth(), plotAreaHeight);
-
-            // Calculate axis spacing and centering
-            int margin = 50;
-            int axisSpacing = (getWidth() - 2 * margin) / (numAttributes - 1);
-
-            // Draw axis lines
-            drawAxisLines(g2, axisSpacing, margin, plotAreaY, plotAreaHeight);
-
-            // Draw the parallel coordinates for each data point
+            g2.fillRect(0, 50, getWidth(), getHeight() - 50); // Adjusted to start from below the title
+            drawAxes(g2);
+            drawData(g2);
+        }
+        private void drawAxes(Graphics2D g2) {
+            g2.setColor(Color.BLACK);
+    
+            for (String attributeName : visualOrder) { // Use visualOrder to draw the axes
+                Point2D.Double pos = axisPositions.get(attributeName);
+                g2.drawLine((int) pos.x, (int) pos.y, (int) pos.x, (int) pos.y + AXIS_HEIGHT);
+    
+                // Draw attribute label
+                g2.setFont(AXIS_LABEL_FONT);
+                String label = attributeName;
+                int labelWidth = g2.getFontMetrics().stringWidth(label);
+                g2.drawString(label, (int) (pos.x - labelWidth / 2), (int) (pos.y + AXIS_HEIGHT + 20));
+            }
+        }
+    
+        private void drawData(Graphics2D g2) {
+            // Draw non-selected data first
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (!selectedRows.contains(row)) {
-                    drawParallelCoordinates(g2, row, axisSpacing, margin, plotAreaY, plotAreaHeight, false);
+                    List<Point2D.Double> points = new ArrayList<>();
+    
+                    for (String attributeName : visualOrder) { // Use visualOrder for drawing polylines
+                        int attributeIndex = attributeNames.indexOf(attributeName); // Get the original attribute index
+                        double value = data.get(attributeIndex).get(row);
+                        double normalizedValue = (value - globalMinValue) / (globalMaxValue - globalMinValue);
+    
+                        if (axisDirections.getOrDefault(attributeName, false)) {
+                            normalizedValue = 1 - normalizedValue;
+                        }
+    
+                        Point2D.Double pos = axisPositions.get(attributeName);
+                        double y = pos.y + AXIS_HEIGHT - normalizedValue * AXIS_HEIGHT;
+                        points.add(new Point2D.Double(pos.x, y));
+                    }
+    
+                    String classLabel = classLabels.get(row);
+                    if (hiddenClasses.containsKey(classLabel)) continue;
+    
+                    g2.setColor(classColors.getOrDefault(classLabel, Color.BLACK));
+                    g2.setStroke(new BasicStroke(1.0f)); // Default line thickness
+                    for (int i = 0; i < points.size() - 1; i++) {
+                        g2.draw(new Line2D.Double(points.get(i), points.get(i + 1)));
+                    }
+    
+                    // Draw class symbols as vertices
+                    for (Point2D.Double point : points) {
+                        Shape shape = classShapes.get(classLabel);
+                        g2.translate(point.x, point.y);
+                        g2.fill(shape);
+                        g2.translate(-point.x, -point.y);
+                    }
                 }
             }
-
-            // Highlight selected rows
-            for (int row = 0; row < data.get(0).size(); row++) {
-                if (selectedRows.contains(row)) {
-                    drawParallelCoordinates(g2, row, axisSpacing, margin, plotAreaY, plotAreaHeight, true);
+    
+            // Draw selected data last to draw on top
+            for (int row : selectedRows) {
+                List<Point2D.Double> points = new ArrayList<>();
+    
+                for (String attributeName : visualOrder) { // Use visualOrder for drawing polylines
+                    int attributeIndex = attributeNames.indexOf(attributeName); // Get the original attribute index
+                    double value = data.get(attributeIndex).get(row);
+                    double normalizedValue = (value - globalMinValue) / (globalMaxValue - globalMinValue);
+    
+                    if (axisDirections.getOrDefault(attributeName, false)) {
+                        normalizedValue = 1 - normalizedValue;
+                    }
+    
+                    Point2D.Double pos = axisPositions.get(attributeName);
+                    double y = pos.y + AXIS_HEIGHT - normalizedValue * AXIS_HEIGHT;
+                    points.add(new Point2D.Double(pos.x, y));
                 }
-            }
-
-            // Draw attribute labels
-            drawAttributeLabels(g2, axisSpacing, margin, plotAreaY + plotAreaHeight + AXIS_LABEL_PADDING);
-        }
-
-        private void drawAxisLines(Graphics2D g2, int axisSpacing, int margin, int plotAreaY, int plotAreaHeight) {
-            g2.setColor(Color.BLACK);
-            for (int i = 0; i < numAttributes; i++) {
-                int x = margin + i * axisSpacing;
-                g2.draw(new Line2D.Double(x, plotAreaY, x, plotAreaY + plotAreaHeight));
-            }
-        }
-
-        private void drawParallelCoordinates(Graphics2D g2, int row, int axisSpacing, int margin, int plotAreaY, int plotAreaHeight, boolean isSelected) {
-            Point2D.Double[] points = new Point2D.Double[numAttributes];
-
-            for (int i = 0; i < numAttributes; i++) {
-                double value = data.get(i).get(row);
-                double normalizedValue = (value - axisMinValue) / (globalMaxValue - axisMinValue);
-
-                // Adjust for axis direction
-                if (axisDirections.containsKey(attributeNames.get(i)) && axisDirections.get(attributeNames.get(i))) {
-                    normalizedValue = 1 - normalizedValue; // Flip the direction
+    
+                String classLabel = classLabels.get(row);
+                if (hiddenClasses.containsKey(classLabel)) continue;
+    
+                g2.setColor(Color.YELLOW); // Highlight selected cases
+                g2.setStroke(new BasicStroke(2.0f)); // Thicker line for selected cases
+                for (int i = 0; i < points.size() - 1; i++) {
+                    g2.draw(new Line2D.Double(points.get(i), points.get(i + 1)));
                 }
-
-                double x = margin + i * axisSpacing;
-                double y = plotAreaHeight - (normalizedValue * plotAreaHeight) + plotAreaY;
-
-                points[i] = new Point2D.Double(x, y);
-            }
-
-            String classLabel = classLabels.get(row);
-            if (hiddenClasses.containsKey(classLabel)) {
-                return; // Skip drawing if the class is hidden
-            }
-
-            Color color = selectedRows.contains(row) ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
-            g2.setColor(color);
-
-            // Adjust line width for selected rows
-            g2.setStroke(isSelected ? new BasicStroke(3) : new BasicStroke(1));
-
-            for (int i = 0; i < numAttributes - 1; i++) {
-                g2.draw(new Line2D.Double(points[i], points[i + 1]));
-            }
-
-            // Draw the shapes at the points
-            for (int i = 0; i < numAttributes; i++) {
-                g2.translate(points[i].x, points[i].y);  // Move the origin to the point location
-                g2.fill(classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6))); // Draw the shape
-                g2.translate(-points[i].x, -points[i].y); // Move back the origin
-            }
-        }
-
-        private void drawAttributeLabels(Graphics2D g2, int axisSpacing, int margin, int labelY) {
-            g2.setFont(AXIS_LABEL_FONT);
-            g2.setColor(Color.BLACK);
-
-            for (int i = 0; i < numAttributes; i++) {
-                int x = margin + i * axisSpacing;
-                g2.drawString(attributeNames.get(i), x - g2.getFontMetrics().stringWidth(attributeNames.get(i)) / 2, labelY);
+    
+                // Draw class symbols as vertices
+                for (Point2D.Double point : points) {
+                    Shape shape = classShapes.get(classLabel);
+                    g2.translate(point.x, point.y);
+                    g2.fill(shape);
+                    g2.translate(-point.x, -point.y);
+                }
             }
         }
     }
