@@ -22,6 +22,7 @@ public class StarCoordinatesPlot extends JFrame {
     private List<Integer> selectedRows;
     private String datasetName;
     private Map<String, Boolean> hiddenClasses; // Map to keep track of hidden classes
+    private boolean showAttributeLabels = true; // Flag to toggle attribute labels
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -54,6 +55,14 @@ public class StarCoordinatesPlot extends JFrame {
 
         // Add a legend panel at the bottom (horizontal)
         add(createLegendPanel(), BorderLayout.SOUTH);
+
+        // Add a button to toggle attribute labels
+        JButton toggleLabelsButton = new JButton("Toggle Attribute Labels");
+        toggleLabelsButton.addActionListener(e -> {
+            showAttributeLabels = !showAttributeLabels;
+            plotPanel.repaint();
+        });
+        add(toggleLabelsButton, BorderLayout.NORTH);
 
         // Add a key listener for the space bar to save a screenshot
         scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
@@ -173,10 +182,12 @@ public class StarCoordinatesPlot extends JFrame {
                 double y = centerY + labelRadius * Math.sin(angle);
                 attributePositions[i] = new Point2D.Double(x, y);
 
-                // Draw attribute labels
-                g2.setFont(AXIS_LABEL_FONT); // Use the defined font for axis labels
-                g2.setColor(Color.BLACK); // Set label color to black
-                drawCenteredString(g2, attributeNames.get(i), (int) x, (int) y);
+                // Draw attribute labels if showAttributeLabels is true
+                if (showAttributeLabels) {
+                    g2.setFont(AXIS_LABEL_FONT); // Use the defined font for axis labels
+                    g2.setColor(Color.BLACK); // Set label color to black
+                    drawCenteredString(g2, attributeNames.get(i), (int) x, (int) y);
+                }
             }
 
             // Draw the star coordinates for each data point
