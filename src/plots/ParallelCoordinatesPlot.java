@@ -19,6 +19,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private final Map<String, Boolean> hiddenClasses;
     private final Map<String, Boolean> axisDirections;
     private final Map<String, Point2D.Double> axisPositions;
+    private final Map<String, Double> axisScales;
     private String draggedAxis = null;
     private final double globalMaxValue;
     private final double globalMinValue;
@@ -40,6 +41,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         this.hiddenClasses = new HashMap<>();
         this.axisDirections = new HashMap<>();
         this.axisPositions = new HashMap<>();
+        this.axisScales = new HashMap<>();
 
         // Calculate global max and min values
         this.globalMaxValue = data.stream()
@@ -58,6 +60,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         int spacing = 150;
         for (int i = 0; i < attributeNames.size(); i++) {
             axisPositions.put(attributeNames.get(i), new Point2D.Double(startX + i * spacing, 100));
+            axisScales.put(attributeNames.get(i), 1.0);
         }
 
         setTitle("Parallel Coordinates Plot");
@@ -100,13 +103,27 @@ public class ParallelCoordinatesPlot extends JFrame {
     
         // Add axis direction toggle buttons for each attribute
         for (String attributeName : attributeNames) {
-            JToggleButton axisDirectionToggle = new JToggleButton(attributeName + " Axis Direction");
+            JToggleButton axisDirectionToggle = new JToggleButton("\u2B05");
             axisDirectionToggle.addActionListener(e -> {
                 boolean isToggled = axisDirectionToggle.isSelected();
                 axisDirections.put(attributeName, isToggled);
+                axisDirectionToggle.setText(isToggled ? "\u27A1" : "\u2B05");
                 repaint();
             });
             controlPanel.add(axisDirectionToggle);
+        }
+    
+        // Add axis scale sliders for each attribute
+        for (String attributeName : attributeNames) {
+            JSlider axisScaleSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);
+            axisScaleSlider.addChangeListener(e -> {
+                int value = axisScaleSlider.getValue();
+                axisScales.put(attributeName, value / 100.0);
+                // Update the axis size when the scale slider is changed
+                axisPositions.get(attributeName).y = 100 + (1 - axisScales.get(attributeName)) * AXIS_HEIGHT;
+                repaint();
+            });
+            controlPanel.add(axisScaleSlider);
         }
     
         // Wrap the control panel in a scroll pane for horizontal scrolling
@@ -236,21 +253,24 @@ public class ParallelCoordinatesPlot extends JFrame {
             drawAxes(g2);
             drawData(g2);
         }
+        
         private void drawAxes(Graphics2D g2) {
             g2.setColor(Color.BLACK);
     
             for (String attributeName : visualOrder) { // Use visualOrder to draw the axes
                 Point2D.Double pos = axisPositions.get(attributeName);
-                g2.drawLine((int) pos.x, (int) pos.y, (int) pos.x, (int) pos.y + AXIS_HEIGHT);
+                double scale = axisScales.getOrDefault(attributeName, 1.0); // Get the current scale for this axis
+                int scaledHeight = (int) (AXIS_HEIGHT * scale); // Scale the height of the axis
+    
+                g2.drawLine((int) pos.x, (int) pos.y, (int) pos.x, (int) pos.y + scaledHeight);
     
                 // Draw attribute label
                 g2.setFont(AXIS_LABEL_FONT);
                 String label = attributeName;
                 int labelWidth = g2.getFontMetrics().stringWidth(label);
-                g2.drawString(label, (int) (pos.x - labelWidth / 2), (int) (pos.y + AXIS_HEIGHT + 20));
+                g2.drawString(label, (int) (pos.x - labelWidth / 2), (int) (pos.y + scaledHeight + 20));
             }
         }
-    
         private void drawData(Graphics2D g2) {
             // Draw non-selected data first
             for (int row = 0; row < data.get(0).size(); row++) {
@@ -267,7 +287,9 @@ public class ParallelCoordinatesPlot extends JFrame {
                         }
     
                         Point2D.Double pos = axisPositions.get(attributeName);
-                        double y = pos.y + AXIS_HEIGHT - normalizedValue * AXIS_HEIGHT;
+                        double scale = axisScales.getOrDefault(attributeName, 1.0); // Get the scale for this axis
+                        int scaledHeight = (int) (AXIS_HEIGHT * scale); // Scale the axis height
+                        double y = pos.y + scaledHeight - normalizedValue * scaledHeight; // Scale the data down to the axis scale
                         points.add(new Point2D.Double(pos.x, y));
                     }
     
@@ -302,9 +324,12 @@ public class ParallelCoordinatesPlot extends JFrame {
                     if (axisDirections.getOrDefault(attributeName, false)) {
                         normalizedValue = 1 - normalizedValue;
                     }
-    
+                    
                     Point2D.Double pos = axisPositions.get(attributeName);
-                    double y = pos.y + AXIS_HEIGHT - normalizedValue * AXIS_HEIGHT;
+                    double scale = axisScales.getOrDefault(attributeName, 1.0); // Get the scale for this axis
+                    int scaledHeight = (int) (AXIS_HEIGHT * scale); // Scale the axis height
+
+                    double y = pos.y + scaledHeight - normalizedValue * scaledHeight; // Scale the data down to the axis scale
                     points.add(new Point2D.Double(pos.x, y));
                 }
     
@@ -327,4 +352,4 @@ public class ParallelCoordinatesPlot extends JFrame {
             }
         }
     }
-}
+} 
