@@ -4,11 +4,14 @@ import javax.swing.*;
 import src.utils.ScreenshotUtils;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 public class ParallelCoordinatesPlot extends JFrame {
 
@@ -22,6 +25,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private double globalMaxValue;
     private double globalMinValue;
     private double axisMinValue; // New variable to store the minimum value for axes
+    private Map<String, Boolean> hiddenClasses; // Map to keep track of hidden classes
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -39,6 +43,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
         this.numAttributes = attributeNames.size();
+        this.hiddenClasses = new HashMap<>(); // Initialize hiddenClasses map
 
         // Calculate global max and min values
         this.globalMaxValue = data.stream()
@@ -107,13 +112,14 @@ public class ParallelCoordinatesPlot extends JFrame {
 
             JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             colorLabelPanel.setBackground(Color.WHITE);
+            colorLabelPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
             JLabel shapeLabel = new JLabel() {
                 @Override
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
                     Graphics2D g2 = (Graphics2D) g;
-                    g2.setColor(color);
+                    g2.setColor(hiddenClasses.containsKey(className) ? Color.LIGHT_GRAY : color);
                     g2.translate(32, 20);
                     g2.scale(2, 2);
                     g2.fill(shape);
@@ -126,6 +132,18 @@ public class ParallelCoordinatesPlot extends JFrame {
 
             colorLabelPanel.add(shapeLabel);
             colorLabelPanel.add(label);
+
+            colorLabelPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (hiddenClasses.containsKey(className)) {
+                        hiddenClasses.remove(className);
+                    } else {
+                        hiddenClasses.put(className, true);
+                    }
+                    repaint();
+                }
+            });
 
             legendPanel.add(colorLabelPanel);
         }
@@ -179,14 +197,14 @@ public class ParallelCoordinatesPlot extends JFrame {
             // Draw the parallel coordinates for each data point
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (!selectedRows.contains(row)) {
-                    drawParallelCoordinates(g2, row, axisSpacing, margin, plotAreaY, plotAreaHeight);
+                    drawParallelCoordinates(g2, row, axisSpacing, margin, plotAreaY, plotAreaHeight, false);
                 }
             }
 
             // Highlight selected rows
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (selectedRows.contains(row)) {
-                    drawParallelCoordinates(g2, row, axisSpacing, margin, plotAreaY, plotAreaHeight);
+                    drawParallelCoordinates(g2, row, axisSpacing, margin, plotAreaY, plotAreaHeight, true);
                 }
             }
 
@@ -202,7 +220,7 @@ public class ParallelCoordinatesPlot extends JFrame {
             }
         }
 
-        private void drawParallelCoordinates(Graphics2D g2, int row, int axisSpacing, int margin, int plotAreaY, int plotAreaHeight) {
+        private void drawParallelCoordinates(Graphics2D g2, int row, int axisSpacing, int margin, int plotAreaY, int plotAreaHeight, boolean isSelected) {
             Point2D.Double[] points = new Point2D.Double[numAttributes];
 
             for (int i = 0; i < numAttributes; i++) {
@@ -216,8 +234,15 @@ public class ParallelCoordinatesPlot extends JFrame {
             }
 
             String classLabel = classLabels.get(row);
+            if (hiddenClasses.containsKey(classLabel)) {
+                return; // Skip drawing if the class is hidden
+            }
+
             Color color = selectedRows.contains(row) ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
             g2.setColor(color);
+
+            // Adjust line width for selected rows
+            g2.setStroke(isSelected ? new BasicStroke(3) : new BasicStroke(1));
 
             for (int i = 0; i < numAttributes - 1; i++) {
                 g2.draw(new Line2D.Double(points[i], points[i + 1]));
