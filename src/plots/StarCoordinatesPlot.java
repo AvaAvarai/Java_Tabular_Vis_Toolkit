@@ -3,10 +3,13 @@ package src.plots;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import src.utils.ScreenshotUtils;
 
 public class StarCoordinatesPlot extends JFrame {
@@ -18,6 +21,7 @@ public class StarCoordinatesPlot extends JFrame {
     private List<String> classLabels;
     private List<Integer> selectedRows;
     private String datasetName;
+    private Map<String, Boolean> hiddenClasses; // Map to keep track of hidden classes
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -31,6 +35,7 @@ public class StarCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
         this.datasetName = datasetName;
+        this.hiddenClasses = new HashMap<>(); // Initialize hiddenClasses map
 
         setTitle("Star Coordinates Plot");
         setSize(800, 800);
@@ -83,7 +88,7 @@ public class StarCoordinatesPlot extends JFrame {
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
                     Graphics2D g2 = (Graphics2D) g;
-                    g2.setColor(color);
+                    g2.setColor(hiddenClasses.containsKey(className) ? Color.LIGHT_GRAY : color);
                     g2.translate(20, 20);
                     g2.scale(3, 3);
                     g2.fill(shape);
@@ -96,6 +101,18 @@ public class StarCoordinatesPlot extends JFrame {
 
             colorLabelPanel.add(shapeLabel);
             colorLabelPanel.add(label);
+
+            colorLabelPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (hiddenClasses.containsKey(className)) {
+                        hiddenClasses.remove(className);
+                    } else {
+                        hiddenClasses.put(className, true);
+                    }
+                    repaint();
+                }
+            });
 
             legendPanel.add(colorLabelPanel);
         }
@@ -164,14 +181,14 @@ public class StarCoordinatesPlot extends JFrame {
 
             // Draw the star coordinates for each data point
             for (int row = 0; row < data.get(0).size(); row++) {
-                if (!selectedRows.contains(row)) {
+                if (!selectedRows.contains(row) && !hiddenClasses.containsKey(classLabels.get(row))) {
                     drawStar(g2, row, centerX, centerY, plotSize / 2, angleIncrement, false);
                 }
             }
 
             // Highlight selected rows
             for (int row = 0; row < data.get(0).size(); row++) {
-                if (selectedRows.contains(row)) {
+                if (selectedRows.contains(row) && !hiddenClasses.containsKey(classLabels.get(row))) {
                     drawStar(g2, row, centerX, centerY, plotSize / 2, angleIncrement, true);
                 }
             }
