@@ -96,26 +96,37 @@ public class ParallelCoordinatesPlot extends JFrame {
     }
 
     private JScrollPane createControlPanel() {
-        // Create a panel to hold the buttons
-        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        // Create a panel to hold the controls for each attribute
+        JPanel controlPanel = new JPanel();
+        controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
         controlPanel.setBackground(Color.WHITE);
-        controlPanel.setPreferredSize(new Dimension(attributeNames.size() * 150, 50));
-    
-        // Add axis direction toggle buttons for each attribute
+        controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
         for (String attributeName : attributeNames) {
+            // Create a panel for each attribute
+            JPanel attributePanel = new JPanel();
+            attributePanel.setLayout(new BoxLayout(attributePanel, BoxLayout.Y_AXIS));
+            attributePanel.setBorder(BorderFactory.createTitledBorder(attributeName));
+            attributePanel.setBackground(new Color(0xF0F0F0)); // Light gray background for attribute panel
+            attributePanel.setMaximumSize(new Dimension(150, 100));
+    
+            // Add a direction toggle button
             JToggleButton axisDirectionToggle = new JToggleButton("\u2B05");
+            axisDirectionToggle.setBackground(Color.WHITE);
+            axisDirectionToggle.setFocusPainted(false);
             axisDirectionToggle.addActionListener(e -> {
                 boolean isToggled = axisDirectionToggle.isSelected();
                 axisDirections.put(attributeName, isToggled);
                 axisDirectionToggle.setText(isToggled ? "\u27A1" : "\u2B05");
                 repaint();
             });
-            controlPanel.add(axisDirectionToggle);
-        }
+            axisDirectionToggle.setAlignmentX(Component.CENTER_ALIGNMENT); // Center align
+            attributePanel.add(axisDirectionToggle);
     
-        // Add axis scale sliders for each attribute
-        for (String attributeName : attributeNames) {
+            // Add a scale slider
             JSlider axisScaleSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);
+            axisScaleSlider.setBackground(Color.WHITE);
+            axisScaleSlider.setPreferredSize(new Dimension(100, 20));
             axisScaleSlider.addChangeListener(e -> {
                 int value = axisScaleSlider.getValue();
                 axisScales.put(attributeName, value / 100.0);
@@ -123,7 +134,14 @@ public class ParallelCoordinatesPlot extends JFrame {
                 axisPositions.get(attributeName).y = 100 + (1 - axisScales.get(attributeName)) * AXIS_HEIGHT;
                 repaint();
             });
-            controlPanel.add(axisScaleSlider);
+            JLabel sliderLabel = new JLabel("Scale");
+            sliderLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            sliderLabel.setAlignmentX(Component.CENTER_ALIGNMENT); // Center align
+            attributePanel.add(sliderLabel);
+            attributePanel.add(axisScaleSlider);
+    
+            // Add the attribute panel to the main control panel
+            controlPanel.add(attributePanel);
         }
     
         // Wrap the control panel in a scroll pane for horizontal scrolling
@@ -132,9 +150,8 @@ public class ParallelCoordinatesPlot extends JFrame {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER); // No vertical scrolling needed
         scrollPane.setBorder(BorderFactory.createEmptyBorder()); // Optional: remove borders for a clean look
     
-        // Return the scroll pane instead of the plain control panel
         return scrollPane;
-    }    
+    }
 
     private JPanel createLegendPanel() {
         JPanel legendPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
