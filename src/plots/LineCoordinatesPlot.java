@@ -260,8 +260,73 @@ public class LineCoordinatesPlot extends JFrame {
                     continue;
                 }
 
-                Color classColor = selectedRows.contains(row) ? Color.YELLOW : classColors.get(classLabels.get(row));
+                Color classColor = classColors.get(classLabels.get(row));
                 g2.setColor(classColor);
+
+                List<Point2D.Double> points = new ArrayList<>();
+                for (int i = 0; i < attributeNames.size(); i++) {
+                    String attr = attributeNames.get(i);
+                    double value = data.get(i).get(row);
+                    double minValue = Collections.min(data.get(i));
+                    double maxValue = Collections.max(data.get(i));
+                    
+                    double normalizedValue = (value - minValue) / (maxValue - minValue);
+                    if (!axisDirections.get(attr)) {
+                        normalizedValue = 1 - normalizedValue;
+                    }
+                    
+                    double scale = axisScales.get(attr);
+                    Point pos = axisPositions.get(attr);
+                    double x = pos.x + normalizedValue * scale * AXIS_LENGTH;
+                    points.add(new Point2D.Double(x, pos.y));
+                }
+
+                // Draw connections between points using Bezier curves
+                if (showConnections) {
+                    for (int i = 0; i < points.size() - 1; i++) {
+                        Point2D.Double p1 = points.get(i);
+                        Point2D.Double p2 = points.get(i + 1);
+                        
+                        // Control points for Bezier curve directly above axes
+                        Point2D.Double ctrl1 = new Point2D.Double(
+                            p1.x,
+                            p1.y - curveHeights.get(attributeNames.get(i))
+                        );
+                        Point2D.Double ctrl2 = new Point2D.Double(
+                            p2.x,
+                            p2.y - curveHeights.get(attributeNames.get(i + 1))
+                        );
+                        
+                        CubicCurve2D curve = new CubicCurve2D.Double(
+                            p1.x, p1.y, ctrl1.x, ctrl1.y,
+                            ctrl2.x, ctrl2.y, p2.x, p2.y
+                        );
+                        g2.draw(curve);
+                    }
+                }
+                
+                // Draw points with scaling
+                Shape shape = classShapes.get(classLabels.get(row));
+                for (Point2D.Double point : points) {
+                    AffineTransform transform = new AffineTransform();
+                    transform.translate(point.x, point.y);
+                    String attr = attributeNames.get(points.indexOf(point));
+                    double scale = axisScales.get(attr);
+                    transform.scale(scale, scale);
+                    Shape scaledShape = transform.createTransformedShape(shape);
+                    g2.fill(scaledShape);
+                }
+            }
+
+            // Highlight selected cases in yellow thicker drawn last above everything
+            for (int row : selectedRows) {
+                if (hiddenClasses.contains(classLabels.get(row))) {
+                    continue;
+                }
+
+                Color classColor = Color.YELLOW; // Highlight selected cases in yellow
+                g2.setColor(classColor);
+                g2.setStroke(new BasicStroke(2.0f)); // Thicker line for selected cases
 
                 List<Point2D.Double> points = new ArrayList<>();
                 for (int i = 0; i < attributeNames.size(); i++) {
