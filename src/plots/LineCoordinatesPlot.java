@@ -21,8 +21,8 @@ public class LineCoordinatesPlot extends JFrame {
     private Set<String> hiddenClasses;
     private boolean showConnections = true;
     private Map<String, Point> axisPositions;
+    private Map<String, Integer> curveHeights; // Map to store individual curve heights for each attribute
     private String draggedAxis = null;
-    private int curveHeight = 50;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -44,6 +44,7 @@ public class LineCoordinatesPlot extends JFrame {
         this.axisDirections = new HashMap<>();
         this.hiddenClasses = new HashSet<>();
         this.axisPositions = new HashMap<>();
+        this.curveHeights = new HashMap<>(); // Initialize curveHeights map
 
         // Initialize axis properties and positions
         int startX = 100;
@@ -54,6 +55,7 @@ public class LineCoordinatesPlot extends JFrame {
             axisScales.put(attr, 1.0);
             axisDirections.put(attr, true);
             axisPositions.put(attr, new Point(startX + i * spacing, fixedY));
+            curveHeights.put(attr, 50); // Default curve height for each attribute
         }
 
         setTitle("Line Coordinates Plot");
@@ -100,25 +102,6 @@ public class LineCoordinatesPlot extends JFrame {
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // Add curve height control
-        JPanel curvePanel = new JPanel(new BorderLayout());
-        curvePanel.setBorder(BorderFactory.createTitledBorder("Curve Height"));
-        JSlider curveSlider = new JSlider(10, 100, 50);
-        curveSlider.addChangeListener(e -> {
-            curveHeight = curveSlider.getValue();
-            repaint();
-        });
-        curvePanel.add(curveSlider);
-        controlPanel.add(curvePanel);
-
-        // Add connection toggle
-        JToggleButton connectionToggle = new JToggleButton("Show Connections", true);
-        connectionToggle.addActionListener(e -> {
-            showConnections = connectionToggle.isSelected();
-            repaint();
-        });
-        controlPanel.add(connectionToggle);
-
         // Add controls for each attribute
         for (String attr : attributeNames) {
             JPanel attrPanel = new JPanel();
@@ -135,15 +118,25 @@ public class LineCoordinatesPlot extends JFrame {
             scalePanel.add(scaleSlider);
             
             // Direction toggle
-            JToggleButton directionToggle = new JToggleButton("←");
+            JToggleButton directionToggle = new JToggleButton("\u2B05");
             directionToggle.addActionListener(e -> {
                 axisDirections.put(attr, !directionToggle.isSelected());
-                directionToggle.setText(directionToggle.isSelected() ? "→" : "←");
+                directionToggle.setText(directionToggle.isSelected() ? "\u27A1" : "\u2B05");
                 repaint();
             });
+            // Curve height slider
+            JPanel curveHeightPanel = new JPanel(new BorderLayout());
+            curveHeightPanel.add(new JLabel("Curve Height:"), BorderLayout.WEST);
+            JSlider curveHeightSlider = new JSlider(-100, 100, curveHeights.get(attr));
+            curveHeightSlider.addChangeListener(e -> {
+                curveHeights.put(attr, curveHeightSlider.getValue());
+                repaint();
+            });
+            curveHeightPanel.add(curveHeightSlider);
             
             attrPanel.add(scalePanel);
             attrPanel.add(directionToggle);
+            attrPanel.add(curveHeightPanel);
             controlPanel.add(attrPanel);
         }
         
@@ -297,11 +290,11 @@ public class LineCoordinatesPlot extends JFrame {
                         // Control points for Bezier curve directly above axes
                         Point2D.Double ctrl1 = new Point2D.Double(
                             p1.x,
-                            p1.y - curveHeight
+                            p1.y - curveHeights.get(attributeNames.get(i))
                         );
                         Point2D.Double ctrl2 = new Point2D.Double(
                             p2.x,
-                            p2.y - curveHeight
+                            p2.y - curveHeights.get(attributeNames.get(i + 1))
                         );
                         
                         CubicCurve2D curve = new CubicCurve2D.Double(
@@ -311,7 +304,7 @@ public class LineCoordinatesPlot extends JFrame {
                         g2.draw(curve);
                     }
                 }
-
+                
                 // Draw points with scaling
                 Shape shape = classShapes.get(classLabels.get(row));
                 for (Point2D.Double point : points) {
@@ -326,4 +319,4 @@ public class LineCoordinatesPlot extends JFrame {
             }
         }
     }
-} 
+}
