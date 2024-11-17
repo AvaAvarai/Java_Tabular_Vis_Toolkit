@@ -23,6 +23,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private String draggedAxis = null;
     private final double globalMaxValue;
     private final double globalMinValue;
+    private boolean showAttributeLabels = true; // Toggle for attribute labels
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -102,6 +103,15 @@ public class ParallelCoordinatesPlot extends JFrame {
         controlPanel.setBackground(Color.WHITE);
         controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
+        // Add a button to toggle the attribute labels
+        JToggleButton attributeLabelToggle = new JToggleButton("Show Labels");
+        attributeLabelToggle.addActionListener(e -> {
+            showAttributeLabels = attributeLabelToggle.isSelected();
+            repaint();
+        });
+        attributeLabelToggle.setAlignmentX(Component.CENTER_ALIGNMENT); // Center align
+        controlPanel.add(attributeLabelToggle);
+
         for (String attributeName : attributeNames) {
             // Create a panel for each attribute
             JPanel attributePanel = new JPanel();
@@ -282,10 +292,12 @@ public class ParallelCoordinatesPlot extends JFrame {
                 g2.drawLine((int) pos.x, (int) pos.y, (int) pos.x, (int) pos.y + scaledHeight);
     
                 // Draw attribute label
-                g2.setFont(AXIS_LABEL_FONT);
-                String label = attributeName;
-                int labelWidth = g2.getFontMetrics().stringWidth(label);
-                g2.drawString(label, (int) (pos.x - labelWidth / 2), (int) (pos.y + scaledHeight + 20));
+                if (showAttributeLabels) {
+                    g2.setFont(AXIS_LABEL_FONT);
+                    String label = attributeName;
+                    int labelWidth = g2.getFontMetrics().stringWidth(label);
+                    g2.drawString(label, (int) (pos.x - labelWidth / 2), (int) (pos.y + scaledHeight + 20));
+                }
             }
         }
         private void drawData(Graphics2D g2) {
