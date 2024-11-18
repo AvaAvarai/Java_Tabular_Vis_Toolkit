@@ -46,17 +46,16 @@ public class LineCoordinatesPlot extends JFrame {
         this.axisPositions = new HashMap<>();
         this.curveHeights = new HashMap<>(); // Initialize curveHeights map
 
-        // Initialize axis properties and positions
-        int startX = 100;
-        int spacing = 150;
-        int fixedY = 300; // Fixed Y position for all axes
+        int startY = 200;
         for (int i = 0; i < attributeNames.size(); i++) {
             String attr = attributeNames.get(i);
-            axisScales.put(attr, 1.0);
-            axisDirections.put(attr, true);
-            axisPositions.put(attr, new Point(startX + i * spacing, fixedY));
-            curveHeights.put(attr, 50); // Default curve height for each attribute
-        }
+            axisScales.put(attr, 1.0);  // Default scale
+            axisDirections.put(attr, true);  // Default direction
+            int x = i * AXIS_LENGTH + 50; // Ensure axes are placed sequentially with proper spacing
+            int y = startY; // Dynamically calculate Y position as half the panel's height
+            axisPositions.put(attr, new Point(x, y));
+            curveHeights.put(attr, 50);  // Default curve height
+        }        
 
         setTitle("Line Coordinates Plot");
         setSize(800, 600);
@@ -248,11 +247,10 @@ public class LineCoordinatesPlot extends JFrame {
             for (String attr : attributeNames) {
                 Point pos = axisPositions.get(attr);
                 g2.setColor(Color.BLACK);
-                double scale = axisScales.get(attr);
-                int scaledAxisLength = (int)(AXIS_LENGTH * scale);
-                g2.drawLine(pos.x, pos.y, pos.x + scaledAxisLength, pos.y);
-                g2.drawString(attr, pos.x + scaledAxisLength/2 - fm.stringWidth(attr)/2, pos.y + 25);
-            }
+                int scaledAxisLength = (int) (AXIS_LENGTH * axisScales.get(attr)); // Scale the axis length
+                g2.drawLine(pos.x, pos.y, pos.x + scaledAxisLength, pos.y); // Draw the axis at dynamic Y
+                g2.drawString(attr, pos.x + scaledAxisLength / 2, pos.y + 20); // Draw the label below the axis
+            }            
 
             // Draw data points and connections
             for (int row = 0; row < data.get(0).size(); row++) {
