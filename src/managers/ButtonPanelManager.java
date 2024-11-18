@@ -19,7 +19,7 @@ public class ButtonPanelManager {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
-        buttonPanel.add(createLoadButton());
+        buttonPanel.add(createFileMenu());
         buttonPanel.add(createVizButton());
 
         buttonPanel.add(createNormalizeButton());
@@ -30,7 +30,6 @@ public class ButtonPanelManager {
         buttonPanel.add(createInsertRowButton());
         buttonPanel.add(createDeleteRowButton());
         buttonPanel.add(createCloneRowButton());
-        buttonPanel.add(createExportButton());
         buttonPanel.add(createCovarianceSortButton());
         buttonPanel.add(createClassColorButton());
         buttonPanel.add(createSetClassColorsButton());
@@ -44,13 +43,27 @@ public class ButtonPanelManager {
         return buttonPanel;
     }
 
+    private JButton createFileMenu() {
+        JMenuItem loadItem = new JMenuItem("Load CSV");
+        JMenuItem exportItem = new JMenuItem("Export CSV");
+
+        loadItem.addActionListener(e -> csvViewer.loadCsvFile());
+        exportItem.addActionListener(e -> csvViewer.exportCsvFile());
+
+        JPopupMenu fileMenu = new JPopupMenu();
+        fileMenu.add(loadItem);
+        fileMenu.add(exportItem);
+
+        return UIHelper.createButton("/icons/file.png", "File", e -> fileMenu.show((JComponent) e.getSource(), 0, 0));
+    }
+
     private JButton createVizButton() {
-        JMenuItem parallelPlotItem = new JMenuItem("Parallel Plot");
-        JMenuItem shiftedPairedItem = new JMenuItem("Shifted Paired Coordinates");
-        JMenuItem staticCircularCoordinatesItem = new JMenuItem("Static Circular Coordinates Plot");
-        JMenuItem starCoordinatesItem = new JMenuItem("Star Coordinates");
+        JMenuItem parallelPlotItem = new JMenuItem("Parallel Coordinates Plot");
+        JMenuItem shiftedPairedItem = new JMenuItem("Shifted Paired Coordinates Plot");
+        JMenuItem staticCircularCoordinatesItem = new JMenuItem("Static Circular/Polygonal Coordinates Plot");
+        JMenuItem starCoordinatesItem = new JMenuItem("Traditional Star Coordinates Plot");
         JMenuItem concentricCoordinatesItem = new JMenuItem("Concentric Coordinates Plot");
-        JMenuItem lineCoordinatesItem = new JMenuItem("Line Coordinates");
+        JMenuItem lineCoordinatesItem = new JMenuItem("Line Coordinates Plot");
         JMenuItem dtItem = new JMenuItem("Decision Tree");
 
         parallelPlotItem.addActionListener(e -> {

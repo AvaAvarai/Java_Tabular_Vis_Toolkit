@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Set;
 import java.util.HashSet;
 import src.utils.ScreenshotUtils;
@@ -113,10 +112,10 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             attrPanel.add(scaleSlider);
             
             // Add direction toggle
-            JToggleButton directionToggle = new JToggleButton("↑");
+            JToggleButton directionToggle = new JToggleButton("\u2191");
             directionToggle.addActionListener(e -> {
                 axisDirections.put(attr, !directionToggle.isSelected());
-                directionToggle.setText(directionToggle.isSelected() ? "↓" : "↑");
+                directionToggle.setText(directionToggle.isSelected() ? "\u2193" : "\u2191");
                 plotPanel.repaint();
             });
             attrPanel.add(directionToggle);
@@ -490,8 +489,8 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
 
             g2.setFont(new Font("SansSerif", Font.PLAIN, 16));
             g2.setColor(Color.BLACK);
-            g2.drawString(xLabel + (xDirection ? " ↑" : " ↓"), plotX + plotSize / 2, plotY + plotSize + 20);
-            g2.drawString(yLabel + (yDirection ? " ↑" : " ↓"), plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);
+            g2.drawString(xLabel + (xDirection ? " \u2191" : " \u2193"), plotX + plotSize / 2, plotY + plotSize + 20);
+            g2.drawString(yLabel + (yDirection ? " \u2191" : " \u2193"), plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);
         }
 
         private void drawRow(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight) {

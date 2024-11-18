@@ -24,6 +24,9 @@ public class CsvViewerUIHelper {
     public static JPanel createBottomPanel(JLabel selectedRowsLabel, JSlider thresholdSlider, JLabel thresholdLabel) {
         JPanel bottomPanel = new JPanel(new BorderLayout());
         JPanel sliderPanel = new JPanel(new BorderLayout());
+
+        JLabel thresholdTitle = new JLabel("Pure Region Size Threshold:");
+        sliderPanel.add(thresholdTitle, BorderLayout.WEST);
         sliderPanel.add(thresholdSlider, BorderLayout.CENTER);
         sliderPanel.add(thresholdLabel, BorderLayout.EAST);
         bottomPanel.add(sliderPanel, BorderLayout.EAST);

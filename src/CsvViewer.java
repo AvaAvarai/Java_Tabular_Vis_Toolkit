@@ -83,7 +83,7 @@ public class CsvViewer extends JFrame {
     
         statsTextArea = UIHelper.createTextArea(3, 0);
         statsScrollPane = CsvViewerUIHelper.createStatsScrollPane(statsTextArea);
-    
+
         // Initialize the thresholdSlider before PureRegionManager
         thresholdSlider = new JSlider(0, 100, 5);
         thresholdSlider.setMajorTickSpacing(20);
