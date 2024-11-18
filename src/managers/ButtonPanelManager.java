@@ -134,10 +134,6 @@ public class ButtonPanelManager {
         });
     }
 
-    private JButton createLoadButton() {
-        return UIHelper.createButton("/icons/load.png", "Load CSV", e -> csvViewer.loadCsvFile());
-    }
-
     private JButton createNormalizeButton() {
         toggleButton = UIHelper.createButton("/icons/normalize.png", "Normalize", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {

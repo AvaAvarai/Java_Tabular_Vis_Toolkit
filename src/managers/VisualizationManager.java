@@ -245,6 +245,7 @@ public class VisualizationManager {
             selectedRows,          // List<Integer>
             csvViewer.getDatasetName() // String
         );
+        plot.setSize(800, 800);
         plot.setVisible(true);
     }
 

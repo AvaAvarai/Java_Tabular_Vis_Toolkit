@@ -100,7 +100,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         // Create a panel to hold the controls for each attribute
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
-        controlPanel.setBackground(Color.WHITE);
+        controlPanel.setBackground(new Color(0xC0C0C0)); // Set background color to c0c0c0
         controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         // Add a button to toggle the attribute labels
