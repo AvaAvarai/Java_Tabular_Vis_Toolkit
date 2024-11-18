@@ -23,6 +23,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
     private boolean showLabels = true; // Track if labels should be shown
     private boolean usePolygon = false; // Track if polygon should be used instead of circle
     private boolean dynamicMode = false; // Track if dynamic mode should be used
+    private Map<String, Double> maxSumPerClass = new HashMap<>(); // Track max sum of each class
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -42,6 +43,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
         setSize(800, 800);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
+        calculateMaxSumPerClass();
 
         // Set the layout and background color of the main content pane
         setLayout(new BorderLayout());
@@ -117,6 +119,23 @@ public class StaticCircularCoordinatesPlot extends JFrame {
         // Ensure the JFrame is focusable to capture key events
         setFocusable(true);
         requestFocusInWindow();
+    }
+
+    private void calculateMaxSumPerClass() {
+        maxSumPerClass.clear(); // Clear previous calculations
+    
+        for (int row = 0; row < classLabels.size(); row++) {
+            String classLabel = classLabels.get(row);
+            double sum = 0;
+    
+            // Calculate the sum of the row values
+            for (int col = 0; col < numAttributes; col++) {
+                sum += data.get(col).get(row);
+            }
+    
+            // Update the maximum sum for the class
+            maxSumPerClass.put(classLabel, Math.max(maxSumPerClass.getOrDefault(classLabel, 0.0), sum));
+        }
     }
 
     private JPanel createLegendPanel() {
@@ -195,7 +214,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             g2.fillRect(0, 0, getWidth(), getHeight());
 
             // Draw the title above the grey background
-            String title = "Static Circular Coordinates Plot";
+            String title = "Circular Coordinates Plot";
             g2.setFont(TITLE_FONT);
             FontMetrics fm = g2.getFontMetrics(TITLE_FONT);
             int titleWidth = fm.stringWidth(title);
@@ -255,12 +274,32 @@ public class StaticCircularCoordinatesPlot extends JFrame {
 
                 // Draw tick marks if enabled
                 if (showTicks) {
-                    double tickLength = 20; // use -half for start of axis and +half for end of axis
-                    double tickStartX = centerX + (radius - tickLength/2) * Math.cos(angle);
-                    double tickStartY = centerY + (radius - tickLength/2) * Math.sin(angle);
-                    double tickEndX = centerX + (radius + tickLength/2) * Math.cos(angle);
-                    double tickEndY = centerY + (radius + tickLength/2) * Math.sin(angle);
-                    g2.drawLine((int)tickStartX, (int)tickStartY, (int)tickEndX, (int)tickEndY);
+                    double tickLength = 20;
+                    if (!dynamicMode) {
+                        double tickStartX = centerX + (radius - tickLength/2) * Math.cos(angle);
+                        double tickStartY = centerY + (radius - tickLength/2) * Math.sin(angle);
+                        double tickEndX = centerX + (radius + tickLength/2) * Math.cos(angle);
+                        double tickEndY = centerY + (radius + tickLength/2) * Math.sin(angle);
+                        g2.drawLine((int)tickStartX, (int)tickStartY, (int)tickEndX, (int)tickEndY);
+                    } else {
+                        for (Map.Entry<String, Double> entry : maxSumPerClass.entrySet()) {
+                            String classLabel = entry.getKey();
+                            double maxSum = entry.getValue();
+                            double angleOffset = (maxSum % numAttributes) * angleStep - Math.PI / 2; // Wrap around using modulo
+
+                            // Calculate tick mark position
+                            double tickX = centerX + (radius + 10) * Math.cos(angleOffset);
+                            double tickY = centerY + (radius + 10) * Math.sin(angleOffset);
+
+                            // Draw the tick mark
+                            g2.setColor(classColors.getOrDefault(classLabel, Color.BLACK));
+                            g2.drawLine(
+                                (int) (centerX + radius * Math.cos(angleOffset)),
+                                (int) (centerY + radius * Math.sin(angleOffset)),
+                                (int) tickX,
+                                (int) tickY
+                            );
+                    }
                 }
             }
 
@@ -280,6 +319,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
                     drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, xPoints, yPoints, true);
                 }
             }
+        }
         }
 
         private void drawRow(Graphics2D g2, int row, Point2D.Double[] attributePositions, int centerX, int centerY, int radius, double angleStep, int[] xPoints, int[] yPoints, boolean isSelected) {
