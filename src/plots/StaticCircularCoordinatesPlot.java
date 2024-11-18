@@ -214,7 +214,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             g2.fillRect(0, 0, getWidth(), getHeight());
 
             // Draw the title above the grey background
-            String title = "Static Circular Coordinates Plot";
+            String title = "Circular/Polygon Coordinates Plot";
             g2.setFont(TITLE_FONT);
             FontMetrics fm = g2.getFontMetrics(TITLE_FONT);
             int titleWidth = fm.stringWidth(title);
@@ -352,10 +352,27 @@ public class StaticCircularCoordinatesPlot extends JFrame {
                             value += data.get(j).get(row - 1);
                         }
                     }
-                    double angleOffset = value * angleStep;
-                    double x = centerX + radius * Math.cos(angleOffset - Math.PI / 2);
-                    double y = centerY + radius * Math.sin(angleOffset - Math.PI / 2);
-                    points[i] = new Point2D.Double(x, y);
+                    
+                    if (usePolygon) {
+                        double cumulativeValue = 0;
+                        for (int j = 0; j <= i; j++) {
+                            cumulativeValue += data.get(j).get(row); // Sum all previous values including current
+                        }
+                        // For polygon mode, interpolate along the straight line between vertices
+                        int currentIndex = i % numAttributes;
+                        int nextIndex = (i + 1) % numAttributes; // Wrap around to first vertex
+                        double edgeFraction = Math.min(Math.max(cumulativeValue, 0), 1); // Normalize to [0, 1]
+
+                        double x = xPoints[currentIndex] + edgeFraction * (xPoints[nextIndex] - xPoints[currentIndex]);
+                        double y = yPoints[currentIndex] + edgeFraction * (yPoints[nextIndex] - yPoints[currentIndex]);
+                        points[i] = new Point2D.Double(x, y);
+                    } else {
+                        // For circle mode, use angle-based positioning
+                        double angleOffset = value * angleStep;
+                        double x = centerX + radius * Math.cos(angleOffset - Math.PI / 2);
+                        double y = centerY + radius * Math.sin(angleOffset - Math.PI / 2);
+                        points[i] = new Point2D.Double(x, y);
+                    }
                 }
             }
         
