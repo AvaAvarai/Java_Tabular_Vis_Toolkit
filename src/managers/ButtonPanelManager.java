@@ -28,10 +28,7 @@ public class ButtonPanelManager {
         buttonPanel.add(createDeleteRowButton());
         buttonPanel.add(createCloneRowButton());
         buttonPanel.add(createExportButton());
-        buttonPanel.add(createParallelPlotButton());
-        buttonPanel.add(createShiftedPairedButton());
-        buttonPanel.add(createStaticCircularCoordinatesButton());
-        buttonPanel.add(createStarCoordinatesButton());
+        buttonPanel.add(createVizButton());
         buttonPanel.add(createCovarianceSortButton());
         buttonPanel.add(createClassColorButton());
         buttonPanel.add(createSetClassColorsButton());
@@ -41,11 +38,85 @@ public class ButtonPanelManager {
         buttonPanel.add(createRuleOverlayButton());
         buttonPanel.add(createLinearCombinationButton());
         buttonPanel.add(createSlopesAndDistancesButton());
-        buttonPanel.add(createDTButton());
-        buttonPanel.add(createConcentricCoordinatesButton());
-        buttonPanel.add(createLineCoordinatesButton());
 
         return buttonPanel;
+    }
+
+    private JButton createVizButton() {
+        JMenuItem parallelPlotItem = new JMenuItem("Parallel Plot");
+        JMenuItem shiftedPairedItem = new JMenuItem("Shifted Paired Coordinates");
+        JMenuItem staticCircularCoordinatesItem = new JMenuItem("Static Circular Coordinates Plot");
+        JMenuItem starCoordinatesItem = new JMenuItem("Star Coordinates");
+        JMenuItem concentricCoordinatesItem = new JMenuItem("Concentric Coordinates Plot");
+        JMenuItem lineCoordinatesItem = new JMenuItem("Line Coordinates");
+        JMenuItem dtItem = new JMenuItem("Decision Tree");
+
+        parallelPlotItem.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showParallelCoordinatesPlot();
+            }
+        });
+        shiftedPairedItem.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showShiftedPairedCoordinates();
+            }
+        });
+        staticCircularCoordinatesItem.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showStaticCircularCoordinatesPlot();
+            }
+        });
+        starCoordinatesItem.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showStarCoordinatesPlot();
+            }
+        });
+        concentricCoordinatesItem.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showConcentricCoordinatesPlot();
+            }
+        });
+        lineCoordinatesItem.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showLineCoordinatesPlot();
+            }
+        });
+        dtItem.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.showDecisionTreeVisualization();
+            }
+        });
+
+        JPopupMenu vizMenu = new JPopupMenu();
+        vizMenu.add(parallelPlotItem);
+        vizMenu.add(shiftedPairedItem);
+        vizMenu.add(staticCircularCoordinatesItem);
+        vizMenu.add(starCoordinatesItem);
+        vizMenu.add(concentricCoordinatesItem);
+        vizMenu.add(lineCoordinatesItem);
+        vizMenu.add(dtItem);
+
+        return UIHelper.createButton("/icons/start.png", "Visualizations", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                vizMenu.show((JComponent) e.getSource(), 0, 0);
+            }
+        });
     }
 
     private JButton createConcentricCoordinatesButton() {
