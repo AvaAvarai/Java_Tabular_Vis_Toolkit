@@ -19,6 +19,15 @@ General Line Coordinates (GLCs) generalize Cartesian Coordinates to n-D space, w
 - Concentric Coordinates (CC) - Drawing all coordinate axes in 2D as a series of circles nested within each other, connecting cases with polylines, circles can be made freeform or concentric.
 - Line Coordinates (LC) - Drawing all coordinate axes in 2D located one after another on a single straight line.
 
+| GLC \ Available Feature          | Spacebar screenshot file export | Legend class view toggle | Selected case highlight | Axis drag and drop freeform | Attribute Label Toggle | Axis direction toggle | Axis scale | Axis rotate | Greedy auto axis order | Curve height | Case frequency | Case slope coloring |
+|----------------------------------|----------------------------------|---------------------------|--------------------------|-----------------------------|-------------------------|------------------------|------------|-------------|-------------------|--------------|----------------|----------------------|
+| Parallel Coordinates             | X                                | X                         | X                        | X                           | X                       | X                      | X          |             |                   |              |                |                      |
+| Shifted Paired Coordinates       | X                                | X                         | X                        | X                           |                         | X                      | X          |             | X                 |              |                | X                    |
+| Static Circular/Polygonal Coordinates | X                          | X                         | X                        |                             | X                       |                        |            |             |                   |              |                |                      |
+| Traditional Star Coordinates     | X                                | X                         | X                        |                             | X                       |                        |            |             |                   |              |                |                      |
+| Concentric Coordinates           | X                                | X                         | X                        | X                           | X                       | X                      | X          | X           | X                 | X            | X              |                      |
+| Static In-Line Coordinates       | X                                | X                         | X                        | X                           |                         | X                      | X          |             |                   | X            |                |                      |
+
 ## Analyzing Fisher Iris Benchmark Dataset
 
 Below are screenshots showcasing the exploration of the Fisher Iris dataset, which serves as a benchmark.
