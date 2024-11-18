@@ -22,6 +22,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
     private boolean showTicks = false; // Track if ticks should be shown
     private boolean showLabels = true; // Track if labels should be shown
     private boolean usePolygon = false; // Track if polygon should be used instead of circle
+    private boolean dynamicMode = false; // Track if dynamic mode should be used
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -90,6 +91,14 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             repaint();
         });
         controlPanel.add(polygonToggle);
+
+        // Add dynamic mode toggle
+        JToggleButton dynamicModeToggle = new JToggleButton("Dynamic Mode");
+        dynamicModeToggle.addActionListener(e -> {
+            dynamicMode = dynamicModeToggle.isSelected();
+            repaint();
+        });
+        controlPanel.add(dynamicModeToggle);
 
         add(controlPanel, BorderLayout.NORTH);
 
@@ -282,21 +291,31 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             // Calculate points
             for (int i = 0; i < numAttributes; i++) {
                 double value = data.get(i).get(row);
-                double minValue = data.get(i).stream().min(Double::compare).orElse(0.0);
-                double maxValue = data.get(i).stream().max(Double::compare).orElse(1.0);
-                double normalizedValue = (value - minValue) / (maxValue - minValue);
-                
-                if (usePolygon) {
-                    // For polygon mode, interpolate along the straight line between vertices
-                    int nextIndex = (i + 1) % numAttributes;
-                    double x = xPoints[i] + normalizedValue * (xPoints[nextIndex] - xPoints[i]);
-                    double y = yPoints[i] + normalizedValue * (yPoints[nextIndex] - yPoints[i]);
-                    points[i] = new Point2D.Double(x, y);
-                } else {
-                    // For circle mode, use angle-based positioning
-                    double angleOffset = normalizedValue * angleStep;
-                    double x = centerX + radius * Math.cos(i * angleStep + angleOffset - Math.PI / 2);
-                    double y = centerY + radius * Math.sin(i * angleStep + angleOffset - Math.PI / 2);
+                if (!dynamicMode) {
+                    if (usePolygon) {
+                        // For polygon mode, interpolate along the straight line between vertices
+                        int nextIndex = (i + 1) % numAttributes;
+                        double x = xPoints[i] + value * (xPoints[nextIndex] - xPoints[i]);
+                        double y = yPoints[i] + value * (yPoints[nextIndex] - yPoints[i]);
+                        points[i] = new Point2D.Double(x, y);
+                    } else {
+                        // For circle mode, use angle-based positioning
+                        double angleOffset = value * angleStep;
+                        double x = centerX + radius * Math.cos(i * angleStep + angleOffset - Math.PI / 2);
+                        double y = centerY + radius * Math.sin(i * angleStep + angleOffset - Math.PI / 2);
+                        points[i] = new Point2D.Double(x, y);
+                    }
+                }
+                if (dynamicMode) {
+                    if (i > 0 && row > 0) {
+                        // sum all previous values with the current value
+                        for (int j = 0; j < i; j++) {
+                            value += data.get(j).get(row - 1);
+                        }
+                    }
+                    double angleOffset = value * angleStep;
+                    double x = centerX + radius * Math.cos(angleOffset - Math.PI / 2);
+                    double y = centerY + radius * Math.sin(angleOffset - Math.PI / 2);
                     points[i] = new Point2D.Double(x, y);
                 }
             }
@@ -323,21 +342,22 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             }
             
             // Connect last point to first point
-            Point2D.Double p1 = points[numAttributes - 1];
-            Point2D.Double p2 = points[0];
-            double ctrlX1 = centerX + (p1.x - centerX) * (1 - curveHeight/100.0);
-            double ctrlY1 = centerY + (p1.y - centerY) * (1 - curveHeight/100.0);
-            double ctrlX2 = centerX + (p2.x - centerX) * (1 - curveHeight/100.0);
-            double ctrlY2 = centerY + (p2.y - centerY) * (1 - curveHeight/100.0);
-            
-            CubicCurve2D curve = new CubicCurve2D.Double(
-                p1.x, p1.y,
-                ctrlX1, ctrlY1,
-                ctrlX2, ctrlY2,
-                p2.x, p2.y
-            );
-            g2.draw(curve);
-        
+            if (!dynamicMode) {
+                Point2D.Double p1 = points[numAttributes - 1];
+                Point2D.Double p2 = points[0];
+                double ctrlX1 = centerX + (p1.x - centerX) * (1 - curveHeight/100.0);
+                double ctrlY1 = centerY + (p1.y - centerY) * (1 - curveHeight/100.0);
+                double ctrlX2 = centerX + (p2.x - centerX) * (1 - curveHeight/100.0);
+                double ctrlY2 = centerY + (p2.y - centerY) * (1 - curveHeight/100.0);
+                
+                CubicCurve2D curve = new CubicCurve2D.Double(
+                    p1.x, p1.y,
+                    ctrlX1, ctrlY1,
+                    ctrlX2, ctrlY2,
+                    p2.x, p2.y
+                );
+                g2.draw(curve);
+            }
             // Draw the shapes at the points
             for (int i = 0; i < numAttributes; i++) {
                 g2.translate(points[i].x, points[i].y);  // Move the origin to the point location
