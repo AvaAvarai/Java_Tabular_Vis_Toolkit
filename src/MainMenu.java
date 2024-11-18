@@ -57,12 +57,12 @@ public class MainMenu extends JFrame {
         add(bannerLabel, BorderLayout.NORTH);
 
         // Create modern styled buttons with aligned icons
-        JButton startAppButton = createModernButton("Start Application", UIHelper.loadIcon("/icons/start.png", 20, 20));
-        JButton githubButton = createModernButton("GitHub Repository", UIHelper.loadIcon("/icons/github.png", 20, 20));
-        JButton aboutButton = createModernButton("About JTabViz", UIHelper.loadIcon("/icons/about.png", 20, 20));
-        JButton openDatasetsButton = createModernButton("Datasets", UIHelper.loadIcon("/icons/folder.png", 20, 20));
-        JButton openScreenshotsButton = createModernButton("Screenshots", UIHelper.loadIcon("/icons/image.png", 20, 20));
-        JButton exitButton = createModernButton("Exit", UIHelper.loadIcon("/icons/exit.png", 20, 20));
+        JButton startAppButton = createModernButton("      Start Application", UIHelper.loadIcon("/icons/start.png", 20, 20));
+        JButton githubButton = createModernButton("      GitHub Repository", UIHelper.loadIcon("/icons/github.png", 20, 20));
+        JButton aboutButton = createModernButton("      About JTabViz", UIHelper.loadIcon("/icons/about.png", 20, 20));
+        JButton openDatasetsButton = createModernButton("      Datasets", UIHelper.loadIcon("/icons/folder.png", 20, 20));
+        JButton openScreenshotsButton = createModernButton("      Screenshots", UIHelper.loadIcon("/icons/image.png", 20, 20));
+        JButton exitButton = createModernButton("      Exit", UIHelper.loadIcon("/icons/exit.png", 20, 20));
 
         // Button panel with modern layout
         JPanel centerPanel = new JPanel();
@@ -122,15 +122,6 @@ public class MainMenu extends JFrame {
             }
         });
         getGlassPane().setVisible(true);
-    }
-
-    private ImageIcon loadIcon(String path) {
-        try {
-            return new ImageIcon(MainMenu.class.getResource(path));
-        } catch (Exception e) {
-            System.err.println("Could not load icon: " + path);
-            return null;
-        }
     }
 
     private JButton createModernButton(String text, ImageIcon icon) {

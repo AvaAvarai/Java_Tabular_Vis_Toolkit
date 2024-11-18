@@ -9,6 +9,7 @@ import java.awt.*;
 public class ButtonPanelManager {
 
     private final CsvViewer csvViewer;
+    private JButton toggleButton;
 
     public ButtonPanelManager(CsvViewer csvViewer) {
         this.csvViewer = csvViewer;
@@ -19,7 +20,9 @@ public class ButtonPanelManager {
         buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
         buttonPanel.add(createLoadButton());
-        buttonPanel.add(createToggleButton());
+        buttonPanel.add(createVizButton());
+
+        buttonPanel.add(createNormalizeButton());
         buttonPanel.add(createHighlightBlanksButton());
         buttonPanel.add(createHeatmapButton());
         buttonPanel.add(createCovarianceMatrixButton());
@@ -28,7 +31,6 @@ public class ButtonPanelManager {
         buttonPanel.add(createDeleteRowButton());
         buttonPanel.add(createCloneRowButton());
         buttonPanel.add(createExportButton());
-        buttonPanel.add(createVizButton());
         buttonPanel.add(createCovarianceSortButton());
         buttonPanel.add(createClassColorButton());
         buttonPanel.add(createSetClassColorsButton());
@@ -123,15 +125,42 @@ public class ButtonPanelManager {
         return UIHelper.createButton("/icons/load.png", "Load CSV", e -> csvViewer.loadCsvFile());
     }
 
-    private JButton createToggleButton() {
-        csvViewer.toggleButton = UIHelper.createButton("/icons/normalize.png", "Normalize", e -> {
+    private JButton createNormalizeButton() {
+        toggleButton = UIHelper.createButton("/icons/normalize.png", "Normalize", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.toggleDataView();
+                return;
             }
+
+            JMenuItem minMaxItem = new JMenuItem("Min-Max Normalization");
+            JMenuItem zScoreItem = new JMenuItem("Z-Score Normalization");
+            minMaxItem.addActionListener(event -> {
+                csvViewer.getStateManager().setNormalizationType("minmax");
+                csvViewer.dataHandler.setNormalizationType("minmax");
+                csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
+                csvViewer.getStateManager().setNormalized(true);
+                toggleButton.setIcon(UIHelper.loadIcon("/icons/denormalize.png", 40, 40));
+                toggleButton.setToolTipText("Denormalize");
+            });
+            zScoreItem.addActionListener(event -> {
+                csvViewer.getStateManager().setNormalizationType("zscore");
+                csvViewer.dataHandler.setNormalizationType("zscore");
+                csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
+                csvViewer.getStateManager().setNormalized(true);
+                toggleButton.setIcon(UIHelper.loadIcon("/icons/denormalize.png", 40, 40));
+                toggleButton.setToolTipText("Denormalize");
+            });
+            JPopupMenu normalizationMenu = new JPopupMenu();
+            normalizationMenu.add(minMaxItem);
+            normalizationMenu.add(zScoreItem);
+
+            normalizationMenu.show((JComponent) e.getSource(), 0, 0);
         });
-        return csvViewer.toggleButton;
+        return toggleButton;
+    }
+
+    public JButton getToggleButton() {
+        return toggleButton;
     }
 
     private JButton createHighlightBlanksButton() {

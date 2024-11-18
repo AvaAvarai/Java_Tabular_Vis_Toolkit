@@ -92,35 +92,6 @@ public class CsvViewer extends JFrame {
         thresholdSlider.setPaintLabels(true);
         thresholdSlider.setToolTipText("Adjust threshold percentage");
 
-        // Initialize normalization menu
-        normalizationMenu = new JPopupMenu();
-        JMenuItem minMaxItem = new JMenuItem("Min-Max Normalization");
-        JMenuItem zScoreItem = new JMenuItem("Z-Score Normalization");
-        minMaxItem.addActionListener(e -> {
-            stateManager.setNormalizationType("minmax");
-            toggleDataView();
-            normalizationMenu.setVisible(false);
-            dataHandler.setNormalizationType("minmax");
-            dataHandler.normalizeOrDenormalizeData(table, statsTextArea);
-            stateManager.setNormalized(true);
-            toggleButton.setIcon(UIHelper.loadIcon("/icons/denormalize.png", 40, 40));
-            toggleButton.setToolTipText("Denormalize");
-        });
-        
-        zScoreItem.addActionListener(e -> {
-            stateManager.setNormalizationType("zscore"); 
-            toggleDataView();
-            normalizationMenu.setVisible(false);
-            dataHandler.setNormalizationType("zscore");
-            dataHandler.normalizeOrDenormalizeData(table, statsTextArea);
-            stateManager.setNormalized(true);
-            toggleButton.setIcon(UIHelper.loadIcon("/icons/denormalize.png", 40, 40));
-            toggleButton.setToolTipText("Denormalize");
-        });
-
-        normalizationMenu.add(minMaxItem);
-        normalizationMenu.add(zScoreItem);
-
         tableScrollPane = new JScrollPane(table);
         trigColumnManager = new TrigonometricColumnManager(table);
         pureRegionManager = new PureRegionManager(this, tableModel, statsTextArea, thresholdSlider);
@@ -440,6 +411,7 @@ public class CsvViewer extends JFrame {
 
             dataHandler.loadCsvData(filePath, tableModel, statsTextArea);
 
+            // Format decimal values
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 for (int col = 0; col < tableModel.getColumnCount(); col++) {
                     Object value = tableModel.getValueAt(row, col);
@@ -462,8 +434,9 @@ public class CsvViewer extends JFrame {
             generateClassShapes();
             updateSelectedRowsLabel();
 
-            toggleButton.setIcon(UIHelper.loadIcon("/icons/normalize.png", 40, 40));
-            toggleButton.setToolTipText("Normalize");
+            // Update the toggle button through ButtonPanelManager
+            buttonPanelManager.getToggleButton().setIcon(UIHelper.loadIcon("/icons/normalize.png", 40, 40));
+            buttonPanelManager.getToggleButton().setToolTipText("Normalize");
 
             statsTextArea.setCaretPosition(0);
         }

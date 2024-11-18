@@ -7,6 +7,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -59,7 +60,7 @@ public class CsvDataHandler {
             JOptionPane.showMessageDialog(null, "No data to normalize", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-    
+
         SwingWorker<List<String[]>, Void> worker = new SwingWorker<List<String[]>, Void>() {
             @Override
             protected List<String[]> doInBackground() {
@@ -70,7 +71,7 @@ public class CsvDataHandler {
                 double[] stdDevs = new double[numColumns];
                 boolean[] isNumerical = new boolean[numColumns];
                 int[] counts = new int[numColumns];
-    
+
                 // Initialize arrays
                 for (int i = 0; i < numColumns; i++) {
                     minValues[i] = Double.MAX_VALUE;
@@ -80,16 +81,18 @@ public class CsvDataHandler {
                     isNumerical[i] = true;
                     counts[i] = 0;
                 }
-    
+
                 // First pass - calculate min, max and means
                 for (String[] row : originalData) {
                     for (int j = 0; j < numColumns; j++) {
                         try {
-                            double value = Double.parseDouble(row[j]);
-                            if (value < minValues[j]) minValues[j] = value;
-                            if (value > maxValues[j]) maxValues[j] = value;
-                            means[j] += value;
-                            counts[j]++;
+                            if (row[j] != null && !row[j].trim().isEmpty()) {
+                                double value = Double.parseDouble(row[j]);
+                                minValues[j] = Math.min(minValues[j], value);
+                                maxValues[j] = Math.max(maxValues[j], value);
+                                means[j] += value;
+                                counts[j]++;
+                            }
                         } catch (NumberFormatException e) {
                             isNumerical[j] = false;
                         }
@@ -109,62 +112,75 @@ public class CsvDataHandler {
                         for (int j = 0; j < numColumns; j++) {
                             if (isNumerical[j]) {
                                 try {
-                                    double value = Double.parseDouble(row[j]);
-                                    stdDevs[j] += Math.pow(value - means[j], 2);
+                                    if (row[j] != null && !row[j].trim().isEmpty()) {
+                                        double value = Double.parseDouble(row[j]);
+                                        stdDevs[j] += Math.pow(value - means[j], 2);
+                                    }
                                 } catch (NumberFormatException ignored) {}
                             }
                         }
                     }
-                    
+
                     // Finalize standard deviations
                     for (int j = 0; j < numColumns; j++) {
-                        if (isNumerical[j] && counts[j] > 0) {
-                            stdDevs[j] = Math.sqrt(stdDevs[j] / counts[j]);
+                        if (isNumerical[j] && counts[j] > 1) {
+                            stdDevs[j] = Math.sqrt(stdDevs[j] / (counts[j] - 1));
                         }
                     }
                 }
-    
-                // Normalize the data
+
+                // Create normalized data
                 List<String[]> normalizedData = new ArrayList<>();
+                DecimalFormat df = new DecimalFormat("#.####");
+                
                 for (String[] row : originalData) {
                     String[] normalizedRow = new String[numColumns];
                     for (int j = 0; j < numColumns; j++) {
                         if (isNumerical[j]) {
                             try {
-                                double value = Double.parseDouble(row[j]);
-                                double normalizedValue;
-                                if (normalizationType.equals("minmax")) {
-                                    normalizedValue = (value - minValues[j]) / (maxValues[j] - minValues[j]);
-                                } else { // zscore
-                                    normalizedValue = stdDevs[j] != 0 ? (value - means[j]) / stdDevs[j] : 0;
+                                if (row[j] != null && !row[j].trim().isEmpty()) {
+                                    double value = Double.parseDouble(row[j]);
+                                    double normalizedValue;
+                                    if (normalizationType.equals("minmax")) {
+                                        double range = maxValues[j] - minValues[j];
+                                        normalizedValue = range != 0 ? (value - minValues[j]) / range : 0;
+                                    } else { // zscore
+                                        normalizedValue = stdDevs[j] != 0 ? (value - means[j]) / stdDevs[j] : 0;
+                                    }
+                                    normalizedRow[j] = df.format(normalizedValue);
+                                } else {
+                                    normalizedRow[j] = row[j];
                                 }
-                                normalizedRow[j] = String.valueOf(normalizedValue);
                             } catch (NumberFormatException e) {
                                 normalizedRow[j] = row[j];
                             }
                         } else {
-                            normalizedRow[j] = row[j]; // Retain original value for non-numeric columns
+                            normalizedRow[j] = row[j];
                         }
                     }
                     normalizedData.add(normalizedRow);
                 }
                 return normalizedData;
             }
-    
+
             @Override
             protected void done() {
                 try {
                     normalizedData = get();
                     isNormalized = true;
-                    updateTableWithNormalizedData(table);
-                    DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
-                    updateStats(tableModel, statsTextArea);
+                    DefaultTableModel model = (DefaultTableModel) table.getModel();
+                    model.setRowCount(0);
+                    for (String[] row : normalizedData) {
+                        model.addRow(row);
+                    }
+                    updateStats((DefaultTableModel) table.getModel(), statsTextArea);
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "Error during normalization: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Error during normalization: " + e.getMessage(), 
+                        "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
-    
+
         worker.execute();
     }
     
