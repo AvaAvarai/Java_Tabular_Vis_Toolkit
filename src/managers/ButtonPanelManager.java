@@ -60,7 +60,7 @@ public class ButtonPanelManager {
     private JButton createVizButton() {
         JMenuItem parallelPlotItem = new JMenuItem("Parallel Coordinates Plot");
         JMenuItem shiftedPairedItem = new JMenuItem("Shifted Paired Coordinates Plot");
-        JMenuItem staticCircularCoordinatesItem = new JMenuItem("Static Circular/Polygonal Coordinates Plot");
+        JMenuItem staticCircularCoordinatesItem = new JMenuItem("Circular/Polygonal Coordinates Plot");
         JMenuItem starCoordinatesItem = new JMenuItem("Traditional Star Coordinates Plot");
         JMenuItem concentricCoordinatesItem = new JMenuItem("Concentric Coordinates Plot");
         JMenuItem lineCoordinatesItem = new JMenuItem("Line Coordinates Plot");

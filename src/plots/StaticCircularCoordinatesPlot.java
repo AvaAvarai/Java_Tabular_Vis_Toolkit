@@ -39,7 +39,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
         this.numAttributes = attributeNames.size();
         this.datasetName = datasetName;
 
-        setTitle("Static Circular Coordinates");
+        setTitle("Circular/Polygonal Coordinates");
         setSize(800, 800);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -136,7 +136,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             // Update the maximum sum for the class
             maxSumPerClass.put(classLabel, Math.max(maxSumPerClass.getOrDefault(classLabel, 0.0), sum));
         }
-    }
+    }    
 
     private JPanel createLegendPanel() {
         JPanel legendPanel = new JPanel();
@@ -214,7 +214,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             g2.fillRect(0, 0, getWidth(), getHeight());
 
             // Draw the title above the grey background
-            String title = "Circular Coordinates Plot";
+            String title = "Static Circular Coordinates Plot";
             g2.setFont(TITLE_FONT);
             FontMetrics fm = g2.getFontMetrics(TITLE_FONT);
             int titleWidth = fm.stringWidth(title);
@@ -292,13 +292,13 @@ public class StaticCircularCoordinatesPlot extends JFrame {
                             double tickY = centerY + (radius + 10) * Math.sin(angleOffset);
 
                             // Draw the tick mark
-                            g2.setColor(classColors.getOrDefault(classLabel, Color.BLACK));
                             g2.drawLine(
                                 (int) (centerX + radius * Math.cos(angleOffset)),
                                 (int) (centerY + radius * Math.sin(angleOffset)),
                                 (int) tickX,
                                 (int) tickY
                             );
+                        }
                     }
                 }
             }
@@ -319,7 +319,6 @@ public class StaticCircularCoordinatesPlot extends JFrame {
                     drawRow(g2, row, attributePositions, centerX, centerY, radius, angleStep, xPoints, yPoints, true);
                 }
             }
-        }
         }
 
         private void drawRow(Graphics2D g2, int row, Point2D.Double[] attributePositions, int centerX, int centerY, int radius, double angleStep, int[] xPoints, int[] yPoints, boolean isSelected) {
