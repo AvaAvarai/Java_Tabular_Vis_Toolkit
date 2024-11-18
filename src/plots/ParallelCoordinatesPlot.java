@@ -23,7 +23,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private String draggedAxis = null;
     private final double globalMaxValue;
     private final double globalMinValue;
-    private boolean showAttributeLabels = true; // Toggle for attribute labels
+    private boolean showAttributeLabels = true;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);

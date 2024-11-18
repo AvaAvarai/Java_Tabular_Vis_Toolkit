@@ -1,9 +1,11 @@
 package src;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -22,6 +24,11 @@ public class MainMenu extends JFrame {
 
     public MainMenu() {
         setTitle("Main Menu");
+        try {
+            setIconImage(ImageIO.read(getClass().getResource("/icons/icon.png")));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         setSize(500, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);

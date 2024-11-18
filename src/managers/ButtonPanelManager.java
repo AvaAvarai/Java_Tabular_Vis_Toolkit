@@ -252,16 +252,6 @@ public class ButtonPanelManager {
         });
     }
 
-    private JButton createExportButton() {
-        return UIHelper.createButton("/icons/export.png", "Export CSV", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.exportCsvFile();
-            }
-        });
-    }
-
     private JButton createCovarianceSortButton() {
         return UIHelper.createButton("/icons/sort.png", "Sort Columns by Covariance", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
