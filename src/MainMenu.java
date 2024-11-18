@@ -26,6 +26,7 @@ public class MainMenu extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout(0, 0));
+        setResizable(false);
 
         // Create gradient background panel with frame
         JPanel backgroundPanel = new JPanel() {
@@ -45,24 +46,20 @@ public class MainMenu extends JFrame {
         setContentPane(backgroundPanel);
 
         // Banner
-        ImageIcon bannerIcon = null;
-        try {
-            bannerIcon = new ImageIcon(MainMenu.class.getResource("/graphics/banner.png"));
-        } catch (Exception e) {
-            System.err.println("Could not load banner image");
-        }
+        ImageIcon bannerIcon = UIHelper.loadIcon("/graphics/banner.png", 500, 200);
         JLabel bannerLabel = new JLabel(bannerIcon);
-        bannerLabel.setPreferredSize(new Dimension(getWidth(), 200));
         bannerLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
         add(bannerLabel, BorderLayout.NORTH);
 
         // Create modern styled buttons with aligned icons
-        JButton startAppButton = createModernButton("      Start Application", UIHelper.loadIcon("/icons/start.png", 20, 20));
-        JButton githubButton = createModernButton("      GitHub Repository", UIHelper.loadIcon("/icons/github.png", 20, 20));
-        JButton aboutButton = createModernButton("      About JTabViz", UIHelper.loadIcon("/icons/about.png", 20, 20));
-        JButton openDatasetsButton = createModernButton("      Datasets", UIHelper.loadIcon("/icons/folder.png", 20, 20));
-        JButton openScreenshotsButton = createModernButton("      Screenshots", UIHelper.loadIcon("/icons/image.png", 20, 20));
-        JButton exitButton = createModernButton("      Exit", UIHelper.loadIcon("/icons/exit.png", 20, 20));
+        JButton[] buttons = {
+            createModernButton("      Start Application", UIHelper.loadIcon("/icons/start.png", 20, 20)),
+            createModernButton("      GitHub Repository", UIHelper.loadIcon("/icons/github.png", 20, 20)),
+            createModernButton("      About JTabViz", UIHelper.loadIcon("/icons/about.png", 20, 20)),
+            createModernButton("      Datasets", UIHelper.loadIcon("/icons/folder.png", 20, 20)),
+            createModernButton("      Screenshots", UIHelper.loadIcon("/icons/image.png", 20, 20)),
+            createModernButton("      Exit", UIHelper.loadIcon("/icons/exit.png", 20, 20))
+        };
 
         // Button panel with modern layout
         JPanel centerPanel = new JPanel();
@@ -84,30 +81,27 @@ public class MainMenu extends JFrame {
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 60, 20, 60));
 
         // Add buttons with spacing
-        addButtonWithSpacing(buttonPanel, startAppButton);
-        addButtonWithSpacing(buttonPanel, githubButton);
-        addButtonWithSpacing(buttonPanel, aboutButton);
-        addButtonWithSpacing(buttonPanel, openDatasetsButton);
-        addButtonWithSpacing(buttonPanel, openScreenshotsButton);
-        addButtonWithSpacing(buttonPanel, exitButton);
+        for (JButton button : buttons) {
+            addButtonWithSpacing(buttonPanel, button);
+        }
 
         centerPanel.add(buttonPanel, BorderLayout.CENTER);
         add(centerPanel, BorderLayout.CENTER);
 
         // Modern footer
-        JLabel footerLabel = new JLabel("© 2024 CWU-VKD-LAB | MIT License", JLabel.CENTER);
+        JLabel footerLabel = new JLabel("CWU-VKD-LAB | MIT License", JLabel.CENTER);
         footerLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         footerLabel.setForeground(new Color(200, 200, 200));
         footerLabel.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
         add(footerLabel, BorderLayout.SOUTH);
 
         // Action listeners
-        startAppButton.addActionListener(e -> openCsvViewer());
-        githubButton.addActionListener(e -> openGitHub());
-        aboutButton.addActionListener(e -> showAboutDialog());
-        openDatasetsButton.addActionListener(e -> openFolder("datasets"));
-        openScreenshotsButton.addActionListener(e -> openFolder("screenshots"));
-        exitButton.addActionListener(e -> System.exit(0));
+        buttons[0].addActionListener(e -> openCsvViewer());
+        buttons[1].addActionListener(e -> openGitHub());
+        buttons[2].addActionListener(e -> showAboutDialog());
+        buttons[3].addActionListener(e -> openFolder("datasets"));
+        buttons[4].addActionListener(e -> openFolder("screenshots"));
+        buttons[5].addActionListener(e -> System.exit(0));
 
         // Draw frame on glass pane
         setGlassPane(new JComponent() {
