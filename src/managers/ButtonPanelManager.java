@@ -119,26 +119,6 @@ public class ButtonPanelManager {
         });
     }
 
-    private JButton createConcentricCoordinatesButton() {
-        return UIHelper.createButton("/icons/concentric.png", "Concentric Coordinates Plot", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showConcentricCoordinatesPlot();
-            }
-        });
-    }
-
-    private JButton createDTButton() {
-        return UIHelper.createButton("/icons/dt.png", "Decision Tree", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showDecisionTreeVisualization();
-            }
-        });
-    }     
-
     private JButton createLoadButton() {
         return UIHelper.createButton("/icons/load.png", "Load CSV", e -> csvViewer.loadCsvFile());
     }
@@ -244,46 +224,6 @@ public class ButtonPanelManager {
         });
     }
 
-    private JButton createParallelPlotButton() {
-        return UIHelper.createButton("/icons/parallel.png", "Parallel Coordinates Plot", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showParallelCoordinatesPlot();
-            }
-        });
-    }
-
-    private JButton createShiftedPairedButton() {
-        return UIHelper.createButton("/icons/shiftedpaired.png", "Shifted Paired Coordinates Plot", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showShiftedPairedCoordinates();
-            }
-        });
-    }
-
-    private JButton createStaticCircularCoordinatesButton() {
-        return UIHelper.createButton("/icons/staticcircular.png", "Static Circular Coordinates Plot", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showStaticCircularCoordinatesPlot();
-            }
-        });
-    }
-
-    private JButton createStarCoordinatesButton() {
-        return UIHelper.createButton("/icons/star.png", "Star Coordinates Plot", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showStarCoordinatesPlot();
-            }
-        });
-    }
-
     private JButton createCovarianceSortButton() {
         return UIHelper.createButton("/icons/sort.png", "Sort Columns by Covariance", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
@@ -378,16 +318,6 @@ public class ButtonPanelManager {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.insertLinearCombinationColumn();
-            }
-        });
-    }
-
-    private JButton createLineCoordinatesButton() {
-        return UIHelper.createButton("/icons/line.png", "Line Coordinates Plot", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showLineCoordinatesPlot();
             }
         });
     }
