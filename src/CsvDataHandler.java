@@ -17,27 +17,36 @@ public class CsvDataHandler {
     private List<String[]> originalData = new ArrayList<>();
     private List<String[]> normalizedData = new ArrayList<>();
     private boolean isNormalized = false;
-    private String normalizationType = "minmax"; // Default to min-max
+    private String normalizationType = "minmax";
+    private int classColumnIndex = -1; // Index of the detected class column
 
     public void loadCsvData(String filePath, DefaultTableModel tableModel, JTextArea statsTextArea) {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             boolean isFirstLine = true;
+
+            // Clear existing data
             originalData.clear();
-            tableModel.setRowCount(0); // Clear existing data
-            tableModel.setColumnCount(0); // Clear existing columns
+            tableModel.setRowCount(0);
+            tableModel.setColumnCount(0);
 
             while ((line = br.readLine()) != null) {
                 String[] values = line.split(",");
                 if (isFirstLine) {
                     tableModel.setColumnIdentifiers(values);
+                    for (int i = 0; i < values.length; i++) {
+                        if (values[i].equalsIgnoreCase("class")) {
+                            classColumnIndex = i;
+                            break;
+                        }
+                    }
                     isFirstLine = false;
                 } else {
                     originalData.add(values);
                     tableModel.addRow(values);
                 }
             }
-            updateStats(tableModel, statsTextArea); // Update statistics after loading new data
+            updateStats(tableModel, statsTextArea);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(null, "Error loading CSV file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -50,7 +59,7 @@ public class CsvDataHandler {
             denormalizeData(table, statsTextArea);
         }
     }
-    
+
     public boolean isDataNormalized() {
         return isNormalized;
     }
@@ -61,7 +70,7 @@ public class CsvDataHandler {
             return;
         }
 
-        SwingWorker<List<String[]>, Void> worker = new SwingWorker<List<String[]>, Void>() {
+        SwingWorker<List<String[]>, Void> worker = new SwingWorker<>() {
             @Override
             protected List<String[]> doInBackground() {
                 int numColumns = originalData.get(0).length;
@@ -82,9 +91,11 @@ public class CsvDataHandler {
                     counts[i] = 0;
                 }
 
-                // First pass - calculate min, max and means
+                // First pass - calculate min, max, and means
                 for (String[] row : originalData) {
                     for (int j = 0; j < numColumns; j++) {
+                        if (j == classColumnIndex) continue; // Skip class column
+
                         try {
                             if (row[j] != null && !row[j].trim().isEmpty()) {
                                 double value = Double.parseDouble(row[j]);
@@ -110,14 +121,14 @@ public class CsvDataHandler {
                 if (normalizationType.equals("zscore")) {
                     for (String[] row : originalData) {
                         for (int j = 0; j < numColumns; j++) {
-                            if (isNumerical[j]) {
-                                try {
-                                    if (row[j] != null && !row[j].trim().isEmpty()) {
-                                        double value = Double.parseDouble(row[j]);
-                                        stdDevs[j] += Math.pow(value - means[j], 2);
-                                    }
-                                } catch (NumberFormatException ignored) {}
-                            }
+                            if (j == classColumnIndex || !isNumerical[j]) continue; // Skip class column
+
+                            try {
+                                if (row[j] != null && !row[j].trim().isEmpty()) {
+                                    double value = Double.parseDouble(row[j]);
+                                    stdDevs[j] += Math.pow(value - means[j], 2);
+                                }
+                            } catch (NumberFormatException ignored) {}
                         }
                     }
 
@@ -132,11 +143,13 @@ public class CsvDataHandler {
                 // Create normalized data
                 List<String[]> normalizedData = new ArrayList<>();
                 DecimalFormat df = new DecimalFormat("#.####");
-                
+
                 for (String[] row : originalData) {
                     String[] normalizedRow = new String[numColumns];
                     for (int j = 0; j < numColumns; j++) {
-                        if (isNumerical[j]) {
+                        if (j == classColumnIndex) {
+                            normalizedRow[j] = row[j]; // Retain original class column
+                        } else if (isNumerical[j]) {
                             try {
                                 if (row[j] != null && !row[j].trim().isEmpty()) {
                                     double value = Double.parseDouble(row[j]);
@@ -155,7 +168,7 @@ public class CsvDataHandler {
                                 normalizedRow[j] = row[j];
                             }
                         } else {
-                            normalizedRow[j] = row[j];
+                            normalizedRow[j] = row[j]; // Retain non-numeric data
                         }
                     }
                     normalizedData.add(normalizedRow);
@@ -168,24 +181,20 @@ public class CsvDataHandler {
                 try {
                     normalizedData = get();
                     isNormalized = true;
-                    DefaultTableModel model = (DefaultTableModel) table.getModel();
-                    model.setRowCount(0);
-                    for (String[] row : normalizedData) {
-                        model.addRow(row);
-                    }
+                    updateTableWithNormalizedData(table);
                     updateStats((DefaultTableModel) table.getModel(), statsTextArea);
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "Error during normalization: " + e.getMessage(), 
-                        "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Error during normalization: " + e.getMessage(),
+                            "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         };
 
         worker.execute();
     }
-    
+
     private void denormalizeData(JTable table, JTextArea statsTextArea) {
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
             @Override
             protected Void doInBackground() {
                 return null; // Nothing to compute in the background
@@ -195,8 +204,7 @@ public class CsvDataHandler {
             protected void done() {
                 isNormalized = false;
                 updateTableWithOriginalData(table);
-                DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
-                updateStats(tableModel, statsTextArea);
+                updateStats((DefaultTableModel) table.getModel(), statsTextArea);
             }
         };
 
