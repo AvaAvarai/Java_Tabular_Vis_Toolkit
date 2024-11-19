@@ -577,11 +577,11 @@ public class CsvViewer extends JFrame {
     }
 
     public void updateTableData(java.util.List<String[]> data) {
-        tableManager.updateTableData(data);  // Delegate to TableManager
+        tableManager.updateTableData(data);
     }
 
     public void highlightBlanks() {
-        tableManager.highlightBlanks();  // Delegate to TableManager
+        tableManager.highlightBlanks();
     }
 
     public void toggleHeatmap() {

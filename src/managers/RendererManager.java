@@ -112,13 +112,12 @@ public class RendererManager {
                     c.setBackground(Color.decode("#C0C0C0"));
                 }
     
-                if (hasFocus) {
+                if (table.isRowSelected(row)) {
                     if (c instanceof JComponent) {
-                        ((JComponent) c).setBorder(BorderFactory.createLineBorder(Color.RED, 2));
-                    }
-                } else {
-                    if (c instanceof JComponent) {
-                        ((JComponent) c).setBorder(BorderFactory.createEmptyBorder());
+                        for (int col = 0; col < csvViewer.tableModel.getColumnCount(); col++) {
+                            Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+                            cell.setBackground(Color.decode("#FFFFFF"));
+                        }
                     }
                 }
     

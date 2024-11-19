@@ -4,3 +4,4 @@ datasets/*/
 screenshots/export/*
 .DS_STORE
 out/*
+.*
