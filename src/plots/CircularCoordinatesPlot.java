@@ -50,7 +50,7 @@ public class CircularCoordinatesPlot extends JFrame {
         getContentPane().setBackground(Color.WHITE);
 
         // Add the plot panel at the center
-        StaticCircularCoordinatesPanel plotPanel = new StaticCircularCoordinatesPanel();
+        CircularCoordinatesPanel plotPanel = new CircularCoordinatesPanel();
         plotPanel.setPreferredSize(new Dimension(600, 600));
         JScrollPane scrollPane = new JScrollPane(plotPanel);
         add(scrollPane, BorderLayout.CENTER);
@@ -191,10 +191,10 @@ public class CircularCoordinatesPlot extends JFrame {
         return legendPanel;
     }
 
-    private class StaticCircularCoordinatesPanel extends JPanel {
+    private class CircularCoordinatesPanel extends JPanel {
         private static final int TITLE_PADDING = 20; // Add 20px padding between title and plot
 
-        public StaticCircularCoordinatesPanel() {
+        public CircularCoordinatesPanel() {
             // Set the panel's background to transparent
             setBackground(new Color(0, 0, 0, 0));
         }

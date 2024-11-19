@@ -1026,8 +1026,8 @@ public class CsvViewer extends JFrame {
         visualizationManager.showShiftedPairedCoordinates();
     }
 
-    public void showStaticCircularCoordinatesPlot() {
-        visualizationManager.showStaticCircularCoordinatesPlot();
+    public void showCircularCoordinatesPlot() {
+        visualizationManager.showCircularCoordinatesPlot();
     }
 
     public void showDecisionTreeVisualization() {

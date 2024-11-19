@@ -147,7 +147,7 @@ public class VisualizationManager {
         shiftedPairedCoordinates.setVisible(true);
     }
 
-    public void showStaticCircularCoordinatesPlot() {
+    public void showCircularCoordinatesPlot() {
         List<List<Double>> data = new ArrayList<>();
         List<String> attributeNames = new ArrayList<>();
         List<String> classLabels = new ArrayList<>();

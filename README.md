@@ -14,7 +14,7 @@ General Line Coordinates (GLCs) generalize Cartesian Coordinates to n-D space, w
 
 - Parallel Coordinates (PC) - Drawing all coordinate axes in 2D located parallel to each other.
 - Shifted Paired Coordinates (SPC) - Drawing each pair of attributes in 2D as a shifted cartesian plane, connecting cases with polylines.
-- Static Circular Coordinates (SCC) - Drawing all coordinate axes in 2D as a circle, connecting cases with polylines, circle can be made a polygon or a circle.
+- Circular Coordinates (SCC & DCC) - Drawing all coordinate axes in 2D as a circle, connecting cases with polylines, circle can be made a polygon or a circle either static or dynamic.
 - Star Coordinates (SC) - Drawing all coordinate axes in 2D as a star shape, connecting cases with polylines.
 - Concentric Coordinates (CC) - Drawing all coordinate axes in 2D as a series of circles nested within each other, connecting cases with polylines, circles can be made freeform or concentric.
 - Line Coordinates (LC) - Drawing all coordinate axes in 2D located one after another on a single straight line.
@@ -23,10 +23,10 @@ General Line Coordinates (GLCs) generalize Cartesian Coordinates to n-D space, w
 |----------------------------------|----------------------------------|---------------------------|--------------------------|-----------------------------|-------------------------|------------------------|------------|-------------|-------------------|--------------|----------------|----------------------|
 | Parallel Coordinates             | X                                | X                         | X                        | X                           | X                       | X                      | X          |             |                   |              |                |                      |
 | Shifted Paired Coordinates       | X                                | X                         | X                        | X                           |                         | X                      | X          |             | X                 |              |                | X                    |
-| Static Circular/Polygonal Coordinates | X                          | X                         | X                        |                             | X                       |                        |            |             |                   |              |                |                      |
+| Circular/Polygonal Coordinates | X                          | X                         | X                        |                             | X                       |                        |            |             |                   |              |                |                      |
 | Traditional Star Coordinates     | X                                | X                         | X                        |                             | X                       |                        |            |             |                   |              |                |                      |
 | Concentric Coordinates           | X                                | X                         | X                        | X                           | X                       | X                      | X          | X           | X                 | X            | X              |                      |
-| Static In-Line Coordinates       | X                                | X                         | X                        | X                           |                         | X                      | X          |             |                   | X            |                |                      |
+| In-Line Coordinates       | X                                | X                         | X                        | X                           |                         | X                      | X          |             |                   | X            |                |                      |
 
 ## Analyzing Fisher Iris Benchmark Dataset
 
