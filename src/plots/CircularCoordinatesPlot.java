@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.List;
 import src.utils.ScreenshotUtils;
 
-public class StaticCircularCoordinatesPlot extends JFrame {
+public class CircularCoordinatesPlot extends JFrame {
     private List<List<Double>> data;
     private List<String> attributeNames;
     private Map<String, Color> classColors;
@@ -29,7 +29,7 @@ public class StaticCircularCoordinatesPlot extends JFrame {
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
-    public StaticCircularCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName) {
+    public CircularCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -331,6 +331,10 @@ public class StaticCircularCoordinatesPlot extends JFrame {
             for (int i = 0; i < numAttributes; i++) {
                 double value = data.get(i).get(row);
                 if (!dynamicMode) {
+                    // Position value within the range [0, 1] for non-dynamic mode
+                    double minValue = Collections.min(data.get(i));
+                    double maxValue = Collections.max(data.get(i));
+                    value = (value - minValue) / (maxValue - minValue);
                     if (usePolygon) {
                         // For polygon mode, interpolate along the straight line between vertices
                         int nextIndex = (i + 1) % numAttributes;
