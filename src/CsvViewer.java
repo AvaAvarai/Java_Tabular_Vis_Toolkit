@@ -68,18 +68,28 @@ public class CsvViewer extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
     
+        // Add modern styling
+        getRootPane().setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, new Color(64, 64, 64)));
+        getContentPane().setBackground(new Color(240, 240, 240));
+    
+        // Create main content panel with padding
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBackground(new Color(240, 240, 240));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        setContentPane(mainPanel);
+    
         dataHandler = new CsvDataHandler();
         tableModel = new ReorderableTableModel();
         table = TableSetup.createTable(tableModel);
     
         rendererManager = new RendererManager(this);
-        tableManager = new TableManager(this, tableModel);  // Initialize TableManager
+        tableManager = new TableManager(this, tableModel);
     
         CsvViewerUIHelper.setupTable(table, tableModel, this);
     
         buttonPanelManager = new ButtonPanelManager(this);
         JPanel buttonPanel = buttonPanelManager.createButtonPanel();
-        add(buttonPanel, BorderLayout.NORTH);
+        mainPanel.add(buttonPanel, BorderLayout.NORTH);
     
         statsTextArea = UIHelper.createTextArea(3, 0);
         statsScrollPane = CsvViewerUIHelper.createStatsScrollPane(statsTextArea);
@@ -120,8 +130,8 @@ public class CsvViewer extends JFrame {
         statsPanel.add(statsScrollPane, BorderLayout.CENTER);
     
         splitPane = CsvViewerUIHelper.createSplitPane(tableScrollPane, statsPanel);
-        add(splitPane, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
+        mainPanel.add(splitPane, BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
     
         generateClassShapes();
     }    
