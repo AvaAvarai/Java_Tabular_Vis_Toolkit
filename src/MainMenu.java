@@ -13,6 +13,8 @@ import java.net.URI;
 
 public class MainMenu extends JFrame {
 
+    private static final String VERSION = "0.1.0";
+
     private static final Color BACKGROUND_COLOR_TOP = new Color(30, 30, 30);
     private static final Color BACKGROUND_COLOR_BOTTOM = new Color(50, 80, 120);
     private static final Color BUTTON_COLOR = new Color(70, 130, 180);
@@ -96,7 +98,7 @@ public class MainMenu extends JFrame {
         add(centerPanel, BorderLayout.CENTER);
 
         // Modern footer
-        JLabel footerLabel = new JLabel("CWU-VKD-LAB | MIT License", JLabel.CENTER);
+        JLabel footerLabel = new JLabel("Version " + VERSION + " | CWU-VKD-LAB | MIT License", JLabel.CENTER);
         footerLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         footerLabel.setForeground(new Color(200, 200, 200));
         footerLabel.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));

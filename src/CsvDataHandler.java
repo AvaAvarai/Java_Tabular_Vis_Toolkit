@@ -276,8 +276,11 @@ public class CsvDataHandler {
 
     public void updateStats(DefaultTableModel tableModel, JTextArea statsTextArea) {
         int caseCount = tableModel.getRowCount();
+
         StringBuilder stats = new StringBuilder();
         stats.append("Case Count: ").append(caseCount).append("\n");
+
+        stats.append("Attribute Count: ").append(tableModel.getColumnCount() - 1).append("\n");
 
         int numColumns = tableModel.getColumnCount();
         int classColumnIndex = -1;
