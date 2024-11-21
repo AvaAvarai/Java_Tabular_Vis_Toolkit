@@ -10,7 +10,7 @@ import javax.swing.JTextField;
 
 /**
  * The GradientDescentOptimizer class provides functionality to optimize the coefficients
- * for a linear combination of features using the gradient descent algorithm with adaptive learning rate.
+ * for a weighted sum of features using the gradient descent algorithm with adaptive learning rate.
  * This optimization aims to maximize the separability between classes in a dataset.
  */
 public class GradientDescentOptimizer {
@@ -41,13 +41,13 @@ public class GradientDescentOptimizer {
     }
 
     /**
-     * Optimizes the coefficients for the linear combination using gradient descent with adaptive learning rate.
+     * Optimizes the coefficients for the weighted sum using gradient descent with adaptive learning rate.
      * The optimized coefficients are then updated in the provided JPanel.
      *
      * @param originalColumnIndices the list of indices corresponding to the original columns in the dataset.
      * @param coefficients the list of coefficients to be optimized.
      * @param panel the JPanel containing the UI components for coefficient inputs.
-     * @param trigFunction the trigonometric function to apply to the linear combination.
+     * @param trigFunction the trigonometric function to apply to the weighted sum.
      */
     public void optimizeCoefficientsUsingGradientDescent(List<Integer> originalColumnIndices, List<Double> coefficients, JPanel panel, String trigFunction, String initializationType, double flatValue, double minRange, double maxRange, double coeffMin, double coeffMax) {
         initializeCoefficients(coefficients, initializationType, flatValue, minRange, maxRange);
@@ -127,8 +127,8 @@ public class GradientDescentOptimizer {
      * The separability is measured as the ratio of between-class variance to within-class variance.
      *
      * @param originalColumnIndices the list of indices corresponding to the original columns in the dataset.
-     * @param coefficients the array of coefficients for the linear combination.
-     * @param trigFunction the trigonometric function to apply to the linear combination.
+     * @param coefficients the array of coefficients for the weighted sum.
+     * @param trigFunction the trigonometric function to apply to the weighted sum.
      * @return the class separability score.
      */
     private double evaluateClassSeparation(List<Integer> originalColumnIndices, double[] coefficients, String trigFunction) {

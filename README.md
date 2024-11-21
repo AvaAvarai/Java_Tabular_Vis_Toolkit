@@ -113,7 +113,7 @@ Hiding the classifiable cases with single attribute pure intervals which cover 5
 - **Feature Engineering:** Insert feature columns with direct trigonometric attribute values, such as arccos(attribute), or calculate forward/backward differences wrapped in trigonometric functions.
 - **Weighted Sum Feature Engineering:** Insert a weighted sum column with custom coefficients, optionally wrapped in a trigonometric function.
 - **Slope Distance Feature Engineering:** Insert slope-distance values for the attributes as paired columns, duplicate last column as needed when missing required attribute count.
-- **Gradient Descent Optimization:** Automatically discover optimal coefficients for linear combination features, maximizing class separability.
+- **Gradient Descent Optimization:** Automatically discover optimal coefficients for weighted sum features, maximizing class separability.
 
 ## Rule Discovery
 
@@ -137,7 +137,7 @@ JTabViz applies trigonometric functions to forward differences, backward differe
 
 ### Feature Engineering with Weighted Sum for Data Classification
 
-JTabViz allows for the creation of **Linear Combination Features** from existing attributes, enhancing class separability, reducing dimensionality, and improving model representation. A new feature created by combining multiple existing features using a set of coefficients.
+JTabViz allows for the creation of **Weighted Sum Features** from existing attributes, enhancing class separability, reducing dimensionality, and improving model representation. A new feature created by combining multiple existing features using a set of coefficients.
 
 New Feature} = c_1(x_1) + c_2(x_2) + ... + c_n(x_n)
 
@@ -151,7 +151,7 @@ JTabViz includes a gradient descent algorithm that optimizes coefficients to max
 
 ### Wrapping Weighted Sum with Trigonometric Functions
 
-Apply trigonometric functions (sin, cos, tan, and their inverses) to linear combination features to reveal non-linear relationships and rotational patterns.
+Apply trigonometric functions (sin, cos, tan, and their inverses) to Weighted Sum features to reveal non-linear relationships and rotational patterns.
 
 ### Practical Example
 

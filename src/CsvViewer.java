@@ -170,7 +170,7 @@ public class CsvViewer extends JFrame {
         visualizationManager.showRuleOverlayPlot();
     }
 
-    public void insertLinearCombinationColumn() {
+    public void insertWeightedSumColumn() {
         if (tableModel.getColumnCount() == 0) {
             noDataLoadedError();
             return;
@@ -236,7 +236,7 @@ public class CsvViewer extends JFrame {
 
         String[] trigOptions = {"None", "cos", "sin", "tan", "arccos", "arcsin", "arctan"};
         JComboBox<String> trigFunctionSelector = new JComboBox<>(trigOptions);
-        panel.add(new JLabel("Wrap Linear Combination in:"));
+        panel.add(new JLabel("Wrap Weighted Sum in:"));
         panel.add(trigFunctionSelector);
 
         JButton optimizeButton = new JButton("Optimize Coefficients");
@@ -290,7 +290,7 @@ public class CsvViewer extends JFrame {
         JScrollPane scrollPane = new JScrollPane(panel);
         scrollPane.setPreferredSize(new Dimension(400, 400));
 
-        int result = JOptionPane.showConfirmDialog(this, scrollPane, "Enter Coefficients for Linear Combination", JOptionPane.OK_CANCEL_OPTION);
+        int result = JOptionPane.showConfirmDialog(this, scrollPane, "Enter or optimize coefficients for weighted sum", JOptionPane.OK_CANCEL_OPTION);
 
         if (result == JOptionPane.OK_OPTION) {
             try {
@@ -302,13 +302,26 @@ public class CsvViewer extends JFrame {
                 return;
             }
 
-            String baseColumnNameBuilder = new StringBuilder("LC#"+(tableModel.getColumnCount()-columnIndices.size())).toString();
+            DecimalFormat decimalFormat = new DecimalFormat("#.####");
+            StringBuilder columnNameBuilder = new StringBuilder();
+            for (int i = 0; i < columnIndices.size(); i++) {
+                double coeff = coefficients.get(i);
+                if (i == 0 || coeff >= 0) {
+                    if (i > 0) {
+                        columnNameBuilder.append("+");
+                    }
+                    columnNameBuilder.append(decimalFormat.format(coeff));
+                } else {
+                    columnNameBuilder.append(decimalFormat.format(coeff)); // Negative sign included in format
+                }
+                columnNameBuilder.append("*")
+                               .append(tableModel.getColumnName(columnIndices.get(i)));
+            }
+            String columnName = columnNameBuilder.toString();
 
-            String newColumnName = getUniqueColumnName(baseColumnNameBuilder);
+            String newColumnName = getUniqueColumnName(columnName);
 
             tableModel.addColumn(newColumnName);
-
-            DecimalFormat decimalFormat = new DecimalFormat("#.##########################");
 
             String trigFunction = (String) trigFunctionSelector.getSelectedItem();
             for (int row = 0; row < tableModel.getRowCount(); row++) {

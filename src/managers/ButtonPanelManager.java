@@ -37,7 +37,7 @@ public class ButtonPanelManager {
         buttonPanel.add(createToggleTrigonometricButton());
         buttonPanel.add(createToggleEasyCasesButton());
         buttonPanel.add(createRuleOverlayButton());
-        buttonPanel.add(createLinearCombinationButton());
+        buttonPanel.add(createWeightedSumButton());
         buttonPanel.add(createSlopesAndDistancesButton());
 
         return buttonPanel;
@@ -340,12 +340,12 @@ public class ButtonPanelManager {
         });
     }
 
-    private JButton createLinearCombinationButton() {
-        return UIHelper.createButton("/icons/combo.png", "Insert Linear Combination Column", e -> {
+    private JButton createWeightedSumButton() {
+        return UIHelper.createButton("/icons/combo.png", "Insert Weighted Sum Column", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
-                csvViewer.insertLinearCombinationColumn();
+                csvViewer.insertWeightedSumColumn();
             }
         });
     }
