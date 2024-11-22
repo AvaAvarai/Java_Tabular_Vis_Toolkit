@@ -224,6 +224,11 @@ public class CsvViewer extends JFrame {
         panel.add(coeffMaxLabel);
         panel.add(coeffMaxField);
 
+        // Add adaptive learning rate checkbox
+        JCheckBox adaptiveLearningRateCheckbox = new JCheckBox("Use Adaptive Learning Rate");
+        panel.add(new JLabel("")); // Empty label for grid alignment
+        panel.add(adaptiveLearningRateCheckbox);
+
         initTypeCombo.addActionListener(e -> {
             boolean isRandom = initTypeCombo.getSelectedItem().equals("Random Range");
             minRangeField.setEnabled(isRandom);
@@ -265,7 +270,7 @@ public class CsvViewer extends JFrame {
                     return;
                 }
 
-                GradientDescentOptimizer optimizer = new GradientDescentOptimizer(this, 0.01, 1000, 1e-6);
+                GradientDescentOptimizer optimizer = new GradientDescentOptimizer(this, 0.01, 1000, 1e-6, adaptiveLearningRateCheckbox.isSelected());
                 optimizer.optimizeCoefficientsUsingGradientDescent(
                     columnIndices, 
                     coefficients, 
@@ -302,7 +307,7 @@ public class CsvViewer extends JFrame {
                 return;
             }
 
-            DecimalFormat decimalFormat = new DecimalFormat("#.####");
+            DecimalFormat decimalFormat = new DecimalFormat("#.##########################");
             StringBuilder columnNameBuilder = new StringBuilder();
             for (int i = 0; i < columnIndices.size(); i++) {
                 double coeff = coefficients.get(i);

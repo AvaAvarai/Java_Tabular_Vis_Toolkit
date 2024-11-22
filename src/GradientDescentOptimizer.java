@@ -10,13 +10,13 @@ import javax.swing.JTextField;
 
 /**
  * The GradientDescentOptimizer class provides functionality to optimize the coefficients
- * for a weighted sum of features using the gradient descent algorithm with adaptive learning rate.
+ * for a weighted sum of features using the gradient descent algorithm with optional adaptive learning rate.
  * This optimization aims to maximize the separability between classes in a dataset.
  */
 public class GradientDescentOptimizer {
 
     private final CsvViewer csvViewer;
-    private double learningRate; // Changed to non-final to allow adaptation
+    private double learningRate;
     private final int maxIterations;
     private final double tolerance;
     private final Random random = new Random();
@@ -24,6 +24,7 @@ public class GradientDescentOptimizer {
     private final double learningRateIncrease = 1.05; // Learning rate increase factor
     private final double minLearningRate = 0.0001; // Minimum learning rate
     private final double maxLearningRate = 1.0; // Maximum learning rate
+    private final boolean useAdaptiveLearningRate;
 
     /**
      * Constructs a GradientDescentOptimizer with the specified parameters.
@@ -32,16 +33,18 @@ public class GradientDescentOptimizer {
      * @param learningRate the initial learning rate for the gradient descent algorithm.
      * @param maxIterations the maximum number of iterations for the optimization process.
      * @param tolerance the tolerance for convergence in the optimization process.
+     * @param useAdaptiveLearningRate whether to use adaptive learning rate during optimization.
      */
-    public GradientDescentOptimizer(CsvViewer csvViewer, double learningRate, int maxIterations, double tolerance) {
+    public GradientDescentOptimizer(CsvViewer csvViewer, double learningRate, int maxIterations, double tolerance, boolean useAdaptiveLearningRate) {
         this.csvViewer = csvViewer;
         this.learningRate = learningRate;
         this.maxIterations = maxIterations;
         this.tolerance = tolerance;
+        this.useAdaptiveLearningRate = useAdaptiveLearningRate;
     }
 
     /**
-     * Optimizes the coefficients for the weighted sum using gradient descent with adaptive learning rate.
+     * Optimizes the coefficients for the weighted sum using gradient descent with optional adaptive learning rate.
      * The optimized coefficients are then updated in the provided JPanel.
      *
      * @param originalColumnIndices the list of indices corresponding to the original columns in the dataset.
@@ -59,13 +62,15 @@ public class GradientDescentOptimizer {
         for (int iteration = 0; iteration < maxIterations; iteration++) {
             double currentScore = evaluateClassSeparation(originalColumnIndices, coefficients.stream().mapToDouble(Double::doubleValue).toArray(), trigFunction);
 
-            // Adapt learning rate based on score improvement
-            if (currentScore > previousScore) {
-                // If score improved, increase learning rate
-                learningRate = Math.min(maxLearningRate, learningRate * learningRateIncrease);
-            } else {
-                // If score didn't improve, decrease learning rate
-                learningRate = Math.max(minLearningRate, learningRate * learningRateDecay);
+            if (useAdaptiveLearningRate) {
+                // Adapt learning rate based on score improvement
+                if (currentScore > previousScore) {
+                    // If score improved, increase learning rate
+                    learningRate = Math.min(maxLearningRate, learningRate * learningRateIncrease);
+                } else {
+                    // If score didn't improve, decrease learning rate
+                    learningRate = Math.max(minLearningRate, learningRate * learningRateDecay);
+                }
             }
             previousScore = currentScore;
 
