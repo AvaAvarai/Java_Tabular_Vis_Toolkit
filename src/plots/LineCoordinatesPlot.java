@@ -47,6 +47,7 @@ public class LineCoordinatesPlot extends JFrame {
         this.curveHeights = new HashMap<>(); // Initialize curveHeights map
 
         int startY = 200;
+        int totalWidth = 0;
         for (int i = 0; i < attributeNames.size(); i++) {
             String attr = attributeNames.get(i);
             axisScales.put(attr, 1.0);  // Default scale
@@ -55,6 +56,7 @@ public class LineCoordinatesPlot extends JFrame {
             int y = startY; // Dynamically calculate Y position as half the panel's height
             axisPositions.put(attr, new Point(x, y));
             curveHeights.put(attr, 50);  // Default curve height
+            totalWidth = x + AXIS_LENGTH + 50; // Update total width needed
         }        
 
         setTitle("Line Coordinates Plot");
@@ -78,9 +80,14 @@ public class LineCoordinatesPlot extends JFrame {
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBackground(Color.WHITE);
 
-        // Add the plot panel
+        // Add the plot panel with scrolling
         LineCoordinatesPanel plotPanel = new LineCoordinatesPanel();
+        plotPanel.setPreferredSize(new Dimension(totalWidth, 600)); // Set preferred size based on total width needed
+        
         JScrollPane plotScrollPane = new JScrollPane(plotPanel);
+        plotScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+        plotScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        
         plotScrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
                  .put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
         plotScrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
@@ -195,7 +202,6 @@ public class LineCoordinatesPlot extends JFrame {
     private class LineCoordinatesPanel extends JPanel {
         public LineCoordinatesPanel() {
             setBackground(new Color(0xC0C0C0));
-            setPreferredSize(new Dimension(800, 600));
 
             addMouseListener(new MouseAdapter() {
                 @Override
