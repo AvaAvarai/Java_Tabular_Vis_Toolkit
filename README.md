@@ -4,7 +4,7 @@
 
 [![Demo Video](https://img.youtube.com/vi/j0_zpYPt_n8/0.jpg)](https://www.youtube.com/watch?v=j0_zpYPt_n8)
 
-**Tested on:**  Windows (10/11), Linux (Pop!_OS), and macOS (Sonoma).
+**Tested on:**  Windows (10/11), Linux (Pop!_OS), and macOS (M3 Sonoma).
 
 To get started quickly, please see the [Getting Started](#getting-started) section, method 3.
 
@@ -221,7 +221,7 @@ There are multiple ways to run JTabViz, but we suggest using method 3 for simpli
 
    to compile, package, and execute the new jar in one step:
      - **macOS/Linux:** `compile_and_package_mac_linux.sh`
-     - **Windows:** to be added shortly.
+     - **Windows:** `compile_and_package_windows.bat`
 
 ## Dataset File Format
 
@@ -265,6 +265,8 @@ x1, x2, x3, x4, x5, class,
 0.87, 1.23, 3.45, 5.67, 7.89, A,  
 9.99, 8.88, 7.77, 6.66, 5.55, C,  
 1.23, 4.56, 7.89, 2.34, 5.67, B
+
+(The class column can be in any position with no case sensitivity.)
 
 ## Acknowledgements
 
