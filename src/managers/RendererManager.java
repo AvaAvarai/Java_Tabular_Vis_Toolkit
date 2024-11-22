@@ -42,10 +42,10 @@ public class RendererManager {
                         for (int col = 0; col < csvViewer.tableModel.getColumnCount(); col++) {
                             Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
                             cell.setBackground(Color.decode("#FFFFFF"));
+                            cell.setForeground(csvViewer.getCellTextColor());
                         }
                     }
                 }
-                
                 return c;
             }
         });

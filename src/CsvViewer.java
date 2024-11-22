@@ -107,7 +107,7 @@ public class CsvViewer extends JFrame {
         pureRegionManager = new PureRegionManager(this, tableModel, statsTextArea, thresholdSlider);
         visualizationManager = new VisualizationManager(this);
         dataExporter = new DataExporter(tableModel);
-        selectedRowsLabel = new JLabel("Selected rows: 0");
+        selectedRowsLabel = new JLabel("Selected cases: 0");
     
         thresholdLabel = new JLabel("5%");
         thresholdSlider.addChangeListener(e -> {
@@ -223,9 +223,8 @@ public class CsvViewer extends JFrame {
         panel.add(coeffMinField);
         panel.add(coeffMaxLabel);
         panel.add(coeffMaxField);
-
         // Add adaptive learning rate checkbox
-        JCheckBox adaptiveLearningRateCheckbox = new JCheckBox("Use Adaptive Learning Rate");
+        JCheckBox adaptiveLearningRateCheckbox = new JCheckBox("Use Adaptive Learning Rate", true);
         panel.add(new JLabel("")); // Empty label for grid alignment
         panel.add(adaptiveLearningRateCheckbox);
 
@@ -1077,7 +1076,7 @@ public class CsvViewer extends JFrame {
             visiblePercentage = (totalVisibleRowCount / (double) totalRowCount) * 100.0;
         }
 
-        selectedRowsLabel.setText(String.format("Selected rows: %d / Total visible cases: %d / Total cases: %d = %.2f%% of dataset",
+        selectedRowsLabel.setText(String.format("Selected cases: %d / Total visible cases: %d / Total cases: %d = %.2f%% of dataset",
             selectedRowCount, totalVisibleRowCount, totalRowCount, visiblePercentage));
     }
 
