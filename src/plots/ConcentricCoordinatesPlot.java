@@ -203,14 +203,12 @@ public class ConcentricCoordinatesPlot extends JFrame {
         piSlider.setMinorTickSpacing(0);
         piSlider.setPaintTicks(true);
         piSlider.setPaintLabels(true);
-        // use an array of labels to make sure the labels are aligned properly
-        String[] labels = {"-2π", "-π", "0", "π", "2π"};
         Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
-        labelTable.put(-720, new JLabel("-2π"));
-        labelTable.put(-360, new JLabel("-π"));
+        labelTable.put(-720, new JLabel("-2\u03C0"));
+        labelTable.put(-360, new JLabel("-\u03C0")); 
         labelTable.put(0, new JLabel("0"));
-        labelTable.put(360, new JLabel("π"));
-        labelTable.put(720, new JLabel("2π"));
+        labelTable.put(360, new JLabel("\u03C0"));
+        labelTable.put(720, new JLabel("2\u03C0"));
         piSlider.setLabelTable(labelTable);
         piSlider.addChangeListener(e -> {
             piAdjustment = piSlider.getValue() / 100.0;
