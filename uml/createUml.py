@@ -4,7 +4,7 @@ import subprocess
 from collections import defaultdict
 
 # Base folder containing the Java files
-folder_to_check = "src"
+folder_to_check = "../src"
 
 # Recursively find all .java files
 java_files = []
