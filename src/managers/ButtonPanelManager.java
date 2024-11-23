@@ -162,8 +162,14 @@ public class ButtonPanelManager {
             JPopupMenu normalizationMenu = new JPopupMenu();
             normalizationMenu.add(minMaxItem);
             normalizationMenu.add(zScoreItem);
-
-            normalizationMenu.show((JComponent) e.getSource(), 0, 0);
+            if (!csvViewer.getStateManager().isNormalized()) {
+                normalizationMenu.show((JComponent) e.getSource(), 0, 0);
+            } else {
+                csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
+                csvViewer.getStateManager().setNormalized(false);
+                toggleButton.setIcon(UIHelper.loadIcon("/icons/denormalize.png", 40, 40));
+                toggleButton.setToolTipText("Denormalize");
+            }
         });
         return toggleButton;
     }
