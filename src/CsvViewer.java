@@ -306,7 +306,7 @@ public class CsvViewer extends JFrame {
                 return;
             }
 
-            DecimalFormat decimalFormat = new DecimalFormat("#.##########################");
+            DecimalFormat decimalFormat = new DecimalFormat("#.####");
             StringBuilder columnNameBuilder = new StringBuilder();
             for (int i = 0; i < columnIndices.size(); i++) {
                 double coeff = coefficients.get(i);
@@ -316,10 +316,9 @@ public class CsvViewer extends JFrame {
                     }
                     columnNameBuilder.append(decimalFormat.format(coeff));
                 } else {
-                    columnNameBuilder.append(decimalFormat.format(coeff)); // Negative sign included in format
+                    columnNameBuilder.append(decimalFormat.format(coeff));
                 }
-                columnNameBuilder.append("*")
-                               .append(tableModel.getColumnName(columnIndices.get(i)));
+                columnNameBuilder.append("*").append(tableModel.getColumnName(columnIndices.get(i)));
             }
             String columnName = columnNameBuilder.toString();
 
