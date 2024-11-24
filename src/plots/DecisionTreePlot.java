@@ -6,8 +6,12 @@ import java.util.Map;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import src.utils.ScreenshotUtils;
+import javax.swing.KeyStroke;
+import javax.swing.AbstractAction;
+import java.awt.event.ActionEvent;
 
-public class DecisionTreeVisualizationPanel extends JPanel {
+public class DecisionTreePlot extends JPanel {
 
     private final DecisionTree.TreeNode root;
     private final List<String> attributeNames;
@@ -22,7 +26,7 @@ public class DecisionTreeVisualizationPanel extends JPanel {
     private int treeHeight;
     private Point lastMousePos;
 
-    public DecisionTreeVisualizationPanel(DecisionTree.TreeNode root, List<String> attributeNames, Map<String, Color> classColors) {
+    public DecisionTreePlot(DecisionTree.TreeNode root, List<String> attributeNames, Map<String, Color> classColors) {
         this.root = root;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -54,6 +58,22 @@ public class DecisionTreeVisualizationPanel extends JPanel {
             }
         });
         SwingUtilities.invokeLater(this::adjustPanelSize);  // Adjust size after component is fully initialized
+
+        // Add screenshot functionality
+        getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
+        getActionMap().put("saveScreenshot", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Get the parent JScrollPane
+                Container parent = getParent();
+                while (parent != null && !(parent instanceof JScrollPane)) {
+                    parent = parent.getParent();
+                }
+                if (parent instanceof JScrollPane) {
+                    ScreenshotUtils.captureAndSaveScreenshot((JScrollPane)parent, "DecisionTree", "DecisionTree");
+                }
+            }
+        });
     }
 
     @Override

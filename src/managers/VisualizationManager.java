@@ -259,7 +259,7 @@ public class VisualizationManager {
         DecisionTree decisionTree = new DecisionTree(csvViewer.getDataHandler().isDataNormalized() ? csvViewer.getDataHandler().getNormalizedData() : csvViewer.getDataHandler().getOriginalData(), attributeNames, labelColumnIndex);
         TreeNode root = decisionTree.getRoot();
         JFrame frame = new JFrame("Decision Tree Visualization");
-        DecisionTreeVisualizationPanel treePanel = new DecisionTreeVisualizationPanel(root, attributeNames, csvViewer.getClassColors());
+        DecisionTreePlot treePanel = new DecisionTreePlot(root, attributeNames, csvViewer.getClassColors());
 
         JScrollPane scrollPane = new JScrollPane(treePanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
