@@ -8,6 +8,18 @@
 
 To get started quickly, please see the [Getting Started](#getting-started) section, method 3.
 
+**Running the Application in One Step:**
+
+Run the script for your operating system to compile and execute the application in one step, or compile, package, and execute the application in one step. All scripts are located in the project root directory and should be run from there, each script requires a Java compiler to be installed.
+
+   Compile and execute the application in one step:
+     **macOS/Linux:** `compile_and_run_mac_linux.sh`
+     **Windows:** `compile_and_run_windows.bat`
+
+   Compile, package, and execute a jar in one step:
+     **macOS/Linux:** `compile_and_package_mac_linux.sh`
+     **Windows:** `compile_and_package_windows.bat`
+
 ## General Line Coordinates Used
 
 General Line Coordinates (GLCs) generalize Cartesian Coordinates to n-D space, with a subcategory being 2-D GLCs so n-D to 2-D graph construction algorithms where graphs are commonly polylines, losslessly and reversibly visualizing all attributes and classes of the n-D data in 2-D space while preserving distance relationships between points. In this software, we implement the following GLC visualizations:
@@ -181,49 +193,28 @@ Attribute Pairing: Attributes are paired sequentially. If there are an odd numbe
 
 These features help identify patterns, clusters, or anomalies, in the data.
 
-## Getting Started
+## Compiling the Application from Source
 
-There are multiple ways to run JTabViz, but we suggest using method 3 for simplicity and cross-platform compatibility (requires a Java compiler).
+1. Clone the repository:
 
-1. **Using the Pre-Compiled JAR File:**
-   - Download the `JTabViz.jar` file and the `libs` folder.
-   - Open a terminal and navigate to the directory containing the JAR file.
-   - Run the following command:
+   ```sh
+   git clone https://github.com/AvaAvarai/jtabviz.git
+   ```
 
-     ```sh
-     java -cp ".;libs/*;JTabViz.jar" src.Main
-     ```
+2. Navigate to the project directory.
+3. Compile the project:
 
-2. **Compiling and Running from Source:**
-   - Clone the repository:
+   ```sh
+   javac -d out -cp "libs/*" src/*.java
+   ```
 
-     ```sh
-     git clone https://github.com/AvaAvarai/jtabviz.git
-     ```
+4. Run the compiled project:
 
-   - Navigate to the project directory.
-   - Compile the project:
-
-     ```sh
-     javac -d out -cp "libs/*" src/*.java
-     ```
-
-   - Run the compiled project:
-
-     ```sh
-     java -cp ".;libs/*" src.Main
-     ```
+   ```sh
+   java -cp ".;libs/*" src.Main
+   ```
 
    **Note:** For macOS and Linux, replace the semicolon (`;`) in the classpath (`-cp`) with a colon (`:`).
-
-3. **Using the Provided Scripts:**
-   - Run the appropriate script for your operating system to compile and execute the application in one step:
-     - **macOS/Linux:** `compile_and_run_mac_linux.sh`
-     - **Windows:** `compile_and_run_windows.bat`
-
-   to compile, package, and execute the new jar in one step:
-     - **macOS/Linux:** `compile_and_package_mac_linux.sh`
-     - **Windows:** `compile_and_package_windows.bat`
 
 ## Dataset File Format
 

@@ -1,5 +1,9 @@
 @echo off
 
+REM Requirements to run this script:
+REM - Java Development Kit (JDK) installed and configured
+REM - The script should be run from the project root directory
+
 REM Create the output directory if it doesn't exist
 if not exist out (
     mkdir out

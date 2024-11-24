@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# Requirements to run this script:
+# - Java Development Kit (JDK) installed and configured
+# - rsync (a command-line utility for synchronizing files and directories) available for file copying and synchronization
+#   (rsync can be installed on most Linux and macOS systems using the package manager, e.g., apt-get, Homebrew, etc.)
+# - The script should be run from the project root directory
+
 # Create the output directory if it doesn't exist
 mkdir -p out
 
