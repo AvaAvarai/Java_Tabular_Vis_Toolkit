@@ -1,16 +1,16 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-**JTabViz** is a Java-based multiplatform toolkit for machine learning (ML) data analysis, designed for the visualization and analysis of multidimensional (n-D) tabular ML data. It supports data augmentation, allowing users to explore how dataset changes impact trained models. Users can load CSV data to view, analyze, and classify with features like normalization, General Line Coordinates visualizations, tabular heatmaps, covariance matrix heatmaps, row manipulation, cell editing, classification rule testing with confusion matrices, automatic pure region discovery, feature engineering using slope and distance calculations, weighted sum features; including trigonometric wrapping, forward/backward differences, and various trigonometric values, optimal coefficient computation for weighted sums, attribute sorting, and data export.
+**JTabViz** is a Java-based multiplatform toolkit for machine learning (ML) data analysis, classification, and visualization. It is designed for the visualization and analysis of multidimensional (n-D) tabular ML data to discover and build classification models from first order logic rules. Further, it supports data augmentation, to explore how dataset changes impact trained models.
+
+Users can load CSV data to view, analyze, and classify with features like normalization, General Line Coordinates (GLCs) visualizations, tabular heatmaps, covariance matrix heatmaps, row manipulation, cell editing, classification rule testing with confusion matrices, automatic pure region discovery, feature engineering using slope and distance calculations, weighted sum features; including trigonometric wrapping, forward/backward differences, and various trigonometric values, optimal coefficient computation for weighted sums, attribute sorting, and data export.
 
 [![Demo Video](https://img.youtube.com/vi/j0_zpYPt_n8/0.jpg)](https://www.youtube.com/watch?v=j0_zpYPt_n8)
 
 **Tested on:**  Windows (10/11), Linux (Pop!_OS), and macOS (M3 Sonoma).
 
-To get started quickly, please see the [Getting Started](#getting-started) section, method 3.
+**Getting Started:**
 
-**Running the Application in One Step:**
-
-Run the script for your operating system to compile and execute the application in one step, or compile, package, and execute the application in one step. All scripts are located in the project root directory and should be run from there, each script requires a Java compiler to be installed.
+To get started quickly, run the script for your operating system to compile and execute the application in one step, or compile, package, and execute the application in one step. All scripts are located in the project root directory and should be run from there, each script requires a Java compiler to be installed.
 
    Compile and execute the application in one step:
      **macOS/Linux:** `compile_and_run_mac_linux.sh`
@@ -22,7 +22,7 @@ Run the script for your operating system to compile and execute the application 
 
 ## General Line Coordinates Used
 
-General Line Coordinates (GLCs) generalize Cartesian Coordinates to n-D space, with a subcategory being 2-D GLCs so n-D to 2-D graph construction algorithms where graphs are commonly polylines, losslessly and reversibly visualizing all attributes and classes of the n-D data in 2-D space while preserving distance relationships between points. In this software, we implement the following GLC visualizations:
+GLCs generalize Cartesian Coordinates to n-D, with a subcategory being n-D to 2-D graph construction algorithms where graphs are commonly polylines, losslessly and reversibly visualizing all attributes and classes of the n-D data in 2-D space, while preserving distance relationships between points. We provide the following GLC visualizations:
 
 | GLC Type | Acronym | Description |
 | --- | --- | --- |
