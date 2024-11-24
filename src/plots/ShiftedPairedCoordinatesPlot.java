@@ -37,6 +37,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     private boolean showSlopes = false; // Toggle for slope visualization
     private Map<Integer, Double> slopeValues; // Store calculated slopes for each line segment
     private JScrollPane mainScrollPane; // Store reference to main scroll pane
+    private boolean showAttributeLabels = true; // Toggle for displaying attribute labels
 
     public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table) {
         this.data = data;
@@ -95,7 +96,15 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         zoomPanel.add(new JLabel("Zoom:"));
         zoomPanel.add(zoomSlider);
         controlPanel.add(zoomPanel);
-        
+
+        // Add attribute labels toggle
+        JToggleButton attributeLabelsToggle = new JToggleButton("Show Labels");
+        attributeLabelsToggle.addActionListener(e -> {
+            showAttributeLabels = attributeLabelsToggle.isSelected();
+            plotPanel.repaint();
+        });
+        controlPanel.add(attributeLabelsToggle);
+
         // Add axis controls for each attribute
         for (String attr : attributeNames) {
             JPanel attrPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -487,10 +496,12 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             g2.drawLine(plotX, plotY + plotSize, plotX, plotY + plotSize - (int)(plotSize * yScale)); // Draw vertical axis growing up from origin
             g2.drawLine(plotX, plotY + plotSize, plotX + (int)(plotSize * xScale), plotY + plotSize);
 
-            g2.setFont(new Font("SansSerif", Font.PLAIN, 16));
-            g2.setColor(Color.BLACK);
-            g2.drawString(xLabel + (xDirection ? " \u2191" : " \u2193"), plotX + plotSize / 2, plotY + plotSize + 20);
-            g2.drawString(yLabel + (yDirection ? " \u2191" : " \u2193"), plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);
+            if (showAttributeLabels) {
+                g2.setFont(new Font("SansSerif", Font.PLAIN, 16));
+                g2.setColor(Color.BLACK);
+                g2.drawString(xLabel + (xDirection ? " \u2191" : " \u2193"), plotX + plotSize / 2, plotY + plotSize + 20);
+                g2.drawString(yLabel + (yDirection ? " \u2191" : " \u2193"), plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);
+            }
         }
 
         private void drawRow(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight) {
