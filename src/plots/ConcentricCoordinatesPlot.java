@@ -15,8 +15,10 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.awt.geom.Path2D;
 
 public class ConcentricCoordinatesPlot extends JFrame {
 
@@ -48,230 +50,238 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private Map<String, JCheckBox> normalizeToggles = new HashMap<>();
     private double zoomLevel = 1.0;
     private JScrollPane plotScrollPane;
-
-    // Font settings
-    private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
-    private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
-    private static final int TITLE_PADDING = 20;
-
-    public ConcentricCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, List<Integer> hiddenRows, String datasetName) {
-        this.data = data;
-        this.attributeNames = attributeNames;
-        this.classColors = classColors;
-        this.classShapes = classShapes;
-        this.classLabels = classLabels;
-        this.selectedRows = selectedRows;
-        this.hiddenRows = hiddenRows;
-
-        // Initialize rotation values, directions, radii and normalization for each attribute
-        for (String attribute : attributeNames) {
-            attributeRotations.put(attribute, 0.0);
-            attributeDirections.put(attribute, true);
-            normalizeAttributes.put(attribute, true);
-            attributeRadii.put(attribute, 1.0); // Initialize all radii to 1.0
-        }
-
-        // Calculate min and max values for each attribute
-        for (int i = 0; i < attributeNames.size(); i++) {
-            String attribute = attributeNames.get(i);
-            List<Double> attributeValues = data.get(i);
-            double min = attributeValues.stream().min(Double::compare).orElse(0.0);
-            double max = attributeValues.stream().max(Double::compare).orElse(1.0);
-            attributeMinValues.put(attribute, min);
-            attributeMaxValues.put(attribute, max);
-        }
-
-        // Calculate the global maximum value across all attributes
-        this.globalMaxValue = data.stream()
-            .flatMap(List::stream)
-            .max(Double::compare)
-            .orElse(1.0);
-
-        setTitle("Circle Coordinates Plot (" + datasetName + ")");
-        setSize(800, 800); // Increased height to accommodate sliders
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(null);
-
-        // Set up the main panel
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(Color.WHITE);
-
-        // Add the plot panel
-        plotPanel = new ConcentricCoordinatesPanel();
-        plotPanel.setPreferredSize(new Dimension(800, 600));
-
-        // Add mouse listeners for axis dragging
-        plotPanel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
-                if (!concentricMode) {
-                    Point clickPoint = e.getPoint();
-                    // Check if click is near any axis center
-                    for (String attribute : attributeNames) {
-                        Point axisCenter = axisPositions.get(attribute);
-                        if (axisCenter != null) {
-                            if (clickPoint.distance(axisCenter) < 20) {
-                                draggedAxis = attribute;
-                                break;
+    private boolean showConvexHulls = false;
+    
+        // Font settings
+        private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
+        private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
+        private static final int TITLE_PADDING = 20;
+    
+        public ConcentricCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, List<Integer> hiddenRows, String datasetName) {
+            this.data = data;
+            this.attributeNames = attributeNames;
+            this.classColors = classColors;
+            this.classShapes = classShapes;
+            this.classLabels = classLabels;
+            this.selectedRows = selectedRows;
+            this.hiddenRows = hiddenRows;
+    
+            // Initialize rotation values, directions, radii and normalization for each attribute
+            for (String attribute : attributeNames) {
+                attributeRotations.put(attribute, 0.0);
+                attributeDirections.put(attribute, true);
+                normalizeAttributes.put(attribute, true);
+                attributeRadii.put(attribute, 1.0); // Initialize all radii to 1.0
+            }
+    
+            // Calculate min and max values for each attribute
+            for (int i = 0; i < attributeNames.size(); i++) {
+                String attribute = attributeNames.get(i);
+                List<Double> attributeValues = data.get(i);
+                double min = attributeValues.stream().min(Double::compare).orElse(0.0);
+                double max = attributeValues.stream().max(Double::compare).orElse(1.0);
+                attributeMinValues.put(attribute, min);
+                attributeMaxValues.put(attribute, max);
+            }
+    
+            // Calculate the global maximum value across all attributes
+            this.globalMaxValue = data.stream()
+                .flatMap(List::stream)
+                .max(Double::compare)
+                .orElse(1.0);
+    
+            setTitle("Circle Coordinates Plot (" + datasetName + ")");
+            setSize(800, 800); // Increased height to accommodate sliders
+            setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            setLocationRelativeTo(null);
+    
+            // Set up the main panel
+            JPanel mainPanel = new JPanel(new BorderLayout());
+            mainPanel.setBackground(Color.WHITE);
+    
+            // Add the plot panel
+            plotPanel = new ConcentricCoordinatesPanel();
+            plotPanel.setPreferredSize(new Dimension(800, 600));
+    
+            // Add mouse listeners for axis dragging
+            plotPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    if (!concentricMode) {
+                        Point clickPoint = e.getPoint();
+                        // Check if click is near any axis center
+                        for (String attribute : attributeNames) {
+                            Point axisCenter = axisPositions.get(attribute);
+                            if (axisCenter != null) {
+                                if (clickPoint.distance(axisCenter) < 20) {
+                                    draggedAxis = attribute;
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                draggedAxis = null;
-            }
-        });
-
-        plotPanel.addMouseMotionListener(new MouseAdapter() {
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                if (!concentricMode && draggedAxis != null) {
-                    Point newPos = e.getPoint();
-                    axisPositions.put(draggedAxis, newPos);
-                    plotPanel.repaint();
+    
+                @Override
+                public void mouseReleased(MouseEvent e) {
+                    draggedAxis = null;
                 }
-            }
-        });
-
-        // Add the plot panel to a scroll pane
-        plotScrollPane = new JScrollPane(plotPanel);
-        plotScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        plotScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        plotScrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-
-        // Add a key listener for the space bar to save a screenshot
-        plotScrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
-        plotScrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ScreenshotUtils.captureAndSaveScreenshot(plotScrollPane, "ConcentricCoordinates", datasetName);
-            }
-        });
-
-        // Create control panel for sliders and toggles
-        JPanel controlPanel = new JPanel();
-        controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
-        controlPanel.setBackground(Color.WHITE);
-        
-        // Add PI adjustment slider
-        JPanel globalControlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        globalControlPanel.setBackground(Color.WHITE);
-        
-        // Add zoom slider
-        JLabel zoomLabel = new JLabel("Zoom: ");
-        JSlider zoomSlider = new JSlider(JSlider.HORIZONTAL, 50, 200, 100);
-        zoomSlider.setMajorTickSpacing(50);
-        zoomSlider.setMinorTickSpacing(10);
-        zoomSlider.setPaintTicks(true);
-        zoomSlider.setPaintLabels(true);
-        Hashtable<Integer, JLabel> zoomLabels = new Hashtable<>();
-        zoomLabels.put(50, new JLabel("50%"));
-        zoomLabels.put(100, new JLabel("100%"));
-        zoomLabels.put(150, new JLabel("150%"));
-        zoomLabels.put(200, new JLabel("200%"));
-        zoomSlider.setLabelTable(zoomLabels);
-        zoomSlider.addChangeListener(e -> {
-            zoomLevel = zoomSlider.getValue() / 100.0;
+            });
+    
+            plotPanel.addMouseMotionListener(new MouseAdapter() {
+                @Override
+                public void mouseDragged(MouseEvent e) {
+                    if (!concentricMode && draggedAxis != null) {
+                        Point newPos = e.getPoint();
+                        axisPositions.put(draggedAxis, newPos);
+                        plotPanel.repaint();
+                    }
+                }
+            });
+    
+            // Add the plot panel to a scroll pane
+            plotScrollPane = new JScrollPane(plotPanel);
+            plotScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            plotScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            plotScrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+    
+            // Add a key listener for the space bar to save a screenshot
+            plotScrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
+            plotScrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    ScreenshotUtils.captureAndSaveScreenshot(plotScrollPane, "ConcentricCoordinates", datasetName);
+                }
+            });
+    
+            // Create control panel for sliders and toggles
+            JPanel controlPanel = new JPanel();
+            controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
+            controlPanel.setBackground(Color.WHITE);
             
-            // Calculate center point
-            int centerX = plotPanel.getWidth() / 2;
-            int centerY = plotPanel.getHeight() / 2;
+            // Add PI adjustment slider
+            JPanel globalControlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+            globalControlPanel.setBackground(Color.WHITE);
             
-            // Set preferred size centered around the middle
-            int newWidth = (int)(800 * zoomLevel);
-            int newHeight = (int)(600 * zoomLevel);
-            plotPanel.setPreferredSize(new Dimension(newWidth, newHeight));
-            
-            // Adjust scroll position to keep center point
-            JViewport viewport = plotScrollPane.getViewport();
-            Point p = viewport.getViewPosition();
-            p.x = (newWidth - viewport.getWidth()) / 2;
-            p.y = (newHeight - viewport.getHeight()) / 2;
-            viewport.setViewPosition(p);
-            
-            plotPanel.revalidate();
-            plotScrollPane.revalidate();
-            plotPanel.repaint();
-        });
-
-        JLabel sliderLabel = new JLabel("PI Adjustment: ");
-        JSlider piSlider = new JSlider(JSlider.HORIZONTAL, -360*2, 360*2, 5);
-        piSlider.setMajorTickSpacing(360);
-        piSlider.setMinorTickSpacing(0);
-        piSlider.setPaintTicks(true);
-        piSlider.setPaintLabels(true);
-        Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
-        labelTable.put(-720, new JLabel("-2\u03C0"));
-        labelTable.put(-360, new JLabel("-\u03C0")); 
-        labelTable.put(0, new JLabel("0"));
-        labelTable.put(360, new JLabel("\u03C0"));
-        labelTable.put(720, new JLabel("2\u03C0"));
-        piSlider.setLabelTable(labelTable);
-        piSlider.addChangeListener(e -> {
-            piAdjustment = piSlider.getValue() / 100.0;
-            plotPanel.repaint();
-        });
-
-        // Add label toggle button
-        JToggleButton labelToggle = new JToggleButton("Show Labels", true);
-        labelToggle.addActionListener(e -> {
-            showLabels = labelToggle.isSelected();
-            plotPanel.repaint();
-        });
-
-        // Add loop toggle button
-        JToggleButton loopToggle = new JToggleButton("Close Loop", true);
-        loopToggle.addActionListener(e -> {
-            closeLoop = loopToggle.isSelected();
-            plotPanel.repaint();
-        });
-
-        // Add concentric mode toggle button
-        JToggleButton concentricToggle = new JToggleButton("Freeform Mode", false);
-        concentricToggle.addActionListener(e -> {
-            concentricMode = !concentricToggle.isSelected();
-            concentricToggle.setText(concentricMode ? "Freeform Mode" : "Concentric Mode");
-            if (!concentricMode) {
-                // Initialize axis positions when switching to freeform mode
+            // Add zoom slider
+            JLabel zoomLabel = new JLabel("Zoom: ");
+            JSlider zoomSlider = new JSlider(JSlider.HORIZONTAL, 50, 200, 100);
+            zoomSlider.setMajorTickSpacing(50);
+            zoomSlider.setMinorTickSpacing(10);
+            zoomSlider.setPaintTicks(true);
+            zoomSlider.setPaintLabels(true);
+            Hashtable<Integer, JLabel> zoomLabels = new Hashtable<>();
+            zoomLabels.put(50, new JLabel("50%"));
+            zoomLabels.put(100, new JLabel("100%"));
+            zoomLabels.put(150, new JLabel("150%"));
+            zoomLabels.put(200, new JLabel("200%"));
+            zoomSlider.setLabelTable(zoomLabels);
+            zoomSlider.addChangeListener(e -> {
+                zoomLevel = zoomSlider.getValue() / 100.0;
+                
+                // Calculate center point
                 int centerX = plotPanel.getWidth() / 2;
                 int centerY = plotPanel.getHeight() / 2;
-                int maxRadius = Math.min(centerX, centerY) - 50;
-                int numAttributes = attributeNames.size();
-                int spacing = maxRadius / (numAttributes + 1);
                 
-                for (int i = 0; i < attributeNames.size(); i++) {
-                    int x = centerX + (i - numAttributes/2) * spacing * 2;
-                    axisPositions.put(attributeNames.get(i), new Point(x, centerY));
-                }
-            }
-            plotPanel.repaint();
-        });
-
-        // Add optimize axes button
-        JButton optimizeButton = new JButton("Optimize Axes");
-        optimizeButton.addActionListener(e -> {
-            if (!concentricMode) {
-                optimizeAxesLayout();
-                // Update UI controls to match optimized settings
-                for (String attribute : attributeNames) {
-                    // Update rotation sliders
-                    double rotation = attributeRotations.get(attribute);
-                    int degrees = (int)(rotation * 180 / Math.PI);
-                    attributeSliders.get(attribute).setValue(degrees);
+                // Set preferred size centered around the middle
+                int newWidth = (int)(800 * zoomLevel);
+                int newHeight = (int)(600 * zoomLevel);
+                plotPanel.setPreferredSize(new Dimension(newWidth, newHeight));
+                
+                // Adjust scroll position to keep center point
+                JViewport viewport = plotScrollPane.getViewport();
+                Point p = viewport.getViewPosition();
+                p.x = (newWidth - viewport.getWidth()) / 2;
+                p.y = (newHeight - viewport.getHeight()) / 2;
+                viewport.setViewPosition(p);
+                
+                plotPanel.revalidate();
+                plotScrollPane.revalidate();
+                plotPanel.repaint();
+            });
+    
+            JLabel sliderLabel = new JLabel("PI Adjustment: ");
+            JSlider piSlider = new JSlider(JSlider.HORIZONTAL, -360*2, 360*2, 5);
+            piSlider.setMajorTickSpacing(360);
+            piSlider.setMinorTickSpacing(0);
+            piSlider.setPaintTicks(true);
+            piSlider.setPaintLabels(true);
+            Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
+            labelTable.put(-720, new JLabel("-2\u03C0"));
+            labelTable.put(-360, new JLabel("-\u03C0")); 
+            labelTable.put(0, new JLabel("0"));
+            labelTable.put(360, new JLabel("\u03C0"));
+            labelTable.put(720, new JLabel("2\u03C0"));
+            piSlider.setLabelTable(labelTable);
+            piSlider.addChangeListener(e -> {
+                piAdjustment = piSlider.getValue() / 100.0;
+                plotPanel.repaint();
+            });
+    
+            // Add label toggle button
+            JToggleButton labelToggle = new JToggleButton("Show Labels", true);
+            labelToggle.addActionListener(e -> {
+                showLabels = labelToggle.isSelected();
+                plotPanel.repaint();
+            });
+    
+            // Add loop toggle button
+            JToggleButton loopToggle = new JToggleButton("Close Loop", true);
+            loopToggle.addActionListener(e -> {
+                closeLoop = loopToggle.isSelected();
+                plotPanel.repaint();
+            });
+    
+            // Add concentric mode toggle button
+            JToggleButton concentricToggle = new JToggleButton("Freeform Mode", false);
+            concentricToggle.addActionListener(e -> {
+                concentricMode = !concentricToggle.isSelected();
+                concentricToggle.setText(concentricMode ? "Freeform Mode" : "Concentric Mode");
+                if (!concentricMode) {
+                    // Initialize axis positions when switching to freeform mode
+                    int centerX = plotPanel.getWidth() / 2;
+                    int centerY = plotPanel.getHeight() / 2;
+                    int maxRadius = Math.min(centerX, centerY) - 50;
+                    int numAttributes = attributeNames.size();
+                    int spacing = maxRadius / (numAttributes + 1);
                     
-                    // Update direction toggles
-                    boolean direction = attributeDirections.get(attribute);
-                    attributeToggles.get(attribute).setSelected(!direction);
-                    
-                    // Update radius sliders
-                    double radius = attributeRadii.get(attribute);
-                    radiusSliders.get(attribute).setValue((int)(radius * 100));
+                    for (int i = 0; i < attributeNames.size(); i++) {
+                        int x = centerX + (i - numAttributes/2) * spacing * 2;
+                        axisPositions.put(attributeNames.get(i), new Point(x, centerY));
+                    }
                 }
                 plotPanel.repaint();
-            }
+            });
+    
+            // Add optimize axes button
+            JButton optimizeButton = new JButton("Optimize Axes");
+            optimizeButton.addActionListener(e -> {
+                if (!concentricMode) {
+                    optimizeAxesLayout();
+                    // Update UI controls to match optimized settings
+                    for (String attribute : attributeNames) {
+                        // Update rotation sliders
+                        double rotation = attributeRotations.get(attribute);
+                        int degrees = (int)(rotation * 180 / Math.PI);
+                        attributeSliders.get(attribute).setValue(degrees);
+                        
+                        // Update direction toggles
+                        boolean direction = attributeDirections.get(attribute);
+                        attributeToggles.get(attribute).setSelected(!direction);
+                        
+                        // Update radius sliders
+                        double radius = attributeRadii.get(attribute);
+                        radiusSliders.get(attribute).setValue((int)(radius * 100));
+                    }
+                    plotPanel.repaint();
+                }
+            });
+    
+            // Add global convex hull toggle
+            JToggleButton convexHullToggle = new JToggleButton("Show Convex Hulls", false);
+            convexHullToggle.addActionListener(e -> {
+                showConvexHulls = convexHullToggle.isSelected();
+            plotPanel.repaint();
         });
 
         // Add global normalization toggle
@@ -294,6 +304,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
         globalControlPanel.add(concentricToggle);
         globalControlPanel.add(optimizeButton);
         globalControlPanel.add(normalizeAllToggle);
+        globalControlPanel.add(convexHullToggle);
         
         controlPanel.add(globalControlPanel);
 
@@ -366,6 +377,73 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
         setContentPane(mainPanel);
     }
+
+    private List<Point2D.Double> computeConvexHull(List<Point2D.Double> points) {
+        points.sort(Comparator.comparingDouble((Point2D.Double p) -> p.x).thenComparingDouble(p -> p.y));
+        List<Point2D.Double> lower = new ArrayList<>();
+        for (Point2D.Double p : points) {
+            while (lower.size() >= 2 && cross(lower.get(lower.size() - 2), lower.get(lower.size() - 1), p) <= 0) {
+                lower.remove(lower.size() - 1);
+            }
+            lower.add(p);
+        }
+        List<Point2D.Double> upper = new ArrayList<>();
+        for (int i = points.size() - 1; i >= 0; i--) {
+            Point2D.Double p = points.get(i);
+            while (upper.size() >= 2 && cross(upper.get(upper.size() - 2), upper.get(upper.size() - 1), p) <= 0) {
+                upper.remove(upper.size() - 1);
+            }
+            upper.add(p);
+        }
+        lower.remove(lower.size() - 1);
+        upper.remove(upper.size() - 1);
+        lower.addAll(upper);
+        return lower;
+    }
+
+    private double cross(Point2D.Double o, Point2D.Double a, Point2D.Double b) {
+        return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+    }
+
+    private void drawConvexHulls(Graphics2D g2, Map<String, List<Point2D.Double>> classPoints) {
+        for (Map.Entry<String, List<Point2D.Double>> entry : classPoints.entrySet()) {
+            String classLabel = entry.getKey();
+            List<Point2D.Double> hull = computeConvexHull(entry.getValue());
+            g2.setColor(new Color(classColors.getOrDefault(classLabel, Color.BLACK).getRGB() & 0xFFFFFF | 0x66000000, true));
+            Path2D.Double path = new Path2D.Double();
+            for (int i = 0; i < hull.size(); i++) {
+                Point2D.Double p = hull.get(i);
+                if (i == 0) {
+                    path.moveTo(p.x, p.y);
+                } else {
+                    path.lineTo(p.x, p.y);
+                }
+            }
+            path.closePath();
+            g2.fill(path);
+        }
+    }
+    
+    private List<Point2D.Double> getPolylinePoints(int row, int centerX, int centerY, int maxRadius) {
+        List<Point2D.Double> points = new ArrayList<>();
+        int numAttributes = attributeNames.size();
+        for (int i = 0; i < numAttributes; i++) {
+            String attribute = attributeNames.get(i);
+            double value = data.get(i).get(row);
+            double normalizedValue = normalizeAttributes.get(attribute)
+                    ? (value - attributeMinValues.get(attribute)) / (attributeMaxValues.get(attribute) - attributeMinValues.get(attribute))
+                    : value / globalMaxValue;
+            if (!attributeDirections.get(attribute)) {
+                normalizedValue = 1.0 - normalizedValue;
+            }
+            double angle = (normalizedValue * 2 * Math.PI) - (Math.PI / 2) + attributeRotations.get(attribute);
+            double radius = (i + 1) * (maxRadius / numAttributes);
+            double x = centerX + radius * Math.cos(angle);
+            double y = centerY + radius * Math.sin(angle);
+            points.add(new Point2D.Double(x, y));
+        }
+        return points;
+    }    
 
     private void optimizeAxesLayout() {
         int centerX = plotPanel.getWidth() / 2;
@@ -601,6 +679,16 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
                 }
             }
+            if (showConvexHulls) {
+                Map<String, List<Point2D.Double>> classPoints = new HashMap<>();
+                for (int row = 0; row < data.get(0).size(); row++) {
+                    String classLabel = classLabels.get(row);
+                    if (!hiddenClasses.contains(classLabel)) {
+                        classPoints.computeIfAbsent(classLabel, k -> new ArrayList<>()).addAll(getPolylinePoints(row, centerX, centerY, maxRadius));
+                    }
+                }
+                drawConvexHulls(g2, classPoints);
+            }            
 
             // Draw attribute labels if enabled
             if (showLabels) {
