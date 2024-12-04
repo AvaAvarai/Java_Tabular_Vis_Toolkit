@@ -327,6 +327,10 @@ public class CsvViewer extends JFrame {
             tableModel.addColumn(newColumnName);
 
             String trigFunction = (String) trigFunctionSelector.getSelectedItem();
+
+            // Calculate the weighted sum for each case, apply the kernel function, and perform min-max normalization if active
+            double min = Double.MAX_VALUE;
+            double max = Double.MIN_VALUE;
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 double sum = 0.0;
                 try {
@@ -335,10 +339,49 @@ public class CsvViewer extends JFrame {
                         sum += coefficients.get(j) * Double.parseDouble(value.toString());
                     }
                     sum = applyTrigFunction(sum, trigFunction);
+                    if (sum < min) {
+                        min = sum;
+                    }
+                    if (sum > max) {
+                        max = sum;
+                    }
                 } catch (NumberFormatException | NullPointerException e) {
                     sum = Double.NaN;
                 }
-                tableModel.setValueAt(decimalFormat.format(sum), row, tableModel.getColumnCount() - 1);
+            }
+
+            if (min != max) { // Check if min and max are not equal to avoid division by zero
+                for (int row = 0; row < tableModel.getRowCount(); row++) {
+                    double sum = 0.0;
+                    try {
+                        for (int j = 0; j < columnIndices.size(); j++) {
+                            Object value = tableModel.getValueAt(row, columnIndices.get(j));
+                            sum += coefficients.get(j) * Double.parseDouble(value.toString());
+                        }
+                        sum = applyTrigFunction(sum, trigFunction);
+                        // Apply min-max normalization only if it is currently active
+                        if (stateManager.isNormalized()) {
+                            sum = (sum - min) / (max - min);
+                        }
+                        tableModel.setValueAt(decimalFormat.format(sum), row, tableModel.getColumnCount() - 1);
+                    } catch (NumberFormatException | NullPointerException e) {
+                        tableModel.setValueAt("NaN", row, tableModel.getColumnCount() - 1);
+                    }
+                }
+            } else {
+                for (int row = 0; row < tableModel.getRowCount(); row++) {
+                    double sum = 0.0;
+                    try {
+                        for (int j = 0; j < columnIndices.size(); j++) {
+                            Object value = tableModel.getValueAt(row, columnIndices.get(j));
+                            sum += coefficients.get(j) * Double.parseDouble(value.toString());
+                        }
+                        sum = applyTrigFunction(sum, trigFunction);
+                        tableModel.setValueAt(decimalFormat.format(sum), row, tableModel.getColumnCount() - 1);
+                    } catch (NumberFormatException | NullPointerException e) {
+                        tableModel.setValueAt("NaN", row, tableModel.getColumnCount() - 1);
+                    }
+                }
             }
 
             applyRowFilter();
