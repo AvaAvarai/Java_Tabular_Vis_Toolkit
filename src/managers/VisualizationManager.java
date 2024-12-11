@@ -204,49 +204,103 @@ public class VisualizationManager {
         int classColumnIndex = csvViewer.getClassColumnIndex();
         TableColumnModel columnModel = csvViewer.table.getColumnModel();
 
-        // Respect the order of attributes as in the JTable (tabular view)
+        // First, collect the attribute names in the current view order
         for (int col = 0; col < columnModel.getColumnCount(); col++) {
             int modelIndex = csvViewer.table.convertColumnIndexToModel(col);
             if (modelIndex != classColumnIndex) {
-                boolean isNumeric = true;
-                List<Double> columnData = new ArrayList<>();
-                for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
-                    if (!csvViewer.getHiddenRows().contains(row)) {
+                attributeNames.add(csvViewer.tableModel.getColumnName(modelIndex));
+                numericalData.add(new ArrayList<>()); // Initialize lists for each attribute
+            }
+        }
+
+        // Then collect data only for visible rows
+        for (int viewRow = 0; viewRow < csvViewer.table.getRowCount(); viewRow++) {
+            int modelRow = csvViewer.table.convertRowIndexToModel(viewRow);
+            
+            // Check if all columns for this row can be parsed as numbers
+            boolean allNumeric = true;
+            int dataIndex = 0;
+            
+            for (int viewCol = 0; viewCol < columnModel.getColumnCount(); viewCol++) {
+                int modelCol = csvViewer.table.convertColumnIndexToModel(viewCol);
+                if (modelCol != classColumnIndex) {
+                    try {
+                        Double.parseDouble(csvViewer.tableModel.getValueAt(modelRow, modelCol).toString());
+                    } catch (NumberFormatException e) {
+                        allNumeric = false;
+                        break;
+                    }
+                }
+            }
+
+            if (allNumeric) {
+                // Add the numeric data for this row
+                dataIndex = 0;
+                for (int viewCol = 0; viewCol < columnModel.getColumnCount(); viewCol++) {
+                    int modelCol = csvViewer.table.convertColumnIndexToModel(viewCol);
+                    if (modelCol != classColumnIndex) {
+                        double value = Double.parseDouble(csvViewer.tableModel.getValueAt(modelRow, modelCol).toString());
+                        numericalData.get(dataIndex++).add(value);
+                    }
+                }
+                // Add the class label for this row
+                classLabels.add((String) csvViewer.tableModel.getValueAt(modelRow, classColumnIndex));
+            }
+        }
+
+        // Only proceed if we have numeric data
+        if (!numericalData.isEmpty() && !numericalData.get(0).isEmpty()) {
+            List<Integer> selectedRows = new ArrayList<>();
+            // Convert selected rows to indices in our filtered dataset
+            int[] selectedViewRows = csvViewer.table.getSelectedRows();
+            int dataRowIndex = 0;
+            
+            for (int viewRow = 0; viewRow < csvViewer.table.getRowCount(); viewRow++) {
+                int modelRow = csvViewer.table.convertRowIndexToModel(viewRow);
+                boolean isNumericRow = true;
+                
+                // Check if this row is all numeric
+                for (int viewCol = 0; viewCol < columnModel.getColumnCount(); viewCol++) {
+                    int modelCol = csvViewer.table.convertColumnIndexToModel(viewCol);
+                    if (modelCol != classColumnIndex) {
                         try {
-                            columnData.add(Double.parseDouble(csvViewer.tableModel.getValueAt(row, modelIndex).toString()));
+                            Double.parseDouble(csvViewer.tableModel.getValueAt(modelRow, modelCol).toString());
                         } catch (NumberFormatException e) {
-                            isNumeric = false;
+                            isNumericRow = false;
                             break;
                         }
                     }
                 }
-                if (isNumeric) {
-                    numericalData.add(columnData);
-                    attributeNames.add(csvViewer.tableModel.getColumnName(modelIndex));
+                
+                if (isNumericRow) {
+                    // If this row is selected in the view, add its index in our filtered dataset
+                    for (int selectedViewRow : selectedViewRows) {
+                        if (viewRow == selectedViewRow) {
+                            selectedRows.add(dataRowIndex);
+                            break;
+                        }
+                    }
+                    dataRowIndex++;
                 }
             }
+
+            ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(
+                numericalData,
+                attributeNames,
+                csvViewer.getClassColors(),
+                csvViewer.getClassShapes(),
+                classLabels,
+                selectedRows,
+                csvViewer.getDatasetName()
+            );
+            plot.setSize(800, 800);
+            plot.setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(csvViewer, 
+                "No numeric data available to visualize.", 
+                "Visualization Error", 
+                JOptionPane.ERROR_MESSAGE);
         }
-
-        for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
-            if (!csvViewer.getHiddenRows().contains(row)) {
-                classLabels.add((String) csvViewer.tableModel.getValueAt(row, classColumnIndex));
-            }
-        }
-
-        List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
-        selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
-
-        ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(
-            numericalData,         // List<List<Double>>
-            attributeNames,        // List<String>
-            csvViewer.getClassColors(), // Map<String, Color>
-            csvViewer.getClassShapes(), // Map<String, Shape>
-            classLabels,           // List<String>
-            selectedRows,          // List<Integer>
-            csvViewer.getDatasetName() // String
-        );
-        plot.setSize(800, 800);
-        plot.setVisible(true);
     }
 
     public void showDecisionTreeVisualization() {
