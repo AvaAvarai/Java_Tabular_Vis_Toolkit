@@ -81,22 +81,24 @@ public class ParallelCoordinatesPlot extends JFrame {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-        scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
-        scrollPane.getActionMap().put("saveScreenshot", new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "ParallelCoordinates", datasetName);
-            }
+        JPanel controlPanel = createControlPanel();
+
+        // Add a button to take a screenshot
+        JButton screenshotButton = new JButton("Take Screenshot");
+        screenshotButton.addActionListener(e -> {
+            ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "ParallelCoordinates", datasetName);
         });
 
+        controlPanel.add(screenshotButton); // Add the button to the control panel
+        
         mainPanel.add(scrollPane, BorderLayout.CENTER);
-        mainPanel.add(createControlPanel(), BorderLayout.NORTH);
+        mainPanel.add(controlPanel, BorderLayout.NORTH);
         mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
 
         setContentPane(mainPanel);
     }
 
-    private JScrollPane createControlPanel() {
+    private JPanel createControlPanel() {
         // Create a panel to hold the controls for each attribute
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
@@ -154,13 +156,7 @@ public class ParallelCoordinatesPlot extends JFrame {
             controlPanel.add(attributePanel);
         }
     
-        // Wrap the control panel in a scroll pane for horizontal scrolling
-        JScrollPane scrollPane = new JScrollPane(controlPanel);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER); // No vertical scrolling needed
-        scrollPane.setBorder(BorderFactory.createEmptyBorder()); // Optional: remove borders for a clean look
-    
-        return scrollPane;
+        return controlPanel;
     }
 
     private JPanel createLegendPanel() {
