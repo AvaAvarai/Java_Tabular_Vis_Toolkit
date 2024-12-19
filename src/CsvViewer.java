@@ -544,30 +544,139 @@ public class CsvViewer extends JFrame {
             return;
         }
 
-        java.util.List<String> attributes = new ArrayList<>();
-        int classColumnIndex = getClassColumnIndex();
-
-        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            if (i != classColumnIndex) {
-                attributes.add(tableModel.getColumnName(i));
-            }
-        }
-
-        String selectedAttribute = (String) JOptionPane.showInputDialog(
+        String[] options = {"Covariance Sort", "Hamiltonian Path Sort"};
+        int choice = JOptionPane.showOptionDialog(
             this,
-            "Select an attribute to sort by covariance:",
-            "Covariance Column Sort",
-            JOptionPane.PLAIN_MESSAGE,
+            "Select sorting method:",
+            "Sort Columns",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
             null,
-            attributes.toArray(new String[0]),
-            attributes.get(0)
+            options,
+            options[0]
         );
 
-        if (selectedAttribute != null) {
-            sortColumnsByCovariance(selectedAttribute);
+        if (choice == 0) {
+            // Existing covariance sort logic
+            java.util.List<String> attributes = new ArrayList<>();
+            int classColumnIndex = getClassColumnIndex();
+
+            for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                if (i != classColumnIndex) {
+                    attributes.add(tableModel.getColumnName(i));
+                }
+            }
+
+            String selectedAttribute = (String) JOptionPane.showInputDialog(
+                this,
+                "Select an attribute to sort by covariance:",
+                "Covariance Column Sort",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                attributes.toArray(new String[0]),
+                attributes.get(0)
+            );
+
+            if (selectedAttribute != null) {
+                sortColumnsByCovariance(selectedAttribute);
+            }
+        } else if (choice == 1) {
+            sortColumnsByHamiltonianPath();
         }
     }
-    
+
+    private void sortColumnsByHamiltonianPath() {
+        int classColumnIndex = getClassColumnIndex();
+        int numColumns = tableModel.getColumnCount();
+        List<Integer> columnIndices = new ArrayList<>();
+        
+        // Collect indices of all columns except the class column
+        for (int i = 0; i < numColumns; i++) {
+            if (i != classColumnIndex) {
+                columnIndices.add(i);
+            }
+        }
+        
+        // Create adjacency matrix based on covariance
+        double[][] adjacencyMatrix = new double[columnIndices.size()][columnIndices.size()];
+        for (int i = 0; i < columnIndices.size(); i++) {
+            for (int j = 0; j < columnIndices.size(); j++) {
+                if (i != j) {
+                    adjacencyMatrix[i][j] = Math.abs(calculateCovariance(
+                        getColumnValues(columnIndices.get(i)),
+                        getColumnValues(columnIndices.get(j))
+                    ));
+                }
+            }
+        }
+        
+        // Find first Hamiltonian path using nearest neighbor approach
+        List<Integer> path = findHamiltonianPath(adjacencyMatrix);
+        
+        // Reorder columns based on the path
+        TableColumnModel columnModel = table.getColumnModel();
+        int currentPosition = 0;
+        for (Integer pathIndex : path) {
+            int columnIndex = columnIndices.get(pathIndex);
+            int fromIndex = columnModel.getColumnIndex(tableModel.getColumnName(columnIndex));
+            columnModel.moveColumn(fromIndex, currentPosition++);
+        }
+        
+        table.getTableHeader().repaint();
+        table.repaint();
+    }
+
+    private double[] getColumnValues(int columnIndex) {
+        double[] values = new double[tableModel.getRowCount()];
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            try {
+                values[i] = Double.parseDouble(tableModel.getValueAt(i, columnIndex).toString());
+            } catch (NumberFormatException e) {
+                values[i] = Double.NaN;
+            }
+        }
+        return values;
+    }
+
+    private List<Integer> findHamiltonianPath(double[][] adjacencyMatrix) {
+        int n = adjacencyMatrix.length;
+        List<Integer> path = new ArrayList<>();
+        boolean[] visited = new boolean[n];
+        
+        // Start with vertex 0
+        path.add(0);
+        visited[0] = true;
+        
+        // Find nearest unvisited neighbor
+        while (path.size() < n) {
+            int current = path.get(path.size() - 1);
+            double maxCovariance = -1;
+            int nextVertex = -1;
+            
+            for (int i = 0; i < n; i++) {
+                if (!visited[i] && adjacencyMatrix[current][i] > maxCovariance) {
+                    maxCovariance = adjacencyMatrix[current][i];
+                    nextVertex = i;
+                }
+            }
+            
+            if (nextVertex == -1) {
+                // If no unvisited neighbor found, add first unvisited vertex
+                for (int i = 0; i < n; i++) {
+                    if (!visited[i]) {
+                        nextVertex = i;
+                        break;
+                    }
+                }
+            }
+            
+            path.add(nextVertex);
+            visited[nextVertex] = true;
+        }
+        
+        return path;
+    }
+
     private void closeAllOwnedWindows() {
         for (Window window : getOwnerlessWindows()) {
             window.dispose();
