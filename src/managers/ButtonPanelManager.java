@@ -36,7 +36,6 @@ public class ButtonPanelManager {
         buttonPanel.add(createRuleTesterButton());
         buttonPanel.add(createToggleTrigonometricButton());
         buttonPanel.add(createToggleEasyCasesButton());
-        buttonPanel.add(createRuleOverlayButton());
         buttonPanel.add(createWeightedSumButton());
         buttonPanel.add(createSlopesAndDistancesButton());
 
@@ -334,16 +333,6 @@ public class ButtonPanelManager {
             }
         });
         return csvViewer.toggleEasyCasesButton;
-    }
-
-    private JButton createRuleOverlayButton() {
-        return UIHelper.createButton("/icons/ruleplot.png", "Rule Overlay Plot", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showRuleOverlayPlot();
-            }
-        });
     }
 
     private JButton createWeightedSumButton() {

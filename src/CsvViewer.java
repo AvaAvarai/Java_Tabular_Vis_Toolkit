@@ -166,10 +166,6 @@ public class CsvViewer extends JFrame {
         visualizationManager.showStarCoordinatesPlot();
     }
 
-    public void showRuleOverlayPlot() {
-        visualizationManager.showRuleOverlayPlot();
-    }
-
     public void insertWeightedSumColumn() {
         if (tableModel.getColumnCount() == 0) {
             noDataLoadedError();
