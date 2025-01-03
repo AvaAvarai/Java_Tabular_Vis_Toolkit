@@ -18,16 +18,10 @@ On macOS/Linux:
 ./build.sh
 ```
 
-This will compile the code, package it with resources into a JAR file, and run the application.
-
 On Windows:
 
 ```sh
-compile_and_package_windows.bat
-```
-
-```sh
-compile_and_run_windows.bat
+./build.bat
 ```
 
 This will compile the code, package it with resources into a JAR file, and run the application.
