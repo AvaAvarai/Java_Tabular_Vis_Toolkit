@@ -1,6 +1,8 @@
 package src;
 
 import javax.swing.*;
+import javax.swing.table.JTableHeader;
+
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyAdapter;
@@ -12,9 +14,18 @@ import src.table.TableMouseListener;
 
 public class CsvViewerUIHelper {
 
-    private static final Color BACKGROUND_COLOR = new Color(240, 240, 240);
-    private static final Color ACCENT_COLOR = new Color(70, 130, 180);
-    private static final Color TEXT_COLOR = new Color(51, 51, 51);
+    // Modern color scheme
+    private static final Color BACKGROUND_COLOR = new Color(245, 245, 247); // Light gray background
+    private static final Color ACCENT_COLOR = new Color(70, 130, 180);  // Steel blue accent
+    private static final Color TEXT_COLOR = new Color(33, 33, 33);  // Dark text
+    private static final Color HEADER_COLOR = new Color(70, 130, 180); // Steel blue headers
+    private static final Color GRID_COLOR = new Color(230, 230, 230); // Light grid lines
+    private static final Color SELECTED_COLOR = new Color(179, 215, 243); // Light blue selection
+
+    // Font settings
+    private static final Font HEADER_FONT = new Font("Segoe UI", Font.BOLD, 13);
+    private static final Font CELL_FONT = new Font("Segoe UI", Font.PLAIN, 12);
+    private static final Font STATS_FONT = new Font("Segoe UI", Font.PLAIN, 12);
 
     public static JPanel createButtonPanel(CsvViewer viewer) {
         ButtonPanelManager buttonPanelManager = new ButtonPanelManager(viewer);
@@ -24,11 +35,11 @@ public class CsvViewerUIHelper {
     public static JScrollPane createStatsScrollPane(JTextArea statsTextArea) {
         statsTextArea.setBackground(Color.WHITE);
         statsTextArea.setForeground(TEXT_COLOR);
-        statsTextArea.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        statsTextArea.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        statsTextArea.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        statsTextArea.setFont(STATS_FONT);
         
         JScrollPane scrollPane = new JScrollPane(statsTextArea);
-        scrollPane.setBorder(BorderFactory.createLineBorder(ACCENT_COLOR));
+        scrollPane.setBorder(BorderFactory.createLineBorder(ACCENT_COLOR, 1));
         scrollPane.setBackground(BACKGROUND_COLOR);
         return scrollPane;
     }
@@ -36,14 +47,12 @@ public class CsvViewerUIHelper {
     public static JPanel createBottomPanel(JLabel selectedRowsLabel, JSlider thresholdSlider, JLabel thresholdLabel) {
         JPanel bottomPanel = new JPanel(new BorderLayout(10, 0));
         bottomPanel.setBackground(BACKGROUND_COLOR);
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         JPanel sliderPanel = new JPanel(new BorderLayout(10, 0));
         sliderPanel.setBackground(BACKGROUND_COLOR);
         
         // Style the labels
-        JLabel thresholdTitle = new JLabel("Auto Pure Region Size Threshold:");
-        styleLabel(thresholdTitle);
         styleLabel(thresholdLabel);
         styleLabel(selectedRowsLabel);
         
@@ -52,12 +61,12 @@ public class CsvViewerUIHelper {
         thresholdSlider.setForeground(ACCENT_COLOR);
         thresholdSlider.setUI(new ModernSliderUI(thresholdSlider));
         
-        sliderPanel.add(thresholdTitle, BorderLayout.WEST);
+        sliderPanel.add(new JLabel("Auto Pure Region Size Threshold:"), BorderLayout.WEST);
         sliderPanel.add(thresholdSlider, BorderLayout.CENTER);
         sliderPanel.add(thresholdLabel, BorderLayout.EAST);
         
         bottomPanel.add(sliderPanel, BorderLayout.EAST);
-        bottomPanel.add(selectedRowsLabel, BorderLayout.CENTER);
+        bottomPanel.add(selectedRowsLabel, BorderLayout.WEST);
         
         return bottomPanel;
     }
@@ -69,7 +78,7 @@ public class CsvViewerUIHelper {
         splitPane.setBackground(BACKGROUND_COLOR);
         
         // Style the table scroll pane
-        tableScrollPane.setBorder(BorderFactory.createLineBorder(ACCENT_COLOR));
+        tableScrollPane.setBorder(BorderFactory.createLineBorder(ACCENT_COLOR, 1));
         tableScrollPane.getViewport().setBackground(Color.WHITE);
         
         // Style the stats panel
@@ -80,22 +89,28 @@ public class CsvViewerUIHelper {
     }
 
     public static void setupTable(JTable table, ReorderableTableModel tableModel, CsvViewer viewer) {
+        // Update existing table setup with modern styling
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table.setRowSelectionAllowed(true);
-        table.setGridColor(new Color(220, 220, 220));
+        table.setGridColor(GRID_COLOR);
         table.setBackground(Color.WHITE);
         table.setForeground(TEXT_COLOR);
-        table.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        table.setFont(CELL_FONT);
+        table.setRowHeight(25); // Increase row height for better readability
         
         // Style the header
-        table.getTableHeader().setBackground(ACCENT_COLOR);
-        table.getTableHeader().setForeground(Color.WHITE);
-        table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 12));
+        JTableHeader header = table.getTableHeader();
+        header.setBackground(HEADER_COLOR);
+        header.setForeground(Color.WHITE);
+        header.setFont(HEADER_FONT);
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, ACCENT_COLOR));
         
-        viewer.applyDefaultRenderer();
-        
-        // Add existing listeners
+        // Selection colors
+        table.setSelectionBackground(SELECTED_COLOR);
+        table.setSelectionForeground(TEXT_COLOR);
+
+        // Add existing listeners and functionality
         table.getSelectionModel().addListSelectionListener(e -> viewer.updateSelectedRowsLabel());
         table.addMouseListener(new TableMouseListener(viewer));
         table.getTableHeader().addMouseListener(new TableMouseListener(viewer));
@@ -124,7 +139,7 @@ public class CsvViewerUIHelper {
     }
 
     private static void styleLabel(JLabel label) {
-        label.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        label.setFont(CELL_FONT);
         label.setForeground(TEXT_COLOR);
     }
 }
