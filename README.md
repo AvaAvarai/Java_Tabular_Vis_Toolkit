@@ -6,9 +6,9 @@ Users can load CSV data to view, analyze, and classify with features like normal
 
 [![Demo Video](https://img.youtube.com/vi/j0_zpYPt_n8/0.jpg)](https://www.youtube.com/watch?v=j0_zpYPt_n8)
 
-**Tested on:**  Windows (10/11), Linux (Pop!_OS), and macOS (M3 Sonoma).
+This application has been tested on Windows (10/11), Linux (Pop!_OS), and macOS (M3 Sonoma) and is designed to run on any platform with a Java runtime environment.
 
-**Getting Started:**
+## Getting Started
 
 To get started, run the build script from the project root directory. The script requires Java Development Kit (JDK) to be installed.
 
@@ -26,7 +26,7 @@ On Windows:
 
 This will compile the code, package it with resources into a JAR file, and run the application.
 
-## General Line Coordinates Used
+## General Line Coordinates Multidimensional Data Visualizations
 
 GLCs generalize Cartesian Coordinates to n-D, with a subcategory being n-D to 2-D graph construction algorithms where graphs are commonly polylines, losslessly and reversibly visualizing all attributes and classes of the n-D data in 2-D space, while preserving distance relationships between points. We provide the following GLC visualizations:
 
@@ -48,7 +48,9 @@ GLCs generalize Cartesian Coordinates to n-D, with a subcategory being n-D to 2-
 | Concentric Coordinates           | X                                | X                         | X                        | X                           | X                       | X                      | X          | X           | X                 | X            | X              |                      |
 | In-Line Coordinates       | X                                | X                         | X                        | X                           |                         | X                      | X          |             |                   | X            |                |                      |
 
-## Analyzing Fisher Iris Benchmark Dataset
+## Example Data Analysis
+
+### Analyzing Fisher Iris Benchmark Dataset
 
 Below are screenshots showcasing the exploration of the Fisher Iris dataset, which serves as a benchmark.
 
@@ -82,7 +84,7 @@ Below are screenshots showcasing the exploration of the Fisher Iris dataset, whi
 **Single-Attribute Classification:** Demonstrated classifying Fisher Iris data with a single attribute for 75% of the dataset.
 ![Rules Tester Demo screenshot](screenshots/demo/Rules_Test_Demo_2.png)
 
-## Analyzing Higher Dimensionality Datasets
+### Analyzing Higher Dimensionality Datasets
 
 **MNIST Letters Train Data:** Visualized in Shifted Paired Coordinates.
 ![SPC Demo screenshot](screenshots/demo/Mnist_Train_Demo_1.png)
@@ -111,7 +113,7 @@ Sorting by covariances of attribute v7 against all other features still in Shift
 Hiding the classifiable cases with single attribute pure intervals which cover 5% threshold of class or dataset visualized in Shifted Paired Coordinates.
 ![PC demo screenshot](screenshots/demo/Musk_166_Demo_6.png)
 
-## Features
+## Software Features
 
 - **Cross-platform support:** Runs on any platform with a Java runtime environment.
 - **CSV Data Handling:** Load and display CSV data in a tabular view.
@@ -135,13 +137,13 @@ Hiding the classifiable cases with single attribute pure intervals which cover 5
 - **Slope Distance Feature Engineering:** Insert slope-distance values for the attributes as paired columns, duplicate last column as needed when missing required attribute count.
 - **Gradient Descent Optimization:** Automatically discover optimal coefficients for weighted sum features, maximizing class separability.
 
-## Rule Discovery
+### Rule Discovery
 
-### Single Attribute Pure Intervals
+#### Single Attribute Pure Intervals
 
 Using a sliding window algorithm, JTabViz *automatically* identifies pure intervals within individual attributes. Only the most significant regions are used for classification, filtered by a threshold slider to ensure coverage of a class or the dataset.
 
-### Trigonometric Differences
+#### Trigonometric Differences
 
 JTabViz applies trigonometric functions to forward differences, backward differences, and direct attribute values to uncover patterns and interactions in the data:
 
@@ -149,13 +151,13 @@ JTabViz applies trigonometric functions to forward differences, backward differe
 - cos: Highlights rotational or angular relationships between attributes, helping to uncover how attributes might cyclically influence each other.
 - tan: Focuses on the rate of change between attributes, useful for identifying steep trends or shifts in the data.
 
-### Application of Trigonometric Functions
+#### Application of Trigonometric Functions
 
 - Forward Differences: The trigonometric functions are applied to the differences between each attribute value and the next one in the sequence. This highlights how changes from one data point to the next evolve cyclically, rotationally, or in terms of their rate of change.
 - Backward Differences: Similar to forward differences, but here the trigonometric functions are applied to the differences between each attribute value and the previous one. This can help in understanding how past values influence current trends, especially in a cyclical or rotational context.
 - Direct Attribute Values: Trigonometric functions are directly applied to the raw attribute values themselves. This approach reveals inherent periodicity, rotation, or trends in the data, independent of any sequence-based differences.
 
-### Feature Engineering with Weighted Sum for Data Classification
+#### Feature Engineering with Weighted Sum for Data Classification
 
 JTabViz allows for the creation of **Weighted Sum Features** from existing attributes, enhancing class separability, reducing dimensionality, and improving model representation. A new feature created by combining multiple existing features using a set of coefficients.
 
@@ -165,15 +167,15 @@ where:
 c_1, c_2, ..., c_n are the coefficients.  
 x_1, x_2, ..., x_n are the original features.
 
-### Automatic Coefficient Optimization with Gradient Descent
+#### Automatic Coefficient Optimization with Gradient Descent
 
 JTabViz includes a gradient descent algorithm that optimizes coefficients to maximize between-class variance and minimize within-class variance, ensuring effective class separation.
 
-### Wrapping Weighted Sum with Trigonometric Functions
+#### Wrapping Weighted Sum with Trigonometric Functions
 
 Apply trigonometric functions (sin, cos, tan, and their inverses) to Weighted Sum features to reveal non-linear relationships and rotational patterns.
 
-### Practical Example
+#### Practical Example
 
 Suppose you have a dataset with features `x1`, `x2`, and `x3`:
 
@@ -185,7 +187,7 @@ Transformed Feature = cos(0.5(x1) + 0.3(x2) - 0.2(x3))
 
 This transformation can provide deeper insights and improve classification.
 
-### Feature Engineering with Slope-Distance
+#### Feature Engineering with Slope-Distance
 
 JTabViz can insert columns of features engineered with slope and distance calculations to explore relationships between pairs of numeric attributes:
 
