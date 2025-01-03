@@ -10,15 +10,27 @@ Users can load CSV data to view, analyze, and classify with features like normal
 
 **Getting Started:**
 
-To get started quickly, run the script for your operating system to compile and execute the application in one step, or compile, package, and execute the application in one step. All scripts are located in the project root directory and should be run from there, each script requires a Java compiler to be installed.
+To get started, run the build script from the project root directory. The script requires Java Development Kit (JDK) to be installed.
 
-   Compile and execute the application in one step:
-     **macOS/Linux:** `compile_and_run_mac_linux.sh`
-     **Windows:** `compile_and_run_windows.bat`
+On macOS/Linux:
 
-   Compile, package, and execute a jar in one step:
-     **macOS/Linux:** `compile_and_package_mac_linux.sh`
-     **Windows:** `compile_and_package_windows.bat`
+```sh
+./build.sh
+```
+
+This will compile the code, package it with resources into a JAR file, and run the application.
+
+On Windows:
+
+```sh
+compile_and_package_windows.bat
+```
+
+```sh
+compile_and_run_windows.bat
+```
+
+This will compile the code, package it with resources into a JAR file, and run the application.
 
 ## General Line Coordinates Used
 
