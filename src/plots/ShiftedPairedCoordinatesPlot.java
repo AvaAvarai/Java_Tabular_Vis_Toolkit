@@ -33,7 +33,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     private ShiftedPairedCoordinatesPanel plotPanel;
     private Map<String, Double> axisScales;
     private Map<String, Boolean> axisDirections;
-    private double zoomLevel = 1.0;
+    private double zoomLevel = 0.5;
     private Set<String> hiddenClasses; // Track which classes are hidden
     private boolean showSlopes = false; // Toggle for slope visualization
     private Map<Integer, Double> slopeValues; // Store calculated slopes for each line segment
