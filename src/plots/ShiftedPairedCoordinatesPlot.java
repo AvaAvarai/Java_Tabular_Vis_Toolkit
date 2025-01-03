@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.HashSet;
 import src.utils.ScreenshotUtils;
+import src.utils.LegendUtils;
 
 public class ShiftedPairedCoordinatesPlot extends JFrame {
 
@@ -197,7 +198,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         requestFocusInWindow();
 
         mainPanel.add(mainScrollPane, BorderLayout.CENTER);
-        mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
+        mainPanel.add(LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses), BorderLayout.SOUTH);
 
         setContentPane(mainPanel);
     }
@@ -356,61 +357,6 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             this.correlation = correlation;
             this.classSeparation = classSeparation;
         }
-    }
-
-    private JPanel createLegendPanel() {
-        JPanel legendPanel = new JPanel();
-        legendPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-        legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        legendPanel.setBackground(Color.WHITE);
-
-        for (Map.Entry<String, Color> entry : classColors.entrySet()) {
-            String className = entry.getKey();
-            Color color = entry.getValue();
-            Shape shape = classShapes.get(className);
-
-            JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            colorLabelPanel.setBackground(Color.WHITE);
-            colorLabelPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-            JLabel shapeLabel = new JLabel() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    super.paintComponent(g);
-                    Graphics2D g2 = (Graphics2D) g;
-                    g2.setColor(hiddenClasses.contains(className) ? Color.LIGHT_GRAY : color);
-                    g2.translate(32, 20);
-                    g2.scale(2, 2);
-                    g2.fill(shape);
-                }
-            };
-            shapeLabel.setPreferredSize(new Dimension(40, 40));
-
-            JLabel label = new JLabel(className);
-            label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-            label.setForeground(hiddenClasses.contains(className) ? Color.LIGHT_GRAY : Color.BLACK);
-
-            colorLabelPanel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (hiddenClasses.contains(className)) {
-                        hiddenClasses.remove(className);
-                    } else {
-                        hiddenClasses.add(className);
-                    }
-                    label.setForeground(hiddenClasses.contains(className) ? Color.LIGHT_GRAY : Color.BLACK);
-                    shapeLabel.repaint();
-                    plotPanel.repaint();
-                }
-            });
-
-            colorLabelPanel.add(shapeLabel);
-            colorLabelPanel.add(label);
-
-            legendPanel.add(colorLabelPanel);
-        }
-
-        return legendPanel;
     }
 
     private class ShiftedPairedCoordinatesPanel extends JPanel {

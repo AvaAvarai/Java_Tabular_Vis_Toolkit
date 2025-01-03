@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.awt.geom.Path2D;
+import src.utils.LegendUtils;
 
 public class ConcentricCoordinatesPlot extends JFrame {
 
@@ -43,7 +44,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private Map<String, Double> attributeMaxValues = new HashMap<>();
     private Map<String, Double> attributeRadii = new HashMap<>(); // Added for circle sizes
     private String draggedAxis = null;
-    private Set<String> hiddenClasses = new HashSet<>();
+    private Set<String> hiddenClasses;
     private Map<String, JSlider> attributeSliders = new HashMap<>();
     private Map<String, JSlider> radiusSliders = new HashMap<>(); // Added for radius control
     private Map<String, JCheckBox> attributeToggles = new HashMap<>();
@@ -372,7 +373,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
         // Add components to main panel
         mainPanel.add(plotScrollPane, BorderLayout.CENTER);
-        mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
+        mainPanel.add(LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses), BorderLayout.SOUTH);
         mainPanel.add(controlPanel, BorderLayout.NORTH);
 
         setContentPane(mainPanel);
@@ -563,59 +564,6 @@ public class ConcentricCoordinatesPlot extends JFrame {
         }
         // Reverse if more than half correlations are negative
         return negativeCount > correlations.length / 2;
-    }
-
-    private JPanel createLegendPanel() {
-        JPanel legendPanel = new JPanel();
-        legendPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-        legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        legendPanel.setBackground(Color.WHITE);
-
-        for (Map.Entry<String, Color> entry : classColors.entrySet()) {
-            String className = entry.getKey();
-            Color color = entry.getValue();
-            Shape shape = classShapes.get(className);
-
-            JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            colorLabelPanel.setBackground(Color.WHITE);
-            colorLabelPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            colorLabelPanel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (hiddenClasses.contains(className)) {
-                        hiddenClasses.remove(className);
-                        colorLabelPanel.setBackground(Color.WHITE);
-                    } else {
-                        hiddenClasses.add(className);
-                        colorLabelPanel.setBackground(Color.LIGHT_GRAY);
-                    }
-                    plotPanel.repaint();
-                }
-            });
-
-            JLabel shapeLabel = new JLabel() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    super.paintComponent(g);
-                    Graphics2D g2 = (Graphics2D) g;
-                    g2.setColor(color);
-                    g2.translate(32, 20);
-                    g2.scale(2, 2);
-                    g2.fill(shape);
-                }
-            };
-            shapeLabel.setPreferredSize(new Dimension(40, 40));
-
-            JLabel label = new JLabel(className);
-            label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-
-            colorLabelPanel.add(shapeLabel);
-            colorLabelPanel.add(label);
-
-            legendPanel.add(colorLabelPanel);
-        }
-
-        return legendPanel;
     }
 
     private class ConcentricCoordinatesPanel extends JPanel {

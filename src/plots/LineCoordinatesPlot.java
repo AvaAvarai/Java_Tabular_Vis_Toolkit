@@ -7,6 +7,7 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.util.*;
 import java.util.List;
+import src.utils.LegendUtils;
 
 public class LineCoordinatesPlot extends JFrame {
     private List<List<Double>> data;
@@ -98,7 +99,7 @@ public class LineCoordinatesPlot extends JFrame {
         });
 
         contentPanel.add(plotScrollPane, BorderLayout.CENTER);
-        contentPanel.add(createLegendPanel(), BorderLayout.SOUTH);
+        contentPanel.add(LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses), BorderLayout.SOUTH);
 
         mainPanel.add(contentPanel, BorderLayout.CENTER);
         setContentPane(mainPanel);
@@ -147,56 +148,6 @@ public class LineCoordinatesPlot extends JFrame {
         }
         
         return controlPanel;
-    }
-
-    private JPanel createLegendPanel() {
-        JPanel legendPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        legendPanel.setBackground(Color.WHITE);
-
-        for (Map.Entry<String, Color> entry : classColors.entrySet()) {
-            String className = entry.getKey();
-            Color color = entry.getValue();
-            Shape shape = classShapes.get(className);
-
-            JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            colorLabelPanel.setBackground(Color.WHITE);
-            colorLabelPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-            JLabel shapeLabel = new JLabel() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    super.paintComponent(g);
-                    Graphics2D g2 = (Graphics2D) g;
-                    g2.setColor(hiddenClasses.contains(className) ? Color.LIGHT_GRAY : color);
-                    g2.translate(20, 20);
-                    g2.scale(2, 2);
-                    g2.fill(shape);
-                }
-            };
-            shapeLabel.setPreferredSize(new Dimension(40, 40));
-
-            JLabel label = new JLabel(className);
-            label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-
-            colorLabelPanel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (hiddenClasses.contains(className)) {
-                        hiddenClasses.remove(className);
-                    } else {
-                        hiddenClasses.add(className);
-                    }
-                    repaint();
-                }
-            });
-
-            colorLabelPanel.add(shapeLabel);
-            colorLabelPanel.add(label);
-            legendPanel.add(colorLabelPanel);
-        }
-
-        return legendPanel;
     }
 
     private class LineCoordinatesPanel extends JPanel {

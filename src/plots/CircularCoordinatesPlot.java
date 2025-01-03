@@ -7,6 +7,7 @@ import java.awt.geom.*;
 import java.util.*;
 import java.util.List;
 import src.utils.ScreenshotUtils;
+import src.utils.LegendUtils;
 
 public class CircularCoordinatesPlot extends JFrame {
     private List<List<Double>> data;
@@ -18,7 +19,7 @@ public class CircularCoordinatesPlot extends JFrame {
     private int numAttributes;
     private String datasetName;
     private int curveHeight = 50; // Default curve height
-    private Set<String> hiddenClasses = new HashSet<>(); // Track hidden classes
+    private Set<String> hiddenClasses;
     private boolean showTicks = false; // Track if ticks should be shown
     private boolean showLabels = true; // Track if labels should be shown
     private boolean usePolygon = false; // Track if polygon should be used instead of circle
@@ -38,6 +39,7 @@ public class CircularCoordinatesPlot extends JFrame {
         this.selectedRows = selectedRows;
         this.numAttributes = attributeNames.size();
         this.datasetName = datasetName;
+        this.hiddenClasses = new HashSet<>();
 
         setTitle("Circular/Polygonal Coordinates");
         setSize(800, 800);
@@ -105,7 +107,7 @@ public class CircularCoordinatesPlot extends JFrame {
         add(controlPanel, BorderLayout.NORTH);
 
         // Add a legend panel at the bottom (horizontal)
-        add(createLegendPanel(), BorderLayout.SOUTH);
+        add(LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses), BorderLayout.SOUTH);
 
         // Add a key listener for the space bar to save a screenshot
         scrollPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("SPACE"), "saveScreenshot");
@@ -137,59 +139,6 @@ public class CircularCoordinatesPlot extends JFrame {
             maxSumPerClass.put(classLabel, Math.max(maxSumPerClass.getOrDefault(classLabel, 0.0), sum));
         }
     }    
-
-    private JPanel createLegendPanel() {
-        JPanel legendPanel = new JPanel();
-        legendPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-        legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        legendPanel.setBackground(Color.WHITE);
-
-        // Add each class color and shape to the legend
-        for (Map.Entry<String, Color> entry : classColors.entrySet()) {
-            String className = entry.getKey();
-            Color color = entry.getValue();
-            Shape shape = classShapes.get(className);
-
-            JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            colorLabelPanel.setBackground(Color.WHITE);
-            colorLabelPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-            JLabel shapeLabel = new JLabel() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    super.paintComponent(g);
-                    Graphics2D g2 = (Graphics2D) g;
-                    g2.setColor(hiddenClasses.contains(className) ? Color.LIGHT_GRAY : color);
-                    g2.translate(32, 20);
-                    g2.scale(2, 2);
-                    g2.fill(shape);
-                }
-            };
-            shapeLabel.setPreferredSize(new Dimension(40, 40));
-
-            JLabel label = new JLabel(className);
-            label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-
-            colorLabelPanel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (hiddenClasses.contains(className)) {
-                        hiddenClasses.remove(className);
-                    } else {
-                        hiddenClasses.add(className);
-                    }
-                    repaint();
-                }
-            });
-
-            colorLabelPanel.add(shapeLabel);
-            colorLabelPanel.add(label);
-
-            legendPanel.add(colorLabelPanel);
-        }
-
-        return legendPanel;
-    }
 
     private class CircularCoordinatesPanel extends JPanel {
         private static final int TITLE_PADDING = 20; // Add 20px padding between title and plot

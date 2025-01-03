@@ -10,7 +10,10 @@ import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 import src.utils.ScreenshotUtils;
+import src.utils.LegendUtils;
 
 public class StarCoordinatesPlot extends JFrame {
 
@@ -21,7 +24,7 @@ public class StarCoordinatesPlot extends JFrame {
     private List<String> classLabels;
     private List<Integer> selectedRows;
     private String datasetName;
-    private Map<String, Boolean> hiddenClasses; // Map to keep track of hidden classes
+    private Set<String> hiddenClasses; // Set to keep track of hidden classes
     private boolean showAttributeLabels = true; // Flag to toggle attribute labels
 
     // Font settings
@@ -36,7 +39,7 @@ public class StarCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
         this.datasetName = datasetName;
-        this.hiddenClasses = new HashMap<>(); // Initialize hiddenClasses map
+        this.hiddenClasses = new HashSet<>(); // Initialize hiddenClasses set
 
         setTitle("Star Coordinates Plot");
         setSize(800, 800);
@@ -53,8 +56,9 @@ public class StarCoordinatesPlot extends JFrame {
         JScrollPane scrollPane = new JScrollPane(plotPanel);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Add a legend panel at the bottom (horizontal)
-        add(createLegendPanel(), BorderLayout.SOUTH);
+        // Replace the existing legend creation with the standardized version
+        JPanel legendPanel = LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses);
+        add(legendPanel, BorderLayout.SOUTH);
 
         // Add a button to toggle attribute labels
         JButton toggleLabelsButton = new JButton("Toggle Attribute Labels");
@@ -76,57 +80,6 @@ public class StarCoordinatesPlot extends JFrame {
         // Ensure the JFrame is focusable to capture key events
         setFocusable(true);
         requestFocusInWindow();
-    }
-
-    private JPanel createLegendPanel() {
-        JPanel legendPanel = new JPanel();
-        legendPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-        legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        legendPanel.setBackground(Color.WHITE);
-
-        for (Map.Entry<String, Color> entry : classColors.entrySet()) {
-            String className = entry.getKey();
-            Color color = entry.getValue();
-            Shape shape = classShapes.get(className);
-
-            JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            colorLabelPanel.setBackground(Color.WHITE);
-
-            JLabel shapeLabel = new JLabel() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    super.paintComponent(g);
-                    Graphics2D g2 = (Graphics2D) g;
-                    g2.setColor(hiddenClasses.containsKey(className) ? Color.LIGHT_GRAY : color);
-                    g2.translate(20, 20);
-                    g2.scale(3, 3);
-                    g2.fill(shape);
-                }
-            };
-            shapeLabel.setPreferredSize(new Dimension(50, 50));
-
-            JLabel label = new JLabel(className);
-            label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-
-            colorLabelPanel.add(shapeLabel);
-            colorLabelPanel.add(label);
-
-            colorLabelPanel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (hiddenClasses.containsKey(className)) {
-                        hiddenClasses.remove(className);
-                    } else {
-                        hiddenClasses.put(className, true);
-                    }
-                    repaint();
-                }
-            });
-
-            legendPanel.add(colorLabelPanel);
-        }
-
-        return legendPanel;
     }
 
     private class StarCoordinatesPanel extends JPanel {
@@ -192,14 +145,14 @@ public class StarCoordinatesPlot extends JFrame {
 
             // Draw the star coordinates for each data point
             for (int row = 0; row < data.get(0).size(); row++) {
-                if (!selectedRows.contains(row) && !hiddenClasses.containsKey(classLabels.get(row))) {
+                if (!selectedRows.contains(row) && !hiddenClasses.contains(classLabels.get(row))) {
                     drawStar(g2, row, centerX, centerY, plotSize / 2, angleIncrement, false);
                 }
             }
 
             // Highlight selected rows
             for (int row = 0; row < data.get(0).size(); row++) {
-                if (selectedRows.contains(row) && !hiddenClasses.containsKey(classLabels.get(row))) {
+                if (selectedRows.contains(row) && !hiddenClasses.contains(classLabels.get(row))) {
                     drawStar(g2, row, centerX, centerY, plotSize / 2, angleIncrement, true);
                 }
             }

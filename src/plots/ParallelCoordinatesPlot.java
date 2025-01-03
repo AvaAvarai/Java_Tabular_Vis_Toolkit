@@ -7,6 +7,7 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.util.*;
 import java.util.List;
+import src.utils.LegendUtils;
 
 public class ParallelCoordinatesPlot extends JFrame {
 
@@ -16,7 +17,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private final Map<String, Shape> classShapes;
     private final List<String> classLabels;
     private final List<Integer> selectedRows;
-    private final Map<String, Boolean> hiddenClasses;
+    private Set<String> hiddenClasses;
     private final Map<String, Boolean> axisDirections;
     private final Map<String, Point2D.Double> axisPositions;
     private final Map<String, Double> axisScales;
@@ -39,7 +40,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
-        this.hiddenClasses = new HashMap<>();
+        this.hiddenClasses = new HashSet<>();
         this.axisDirections = new HashMap<>();
         this.axisPositions = new HashMap<>();
         this.axisScales = new HashMap<>();
@@ -93,7 +94,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         mainPanel.add(controlPanel, BorderLayout.NORTH);
-        mainPanel.add(createLegendPanel(), BorderLayout.SOUTH);
+        mainPanel.add(LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses), BorderLayout.SOUTH);
 
         setContentPane(mainPanel);
     }
@@ -157,57 +158,6 @@ public class ParallelCoordinatesPlot extends JFrame {
         }
     
         return controlPanel;
-    }
-
-    private JPanel createLegendPanel() {
-        JPanel legendPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        legendPanel.setBackground(Color.WHITE);
-
-        for (Map.Entry<String, Color> entry : classColors.entrySet()) {
-            String className = entry.getKey();
-            Color color = entry.getValue();
-            Shape shape = classShapes.get(className);
-
-            JPanel colorLabelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            colorLabelPanel.setBackground(Color.WHITE);
-            colorLabelPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-            JLabel shapeLabel = new JLabel() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    super.paintComponent(g);
-                    Graphics2D g2 = (Graphics2D) g;
-                    g2.setColor(hiddenClasses.getOrDefault(className, false) ? Color.LIGHT_GRAY : color);
-                    g2.translate(32, 20);
-                    g2.scale(2, 2);
-                    g2.fill(shape);
-                }
-            };
-            shapeLabel.setPreferredSize(new Dimension(40, 40));
-
-            JLabel label = new JLabel(className);
-            label.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 10));
-            label.setForeground(hiddenClasses.getOrDefault(className, false) ? Color.LIGHT_GRAY : Color.BLACK);
-
-            colorLabelPanel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (hiddenClasses.getOrDefault(className, false)) {
-                        hiddenClasses.remove(className);
-                    } else {
-                        hiddenClasses.put(className, true);
-                    }
-                    repaint();
-                }
-            });
-
-            colorLabelPanel.add(shapeLabel);
-            colorLabelPanel.add(label);
-            legendPanel.add(colorLabelPanel);
-        }
-
-        return legendPanel;
     }
 
     private class ParallelCoordinatesPanel extends JPanel {
@@ -319,7 +269,7 @@ public class ParallelCoordinatesPlot extends JFrame {
                     }
     
                     String classLabel = classLabels.get(row);
-                    if (hiddenClasses.containsKey(classLabel)) continue;
+                    if (hiddenClasses.contains(classLabel)) continue;
     
                     g2.setColor(classColors.getOrDefault(classLabel, Color.BLACK));
                     g2.setStroke(new BasicStroke(1.0f)); // Default line thickness
@@ -359,7 +309,7 @@ public class ParallelCoordinatesPlot extends JFrame {
                 }
     
                 String classLabel = classLabels.get(row);
-                if (hiddenClasses.containsKey(classLabel)) continue;
+                if (hiddenClasses.contains(classLabel)) continue;
     
                 g2.setColor(Color.YELLOW); // Highlight selected cases
                 g2.setStroke(new BasicStroke(2.0f)); // Thicker line for selected cases
