@@ -24,6 +24,7 @@ public class LineCoordinatesPlot extends JFrame {
     private Map<String, Point> axisPositions;
     private Map<String, Integer> curveHeights; // Map to store individual curve heights for each attribute
     private String draggedAxis = null;
+    private boolean showLabels = true;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -108,6 +109,14 @@ public class LineCoordinatesPlot extends JFrame {
     private JPanel createControlPanel() {
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Add label toggle button at the start
+        JToggleButton labelToggle = new JToggleButton("Show Labels", true);
+        labelToggle.addActionListener(e -> {
+            showLabels = labelToggle.isSelected();
+            repaint();
+        });
+        controlPanel.add(labelToggle);
         
         // Add controls for each attribute
         for (String attr : attributeNames) {
@@ -204,9 +213,13 @@ public class LineCoordinatesPlot extends JFrame {
             for (String attr : attributeNames) {
                 Point pos = axisPositions.get(attr);
                 g2.setColor(Color.BLACK);
-                int scaledAxisLength = (int) (AXIS_LENGTH * axisScales.get(attr)); // Scale the axis length
-                g2.drawLine(pos.x, pos.y, pos.x + scaledAxisLength, pos.y); // Draw the axis at dynamic Y
-                g2.drawString(attr, pos.x + scaledAxisLength / 2, pos.y + 20); // Draw the label below the axis
+                int scaledAxisLength = (int) (AXIS_LENGTH * axisScales.get(attr));
+                g2.drawLine(pos.x, pos.y, pos.x + scaledAxisLength, pos.y);
+                
+                // Only draw labels if showLabels is true
+                if (showLabels) {
+                    g2.drawString(attr, pos.x + scaledAxisLength / 2, pos.y + 20);
+                }
             }            
 
             // Draw data points and connections
