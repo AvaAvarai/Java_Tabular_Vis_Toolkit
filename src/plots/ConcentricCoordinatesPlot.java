@@ -44,7 +44,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private Map<String, Double> attributeMaxValues = new HashMap<>();
     private Map<String, Double> attributeRadii = new HashMap<>(); // Added for circle sizes
     private String draggedAxis = null;
-    private Set<String> hiddenClasses;
+    private Set<String> hiddenClasses = new HashSet<>();
     private Map<String, JSlider> attributeSliders = new HashMap<>();
     private Map<String, JSlider> radiusSliders = new HashMap<>(); // Added for radius control
     private Map<String, JCheckBox> attributeToggles = new HashMap<>();
