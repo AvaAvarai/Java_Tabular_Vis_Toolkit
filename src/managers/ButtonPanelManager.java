@@ -31,7 +31,6 @@ public class ButtonPanelManager {
         buttonPanel.add(createSetClassColorsButton());
         buttonPanel.add(createRuleTesterButton());
         buttonPanel.add(createToggleTrigonometricButton());
-        buttonPanel.add(createToggleEasyCasesButton());
         buttonPanel.add(createWeightedSumButton());
         buttonPanel.add(createSlopesAndDistancesButton());
 
@@ -176,17 +175,21 @@ public class ButtonPanelManager {
     private JButton createColorMenu() {
         JMenuItem heatmapItem = new JMenuItem("Toggle Heatmap");
         JMenuItem classColorItem = new JMenuItem("Toggle Class Colors");
-        JMenuItem highlightBlanksItem = new JMenuItem("Highlight Blanks");
-
+        JMenuItem highlightBlanksItem = new JMenuItem("Toggle Highlight Blanks");
+        JMenuItem easyCasesItem = new JMenuItem("Toggle Easy Cases");
+    
         // Create popup menu
         JPopupMenu colorMenu = new JPopupMenu();
         colorMenu.add(heatmapItem);
         colorMenu.add(classColorItem);
         colorMenu.add(highlightBlanksItem);
-
-        // Create button that ONLY shows menu
-        JButton button = UIHelper.createButton("/icons/heatmap.png", "Visualization Options", e -> colorMenu.show((JComponent) e.getSource(), 0, 0));
-
+        colorMenu.add(easyCasesItem);
+    
+        // Create button that shows menu
+        JButton button = UIHelper.createButton("/icons/heatmap.png", "Visualization Options", e -> {
+            colorMenu.show((JComponent) e.getSource(), 0, 0);
+        });
+    
         heatmapItem.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
@@ -194,7 +197,7 @@ public class ButtonPanelManager {
                 csvViewer.toggleHeatmap();
             }
         });
-
+    
         classColorItem.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
@@ -202,7 +205,7 @@ public class ButtonPanelManager {
                 csvViewer.toggleClassColors();
             }
         });
-
+    
         highlightBlanksItem.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
@@ -210,10 +213,18 @@ public class ButtonPanelManager {
                 csvViewer.highlightBlanks();
             }
         });
-
+    
+        easyCasesItem.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.toggleEasyCases();
+            }
+        });
+    
         return button;
     }
-
+    
     private JButton createCovarianceMatrixButton() {
         return UIHelper.createButton("/icons/variance.png", "Show Covariance Matrix", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
@@ -349,25 +360,6 @@ public class ButtonPanelManager {
 
         return UIHelper.createButton("/icons/trigon.png", "Trigonometric Options", 
             e -> trigMenu.show((JComponent) e.getSource(), 0, 0));
-    }
-
-    private JButton createToggleEasyCasesButton() {
-        csvViewer.toggleEasyCasesButton = UIHelper.createButton("/icons/easy.png", "Show Easy Cases", null);
-        csvViewer.toggleEasyCasesButton.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.toggleEasyCases();
-                if (csvViewer.hasHiddenRows()) {
-                    csvViewer.toggleEasyCasesButton.setIcon(UIHelper.loadIcon("/icons/uneasy.png", 40, 40));
-                    csvViewer.toggleEasyCasesButton.setToolTipText("Show All Cases");
-                } else {
-                    csvViewer.toggleEasyCasesButton.setIcon(UIHelper.loadIcon("/icons/easy.png", 40, 40));
-                    csvViewer.toggleEasyCasesButton.setToolTipText("Show Non-Easy Cases");
-                }
-            }
-        });
-        return csvViewer.toggleEasyCasesButton;
     }
 
     private JButton createWeightedSumButton() {
