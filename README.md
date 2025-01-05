@@ -8,6 +8,9 @@ Users can load CSV data to view, analyze, and classify with features like normal
 
 This application has been tested on Windows (10/11), Linux (Pop!_OS), and macOS (M3 Sonoma) and is designed to run on any platform with a Java runtime environment.
 
+Start menu screenshot:  
+![Start Menu](screenshots/demo/start_menu.png)
+
 ## Getting Started
 
 To get started, run the build script from the project root directory. The script requires Java Development Kit (JDK) to be installed.

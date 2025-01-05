@@ -25,7 +25,7 @@ public class MainMenu extends JFrame {
     private static final int FRAME_THICKNESS = 4;
 
     public MainMenu() {
-        setTitle("Main Menu");
+        setTitle("Start Menu");
         try {
             setIconImage(ImageIO.read(getClass().getResource("/icons/icon.png")));
         } catch (IOException e) {
