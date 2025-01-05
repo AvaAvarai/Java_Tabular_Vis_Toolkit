@@ -37,35 +37,8 @@ public class TrigonometricColumnManager {
         if (areDifferenceColumnsVisible) {
             removeTrigonometricColumns(); // If columns are visible, remove them
         } else {
-            // Ask user to choose the mode for trigonometric columns
-            String[] options = {
-                    "Forward Differences",
-                    "Backward Differences",
-                    "Direct",
-                    "Inverse Forward Differences",
-                    "Inverse Backward Differences",
-                    "Inverse Direct"
-            };
-            String mode = (String) JOptionPane.showInputDialog(null,
-                    "Choose the mode for trigonometric columns:",
-                    "Trigonometric Columns Mode",
-                    JOptionPane.PLAIN_MESSAGE,
-                    null,
-                    options,
-                    options[0]);
-
-            if (mode != null) { // User selected a mode, add columns based on the mode
-                switch (mode) {
-                    case "Inverse Direct":
-                    case "Inverse Forward Differences":
-                    case "Inverse Backward Differences":
-                        addTrigonometricColumns(mode.replace("Inverse ", ""), true);
-                        break;
-                    default:
-                        addTrigonometricColumns(mode, false);
-                        break;
-                }
-            }
+            // No menu/dialog here - just add columns with default mode
+            addTrigonometricColumns("Direct", false);
         }
 
         areDifferenceColumnsVisible = !areDifferenceColumnsVisible;

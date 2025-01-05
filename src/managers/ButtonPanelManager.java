@@ -5,6 +5,7 @@ import src.UIHelper;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class ButtonPanelManager {
 
@@ -311,22 +312,43 @@ public class ButtonPanelManager {
     }
 
     private JButton createToggleTrigonometricButton() {
-        csvViewer.toggleTrigonometricButton = UIHelper.createButton("/icons/trigon.png", "Insert Trig Columns", null);
-        csvViewer.toggleTrigonometricButton.addActionListener(e -> {
+        JMenuItem forwardDiffItem = new JMenuItem("Forward Differences");
+        JMenuItem backwardDiffItem = new JMenuItem("Backward Differences");
+        JMenuItem directItem = new JMenuItem("Direct");
+        JMenuItem invForwardDiffItem = new JMenuItem("Inverse Forward Differences");
+        JMenuItem invBackwardDiffItem = new JMenuItem("Inverse Backward Differences");
+        JMenuItem invDirectItem = new JMenuItem("Inverse Direct");
+        JMenuItem removeItem = new JMenuItem("Remove Trigonometric Columns");
+
+        ActionListener trigActionListener = e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.toggleTrigonometricColumns();
-                if (csvViewer.areDifferenceColumnsVisible()) {
-                    csvViewer.toggleTrigonometricButton.setIcon(UIHelper.loadIcon("/icons/trigoff.png", 40, 40));
-                    csvViewer.toggleTrigonometricButton.setToolTipText("Remove Trig Columns");
-                } else {
-                    csvViewer.toggleTrigonometricButton.setIcon(UIHelper.loadIcon("/icons/trigon.png", 40, 40));
-                    csvViewer.toggleTrigonometricButton.setToolTipText("Insert Trig Columns");
-                }
+                return;
             }
-        });
-        return csvViewer.toggleTrigonometricButton;
+            csvViewer.toggleTrigonometricColumns();
+        };
+
+        forwardDiffItem.addActionListener(trigActionListener);
+        backwardDiffItem.addActionListener(trigActionListener);
+        directItem.addActionListener(trigActionListener);
+        invForwardDiffItem.addActionListener(trigActionListener);
+        invBackwardDiffItem.addActionListener(trigActionListener);
+        invDirectItem.addActionListener(trigActionListener);
+        removeItem.addActionListener(trigActionListener);
+
+        JPopupMenu trigMenu = new JPopupMenu();
+        trigMenu.add(forwardDiffItem);
+        trigMenu.add(backwardDiffItem);
+        trigMenu.add(directItem);
+        trigMenu.addSeparator();
+        trigMenu.add(invForwardDiffItem);
+        trigMenu.add(invBackwardDiffItem);
+        trigMenu.add(invDirectItem);
+        trigMenu.addSeparator();
+        trigMenu.add(removeItem);
+
+        return UIHelper.createButton("/icons/trigon.png", "Trigonometric Options", 
+            e -> trigMenu.show((JComponent) e.getSource(), 0, 0));
     }
 
     private JButton createToggleEasyCasesButton() {
