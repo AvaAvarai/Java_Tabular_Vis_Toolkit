@@ -21,10 +21,8 @@ public class ButtonPanelManager {
 
         buttonPanel.add(createFileMenu());
         buttonPanel.add(createVizButton());
-
         buttonPanel.add(createNormalizeButton());
-        buttonPanel.add(createHighlightBlanksButton());
-        buttonPanel.add(createHeatmapButton());
+        buttonPanel.add(createColorMenu());
         buttonPanel.add(createCovarianceMatrixButton());
         buttonPanel.add(createFontSettingsButton());
         buttonPanel.add(createInsertRowButton());
@@ -176,19 +174,19 @@ public class ButtonPanelManager {
         return toggleButton;
     }
 
-    private JButton createHighlightBlanksButton() {
-        return UIHelper.createButton("/icons/highlight.png", "Highlight Blanks", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.highlightBlanks();
-            }
-        });
-    }
-
-    private JButton createHeatmapButton() {
+    private JButton createColorMenu() {
         JMenuItem heatmapItem = new JMenuItem("Toggle Heatmap");
         JMenuItem classColorItem = new JMenuItem("Toggle Class Colors");
+        JMenuItem highlightBlanksItem = new JMenuItem("Highlight Blanks");
+
+        // Create popup menu
+        JPopupMenu colorMenu = new JPopupMenu();
+        colorMenu.add(heatmapItem);
+        colorMenu.add(classColorItem);
+        colorMenu.add(highlightBlanksItem);
+
+        // Create button that ONLY shows menu
+        JButton button = UIHelper.createButton("/icons/heatmap.png", "Visualization Options", e -> colorMenu.show((JComponent) e.getSource(), 0, 0));
 
         heatmapItem.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
@@ -206,11 +204,15 @@ public class ButtonPanelManager {
             }
         });
 
-        JPopupMenu heatmapMenu = new JPopupMenu();
-        heatmapMenu.add(heatmapItem);
-        heatmapMenu.add(classColorItem);
+        highlightBlanksItem.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.highlightBlanks();
+            }
+        });
 
-        return UIHelper.createButton("/icons/heatmap.png", "Heatmap", e -> heatmapMenu.show((JComponent) e.getSource(), 0, 0));
+        return button;
     }
 
     private JButton createCovarianceMatrixButton() {
