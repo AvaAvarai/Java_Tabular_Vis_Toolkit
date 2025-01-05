@@ -48,5 +48,4 @@ if %errorlevel% neq 0 (
 
 echo Build successful! JAR file created at out\JTabViz.jar
 echo Running the application...
-java -jar out\JTabViz.jar
-pause 
+start /min java -jar out\JTabViz.jar
