@@ -25,9 +25,7 @@ public class ButtonPanelManager {
         buttonPanel.add(createColorMenu());
         buttonPanel.add(createCovarianceMatrixButton());
         buttonPanel.add(createFontSettingsButton());
-        buttonPanel.add(createInsertRowButton());
-        buttonPanel.add(createDeleteRowButton());
-        buttonPanel.add(createCloneRowButton());
+        buttonPanel.add(createRowOperationsMenu());
         buttonPanel.add(createCovarianceSortButton());
         buttonPanel.add(createSetClassColorsButton());
         buttonPanel.add(createRuleTesterButton());
@@ -245,34 +243,41 @@ public class ButtonPanelManager {
         });
     }
 
-    private JButton createInsertRowButton() {
-        return UIHelper.createButton("/icons/insert.png", "Insert Row", e -> {
+    private JButton createRowOperationsMenu() {
+        JMenuItem insertItem = new JMenuItem("Insert Row");
+        JMenuItem deleteItem = new JMenuItem("Delete Row");
+        JMenuItem cloneItem = new JMenuItem("Clone Row");
+
+        insertItem.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.insertRow();
             }
         });
-    }
 
-    private JButton createDeleteRowButton() {
-        return UIHelper.createButton("/icons/delete.png", "Delete Row", e -> {
+        deleteItem.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.deleteRow();
             }
         });
-    }
 
-    private JButton createCloneRowButton() {
-        return UIHelper.createButton("/icons/clone.png", "Clone Row", e -> {
+        cloneItem.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.cloneSelectedRow();
             }
         });
+
+        JPopupMenu rowMenu = new JPopupMenu();
+        rowMenu.add(insertItem);
+        rowMenu.add(deleteItem);
+        rowMenu.add(cloneItem);
+
+        return UIHelper.createButton("/icons/clone.png", "Row Operations", e -> rowMenu.show((JComponent) e.getSource(), 0, 0));
     }
 
     private JButton createCovarianceSortButton() {
