@@ -11,14 +11,6 @@ if not exist out (
     mkdir out
 )
 
-REM Check if JAR file already exists
-if exist out\JTabViz.jar (
-    echo JAR file exists. Running the application...
-    java -jar out\JTabViz.jar
-    pause
-    exit /b 0
-)
-
 REM Copy all resources to the output directory if they don't exist
 echo Copying resources...
 xcopy /E /I /Y resources\graphics out\graphics
