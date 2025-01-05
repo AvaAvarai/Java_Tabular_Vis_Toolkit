@@ -31,7 +31,6 @@ public class ButtonPanelManager {
         buttonPanel.add(createDeleteRowButton());
         buttonPanel.add(createCloneRowButton());
         buttonPanel.add(createCovarianceSortButton());
-        buttonPanel.add(createClassColorButton());
         buttonPanel.add(createSetClassColorsButton());
         buttonPanel.add(createRuleTesterButton());
         buttonPanel.add(createToggleTrigonometricButton());
@@ -188,13 +187,30 @@ public class ButtonPanelManager {
     }
 
     private JButton createHeatmapButton() {
-        return UIHelper.createButton("/icons/heatmap.png", "Show Heatmap", e -> {
+        JMenuItem heatmapItem = new JMenuItem("Toggle Heatmap");
+        JMenuItem classColorItem = new JMenuItem("Toggle Class Colors");
+
+        heatmapItem.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.toggleHeatmap();
             }
         });
+
+        classColorItem.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                csvViewer.toggleClassColors();
+            }
+        });
+
+        JPopupMenu heatmapMenu = new JPopupMenu();
+        heatmapMenu.add(heatmapItem);
+        heatmapMenu.add(classColorItem);
+
+        return UIHelper.createButton("/icons/heatmap.png", "Heatmap", e -> heatmapMenu.show((JComponent) e.getSource(), 0, 0));
     }
 
     private JButton createCovarianceMatrixButton() {
@@ -263,16 +279,6 @@ public class ButtonPanelManager {
                 csvViewer.noDataLoadedError();
             } else {
                 csvViewer.showCovarianceSortDialog();
-            }
-        });
-    }
-
-    private JButton createClassColorButton() {
-        return UIHelper.createButton("/icons/classcolor.png", "Toggle Class Colors", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.toggleClassColors();
             }
         });
     }
