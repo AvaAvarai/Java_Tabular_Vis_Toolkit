@@ -1,5 +1,6 @@
 package src.classifiers;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -7,6 +8,7 @@ import java.util.HashMap;
 import java.util.Comparator;
 import javax.swing.table.DefaultTableModel;
 import src.CsvViewer;
+import java.text.DecimalFormat;
 
 public class KNearestNeighbors {
     private final CsvViewer csvViewer;
@@ -26,8 +28,26 @@ public class KNearestNeighbors {
         // Extract features and labels
         List<double[]> features = new ArrayList<>();
         List<String> labels = new ArrayList<>();
+        Map<String, Double> labelMap = new HashMap<>();
+        List<String> uniqueLabels = new ArrayList<>();
+        
         int classColumnIndex = csvViewer.getClassColumnIndex();
 
+        // First pass - collect unique labels in order
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            String label = tableModel.getValueAt(row, classColumnIndex).toString();
+            if (!uniqueLabels.contains(label)) {
+                uniqueLabels.add(label);
+            }
+        }
+
+        // Create evenly distributed values from 0 to 1 inclusive
+        int numLabels = uniqueLabels.size();
+        for (int i = 0; i < numLabels; i++) {
+            labelMap.put(uniqueLabels.get(i), i / (double)(numLabels - 1));
+        }
+
+        // Second pass - collect features and mapped labels
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             double[] featureRow = new double[tableModel.getColumnCount() - 1];
             int featureIndex = 0;
@@ -40,19 +60,19 @@ public class KNearestNeighbors {
             labels.add(tableModel.getValueAt(row, classColumnIndex).toString());
         }
 
-        // Add a new column for k-NN classification
-        String newColumnName = csvViewer.getUniqueColumnName("kNN Classification (k=" + k + ", metric=" + metric + ")");
+        // Add new column for k-NN numerical classification
+        String newColumnName = csvViewer.getUniqueColumnName("kNN_" + k + "_" + metric);
         tableModel.addColumn(newColumnName);
         int newColumnIndex = tableModel.getColumnCount() - 1;
 
+        DecimalFormat df = new DecimalFormat("#.####");
+        
         // Classify each instance
         for (int i = 0; i < features.size(); i++) {
             double[] query = features.get(i);
             String prediction = classifyKNN(query, features, labels, k, metric);
-            tableModel.setValueAt(prediction, i, newColumnIndex);
+            tableModel.setValueAt(df.format(labelMap.get(prediction)), i, newColumnIndex);
         }
-
-        csvViewer.getStateManager().addClassColumn(newColumnIndex);
     }
 
     private String classifyKNN(double[] query, List<double[]> features, List<String> labels, int k, String metric) {
@@ -62,10 +82,8 @@ public class KNearestNeighbors {
             distances.add(new double[]{distance, i});
         }
 
-        // Sort by distance
         distances.sort(Comparator.comparingDouble(a -> a[0]));
 
-        // Take the top-k neighbors
         Map<String, Integer> voteCount = new HashMap<>();
         for (int i = 0; i < k; i++) {
             int index = (int) distances.get(i)[1];
@@ -73,7 +91,6 @@ public class KNearestNeighbors {
             voteCount.put(label, voteCount.getOrDefault(label, 0) + 1);
         }
 
-        // Find the majority vote
         return voteCount.entrySet().stream()
                 .max(Map.Entry.comparingByValue())
                 .get()
