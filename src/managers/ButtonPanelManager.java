@@ -98,6 +98,23 @@ public class ButtonPanelManager {
         // Analysis Menu
         JMenu analysisMenu = new JMenu("Analysis Tools");
         analysisMenu.setIcon(resizeIcon("/icons/variance.png"));
+
+        // Machine Learning Menu
+        JMenu mlMenu = new JMenu("Machine Learning");
+        mlMenu.setIcon(resizeIcon("/icons/ml.png"));
+        
+        JMenuItem knnItem = new JMenuItem("k-Nearest Neighbors Classification");
+        knnItem.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                showKNNDialog();
+            }
+        });
+        mlMenu.add(knnItem);
+
+        analysisMenu.add(mlMenu);
+
         addMenuItem(analysisMenu, "Toggle Easy Cases", "/icons/easy.png", e -> csvViewer.toggleEasyCases());
         addMenuItem(analysisMenu, "Show Covariance Matrix", "/icons/variance.png", e -> csvViewer.showCovarianceMatrix());
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", e -> csvViewer.showCovarianceSortDialog());
@@ -110,6 +127,7 @@ public class ButtonPanelManager {
         menuBar.add(trigMenu);
         menuBar.add(visualizationMenu);
         menuBar.add(analysisMenu);
+        menuBar.add(mlMenu);
 
         return menuBar;
     }
@@ -129,5 +147,47 @@ public class ButtonPanelManager {
 
     private ImageIcon resizeIcon(String path) {
         return UIHelper.loadIcon(path, 16, 16); // Small 16x16 icons for menu items
+    }
+
+    private void showKNNDialog() {
+        JDialog dialog = new JDialog((Frame)null, "k-NN Parameters", true);
+        dialog.setLayout(new BorderLayout(5,5));
+        
+        JPanel panel = new JPanel(new GridLayout(0,2,5,5));
+        
+        // K value spinner
+        SpinnerNumberModel spinnerModel = new SpinnerNumberModel(3, 1, 100, 2);
+        JSpinner kSpinner = new JSpinner(spinnerModel);
+        panel.add(new JLabel("Number of neighbors (k):"));
+        panel.add(kSpinner);
+        
+        // Distance metric combo box
+        String[] metrics = {"Euclidean", "Manhattan"};
+        JComboBox<String> metricBox = new JComboBox<>(metrics);
+        panel.add(new JLabel("Distance metric:"));
+        panel.add(metricBox);
+        
+        dialog.add(panel, BorderLayout.CENTER);
+        
+        // Buttons
+        JPanel buttonPanel = new JPanel();
+        JButton okButton = new JButton("OK");
+        okButton.addActionListener(e -> {
+            int k = (Integer)kSpinner.getValue();
+            String metric = (String)metricBox.getSelectedItem();
+            csvViewer.insertKNNClassification(k, metric);
+            dialog.dispose();
+        });
+        buttonPanel.add(okButton);
+        
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> dialog.dispose());
+        buttonPanel.add(cancelButton);
+        
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
     }
 }
