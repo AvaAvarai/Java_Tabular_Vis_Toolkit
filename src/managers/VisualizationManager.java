@@ -1,10 +1,10 @@
 package src.managers;
 
 import src.CsvViewer;
-import src.DecisionTree;
-import src.DecisionTree.TreeNode;
 import src.plots.*;
+import src.utils.DecisionTree;
 import src.utils.PureRegionUtils;
+import src.utils.DecisionTree.TreeNode;
 
 import javax.swing.table.TableColumnModel;
 import java.util.ArrayList;

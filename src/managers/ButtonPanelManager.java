@@ -105,9 +105,9 @@ public class ButtonPanelManager {
         JMenu mlMenu = new JMenu("Classifiers");
         mlMenu.setIcon(resizeIcon("/icons/ml.png"));
         
-        addMenuItem(mlMenu, "Support Sum Machine Classifier", "/icons/combo.png", e -> csvViewer.insertWeightedSumColumn());
+        addMenuItem(mlMenu, "Support Sum Machine", "/icons/combo.png", e -> csvViewer.insertWeightedSumColumn());
 
-        JMenuItem knnItem = new JMenuItem("k-Nearest Neighbors Classifier");
+        JMenuItem knnItem = new JMenuItem("k-Nearest Neighbors");
         knnItem.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();

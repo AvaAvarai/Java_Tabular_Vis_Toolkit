@@ -5,15 +5,15 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.*;
 import src.CsvViewer;
+import src.utils.DecisionTree;
+
 import java.util.List;
-import src.DecisionTree;
 import java.text.DecimalFormat;
 
 public class DecisionTreeClassifier {
     private final CsvViewer csvViewer;
     private final DefaultTableModel tableModel;
     private double trainSplit = 0.7;
-    private boolean useRandomSplit = true;
     private int kFold = 5;
     private boolean useKFold = false;
 
@@ -99,7 +99,6 @@ public class DecisionTreeClassifier {
             trainSplit = (Double) splitSpinner.getValue();
             kFold = (Integer) kFoldSpinner.getValue();
             useKFold = kFoldButton.isSelected();
-            useRandomSplit = randomSplitButton.isSelected();
             dialog.dispose();
             if (useKFold) {
                 performKFoldValidation();

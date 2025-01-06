@@ -1,11 +1,12 @@
 package src.plots;
 
-import src.DecisionTree;
 import java.util.List;
 import java.util.Map;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+
+import src.utils.DecisionTree;
 import src.utils.ScreenshotUtils;
 import javax.swing.KeyStroke;
 import javax.swing.AbstractAction;
