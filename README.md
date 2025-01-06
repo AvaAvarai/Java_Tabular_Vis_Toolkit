@@ -1,6 +1,14 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-**JTabViz** is a Java-based multiplatform toolkit for machine learning (ML) data analysis, classification, and visualization. It is designed for the visualization and analysis of multidimensional (n-D) tabular ML data to discover and build classification models from first order logic rules. Further, it supports data augmentation, to explore how dataset changes impact trained models.
+This project is a research project for my study of the AdaBoost algorithm from a visual perspective and representation learning. To conduct this research, I have developed **JTabViz**, a Java-based multiplatform toolkit for machine learning (ML) data analysis, classification, and visualization. It is designed for the visualization and analysis of multidimensional (n-D) tabular ML data to discover and build classification models from first order logic rules. Further, it supports data augmentation, to explore how dataset changes impact trained models.
+
+Currently, the project supports the following classifiers:
+
+- Support (weighted) Sum Classifier (my own invention)
+- k-Nearest Neighbors Classifier (my own implementation)
+- Linear Discriminant Analysis Classifier (my own implementation)
+
+We seek to combine these potentially weaker classifiers into a single stronger classifier, as AdaBoost does.  
 
 Users can load CSV data to view, analyze, and classify with features like normalization, General Line Coordinates (GLCs) visualizations, tabular heatmaps, covariance matrix heatmaps, row manipulation, cell editing, classification rule testing with confusion matrices, automatic pure region discovery, feature engineering using slope and distance calculations, weighted sum features; including trigonometric wrapping, forward/backward differences, and various trigonometric values, optimal coefficient computation for weighted sums, attribute sorting, and data export.
 
