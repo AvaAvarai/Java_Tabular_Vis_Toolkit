@@ -89,7 +89,7 @@ public class RendererManager {
                 int modelColumn = table.convertColumnIndexToModel(column);
     
                 if (modelColumn >= 0 && modelColumn < numColumns) {
-                    if (csvViewer.isClassColorEnabled() && modelColumn == classColumnIndex) {
+                    if (csvViewer.isClassColorEnabled() && csvViewer.getStateManager().isClassColumn(modelColumn)) {
                         String className = (String) value;
                         if (csvViewer.getClassColors().containsKey(className)) {
                             c.setBackground(csvViewer.getClassColors().get(className));

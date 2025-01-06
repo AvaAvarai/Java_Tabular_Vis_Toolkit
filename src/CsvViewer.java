@@ -492,7 +492,7 @@ public class CsvViewer extends JFrame {
                 originalColumnNames.add(tableModel.getColumnName(i));
             }
             stateManager.setOriginalColumnNames(originalColumnNames);
-
+            stateManager.addClassColumn(getClassColumnIndex());
             stateManager.setNormalized(false);
             stateManager.setHeatmapEnabled(false);
             stateManager.setClassColorEnabled(false);
@@ -1339,13 +1339,16 @@ public class CsvViewer extends JFrame {
         // Add a new column for k-NN classification
         String newColumnName = getUniqueColumnName("kNN Classification (k=" + k + ", metric=" + metric + ")");
         tableModel.addColumn(newColumnName);
+        int newColumnIndex = tableModel.getColumnCount() - 1;
 
         // Classify each instance
         for (int i = 0; i < features.size(); i++) {
             double[] query = features.get(i);
             String prediction = classifyKNN(query, features, labels, k, metric);
-            tableModel.setValueAt(prediction, i, tableModel.getColumnCount() - 1);
+            tableModel.setValueAt(prediction, i, newColumnIndex);
         }
+
+        stateManager.addClassColumn(newColumnIndex);
     }
 
     private String classifyKNN(double[] query, List<double[]> features, List<String> labels, int k, String metric) {

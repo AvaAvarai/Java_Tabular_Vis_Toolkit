@@ -4,8 +4,10 @@ import java.awt.Color;
 import java.awt.Shape;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class StateManager {
     private String datasetName;
@@ -19,6 +21,7 @@ public class StateManager {
     private Map<String, Shape> classShapes;
     private Color cellTextColor;
     private boolean differenceColumnsVisible;
+    private Set<Integer> classColumns;
 
     public StateManager() {
         this.datasetName = "";
@@ -32,6 +35,7 @@ public class StateManager {
         this.classShapes = new HashMap<>();
         this.cellTextColor = Color.BLACK;
         this.differenceColumnsVisible = false;
+        this.classColumns = new HashSet<>();
     }
 
     public void clearState() {
@@ -45,6 +49,7 @@ public class StateManager {
         classShapes.clear();
         cellTextColor = Color.BLACK;
         differenceColumnsVisible = false;
+        classColumns.clear();
     }
 
     public String getDatasetName() {
@@ -125,5 +130,13 @@ public class StateManager {
 
     public void setDifferenceColumnsVisible(boolean differenceColumnsVisible) {
         this.differenceColumnsVisible = differenceColumnsVisible;
+    }
+
+    public boolean isClassColumn(int modelColumn) {
+        return classColumns.contains(modelColumn);
+    }
+
+    public void addClassColumn(int columnIndex) {
+        classColumns.add(columnIndex);
     }
 }
