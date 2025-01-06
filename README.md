@@ -4,9 +4,10 @@ This project is a research project for my study of the AdaBoost algorithm from a
 
 Currently, the project supports the following classifiers:
 
-- Support (weighted) Sum Classifier (my own invention)
-- k-Nearest Neighbors Classifier (my own implementation)
-- Linear Discriminant Analysis Classifier (my own implementation)
+- Support (weighted) Sum Classifier (our invention)
+- k-Nearest Neighbors Classifier
+- Linear Discriminant Analysis Classifier
+- Decision Tree Classifier
 
 We seek to combine these potentially weaker classifiers into a single stronger classifier, as AdaBoost does.  
 
@@ -283,6 +284,8 @@ x1, x2, x3, x4, x5, class,
 ## Acknowledgements
 
 The user interface icons are sourced from [Font Awesome](https://fontawesome.com/search), converted using the [fa2png tool](https://fa2png.app/).
+
+This project is built on the Java Swing graphics library and uses no external libraries. We include a subfolder with UML generation and SVG to PNG conversion using PlantUML, library included in the project, licensed under the GNU GPL ![PlantUML](https://plantuml.com/license).  
 
 ## License Information
 
