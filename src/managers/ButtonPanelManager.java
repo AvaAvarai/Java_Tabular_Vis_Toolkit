@@ -118,7 +118,7 @@ public class ButtonPanelManager {
         });
         mlMenu.add(knnItem);
 
-        addMenuItem(mlMenu, "Linear Discriminant Analysis", "/icons/ml.png", e -> {
+        addMenuItem(mlMenu, "Linear Discriminant Analysis", "/icons/lda.png", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
