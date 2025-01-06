@@ -29,8 +29,8 @@ public class ButtonPanelManager {
         // File Menu
         JMenu fileMenu = new JMenu("File");
         fileMenu.setIcon(resizeIcon("/icons/file.png"));
-        addMenuItem(fileMenu, "Load CSV", "/icons/file.png", e -> csvViewer.loadCsvFile());
-        addMenuItem(fileMenu, "Export CSV", "/icons/file.png", e -> csvViewer.exportCsvFile());
+        addMenuItem(fileMenu, "Open Data", "/icons/file.png", e -> csvViewer.loadCsvFile());
+        addMenuItem(fileMenu, "Save Data", "/icons/export.png", e -> csvViewer.exportCsvFile());
 
         // View Menu (Visualizations)
         JMenu viewMenu = new JMenu("Visualizations");
@@ -108,6 +108,7 @@ public class ButtonPanelManager {
         addMenuItem(mlMenu, "Support Sum Machine", "/icons/combo.png", e -> csvViewer.insertWeightedSumColumn());
 
         JMenuItem knnItem = new JMenuItem("k-Nearest Neighbors");
+        knnItem.setIcon(resizeIcon("/icons/knn.png"));
         knnItem.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
@@ -126,7 +127,7 @@ public class ButtonPanelManager {
             }
         });
 
-        addMenuItem(mlMenu, "Decision Tree", "/icons/ml.png", e -> {
+        addMenuItem(mlMenu, "Decision Tree", "/icons/dt.png", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -158,7 +159,7 @@ public class ButtonPanelManager {
         JMenuItem item = new JMenuItem(text);
         item.setIcon(resizeIcon(iconPath));
         item.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty() && !text.equals("Load CSV")) {
+            if (csvViewer.dataHandler.isDataEmpty() && !text.equals("Open Data")) {
                 csvViewer.noDataLoadedError();
             } else {
                 listener.actionPerformed(e);
