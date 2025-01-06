@@ -22,13 +22,24 @@ for file in java_files:
         content = f.readlines()
 
     class_info = {}
+    package_name = ""
+    
     for line in content:
+        # Detect package name
+        if line.strip().startswith("package "):
+            package_name = re.findall(r"package\s+([\w.]+)", line)[0]
+            
         # Detect class definition
         if re.search(r"\bclass\b", line) and "{" in line:
             class_name = re.findall(r"class\s+(\w+)", line)
             if class_name:
                 class_name = class_name[0]
-                class_info = {"class": class_name, "file": file, "functions": []}
+                class_info = {
+                    "class": class_name,
+                    "file": file,
+                    "package": package_name,
+                    "functions": []
+                }
                 info.append(class_info)
 
             # Detect inheritance
@@ -81,6 +92,11 @@ relationships = {
     for key, pairs in relationships.items()
 }
 
+# Group classes by package
+packages = defaultdict(list)
+for item in info:
+    packages[item.get("package", "default")].append(item)
+
 # Generate PlantUML code
 uml_code = "@startuml\n"
 uml_code += "skinparam classAttributeIconSize 0\n"
@@ -88,13 +104,16 @@ uml_code += "skinparam class {\n"
 uml_code += "\tBorderColor black\n"
 uml_code += "}\n"
 
-for item in info:
-    if "class" in item:
-        uml_code += f"class {item['class']} {{\n"
-        uml_code += f"\tFrom file: {os.path.basename(item['file'])}\n"
+# Generate package and class definitions
+for package_name, package_classes in packages.items():
+    uml_code += f"package {package_name} {{\n"
+    for item in package_classes:
+        uml_code += f"\tclass {item['class']} {{\n"
+        uml_code += f"\t\tFrom file: {os.path.basename(item['file'])}\n"
         for func in item.get("functions", []):
-            uml_code += f"\t+ {func}()\n"
-        uml_code += "}\n"
+            uml_code += f"\t\t+ {func}()\n"
+        uml_code += "\t}\n"
+    uml_code += "}\n"
 
 # Add relationships
 for parent, child in relationships["inheritance"]:
