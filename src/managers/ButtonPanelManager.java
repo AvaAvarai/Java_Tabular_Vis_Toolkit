@@ -2,6 +2,7 @@ package src.managers;
 
 import src.CsvViewer;
 import src.UIHelper;
+import src.classifiers.LinearDiscriminantAnalysis;
 
 import javax.swing.*;
 import java.awt.*;
@@ -114,6 +115,15 @@ public class ButtonPanelManager {
             }
         });
         mlMenu.add(knnItem);
+
+        addMenuItem(mlMenu, "Linear Discriminant Analysis", "/icons/ml.png", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                LinearDiscriminantAnalysis lda = new LinearDiscriminantAnalysis(csvViewer, csvViewer.tableModel);
+                lda.insertLDAClassification();
+            }
+        });
 
         analysisMenu.add(mlMenu);
 
