@@ -14,6 +14,7 @@ public class ButtonPanelManager {
 
     public ButtonPanelManager(CsvViewer csvViewer) {
         this.csvViewer = csvViewer;
+        this.toggleButton = new JButton();
     }
 
     public JButton getToggleButton() {

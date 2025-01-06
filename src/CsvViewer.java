@@ -16,7 +16,6 @@ import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
-import java.util.Comparator;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -28,6 +27,8 @@ import src.table.ReorderableTableModel;
 import src.table.TableSetup;
 import src.utils.ShapeUtils;
 import src.utils.CovariancePairUtils;
+import src.classifiers.SupportSumMachine;
+import src.classifiers.KNearestNeighbors;
 
 public class CsvViewer extends JFrame {
     public JTable table;
@@ -172,242 +173,12 @@ public class CsvViewer extends JFrame {
             noDataLoadedError();
             return;
         }
-
-        List<Integer> columnIndices = new ArrayList<>();
-        List<Double> coefficients = new ArrayList<>();
-
-        JPanel panel = new JPanel(new GridLayout(0, 2));
-
-        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            String columnName = tableModel.getColumnName(i);
-            if (!columnName.equalsIgnoreCase("class")) {
-                columnIndices.add(i);
-                JLabel label = new JLabel("Coefficient for " + columnName + ":");
-                JTextField coefficientField = new JTextField("1");
-                panel.add(label);
-                panel.add(coefficientField);
-                coefficients.add(null);
-            }
-        }
-
-        String[] initTypes = {"Flat Value", "Random Range"};
-        JComboBox<String> initTypeCombo = new JComboBox<>(initTypes);
-        panel.add(new JLabel("Initialization Type:"));
-        panel.add(initTypeCombo);
-
-        JLabel flatValueLabel = new JLabel("Flat Value:");
-        JTextField flatValueField = new JTextField("1.0");
-        panel.add(flatValueLabel);
-        panel.add(flatValueField);
-
-        JLabel minRangeLabel = new JLabel("Min Range:");
-        JTextField minRangeField = new JTextField("0.0");
-        JLabel maxRangeLabel = new JLabel("Max Range:");
-        JTextField maxRangeField = new JTextField("1.0");
-
-        panel.add(minRangeLabel);
-        panel.add(minRangeField);
-        panel.add(maxRangeLabel);
-        panel.add(maxRangeField);
-
-        // Add coefficient range controls
-        JLabel coeffMinLabel = new JLabel("Coefficient Min:");
-        JTextField coeffMinField = new JTextField("-1.0");
-        JLabel coeffMaxLabel = new JLabel("Coefficient Max:");
-        JTextField coeffMaxField = new JTextField("1.0");
-
-        panel.add(coeffMinLabel);
-        panel.add(coeffMinField);
-        panel.add(coeffMaxLabel);
-        panel.add(coeffMaxField);
-        // Add adaptive learning rate checkbox
-        JCheckBox adaptiveLearningRateCheckbox = new JCheckBox("Use Adaptive Learning Rate", true);
-        panel.add(new JLabel("")); // Empty label for grid alignment
-        panel.add(adaptiveLearningRateCheckbox);
-
-        initTypeCombo.addActionListener(e -> {
-            boolean isRandom = initTypeCombo.getSelectedItem().equals("Random Range");
-            minRangeField.setEnabled(isRandom);
-            maxRangeField.setEnabled(isRandom);
-            flatValueField.setEnabled(!isRandom);
-        });
         
-        minRangeField.setEnabled(false);
-        maxRangeField.setEnabled(false);
-
-        String[] trigOptions = {"None", "cos", "sin", "tan", "arccos", "arcsin", "arctan"};
-        JComboBox<String> trigFunctionSelector = new JComboBox<>(trigOptions);
-        panel.add(new JLabel("Wrap Weighted Sum in:"));
-        panel.add(trigFunctionSelector);
-
-        JButton optimizeButton = new JButton("Optimize Coefficients");
-        optimizeButton.addActionListener(e -> {
-            try {
-                String initType = initTypeCombo.getSelectedItem().toString();
-                double flatValue = Double.parseDouble(flatValueField.getText());
-                double minRange = Double.parseDouble(minRangeField.getText());
-                double maxRange = Double.parseDouble(maxRangeField.getText());
-                double coeffMin = Double.parseDouble(coeffMinField.getText());
-                double coeffMax = Double.parseDouble(coeffMaxField.getText());
-                
-                if (initType.equals("Random Range") && minRange >= maxRange) {
-                    JOptionPane.showMessageDialog(this, 
-                        "Min range must be less than max range", 
-                        "Invalid Range", 
-                        JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                if (coeffMin >= coeffMax) {
-                    JOptionPane.showMessageDialog(this,
-                        "Coefficient minimum must be less than maximum",
-                        "Invalid Coefficient Range",
-                        JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                GradientDescentOptimizer optimizer = new GradientDescentOptimizer(this, 0.01, 1000, 1e-6, adaptiveLearningRateCheckbox.isSelected());
-                optimizer.optimizeCoefficientsUsingGradientDescent(
-                    columnIndices, 
-                    coefficients, 
-                    panel, 
-                    (String) trigFunctionSelector.getSelectedItem(),
-                    initType.equals("Random Range") ? "random" : "flat",
-                    flatValue,
-                    minRange,
-                    maxRange,
-                    coeffMin,
-                    coeffMax
-                );
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, 
-                    "Please enter valid numbers for all fields", 
-                    "Invalid Input", 
-                    JOptionPane.ERROR_MESSAGE);
-            }
-        });
-        panel.add(optimizeButton);
-
-        JScrollPane scrollPane = new JScrollPane(panel);
-        scrollPane.setPreferredSize(new Dimension(400, 400));
-
-        int result = JOptionPane.showConfirmDialog(this, scrollPane, "Enter or optimize coefficients for weighted sum", JOptionPane.OK_CANCEL_OPTION);
-
-        if (result == JOptionPane.OK_OPTION) {
-            try {
-                for (int j = 0; j < coefficients.size(); j++) {
-                    coefficients.set(j, Double.parseDouble(((JTextField) panel.getComponent(2 * j + 1)).getText()));
-                }
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Please enter valid numbers for coefficients.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            DecimalFormat decimalFormat = new DecimalFormat("#.####");
-            StringBuilder columnNameBuilder = new StringBuilder();
-            for (int i = 0; i < columnIndices.size(); i++) {
-                double coeff = coefficients.get(i);
-                if (i == 0 || coeff >= 0) {
-                    if (i > 0) {
-                        columnNameBuilder.append("+");
-                    }
-                    columnNameBuilder.append(decimalFormat.format(coeff));
-                } else {
-                    columnNameBuilder.append(decimalFormat.format(coeff));
-                }
-                columnNameBuilder.append("*").append(tableModel.getColumnName(columnIndices.get(i)));
-            }
-            String columnName = columnNameBuilder.toString();
-
-            String newColumnName = getUniqueColumnName(columnName);
-
-            tableModel.addColumn(newColumnName);
-
-            String trigFunction = (String) trigFunctionSelector.getSelectedItem();
-
-            // Calculate the weighted sum for each case, apply the kernel function, and perform min-max normalization if active
-            double min = Double.MAX_VALUE;
-            double max = Double.MIN_VALUE;
-            for (int row = 0; row < tableModel.getRowCount(); row++) {
-                double sum = 0.0;
-                try {
-                    for (int j = 0; j < columnIndices.size(); j++) {
-                        Object value = tableModel.getValueAt(row, columnIndices.get(j));
-                        sum += coefficients.get(j) * Double.parseDouble(value.toString());
-                    }
-                    sum = applyTrigFunction(sum, trigFunction);
-                    if (sum < min) {
-                        min = sum;
-                    }
-                    if (sum > max) {
-                        max = sum;
-                    }
-                } catch (NumberFormatException | NullPointerException e) {
-                    sum = Double.NaN;
-                }
-            }
-
-            if (min != max) { // Check if min and max are not equal to avoid division by zero
-                for (int row = 0; row < tableModel.getRowCount(); row++) {
-                    double sum = 0.0;
-                    try {
-                        for (int j = 0; j < columnIndices.size(); j++) {
-                            Object value = tableModel.getValueAt(row, columnIndices.get(j));
-                            sum += coefficients.get(j) * Double.parseDouble(value.toString());
-                        }
-                        sum = applyTrigFunction(sum, trigFunction);
-                        // Apply min-max normalization only if it is currently active
-                        if (stateManager.isNormalized()) {
-                            sum = (sum - min) / (max - min);
-                        }
-                        tableModel.setValueAt(decimalFormat.format(sum), row, tableModel.getColumnCount() - 1);
-                    } catch (NumberFormatException | NullPointerException e) {
-                        tableModel.setValueAt("NaN", row, tableModel.getColumnCount() - 1);
-                    }
-                }
-            } else {
-                for (int row = 0; row < tableModel.getRowCount(); row++) {
-                    double sum = 0.0;
-                    try {
-                        for (int j = 0; j < columnIndices.size(); j++) {
-                            Object value = tableModel.getValueAt(row, columnIndices.get(j));
-                            sum += coefficients.get(j) * Double.parseDouble(value.toString());
-                        }
-                        sum = applyTrigFunction(sum, trigFunction);
-                        tableModel.setValueAt(decimalFormat.format(sum), row, tableModel.getColumnCount() - 1);
-                    } catch (NumberFormatException | NullPointerException e) {
-                        tableModel.setValueAt("NaN", row, tableModel.getColumnCount() - 1);
-                    }
-                }
-            }
-
-            applyRowFilter();
-            dataHandler.updateStats(tableModel, statsTextArea);
-            updateSelectedRowsLabel();
-        }
+        SupportSumMachine ssm = new SupportSumMachine(this, tableModel);
+        ssm.insertWeightedSumColumn();
     }
 
-    private double applyTrigFunction(double value, String trigFunction) {
-        switch (trigFunction) {
-            case "cos":
-                return Math.cos(value);
-            case "sin":
-                return Math.sin(value);
-            case "tan":
-                return Math.tan(value);
-            case "arccos":
-                return Math.acos(value);
-            case "arcsin":
-                return Math.asin(value);
-            case "arctan":
-                return Math.atan(value);
-            case "None":
-            default:
-                return value;
-        }
-    }
-
-    private String getUniqueColumnName(String baseName) {
+    public String getUniqueColumnName(String baseName) {
         String newName = baseName;
         int counter = 1;
         while (columnExists(newName)) {
@@ -1314,91 +1085,7 @@ public class CsvViewer extends JFrame {
     }
 
     public void insertKNNClassification(int k, String metric) {
-        if (tableModel.getColumnCount() == 0) {
-            noDataLoadedError();
-            return;
-        }
-
-        // Extract features and labels
-        List<double[]> features = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        int classColumnIndex = getClassColumnIndex();
-
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            double[] featureRow = new double[tableModel.getColumnCount() - 1];
-            int featureIndex = 0;
-            for (int col = 0; col < tableModel.getColumnCount(); col++) {
-                if (col != classColumnIndex) {
-                    featureRow[featureIndex++] = Double.parseDouble(tableModel.getValueAt(row, col).toString());
-                }
-            }
-            features.add(featureRow);
-            labels.add(tableModel.getValueAt(row, classColumnIndex).toString());
-        }
-
-        // Add a new column for k-NN classification
-        String newColumnName = getUniqueColumnName("kNN Classification (k=" + k + ", metric=" + metric + ")");
-        tableModel.addColumn(newColumnName);
-        int newColumnIndex = tableModel.getColumnCount() - 1;
-
-        // Classify each instance
-        for (int i = 0; i < features.size(); i++) {
-            double[] query = features.get(i);
-            String prediction = classifyKNN(query, features, labels, k, metric);
-            tableModel.setValueAt(prediction, i, newColumnIndex);
-        }
-
-        stateManager.addClassColumn(newColumnIndex);
-    }
-
-    private String classifyKNN(double[] query, List<double[]> features, List<String> labels, int k, String metric) {
-        List<double[]> distances = new ArrayList<>();
-        for (int i = 0; i < features.size(); i++) {
-            double distance = calculateDistance(query, features.get(i), metric);
-            distances.add(new double[]{distance, i});
-        }
-
-        // Sort by distance
-        distances.sort(Comparator.comparingDouble(a -> a[0]));
-
-        // Take the top-k neighbors
-        Map<String, Integer> voteCount = new HashMap<>();
-        for (int i = 0; i < k; i++) {
-            int index = (int) distances.get(i)[1];
-            String label = labels.get(index);
-            voteCount.put(label, voteCount.getOrDefault(label, 0) + 1);
-        }
-
-        // Find the majority vote
-        return voteCount.entrySet().stream()
-                .max(Map.Entry.comparingByValue())
-                .get()
-                .getKey();
-    }
-
-    private double calculateDistance(double[] a, double[] b, String metric) {
-        switch (metric.toLowerCase()) {
-            case "manhattan":
-                return manhattanDistance(a, b);
-            case "euclidean":
-            default:
-                return euclideanDistance(a, b);
-        }
-    }
-
-    private double euclideanDistance(double[] a, double[] b) {
-        double sum = 0.0;
-        for (int i = 0; i < a.length; i++) {
-            sum += Math.pow(a[i] - b[i], 2);
-        }
-        return Math.sqrt(sum);
-    }
-
-    private double manhattanDistance(double[] a, double[] b) {
-        double sum = 0.0;
-        for (int i = 0; i < a.length; i++) {
-            sum += Math.abs(a[i] - b[i]);
-        }
-        return sum;
+        KNearestNeighbors knn = new KNearestNeighbors(this, tableModel);
+        knn.insertKNNClassification(k, metric);
     }
 }

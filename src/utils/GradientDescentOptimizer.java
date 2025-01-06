@@ -1,4 +1,4 @@
-package src;
+package src.utils;
 
 import java.util.List;
 import java.util.Map;
@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Random;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-
+import src.CsvViewer;
 /**
  * The GradientDescentOptimizer class provides functionality to optimize the coefficients
  * for a weighted sum of features using the gradient descent algorithm with optional adaptive learning rate.
