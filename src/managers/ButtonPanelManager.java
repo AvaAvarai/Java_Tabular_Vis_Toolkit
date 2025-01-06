@@ -16,353 +16,118 @@ public class ButtonPanelManager {
         this.csvViewer = csvViewer;
     }
 
-    public JPanel createButtonPanel() {
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-
-        buttonPanel.add(createFileMenu());
-        buttonPanel.add(createVizButton());
-        buttonPanel.add(createNormalizeButton());
-        buttonPanel.add(createColorMenu());
-        buttonPanel.add(createCovarianceMatrixButton());
-        buttonPanel.add(createFontSettingsButton());
-        buttonPanel.add(createRowOperationsMenu());
-        buttonPanel.add(createCovarianceSortButton());
-        buttonPanel.add(createSetClassColorsButton());
-        buttonPanel.add(createRuleTesterButton());
-        buttonPanel.add(createToggleTrigonometricButton());
-        buttonPanel.add(createWeightedSumButton());
-        buttonPanel.add(createSlopesAndDistancesButton());
-
-        return buttonPanel;
-    }
-
-    private JButton createFileMenu() {
-        JMenuItem loadItem = new JMenuItem("Load CSV");
-        JMenuItem exportItem = new JMenuItem("Export CSV");
-
-        loadItem.addActionListener(e -> csvViewer.loadCsvFile());
-        exportItem.addActionListener(e -> csvViewer.exportCsvFile());
-
-        JPopupMenu fileMenu = new JPopupMenu();
-        fileMenu.add(loadItem);
-        fileMenu.add(exportItem);
-
-        return UIHelper.createButton("/icons/file.png", "File", e -> fileMenu.show((JComponent) e.getSource(), 0, 0));
-    }
-
-    private JButton createVizButton() {
-        JMenuItem parallelPlotItem = new JMenuItem("Parallel Coordinates Plot");
-        JMenuItem shiftedPairedItem = new JMenuItem("Shifted Paired Coordinates Plot");
-        JMenuItem CircularCoordinatesItem = new JMenuItem("Circular/Polygonal Coordinates Plot");
-        JMenuItem starCoordinatesItem = new JMenuItem("Traditional Star Coordinates Plot");
-        JMenuItem concentricCoordinatesItem = new JMenuItem("Concentric Coordinates Plot");
-        JMenuItem lineCoordinatesItem = new JMenuItem("Line Coordinates Plot");
-        JMenuItem dtItem = new JMenuItem("Decision Tree");
-
-        parallelPlotItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showParallelCoordinatesPlot();
-            }
-        });
-        shiftedPairedItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showShiftedPairedCoordinates();
-            }
-        });
-        CircularCoordinatesItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showCircularCoordinatesPlot();
-            }
-        });
-        starCoordinatesItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showStarCoordinatesPlot();
-            }
-        });
-        concentricCoordinatesItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showConcentricCoordinatesPlot();
-            }
-        });
-        lineCoordinatesItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showLineCoordinatesPlot();
-            }
-        });
-        dtItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showDecisionTreeVisualization();
-            }
-        });
-
-        JPopupMenu vizMenu = new JPopupMenu();
-        vizMenu.add(parallelPlotItem);
-        vizMenu.add(shiftedPairedItem);
-        vizMenu.add(CircularCoordinatesItem);
-        vizMenu.add(starCoordinatesItem);
-        vizMenu.add(concentricCoordinatesItem);
-        vizMenu.add(lineCoordinatesItem);
-        vizMenu.add(dtItem);
-
-        return UIHelper.createButton("/icons/start.png", "Visualizations", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                vizMenu.show((JComponent) e.getSource(), 0, 0);
-            }
-        });
-    }
-
-    private JButton createNormalizeButton() {
-        JButton normalizeButton = UIHelper.createButton("/icons/normalize.png", "Toggle Normalization", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-                return;
-            }
-
-            JMenuItem minMaxItem = new JMenuItem("Min-Max Normalization");
-            JMenuItem zScoreItem = new JMenuItem("Z-Score Normalization");
-            minMaxItem.addActionListener(event -> {
-                csvViewer.getStateManager().setNormalizationType("minmax");
-                csvViewer.dataHandler.setNormalizationType("minmax");
-                csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
-                csvViewer.getStateManager().setNormalized(true);
-            });
-            zScoreItem.addActionListener(event -> {
-                csvViewer.getStateManager().setNormalizationType("zscore");
-                csvViewer.dataHandler.setNormalizationType("zscore");
-                csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
-                csvViewer.getStateManager().setNormalized(true);
-            });
-            JPopupMenu normalizationMenu = new JPopupMenu();
-            normalizationMenu.add(minMaxItem);
-            normalizationMenu.add(zScoreItem);
-            if (!csvViewer.getStateManager().isNormalized()) {
-                normalizationMenu.show((JComponent) e.getSource(), 0, 0);
-            } else {
-                csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
-                csvViewer.getStateManager().setNormalized(false);
-            }
-        });
-        return normalizeButton;
-    }
-
     public JButton getToggleButton() {
         return toggleButton;
     }
 
-    private JButton createColorMenu() {
-        JMenuItem heatmapItem = new JMenuItem("Toggle Heatmap");
-        JMenuItem classColorItem = new JMenuItem("Toggle Class Colors");
-        JMenuItem highlightBlanksItem = new JMenuItem("Toggle Highlight Blanks");
-        JMenuItem easyCasesItem = new JMenuItem("Toggle Easy Cases");
-    
-        // Create popup menu
-        JPopupMenu colorMenu = new JPopupMenu();
-        colorMenu.add(heatmapItem);
-        colorMenu.add(classColorItem);
-        colorMenu.add(highlightBlanksItem);
-        colorMenu.add(easyCasesItem);
-    
-        // Create button that shows menu
-        JButton button = UIHelper.createButton("/icons/heatmap.png", "Visualization Options", e -> {
-            colorMenu.show((JComponent) e.getSource(), 0, 0);
+    public JMenuBar createMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+
+        // File Menu
+        JMenu fileMenu = new JMenu("File");
+        fileMenu.setIcon(resizeIcon("/icons/file.png"));
+        addMenuItem(fileMenu, "Load CSV", "/icons/file.png", e -> csvViewer.loadCsvFile());
+        addMenuItem(fileMenu, "Export CSV", "/icons/file.png", e -> csvViewer.exportCsvFile());
+
+        // View Menu (Visualizations)
+        JMenu viewMenu = new JMenu("Visualizations");
+        viewMenu.setIcon(resizeIcon("/icons/start.png"));
+        addMenuItem(viewMenu, "Parallel Coordinates Plot", "/icons/start.png", e -> csvViewer.showParallelCoordinatesPlot());
+        addMenuItem(viewMenu, "Shifted Paired Coordinates Plot", "/icons/start.png", e -> csvViewer.showShiftedPairedCoordinates());
+        addMenuItem(viewMenu, "Circular/Polygonal Coordinates Plot", "/icons/start.png", e -> csvViewer.showCircularCoordinatesPlot());
+        addMenuItem(viewMenu, "Traditional Star Coordinates Plot", "/icons/start.png", e -> csvViewer.showStarCoordinatesPlot());
+        addMenuItem(viewMenu, "Concentric Coordinates Plot", "/icons/start.png", e -> csvViewer.showConcentricCoordinatesPlot());
+        addMenuItem(viewMenu, "Line Coordinates Plot", "/icons/start.png", e -> csvViewer.showLineCoordinatesPlot());
+        addMenuItem(viewMenu, "Decision Tree", "/icons/start.png", e -> csvViewer.showDecisionTreeVisualization());
+
+        // Data Menu
+        JMenu dataMenu = new JMenu("Data");
+        dataMenu.setIcon(resizeIcon("/icons/normalize.png"));
+        
+        // Normalization submenu
+        JMenu normalizeMenu = new JMenu("Normalize");
+        normalizeMenu.setIcon(resizeIcon("/icons/normalize.png"));
+        addMenuItem(normalizeMenu, "Min-Max Normalization", "/icons/normalize.png", e -> {
+            csvViewer.getStateManager().setNormalizationType("minmax");
+            csvViewer.dataHandler.setNormalizationType("minmax");
+            csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
+            csvViewer.getStateManager().setNormalized(true);
         });
-    
-        heatmapItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.toggleHeatmap();
-            }
+        addMenuItem(normalizeMenu, "Z-Score Normalization", "/icons/normalize.png", e -> {
+            csvViewer.getStateManager().setNormalizationType("zscore");
+            csvViewer.dataHandler.setNormalizationType("zscore");
+            csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
+            csvViewer.getStateManager().setNormalized(true);
         });
-    
-        classColorItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.toggleClassColors();
-            }
-        });
-    
-        highlightBlanksItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.highlightBlanks();
-            }
-        });
-    
-        easyCasesItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.toggleEasyCases();
-            }
-        });
-    
-        return button;
-    }
-    
-    private JButton createCovarianceMatrixButton() {
-        return UIHelper.createButton("/icons/variance.png", "Show Covariance Matrix", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showCovarianceMatrix();
-            }
-        });
-    }
+        dataMenu.add(normalizeMenu);
 
-    private JButton createSlopesAndDistancesButton() {
-        return UIHelper.createButton("/icons/slopes_distances.png", "Insert Slopes and Distances", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showCalculateSlopesAndDistancesDialog();
-            }
-        });
-    }    
+        // Row operations submenu
+        JMenu rowMenu = new JMenu("Row Operations");
+        rowMenu.setIcon(resizeIcon("/icons/clone.png"));
+        addMenuItem(rowMenu, "Insert Row", "/icons/clone.png", e -> csvViewer.insertRow());
+        addMenuItem(rowMenu, "Delete Row", "/icons/clone.png", e -> csvViewer.deleteRow());
+        addMenuItem(rowMenu, "Clone Row", "/icons/clone.png", e -> csvViewer.cloneSelectedRow());
+        dataMenu.add(rowMenu);
 
-    private JButton createFontSettingsButton() {
-        return UIHelper.createButton("/icons/fontcolor.png", "Font Color", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showFontSettingsDialog();
-            }
-        });
-    }
+        // Other data operations
+        addMenuItem(dataMenu, "Insert Weighted Sum Column", "/icons/combo.png", e -> csvViewer.insertWeightedSumColumn());
+        addMenuItem(dataMenu, "Insert Slopes and Distances", "/icons/slopes_distances.png", e -> csvViewer.showCalculateSlopesAndDistancesDialog());
 
-    private JButton createRowOperationsMenu() {
-        JMenuItem insertItem = new JMenuItem("Insert Row");
-        JMenuItem deleteItem = new JMenuItem("Delete Row");
-        JMenuItem cloneItem = new JMenuItem("Clone Row");
-
-        insertItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.insertRow();
-            }
-        });
-
-        deleteItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.deleteRow();
-            }
-        });
-
-        cloneItem.addActionListener(e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.cloneSelectedRow();
-            }
-        });
-
-        JPopupMenu rowMenu = new JPopupMenu();
-        rowMenu.add(insertItem);
-        rowMenu.add(deleteItem);
-        rowMenu.add(cloneItem);
-
-        return UIHelper.createButton("/icons/clone.png", "Row Operations", e -> rowMenu.show((JComponent) e.getSource(), 0, 0));
-    }
-
-    private JButton createCovarianceSortButton() {
-        return UIHelper.createButton("/icons/sort.png", "Sort Columns by Covariance", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showCovarianceSortDialog();
-            }
-        });
-    }
-
-    private JButton createSetClassColorsButton() {
-        return UIHelper.createButton("/icons/setcolor.png", "Set Class Colors", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showColorPickerDialog();
-            }
-        });
-    }
-
-    private JButton createRuleTesterButton() {
-        return UIHelper.createButton("/icons/rule_tester.png", "Rule Tester", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                csvViewer.showRuleTesterDialog();
-            }
-        });
-    }
-
-    private JButton createToggleTrigonometricButton() {
-        JMenuItem forwardDiffItem = new JMenuItem("Forward Differences");
-        JMenuItem backwardDiffItem = new JMenuItem("Backward Differences");
-        JMenuItem directItem = new JMenuItem("Direct");
-        JMenuItem invForwardDiffItem = new JMenuItem("Inverse Forward Differences");
-        JMenuItem invBackwardDiffItem = new JMenuItem("Inverse Backward Differences");
-        JMenuItem invDirectItem = new JMenuItem("Inverse Direct");
-        JMenuItem removeItem = new JMenuItem("Remove Trigonometric Columns");
-
-        ActionListener trigActionListener = e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-                return;
-            }
-            csvViewer.toggleTrigonometricColumns();
-        };
-
-        forwardDiffItem.addActionListener(trigActionListener);
-        backwardDiffItem.addActionListener(trigActionListener);
-        directItem.addActionListener(trigActionListener);
-        invForwardDiffItem.addActionListener(trigActionListener);
-        invBackwardDiffItem.addActionListener(trigActionListener);
-        invDirectItem.addActionListener(trigActionListener);
-        removeItem.addActionListener(trigActionListener);
-
-        JPopupMenu trigMenu = new JPopupMenu();
-        trigMenu.add(forwardDiffItem);
-        trigMenu.add(backwardDiffItem);
-        trigMenu.add(directItem);
+        // Trigonometric Menu
+        JMenu trigMenu = new JMenu("Trigonometric");
+        trigMenu.setIcon(resizeIcon("/icons/trigon.png"));
+        addMenuItem(trigMenu, "Forward Differences", "/icons/trigon.png", e -> csvViewer.toggleTrigonometricColumns());
+        addMenuItem(trigMenu, "Backward Differences", "/icons/trigon.png", e -> csvViewer.toggleTrigonometricColumns());
+        addMenuItem(trigMenu, "Direct", "/icons/trigon.png", e -> csvViewer.toggleTrigonometricColumns());
         trigMenu.addSeparator();
-        trigMenu.add(invForwardDiffItem);
-        trigMenu.add(invBackwardDiffItem);
-        trigMenu.add(invDirectItem);
+        addMenuItem(trigMenu, "Inverse Forward Differences", "/icons/trigon.png", e -> csvViewer.toggleTrigonometricColumns());
+        addMenuItem(trigMenu, "Inverse Backward Differences", "/icons/trigon.png", e -> csvViewer.toggleTrigonometricColumns());
+        addMenuItem(trigMenu, "Inverse Direct", "/icons/trigon.png", e -> csvViewer.toggleTrigonometricColumns());
         trigMenu.addSeparator();
-        trigMenu.add(removeItem);
+        addMenuItem(trigMenu, "Remove Trigonometric Columns", "/icons/trigon.png", e -> csvViewer.toggleTrigonometricColumns());
 
-        return UIHelper.createButton("/icons/trigon.png", "Trigonometric Options", 
-            e -> trigMenu.show((JComponent) e.getSource(), 0, 0));
+        // Visualization Options Menu
+        JMenu visualizationMenu = new JMenu("Visualization Options");
+        visualizationMenu.setIcon(resizeIcon("/icons/heatmap.png"));
+        addMenuItem(visualizationMenu, "Toggle Heatmap", "/icons/heatmap.png", e -> csvViewer.toggleHeatmap());
+        addMenuItem(visualizationMenu, "Toggle Class Colors", "/icons/heatmap.png", e -> csvViewer.toggleClassColors());
+        addMenuItem(visualizationMenu, "Toggle Highlight Blanks", "/icons/heatmap.png", e -> csvViewer.highlightBlanks());
+        addMenuItem(visualizationMenu, "Toggle Easy Cases", "/icons/heatmap.png", e -> csvViewer.toggleEasyCases());
+        addMenuItem(visualizationMenu, "Font Settings", "/icons/fontcolor.png", e -> csvViewer.showFontSettingsDialog());
+        addMenuItem(visualizationMenu, "Set Class Colors", "/icons/setcolor.png", e -> csvViewer.showColorPickerDialog());
+
+        // Analysis Menu
+        JMenu analysisMenu = new JMenu("Analysis");
+        analysisMenu.setIcon(resizeIcon("/icons/variance.png"));
+        addMenuItem(analysisMenu, "Show Covariance Matrix", "/icons/variance.png", e -> csvViewer.showCovarianceMatrix());
+        addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", e -> csvViewer.showCovarianceSortDialog());
+        addMenuItem(analysisMenu, "Rule Tester", "/icons/rule_tester.png", e -> csvViewer.showRuleTesterDialog());
+
+        // Add all menus to menubar
+        menuBar.add(fileMenu);
+        menuBar.add(viewMenu);
+        menuBar.add(dataMenu);
+        menuBar.add(trigMenu);
+        menuBar.add(visualizationMenu);
+        menuBar.add(analysisMenu);
+
+        return menuBar;
     }
 
-    private JButton createWeightedSumButton() {
-        return UIHelper.createButton("/icons/combo.png", "Insert Weighted Sum Column", e -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
+    private void addMenuItem(JMenu menu, String text, String iconPath, ActionListener listener) {
+        JMenuItem item = new JMenuItem(text);
+        item.setIcon(resizeIcon(iconPath));
+        item.addActionListener(e -> {
+            if (csvViewer.dataHandler.isDataEmpty() && !text.equals("Load CSV")) {
                 csvViewer.noDataLoadedError();
             } else {
-                csvViewer.insertWeightedSumColumn();
+                listener.actionPerformed(e);
             }
         });
+        menu.add(item);
+    }
+
+    private ImageIcon resizeIcon(String path) {
+        return UIHelper.loadIcon(path, 16, 16); // Small 16x16 icons for menu items
     }
 }

@@ -88,7 +88,7 @@ public class CsvViewer extends JFrame {
         CsvViewerUIHelper.setupTable(table, tableModel, this);
     
         buttonPanelManager = new ButtonPanelManager(this);
-        JPanel buttonPanel = buttonPanelManager.createButtonPanel();
+        JMenuBar buttonPanel = buttonPanelManager.createMenuBar();
         mainPanel.add(buttonPanel, BorderLayout.NORTH);
     
         statsTextArea = UIHelper.createTextArea(3, 0);

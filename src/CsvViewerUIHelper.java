@@ -27,9 +27,9 @@ public class CsvViewerUIHelper {
     private static final Font CELL_FONT = new Font("Segoe UI", Font.PLAIN, 12);
     private static final Font STATS_FONT = new Font("Segoe UI", Font.PLAIN, 12);
 
-    public static JPanel createButtonPanel(CsvViewer viewer) {
+    public static JMenuBar createButtonPanel(CsvViewer viewer) {
         ButtonPanelManager buttonPanelManager = new ButtonPanelManager(viewer);
-        return buttonPanelManager.createButtonPanel();
+        return buttonPanelManager.createMenuBar();
     }
 
     public static JScrollPane createStatsScrollPane(JTextArea statsTextArea) {
