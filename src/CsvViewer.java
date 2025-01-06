@@ -286,7 +286,8 @@ public class CsvViewer extends JFrame {
             // Update the toggle button through ButtonPanelManager
             buttonPanelManager.getToggleButton().setIcon(UIHelper.loadIcon("/icons/normalize.png", 40, 40));
             buttonPanelManager.getToggleButton().setToolTipText("Normalize");
-
+            
+            tableManager.autoResizeColumns();
             statsTextArea.setCaretPosition(0);
         }
     }

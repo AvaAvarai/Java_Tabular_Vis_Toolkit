@@ -6,6 +6,9 @@ import src.table.NumericStringComparator;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
@@ -101,5 +104,38 @@ public class TableManager {
             }
         });
         csvViewer.getTable().repaint();
+    }
+
+    public void autoResizeColumns() {
+        TableColumnModel columnModel = csvViewer.getTable().getColumnModel();
+        for (int column = 0; column < csvViewer.getTable().getColumnCount(); column++) {
+            // Get width of column header
+            TableColumn tableColumn = columnModel.getColumn(column);
+            JTableHeader header = csvViewer.getTable().getTableHeader();
+            int preferredWidth = tableColumn.getMinWidth();
+            
+            // Get maximum width of column data
+            for (int row = 0; row < csvViewer.getTable().getRowCount(); row++) {
+                TableCellRenderer cellRenderer = csvViewer.getTable().getCellRenderer(row, column);
+                Component c = cellRenderer.getTableCellRendererComponent(
+                    csvViewer.getTable(),
+                    csvViewer.getTable().getValueAt(row, column),
+                    false, false, row, column);
+                preferredWidth = Math.max(preferredWidth, c.getPreferredSize().width + 10);
+            }
+            
+            // Get width of column header
+            TableCellRenderer headerRenderer = tableColumn.getHeaderRenderer();
+            if (headerRenderer == null) {
+                headerRenderer = header.getDefaultRenderer();
+            }
+            Component headerComp = headerRenderer.getTableCellRendererComponent(
+                csvViewer.getTable(), tableColumn.getHeaderValue(),
+                false, false, 0, column);
+            preferredWidth = Math.max(preferredWidth, headerComp.getPreferredSize().width + 10);
+            
+            // Set the width
+            tableColumn.setPreferredWidth(preferredWidth);
+        }
     }
 }
