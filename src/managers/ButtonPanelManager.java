@@ -41,7 +41,7 @@ public class ButtonPanelManager {
         addMenuItem(viewMenu, "Decision Tree", "/icons/start.png", e -> csvViewer.showDecisionTreeVisualization());
 
         // Data Menu
-        JMenu dataMenu = new JMenu("Data");
+        JMenu dataMenu = new JMenu("Data Operations");
         dataMenu.setIcon(resizeIcon("/icons/normalize.png"));
         
         // Normalization submenu
@@ -74,7 +74,7 @@ public class ButtonPanelManager {
         addMenuItem(dataMenu, "Insert Slopes and Distances", "/icons/slopes_distances.png", e -> csvViewer.showCalculateSlopesAndDistancesDialog());
 
         // Trigonometric Menu
-        JMenu trigMenu = new JMenu("Trigonometric");
+        JMenu trigMenu = new JMenu("Trigonometric Operations");
         trigMenu.setIcon(resizeIcon("/icons/trigon.png"));
         addMenuItem(trigMenu, "Forward Differences", "/icons/trigon.png", e -> csvViewer.toggleTrigonometricColumns());
         addMenuItem(trigMenu, "Backward Differences", "/icons/trigon.png", e -> csvViewer.toggleTrigonometricColumns());
@@ -92,13 +92,13 @@ public class ButtonPanelManager {
         addMenuItem(visualizationMenu, "Toggle Heatmap", "/icons/heatmap.png", e -> csvViewer.toggleHeatmap());
         addMenuItem(visualizationMenu, "Toggle Class Colors", "/icons/heatmap.png", e -> csvViewer.toggleClassColors());
         addMenuItem(visualizationMenu, "Toggle Highlight Blanks", "/icons/heatmap.png", e -> csvViewer.highlightBlanks());
-        addMenuItem(visualizationMenu, "Toggle Easy Cases", "/icons/heatmap.png", e -> csvViewer.toggleEasyCases());
         addMenuItem(visualizationMenu, "Font Settings", "/icons/fontcolor.png", e -> csvViewer.showFontSettingsDialog());
         addMenuItem(visualizationMenu, "Set Class Colors", "/icons/setcolor.png", e -> csvViewer.showColorPickerDialog());
 
         // Analysis Menu
-        JMenu analysisMenu = new JMenu("Analysis");
+        JMenu analysisMenu = new JMenu("Analysis Tools");
         analysisMenu.setIcon(resizeIcon("/icons/variance.png"));
+        addMenuItem(analysisMenu, "Toggle Easy Cases", "/icons/easy.png", e -> csvViewer.toggleEasyCases());
         addMenuItem(analysisMenu, "Show Covariance Matrix", "/icons/variance.png", e -> csvViewer.showCovarianceMatrix());
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", e -> csvViewer.showCovarianceSortDialog());
         addMenuItem(analysisMenu, "Rule Tester", "/icons/rule_tester.png", e -> csvViewer.showRuleTesterDialog());
