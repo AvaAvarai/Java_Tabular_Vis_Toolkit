@@ -129,7 +129,7 @@ public class ButtonPanelManager {
     }
 
     private JButton createNormalizeButton() {
-        toggleButton = UIHelper.createButton("/icons/normalize.png", "Normalize", e -> {
+        JButton normalizeButton = UIHelper.createButton("/icons/normalize.png", "Toggle Normalization", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
                 return;
@@ -142,16 +142,12 @@ public class ButtonPanelManager {
                 csvViewer.dataHandler.setNormalizationType("minmax");
                 csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
                 csvViewer.getStateManager().setNormalized(true);
-                toggleButton.setIcon(UIHelper.loadIcon("/icons/denormalize.png", 40, 40));
-                toggleButton.setToolTipText("Denormalize");
             });
             zScoreItem.addActionListener(event -> {
                 csvViewer.getStateManager().setNormalizationType("zscore");
                 csvViewer.dataHandler.setNormalizationType("zscore");
                 csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
                 csvViewer.getStateManager().setNormalized(true);
-                toggleButton.setIcon(UIHelper.loadIcon("/icons/denormalize.png", 40, 40));
-                toggleButton.setToolTipText("Denormalize");
             });
             JPopupMenu normalizationMenu = new JPopupMenu();
             normalizationMenu.add(minMaxItem);
@@ -161,11 +157,9 @@ public class ButtonPanelManager {
             } else {
                 csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
                 csvViewer.getStateManager().setNormalized(false);
-                toggleButton.setIcon(UIHelper.loadIcon("/icons/denormalize.png", 40, 40));
-                toggleButton.setToolTipText("Denormalize");
             }
         });
-        return toggleButton;
+        return normalizeButton;
     }
 
     public JButton getToggleButton() {
