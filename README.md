@@ -9,7 +9,7 @@ Currently, the project supports the following classifiers:
 - Linear Discriminant Analysis Classifier
 - Decision Tree Classifier
 
-We seek to combine these potentially weaker classifiers into a single stronger classifier, as AdaBoost does.  
+We seek to combine these potentially weaker classifiers into a single stronger classifier, as AdaBoost does. Here we visualize classifier mistakes, seek improved representations, and build classification models from first order logic rules which we will later convert into Hyperblocks using our [Hyperblock Parser](https://github.com/AvaAvarai/Hyperblock_Parser).  
 
 Users can load CSV data to view, analyze, and classify with features like normalization, General Line Coordinates (GLCs) visualizations, tabular heatmaps, covariance matrix heatmaps, row manipulation, cell editing, classification rule testing with confusion matrices, automatic pure region discovery, feature engineering using slope and distance calculations, weighted sum features; including trigonometric wrapping, forward/backward differences, and various trigonometric values, optimal coefficient computation for weighted sums, attribute sorting, and data export.
 
