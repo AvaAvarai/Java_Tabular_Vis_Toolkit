@@ -70,7 +70,6 @@ public class ButtonPanelManager {
         dataMenu.add(rowMenu);
 
         // Other data operations
-        addMenuItem(dataMenu, "Insert Weighted Sum Column", "/icons/combo.png", e -> csvViewer.insertWeightedSumColumn());
         addMenuItem(dataMenu, "Insert Slopes and Distances", "/icons/slopes_distances.png", e -> csvViewer.showCalculateSlopesAndDistancesDialog());
 
         // Trigonometric Menu
@@ -100,10 +99,12 @@ public class ButtonPanelManager {
         analysisMenu.setIcon(resizeIcon("/icons/variance.png"));
 
         // Machine Learning Menu
-        JMenu mlMenu = new JMenu("Machine Learning");
+        JMenu mlMenu = new JMenu("Classifiers");
         mlMenu.setIcon(resizeIcon("/icons/ml.png"));
         
-        JMenuItem knnItem = new JMenuItem("k-Nearest Neighbors Classification");
+        addMenuItem(mlMenu, "Support Sum Machine Classifier", "/icons/combo.png", e -> csvViewer.insertWeightedSumColumn());
+
+        JMenuItem knnItem = new JMenuItem("k-Nearest Neighbors Classifier");
         knnItem.addActionListener(e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
