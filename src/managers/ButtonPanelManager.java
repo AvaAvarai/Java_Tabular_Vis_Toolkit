@@ -2,6 +2,7 @@ package src.managers;
 
 import src.CsvViewer;
 import src.UIHelper;
+import src.classifiers.DecisionTreeClassifier;
 import src.classifiers.LinearDiscriminantAnalysis;
 
 import javax.swing.*;
@@ -122,6 +123,15 @@ public class ButtonPanelManager {
             } else {
                 LinearDiscriminantAnalysis lda = new LinearDiscriminantAnalysis(csvViewer, csvViewer.tableModel);
                 lda.insertLDAClassification();
+            }
+        });
+
+        addMenuItem(mlMenu, "Decision Tree", "/icons/ml.png", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                DecisionTreeClassifier dt = new DecisionTreeClassifier(csvViewer, csvViewer.tableModel);
+                dt.insertTreeClassification();
             }
         });
 
