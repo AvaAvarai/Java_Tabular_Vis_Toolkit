@@ -16,6 +16,8 @@ import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -124,6 +126,16 @@ public class CsvViewer extends JFrame {
                 closeAllOwnedWindows();
                 dispose();
                 mainMenu.setVisible(true);
+            }
+        });
+
+        table.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                    table.clearSelection();
+                    updateSelectedRowsLabel(); // Update the status if you have one
+                }
             }
         });
     
