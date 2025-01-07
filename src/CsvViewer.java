@@ -29,8 +29,8 @@ import src.table.ReorderableTableModel;
 import src.table.TableSetup;
 import src.utils.ShapeUtils;
 import src.utils.CovariancePairUtils;
-import src.classifiers.SupportSumMachine;
-import src.classifiers.KNearestNeighbors;
+import src.classifiers.SupportSumMachineClassifier;
+import src.classifiers.KNearestNeighborsClassifier;
 
 public class CsvViewer extends JFrame {
     public JTable table;
@@ -186,7 +186,7 @@ public class CsvViewer extends JFrame {
             return;
         }
         
-        SupportSumMachine ssm = new SupportSumMachine(this, tableModel);
+        SupportSumMachineClassifier ssm = new SupportSumMachineClassifier(this, tableModel);
         ssm.insertWeightedSumColumn();
     }
 
@@ -1098,7 +1098,7 @@ public class CsvViewer extends JFrame {
     }
 
     public void insertKNNClassification(int k, String metric) {
-        KNearestNeighbors knn = new KNearestNeighbors(this, tableModel);
+        KNearestNeighborsClassifier knn = new KNearestNeighborsClassifier(this, tableModel);
         knn.insertKNNClassification(k, metric);
     }
 }

@@ -6,11 +6,11 @@ import src.CsvViewer;
 import java.util.*;
 import java.text.DecimalFormat;
 
-public class LDAClassifier {
+public class LinearDiscriminantAnalysisClassifier {
     private final CsvViewer csvViewer;
     private final DefaultTableModel tableModel;
 
-    public LDAClassifier(CsvViewer csvViewer, DefaultTableModel tableModel) {
+    public LinearDiscriminantAnalysisClassifier(CsvViewer csvViewer, DefaultTableModel tableModel) {
         this.csvViewer = csvViewer;
         this.tableModel = tableModel;
     }

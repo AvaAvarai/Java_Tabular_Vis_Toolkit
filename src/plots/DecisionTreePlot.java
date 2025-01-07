@@ -6,7 +6,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import src.utils.DecisionTree;
+import src.utils.DecisionTreeModel;
 import src.utils.ScreenshotUtils;
 import javax.swing.KeyStroke;
 import javax.swing.AbstractAction;
@@ -14,7 +14,7 @@ import java.awt.event.ActionEvent;
 
 public class DecisionTreePlot extends JPanel {
 
-    private final DecisionTree.TreeNode root;
+    private final DecisionTreeModel.TreeNode root;
     private final List<String> attributeNames;
     private final Map<String, Color> classColors;
     private static final int BASE_NODE_HEIGHT = 60;  // Base vertical space between nodes
@@ -27,7 +27,7 @@ public class DecisionTreePlot extends JPanel {
     private int treeHeight;
     private Point lastMousePos;
 
-    public DecisionTreePlot(DecisionTree.TreeNode root, List<String> attributeNames, Map<String, Color> classColors) {
+    public DecisionTreePlot(DecisionTreeModel.TreeNode root, List<String> attributeNames, Map<String, Color> classColors) {
         this.root = root;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -94,7 +94,7 @@ public class DecisionTreePlot extends JPanel {
         g2d.dispose();
     }
 
-    private void drawTree(Graphics2D g, DecisionTree.TreeNode node, int x, int y) {
+    private void drawTree(Graphics2D g, DecisionTreeModel.TreeNode node, int x, int y) {
         if (node != null) {
             g.setFont(new Font("Arial", Font.PLAIN, 12));
             String mainText = node.isLeaf ? node.prediction : node.questionText;
@@ -157,7 +157,7 @@ public class DecisionTreePlot extends JPanel {
         return new Rectangle(width, height);
     }
 
-    private int calculateSubtreeWidth(DecisionTree.TreeNode node) {
+    private int calculateSubtreeWidth(DecisionTreeModel.TreeNode node) {
         if (node == null) {
             return 0;
         }
@@ -170,7 +170,7 @@ public class DecisionTreePlot extends JPanel {
         return leftWidth + rightWidth;
     }
 
-    private int getTreeDepth(DecisionTree.TreeNode node) {
+    private int getTreeDepth(DecisionTreeModel.TreeNode node) {
         if (node == null || node.isLeaf) {
             return 0;
         }

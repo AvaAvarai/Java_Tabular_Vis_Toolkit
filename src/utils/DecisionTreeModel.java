@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
-public class DecisionTree {
+public class DecisionTreeModel {
 
     private static final String RIGHT_CHILD = "RIGHT_CHILD";
     private static final String LEFT_CHILD = "LEFT_CHILD";
@@ -26,7 +26,7 @@ public class DecisionTree {
     private TreeNode root;
     private List<String> attributeNames;
 
-    public DecisionTree(List<String[]> data, List<String> attributeNames, int labelColumnIndex) {
+    public DecisionTreeModel(List<String[]> data, List<String> attributeNames, int labelColumnIndex) {
         this.attributeNames = attributeNames;
         this.root = buildTree(data, labelColumnIndex);
     }

@@ -3,8 +3,8 @@ package src.managers;
 import src.CsvViewer;
 import src.UIHelper;
 import src.classifiers.DecisionTreeClassifier;
-import src.classifiers.LDAClassifier;
-import src.classifiers.PCAClassifier;
+import src.classifiers.LinearDiscriminantAnalysisClassifier;
+import src.classifiers.PrincipalComponentAnalysisClassifier;
 import src.utils.PrincipalComponentAnalysis;
 
 import javax.swing.*;
@@ -124,7 +124,7 @@ public class ButtonPanelManager {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
-                LDAClassifier lda = new LDAClassifier(csvViewer, csvViewer.tableModel);
+                LinearDiscriminantAnalysisClassifier lda = new LinearDiscriminantAnalysisClassifier(csvViewer, csvViewer.tableModel);
                 lda.insertLDAClassification();
             }
         });
@@ -142,7 +142,7 @@ public class ButtonPanelManager {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
-                PCAClassifier pcaClassifier = new PCAClassifier(csvViewer, csvViewer.tableModel);
+                PrincipalComponentAnalysisClassifier pcaClassifier = new PrincipalComponentAnalysisClassifier(csvViewer, csvViewer.tableModel);
                 pcaClassifier.insertPCAClassification();
             }
         });

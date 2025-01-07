@@ -9,14 +9,14 @@ import java.util.HashMap;
 import java.util.Map;
 import src.CsvViewer;
 
-public class PCAClassifier {
+public class PrincipalComponentAnalysisClassifier {
     private final CsvViewer csvViewer;
     private final DefaultTableModel tableModel;
     private double[][] data;
     private double[][] V;  // Right singular vectors
     private double[] singularValues;
 
-    public PCAClassifier(CsvViewer csvViewer, DefaultTableModel tableModel) {
+    public PrincipalComponentAnalysisClassifier(CsvViewer csvViewer, DefaultTableModel tableModel) {
         this.csvViewer = csvViewer;
         this.tableModel = tableModel;
     }

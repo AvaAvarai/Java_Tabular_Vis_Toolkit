@@ -9,11 +9,11 @@ import javax.swing.table.DefaultTableModel;
 import src.CsvViewer;
 import java.text.DecimalFormat;
 
-public class KNearestNeighbors {
+public class KNearestNeighborsClassifier {
     private final CsvViewer csvViewer;
     private final DefaultTableModel tableModel;
 
-    public KNearestNeighbors(CsvViewer csvViewer, DefaultTableModel tableModel) {
+    public KNearestNeighborsClassifier(CsvViewer csvViewer, DefaultTableModel tableModel) {
         this.csvViewer = csvViewer;
         this.tableModel = tableModel;
     }

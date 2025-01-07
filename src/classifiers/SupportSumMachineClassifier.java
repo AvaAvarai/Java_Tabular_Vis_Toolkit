@@ -9,11 +9,11 @@ import javax.swing.table.DefaultTableModel;
 import src.utils.GradientDescentOptimizer;
 import src.CsvViewer;
 
-public class SupportSumMachine {
+public class SupportSumMachineClassifier {
     private final CsvViewer csvViewer;
     private final DefaultTableModel tableModel;
 
-    public SupportSumMachine(CsvViewer csvViewer, DefaultTableModel tableModel) {
+    public SupportSumMachineClassifier(CsvViewer csvViewer, DefaultTableModel tableModel) {
         this.csvViewer = csvViewer;
         this.tableModel = tableModel;
     }

@@ -2,9 +2,9 @@ package src.managers;
 
 import src.CsvViewer;
 import src.plots.*;
-import src.utils.DecisionTree;
+import src.utils.DecisionTreeModel;
 import src.utils.PureRegionUtils;
-import src.utils.DecisionTree.TreeNode;
+import src.utils.DecisionTreeModel.TreeNode;
 
 import javax.swing.table.TableColumnModel;
 import java.util.ArrayList;
@@ -310,7 +310,7 @@ public class VisualizationManager {
             attributeNames.add(csvViewer.getTable().getColumnName(i));
         }
         int labelColumnIndex = csvViewer.getClassColumnIndex();
-        DecisionTree decisionTree = new DecisionTree(csvViewer.getDataHandler().isDataNormalized() ? csvViewer.getDataHandler().getNormalizedData() : csvViewer.getDataHandler().getOriginalData(), attributeNames, labelColumnIndex);
+        DecisionTreeModel decisionTree = new DecisionTreeModel(csvViewer.getDataHandler().isDataNormalized() ? csvViewer.getDataHandler().getNormalizedData() : csvViewer.getDataHandler().getOriginalData(), attributeNames, labelColumnIndex);
         TreeNode root = decisionTree.getRoot();
         JFrame frame = new JFrame("Decision Tree Visualization");
         DecisionTreePlot treePanel = new DecisionTreePlot(root, attributeNames, csvViewer.getClassColors());

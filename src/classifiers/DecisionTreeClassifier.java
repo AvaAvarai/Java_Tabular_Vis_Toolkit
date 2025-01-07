@@ -5,7 +5,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.*;
 import src.CsvViewer;
-import src.utils.DecisionTree;
+import src.utils.DecisionTreeModel;
 
 import java.util.List;
 import java.text.DecimalFormat;
@@ -140,7 +140,7 @@ public class DecisionTreeClassifier {
         List<String[]> testData = allData.subList(trainSize, allData.size());
 
         // Build decision tree on training data
-        DecisionTree dt = new DecisionTree(trainData, attributeNames, classColumnIndex);
+        DecisionTreeModel dt = new DecisionTreeModel(trainData, attributeNames, classColumnIndex);
 
         // Create label mapping from training data only
         Map<String, Integer> labelMap = new HashMap<>();
@@ -211,7 +211,7 @@ public class DecisionTreeClassifier {
             trainData.addAll(allData.subList(0, startTest));
             trainData.addAll(allData.subList(endTest, allData.size()));
             
-            DecisionTree dt = new DecisionTree(trainData, attributeNames, classColumnIndex);
+            DecisionTreeModel dt = new DecisionTreeModel(trainData, attributeNames, classColumnIndex);
             
             // Update label map
             for (String[] row : trainData) {
@@ -233,7 +233,7 @@ public class DecisionTreeClassifier {
         }
         
         // Train final model on all data and make predictions
-        DecisionTree finalModel = new DecisionTree(allData, attributeNames, classColumnIndex);
+        DecisionTreeModel finalModel = new DecisionTreeModel(allData, attributeNames, classColumnIndex);
         
         // Add prediction column
         String columnName = csvViewer.getUniqueColumnName("DT_prediction");
@@ -284,7 +284,7 @@ public class DecisionTreeClassifier {
         return attributeNames;
     }
 
-    private String predictClass(DecisionTree.TreeNode node, String[] instance) {
+    private String predictClass(DecisionTreeModel.TreeNode node, String[] instance) {
         if (node.isLeaf) {
             return node.prediction;
         }
