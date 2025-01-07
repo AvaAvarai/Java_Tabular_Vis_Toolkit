@@ -3,7 +3,7 @@ package src.managers;
 import src.CsvViewer;
 import src.UIHelper;
 import src.classifiers.DecisionTreeClassifier;
-import src.classifiers.LinearDiscriminantAnalysis;
+import src.classifiers.LDAClassifier;
 import src.classifiers.PCAClassifier;
 import src.utils.PrincipalComponentAnalysis;
 
@@ -35,7 +35,7 @@ public class ButtonPanelManager {
         addMenuItem(fileMenu, "Save Data", "/icons/export.png", _ -> csvViewer.exportCsvFile());
 
         // View Menu (Visualizations)
-        JMenu viewMenu = new JMenu("Visualizations");
+        JMenu viewMenu = new JMenu("View Visualizations");
         viewMenu.setIcon(resizeIcon("/icons/start.png"));
         addMenuItem(viewMenu, "Parallel Coordinates Plot", "/icons/start.png", _ -> csvViewer.showParallelCoordinatesPlot());
         addMenuItem(viewMenu, "Shifted Paired Coordinates Plot", "/icons/start.png", _ -> csvViewer.showShiftedPairedCoordinates());
@@ -124,7 +124,7 @@ public class ButtonPanelManager {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
-                LinearDiscriminantAnalysis lda = new LinearDiscriminantAnalysis(csvViewer, csvViewer.tableModel);
+                LDAClassifier lda = new LDAClassifier(csvViewer, csvViewer.tableModel);
                 lda.insertLDAClassification();
             }
         });
