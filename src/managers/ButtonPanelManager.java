@@ -78,7 +78,11 @@ public class ButtonPanelManager {
         // Other data operations
         addMenuItem(dataMenu, "Insert Slopes and Distances", "/icons/slopes_distances.png", _ -> csvViewer.showCalculateSlopesAndDistancesDialog());
 
-        // Trigonometric Menu
+        // Feature Engineering Menu
+        JMenu featureMenu = new JMenu("Feature Engineering");
+        featureMenu.setIcon(resizeIcon("/icons/trigon.png"));
+
+        // Trigonometric submenu
         JMenu trigMenu = new JMenu("Trigonometric Operations");
         trigMenu.setIcon(resizeIcon("/icons/trigon.png"));
         addMenuItem(trigMenu, "Forward Differences", "/icons/trigon.png", _ -> csvViewer.toggleTrigonometricColumns());
@@ -90,6 +94,17 @@ public class ButtonPanelManager {
         addMenuItem(trigMenu, "Inverse Direct", "/icons/trigon.png", _ -> csvViewer.toggleTrigonometricColumns());
         trigMenu.addSeparator();
         addMenuItem(trigMenu, "Remove Trigonometric Columns", "/icons/trigon.png", _ -> csvViewer.toggleTrigonometricColumns());
+        featureMenu.add(trigMenu);
+
+        // Add PCA to Feature Engineering menu
+        addMenuItem(featureMenu, "Principal Components Analysis", "/icons/ml.png", _ -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                PrincipalComponentAnalysis pca = new PrincipalComponentAnalysis(csvViewer, csvViewer.tableModel);
+                pca.insertPrincipalComponents();
+            }
+        });
 
         // Visualization Options Menu
         JMenu visualizationMenu = new JMenu("Visualization Options");
@@ -163,20 +178,12 @@ public class ButtonPanelManager {
         addMenuItem(analysisMenu, "Show Covariance Matrix", "/icons/variance.png", _ -> csvViewer.showCovarianceMatrix());
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", _ -> csvViewer.showCovarianceSortDialog());
         addMenuItem(analysisMenu, "Rule Tester", "/icons/rule_tester.png", _ -> csvViewer.showRuleTesterDialog());
-        addMenuItem(analysisMenu, "Principal Components Analysis", "/icons/ml.png", _ -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-            } else {
-                PrincipalComponentAnalysis pca = new PrincipalComponentAnalysis(csvViewer, csvViewer.tableModel);
-                pca.insertPrincipalComponents();
-            }
-        });
 
         // Add all menus to menubar
         menuBar.add(fileMenu);
         menuBar.add(viewMenu);
         menuBar.add(dataMenu);
-        menuBar.add(trigMenu);
+        menuBar.add(featureMenu);
         menuBar.add(visualizationMenu);
         menuBar.add(analysisMenu);
         menuBar.add(mlMenu);
