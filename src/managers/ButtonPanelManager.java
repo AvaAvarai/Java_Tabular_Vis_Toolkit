@@ -7,6 +7,7 @@ import src.classifiers.LinearDiscriminantAnalysisClassifier;
 import src.classifiers.PrincipalComponentAnalysisClassifier;
 import src.utils.PrincipalComponentAnalysis;
 import src.classifiers.RandomForestClassifier;
+import src.classifiers.LDAFeatures;
 
 import javax.swing.*;
 import java.awt.*;
@@ -104,6 +105,12 @@ public class ButtonPanelManager {
                 PrincipalComponentAnalysis pca = new PrincipalComponentAnalysis(csvViewer, csvViewer.tableModel);
                 pca.insertPrincipalComponents();
             }
+        });
+
+        // Add LDA Features to Feature Engineering menu
+        addMenuItem(featureMenu, "Linear Discriminant Analysis", "/icons/ml.png", e -> {
+            LDAFeatures lda = new LDAFeatures(csvViewer, csvViewer.tableModel);
+            lda.insertLDAComponents();
         });
 
         // Visualization Options Menu
