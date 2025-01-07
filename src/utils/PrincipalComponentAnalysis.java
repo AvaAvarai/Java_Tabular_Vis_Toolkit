@@ -1,4 +1,4 @@
-package src.classifiers;
+package src.utils;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

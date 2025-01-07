@@ -4,8 +4,8 @@ import src.CsvViewer;
 import src.UIHelper;
 import src.classifiers.DecisionTreeClassifier;
 import src.classifiers.LinearDiscriminantAnalysis;
-import src.classifiers.PrincipalComponentAnalysis;
 import src.classifiers.PCAClassifier;
+import src.utils.PrincipalComponentAnalysis;
 
 import javax.swing.*;
 import java.awt.*;
@@ -153,6 +153,14 @@ public class ButtonPanelManager {
         addMenuItem(analysisMenu, "Show Covariance Matrix", "/icons/variance.png", e -> csvViewer.showCovarianceMatrix());
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", e -> csvViewer.showCovarianceSortDialog());
         addMenuItem(analysisMenu, "Rule Tester", "/icons/rule_tester.png", e -> csvViewer.showRuleTesterDialog());
+        addMenuItem(analysisMenu, "Principal Components Analysis", "/icons/ml.png", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                PrincipalComponentAnalysis pca = new PrincipalComponentAnalysis(csvViewer, csvViewer.tableModel);
+                pca.insertPrincipalComponents();
+            }
+        });
 
         // Add all menus to menubar
         menuBar.add(fileMenu);
