@@ -68,10 +68,6 @@ public class TableManager {
             return;
         }
 
-        if (csvViewer.getStateManager().getOriginalColumnNames() != null && modelColumnIndex < csvViewer.getStateManager().getOriginalColumnNames().size()) {
-            csvViewer.getStateManager().getOriginalColumnNames().remove(modelColumnIndex);
-        }
-
         TableColumnModel columnModel = csvViewer.getTable().getColumnModel();
         columnModel.removeColumn(columnModel.getColumn(viewColumnIndex));
 
@@ -82,7 +78,6 @@ public class TableManager {
         }
 
         tableModel.setColumnCount(tableModel.getColumnCount() - 1);
-        tableModel.setColumnIdentifiers(csvViewer.getStateManager().getOriginalColumnNames().toArray());
 
         csvViewer.getDataHandler().updateStats(tableModel, csvViewer.getStatsTextArea());
         csvViewer.updateSelectedRowsLabel();
