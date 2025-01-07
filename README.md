@@ -4,10 +4,11 @@ This project is a research project for my study of the AdaBoost algorithm from a
 
 Currently, the project supports the following classifiers:
 
-- Support (weighted) Sum Classifier (our invention)
-- k-Nearest Neighbors Classifier
-- Linear Discriminant Analysis Classifier
 - Decision Tree Classifier
+- K Nearest Neighbors Classifier
+- Linear Discriminant Analysis Classifier
+- Principal Component Analysis Classifier
+- Support (weighted) Sum Classifier (our invention)
 
 We seek to combine these potentially weaker classifiers into a single stronger classifier, as AdaBoost does. Here we visualize classifier mistakes, seek improved representations, and build classification models from first order logic rules which we will later convert into Hyperblocks using our [Hyperblock Parser](https://github.com/AvaAvarai/Hyperblock_Parser).  
 
