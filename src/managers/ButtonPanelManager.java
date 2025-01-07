@@ -6,6 +6,7 @@ import src.classifiers.DecisionTreeClassifier;
 import src.classifiers.LinearDiscriminantAnalysisClassifier;
 import src.classifiers.PrincipalComponentAnalysisClassifier;
 import src.utils.PrincipalComponentAnalysis;
+import src.classifiers.RandomForestClassifier;
 
 import javax.swing.*;
 import java.awt.*;
@@ -144,6 +145,15 @@ public class ButtonPanelManager {
             } else {
                 PrincipalComponentAnalysisClassifier pcaClassifier = new PrincipalComponentAnalysisClassifier(csvViewer, csvViewer.tableModel);
                 pcaClassifier.insertPCAClassification();
+            }
+        });
+
+        addMenuItem(mlMenu, "Random Forest Classifier", "/icons/ml.png", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                RandomForestClassifier rf = new RandomForestClassifier(csvViewer, csvViewer.tableModel);
+                rf.insertForestClassification();
             }
         });
 
