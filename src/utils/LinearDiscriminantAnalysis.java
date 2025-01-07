@@ -50,25 +50,36 @@ public class LinearDiscriminantAnalysis {
 
     private void prepareData(int classColumnIndex) {
         int rows = tableModel.getRowCount();
-        int cols = tableModel.getColumnCount() - 1; // Exclude class column
+        ArrayList<Integer> numericColumns = new ArrayList<>();
+        
+        // Find all numeric columns except class column
+        for (int j = 0; j < tableModel.getColumnCount(); j++) {
+            if (j != classColumnIndex) {
+                try {
+                    Double.parseDouble(tableModel.getValueAt(0, j).toString());
+                    numericColumns.add(j);
+                } catch (NumberFormatException e) {
+                    // Skip non-numeric columns
+                }
+            }
+        }
+        
+        int cols = numericColumns.size();
         data = new double[rows][cols];
         
         // Convert data to matrix and center it
         double[] means = new double[cols];
         
-        // Calculate means (skip class column)
-        int dataCol = 0;
-        for (int j = 0; j < tableModel.getColumnCount(); j++) {
-            if (j == classColumnIndex) continue;
-            
+        // Calculate means for numeric columns
+        for (int j = 0; j < cols; j++) {
+            int colIndex = numericColumns.get(j);
             double sum = 0;
             for (int i = 0; i < rows; i++) {
-                double value = Double.parseDouble(tableModel.getValueAt(i, j).toString());
+                double value = Double.parseDouble(tableModel.getValueAt(i, colIndex).toString());
                 sum += value;
-                data[i][dataCol] = value;
+                data[i][j] = value;
             }
-            means[dataCol] = sum / rows;
-            dataCol++;
+            means[j] = sum / rows;
         }
         
         // Center the data
@@ -387,4 +398,4 @@ public class LinearDiscriminantAnalysis {
         }
         return diff < convergenceThreshold;
     }
-} 
+}
