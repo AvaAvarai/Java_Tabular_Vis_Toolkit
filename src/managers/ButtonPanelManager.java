@@ -5,6 +5,7 @@ import src.UIHelper;
 import src.classifiers.DecisionTreeClassifier;
 import src.classifiers.LinearDiscriminantAnalysis;
 import src.classifiers.PrincipalComponentAnalysis;
+import src.classifiers.PCAClassifier;
 
 import javax.swing.*;
 import java.awt.*;
@@ -137,12 +138,12 @@ public class ButtonPanelManager {
             }
         });
 
-        addMenuItem(analysisMenu, "Principal Components Analysis", "/icons/ml.png", e -> {
+        addMenuItem(mlMenu, "PCA Classifier", "/icons/ml.png", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
-                PrincipalComponentAnalysis pca = new PrincipalComponentAnalysis(csvViewer, csvViewer.tableModel);
-                pca.insertPrincipalComponents();
+                PCAClassifier pcaClassifier = new PCAClassifier(csvViewer, csvViewer.tableModel);
+                pcaClassifier.insertPCAClassification();
             }
         });
 
