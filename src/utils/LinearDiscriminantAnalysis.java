@@ -1,4 +1,4 @@
-package src.classifiers;
+package src.utils;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import src.CsvViewer;
 
-public class LDAFeatures {
+public class LinearDiscriminantAnalysis {
     private final CsvViewer csvViewer;
     private final DefaultTableModel tableModel;
     private double[][] data;
@@ -21,7 +21,7 @@ public class LDAFeatures {
     private double convergenceThreshold = 1e-10;
     private int maxIterations = 100;
 
-    public LDAFeatures(CsvViewer csvViewer, DefaultTableModel tableModel) {
+    public LinearDiscriminantAnalysis(CsvViewer csvViewer, DefaultTableModel tableModel) {
         this.csvViewer = csvViewer;
         this.tableModel = tableModel;
     }

@@ -5,9 +5,9 @@ import src.UIHelper;
 import src.classifiers.DecisionTreeClassifier;
 import src.classifiers.LinearDiscriminantAnalysisClassifier;
 import src.classifiers.PrincipalComponentAnalysisClassifier;
+import src.utils.LinearDiscriminantAnalysis;
 import src.utils.PrincipalComponentAnalysis;
 import src.classifiers.RandomForestClassifier;
-import src.classifiers.LDAFeatures;
 
 import javax.swing.*;
 import java.awt.*;
@@ -109,7 +109,7 @@ public class ButtonPanelManager {
 
         // Add LDA Features to Feature Engineering menu
         addMenuItem(featureMenu, "Linear Discriminant Analysis", "/icons/ml.png", e -> {
-            LDAFeatures lda = new LDAFeatures(csvViewer, csvViewer.tableModel);
+            LinearDiscriminantAnalysis lda = new LinearDiscriminantAnalysis(csvViewer, csvViewer.tableModel);
             lda.insertLDAComponents();
         });
 
