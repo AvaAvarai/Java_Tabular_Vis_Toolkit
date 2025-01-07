@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.text.DecimalFormat;
+import java.util.Arrays;
+
 import src.CsvViewer;
 
 public class PrincipalComponentAnalysis {
@@ -121,29 +123,36 @@ public class PrincipalComponentAnalysis {
         }
     }
 
-    private void showComponentSelectionDialog() {
+        private void showComponentSelectionDialog() {
         int maxComponents = Math.min(data.length, data[0].length);
         
-        // Cast the ancestor to Frame explicitly
         Frame parent = (Frame) SwingUtilities.getWindowAncestor(csvViewer.getTable());
-        JDialog dialog = new JDialog(parent, "Select Principal Components", true);
+        JDialog dialog = new JDialog(parent, "PCA Configuration", true);
         dialog.setLayout(new BorderLayout(10, 10));
         
-        JPanel panel = new JPanel(new GridLayout(2, 1, 5, 5));
+        JPanel panel = new JPanel(new GridLayout(3, 1, 5, 5));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         // Spinner for number of components
         SpinnerNumberModel model = new SpinnerNumberModel(2, 1, maxComponents, 1);
         JSpinner spinner = new JSpinner(model);
-        panel.add(new JLabel("Number of components to insert:"));
-        panel.add(spinner);
+        JPanel spinnerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        spinnerPanel.add(new JLabel("Number of components:"));
+        spinnerPanel.add(spinner);
+        panel.add(spinnerPanel);
         
+        // Checkbox for normalization
+        JCheckBox normalizeBox = new JCheckBox("Normalize components to [0,1]", true);
+        panel.add(normalizeBox);
+        
+        // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton okButton = new JButton("OK");
         okButton.addActionListener(e -> {
             int numComponents = (Integer) spinner.getValue();
+            boolean normalize = normalizeBox.isSelected();
             dialog.dispose();
-            insertComponents(numComponents);
+            insertComponents(numComponents, normalize);
         });
         
         JButton cancelButton = new JButton("Cancel");
@@ -156,11 +165,11 @@ public class PrincipalComponentAnalysis {
         dialog.add(buttonPanel, BorderLayout.SOUTH);
         
         dialog.pack();
-        dialog.setLocationRelativeTo(SwingUtilities.getWindowAncestor(csvViewer.getTable()));
+        dialog.setLocationRelativeTo(parent);
         dialog.setVisible(true);
     }
 
-    private void insertComponents(int numComponents) {
+    private void insertComponents(int numComponents, boolean normalize) {
         DecimalFormat df = new DecimalFormat("#.###");
         
         // Project data onto principal components
@@ -169,12 +178,31 @@ public class PrincipalComponentAnalysis {
             tableModel.addColumn(columnName);
             int newColIndex = tableModel.getColumnCount() - 1;
             
+            double[] projections = new double[data.length];
+            
+            // Calculate projections
             for (int i = 0; i < data.length; i++) {
                 double projection = 0;
                 for (int j = 0; j < data[0].length; j++) {
                     projection += data[i][j] * V[j][k];
                 }
-                tableModel.setValueAt(df.format(projection), i, newColIndex);
+                projections[i] = projection;
+            }
+            
+            // Normalize if requested
+            if (normalize) {
+                double min = Arrays.stream(projections).min().getAsDouble();
+                double max = Arrays.stream(projections).max().getAsDouble();
+                double range = max - min;
+                
+                for (int i = 0; i < data.length; i++) {
+                    double normalizedValue = (projections[i] - min) / range;
+                    tableModel.setValueAt(df.format(normalizedValue), i, newColIndex);
+                }
+            } else {
+                for (int i = 0; i < data.length; i++) {
+                    tableModel.setValueAt(df.format(projections[i]), i, newColIndex);
+                }
             }
         }
     }
