@@ -38,12 +38,12 @@ public class ButtonPanelManager {
         // View Menu (Visualizations)
         JMenu viewMenu = new JMenu("View Visualizations");
         viewMenu.setIcon(resizeIcon("/icons/start.png"));
-        addMenuItem(viewMenu, "Parallel Coordinates Plot", "/icons/start.png", _ -> csvViewer.showParallelCoordinatesPlot());
-        addMenuItem(viewMenu, "Shifted Paired Coordinates Plot", "/icons/start.png", _ -> csvViewer.showShiftedPairedCoordinates());
-        addMenuItem(viewMenu, "Circular/Polygonal Coordinates Plot", "/icons/start.png", _ -> csvViewer.showCircularCoordinatesPlot());
-        addMenuItem(viewMenu, "Traditional Star Coordinates Plot", "/icons/start.png", _ -> csvViewer.showStarCoordinatesPlot());
-        addMenuItem(viewMenu, "Concentric Coordinates Plot", "/icons/start.png", _ -> csvViewer.showConcentricCoordinatesPlot());
-        addMenuItem(viewMenu, "Line Coordinates Plot", "/icons/start.png", _ -> csvViewer.showLineCoordinatesPlot());
+        addMenuItem(viewMenu, "Parallel Coordinates", "/icons/start.png", _ -> csvViewer.showParallelCoordinatesPlot());
+        addMenuItem(viewMenu, "Shifted Paired Coordinates", "/icons/start.png", _ -> csvViewer.showShiftedPairedCoordinates());
+        addMenuItem(viewMenu, "Circular/Polygonal Coordinates", "/icons/start.png", _ -> csvViewer.showCircularCoordinatesPlot());
+        addMenuItem(viewMenu, "Traditional Star Coordinates", "/icons/start.png", _ -> csvViewer.showStarCoordinatesPlot());
+        addMenuItem(viewMenu, "Concentric Coordinates", "/icons/start.png", _ -> csvViewer.showConcentricCoordinatesPlot());
+        addMenuItem(viewMenu, "Line Coordinates", "/icons/start.png", _ -> csvViewer.showLineCoordinatesPlot());
         addMenuItem(viewMenu, "Decision Tree", "/icons/start.png", _ -> csvViewer.showDecisionTreeVisualization());
 
         // Data Menu
@@ -97,7 +97,7 @@ public class ButtonPanelManager {
         featureMenu.add(trigMenu);
 
         // Add PCA to Feature Engineering menu
-        addMenuItem(featureMenu, "Principal Components Analysis", "/icons/ml.png", _ -> {
+        addMenuItem(featureMenu, "Principal Component Analysis", "/icons/ml.png", _ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -120,7 +120,7 @@ public class ButtonPanelManager {
         analysisMenu.setIcon(resizeIcon("/icons/variance.png"));
 
         // Machine Learning Menu
-        JMenu mlMenu = new JMenu("Data Classifiers");
+        JMenu mlMenu = new JMenu("Run ML Classifiers");
         mlMenu.setIcon(resizeIcon("/icons/ml.png"));
         
         addMenuItem(mlMenu, "Support Sum Machine", "/icons/combo.png", _ -> csvViewer.insertWeightedSumColumn());
@@ -154,7 +154,7 @@ public class ButtonPanelManager {
             }
         });
 
-        addMenuItem(mlMenu, "PCA Classifier", "/icons/ml.png", _ -> {
+        addMenuItem(mlMenu, "Principal Component Analysis", "/icons/ml.png", _ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -163,7 +163,7 @@ public class ButtonPanelManager {
             }
         });
 
-        addMenuItem(mlMenu, "Random Forest Classifier", "/icons/ml.png", e -> {
+        addMenuItem(mlMenu, "Random Forest", "/icons/rf.png", e -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
