@@ -4,6 +4,7 @@ import src.CsvViewer;
 import src.UIHelper;
 import src.classifiers.DecisionTreeClassifier;
 import src.classifiers.LinearDiscriminantAnalysis;
+import src.classifiers.PrincipalComponentAnalysis;
 
 import javax.swing.*;
 import java.awt.*;
@@ -102,7 +103,7 @@ public class ButtonPanelManager {
         analysisMenu.setIcon(resizeIcon("/icons/variance.png"));
 
         // Machine Learning Menu
-        JMenu mlMenu = new JMenu("Classifiers");
+        JMenu mlMenu = new JMenu("Data Classifiers");
         mlMenu.setIcon(resizeIcon("/icons/ml.png"));
         
         addMenuItem(mlMenu, "Support Sum Machine", "/icons/combo.png", e -> csvViewer.insertWeightedSumColumn());
@@ -133,6 +134,15 @@ public class ButtonPanelManager {
             } else {
                 DecisionTreeClassifier dt = new DecisionTreeClassifier(csvViewer, csvViewer.tableModel);
                 dt.insertTreeClassification();
+            }
+        });
+
+        addMenuItem(analysisMenu, "Principal Components Analysis", "/icons/ml.png", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                PrincipalComponentAnalysis pca = new PrincipalComponentAnalysis(csvViewer, csvViewer.tableModel);
+                pca.insertPrincipalComponents();
             }
         });
 
