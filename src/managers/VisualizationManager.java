@@ -9,6 +9,8 @@ import src.utils.DecisionTreeModel.TreeNode;
 import javax.swing.table.TableColumnModel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 import javax.swing.*;
 
@@ -18,6 +20,15 @@ public class VisualizationManager {
 
     public VisualizationManager(CsvViewer csvViewer) {
         this.csvViewer = csvViewer;
+    }
+
+    private void checkAndHandleNewClasses(List<String> classLabels) {
+        Set<String> uniqueClasses = new HashSet<>(classLabels);
+        for (String className : uniqueClasses) {
+            if (!csvViewer.getClassColors().containsKey(className)) {
+                csvViewer.handleNewClass(className);
+            }
+        }
     }
 
     public void showStarCoordinatesPlot() {
@@ -283,6 +294,8 @@ public class VisualizationManager {
                     dataRowIndex++;
                 }
             }
+
+            checkAndHandleNewClasses(classLabels);
 
             ParallelCoordinatesPlot plot = new ParallelCoordinatesPlot(
                 numericalData,

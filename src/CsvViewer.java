@@ -1007,4 +1007,24 @@ public class CsvViewer extends JFrame {
         KNearestNeighborsClassifier knn = new KNearestNeighborsClassifier(this, tableModel);
         knn.insertKNNClassification(k, metric);
     }
+
+    public void handleNewClass(String newClass) {
+        if (!getClassColors().containsKey(newClass)) {
+            // Generate a new color for this class using golden ratio for good distribution
+            float hue = (getClassColors().size() * 0.618034f) % 1f;
+            Color newColor = Color.getHSBColor(hue, 0.8f, 0.9f);
+            getClassColors().put(newClass, newColor);
+            
+            // Generate a new shape for this class
+            Shape[] availableShapes = {
+                new Ellipse2D.Double(-3, -3, 6, 6),
+                new Rectangle2D.Double(-3, -3, 6, 6),
+                new Polygon(new int[]{-3, 3, 0}, new int[]{-3, -3, 3}, 3),
+                new Polygon(new int[]{0, 3, 0, -3}, new int[]{-3, 0, 3, 0}, 4)
+            };
+            
+            int shapeIndex = getClassShapes().size() % availableShapes.length;
+            getClassShapes().put(newClass, availableShapes[shapeIndex]);
+        }
+    }
 }
