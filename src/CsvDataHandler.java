@@ -38,68 +38,142 @@ public class CsvDataHandler {
     private Map<Integer, Double> originalMean = new HashMap<>();
     private Map<Integer, Double> originalStd = new HashMap<>();
     private Set<String> selectedClasses = new HashSet<>();
+    private Map<String, Set<String>> classGroups;
+
+    private static class ClassGrouping {
+        JCheckBox checkBox;
+        JComboBox<String> groupCombo;
+        String className;
+
+        ClassGrouping(String className, boolean selected) {
+            this.className = className;
+            this.checkBox = new JCheckBox(className, selected);
+            this.groupCombo = new JComboBox<>();
+            checkBox.setFont(checkBox.getFont().deriveFont(11f));
+            groupCombo.setFont(groupCombo.getFont().deriveFont(11f));
+        }
+    }
 
     private boolean showClassSelectionDialog(List<String> classes) {
         JDialog dialog = new JDialog();
-        dialog.setTitle("Select Classes to Load");
+        dialog.setTitle("Class Grouping Selection");
         dialog.setModal(true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         dialog.setLayout(new BorderLayout(5, 5));
 
-        // Create panel with compact grid
-        JPanel checkBoxPanel = new JPanel(new GridLayout(0, 3, 5, 2)); // 3 columns, 5 horizontal gap, 2 vertical gap
-        checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        List<JCheckBox> checkBoxes = new ArrayList<>();
-
+        // Create panel with grid (2 columns: checkbox and combo box)
+        JPanel selectionPanel = new JPanel(new GridLayout(0, 2, 5, 2));
+        selectionPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        
+        List<ClassGrouping> classGroupings = new ArrayList<>();
+        Set<String> availableGroups = new HashSet<>();
+        
+        // Initially, each class gets its own group
         for (String className : classes) {
-            JCheckBox checkBox = new JCheckBox(className, true);
-            checkBox.setFont(checkBox.getFont().deriveFont(11f)); // Slightly smaller font
-            checkBoxes.add(checkBox);
-            checkBoxPanel.add(checkBox);
+            availableGroups.add(className);
         }
 
-        JScrollPane scrollPane = new JScrollPane(checkBoxPanel);
-        scrollPane.setPreferredSize(new Dimension(400, Math.min(400, 30 * (classes.size() / 3 + 1))));
+        // Create class groupings
+        for (String className : classes) {
+            ClassGrouping grouping = new ClassGrouping(className, true);
+            classGroupings.add(grouping);
+            
+            // Add all available groups to combo box
+            availableGroups.forEach(group -> grouping.groupCombo.addItem(group));
+            // Set default selection to the class's own name
+            grouping.groupCombo.setSelectedItem(className);
+            
+            // Add item listener to checkbox to enable/disable combo box
+            grouping.checkBox.addItemListener(e -> {
+                grouping.groupCombo.setEnabled(grouping.checkBox.isSelected());
+            });
+
+            selectionPanel.add(grouping.checkBox);
+            selectionPanel.add(grouping.groupCombo);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(selectionPanel);
+        scrollPane.setPreferredSize(new Dimension(400, Math.min(400, 50 * classes.size())));
         dialog.add(scrollPane, BorderLayout.CENTER);
 
-        // Add Select All/None buttons
-        JPanel selectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        // Top panel with controls
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        
+        // Select All/None buttons
         JButton selectAllButton = new JButton("Select All");
         selectAllButton.addActionListener(e -> {
-            checkBoxes.forEach(box -> box.setSelected(true));
+            classGroupings.forEach(g -> g.checkBox.setSelected(true));
         });
+        
         JButton selectNoneButton = new JButton("Select None");
         selectNoneButton.addActionListener(e -> {
-            checkBoxes.forEach(box -> box.setSelected(false));
+            classGroupings.forEach(g -> g.checkBox.setSelected(false));
         });
-        selectionPanel.add(selectAllButton);
-        selectionPanel.add(selectNoneButton);
-        dialog.add(selectionPanel, BorderLayout.NORTH);
 
-        // Add separator and buttons panel
+        topPanel.add(selectAllButton);
+        topPanel.add(selectNoneButton);
+        dialog.add(topPanel, BorderLayout.NORTH);
+
+        // Bottom panel with separator and buttons
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
 
         JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
         separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
 
-        // OK/Cancel buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton okButton = new JButton("OK");
         okButton.addActionListener(e -> {
             selectedClasses.clear();
-            for (JCheckBox box : checkBoxes) {
-                if (box.isSelected()) {
-                    selectedClasses.add(box.getText());
+            Map<String, Set<String>> groupedClasses = new HashMap<>();
+            
+            // Collect selected classes and their groups
+            for (ClassGrouping grouping : classGroupings) {
+                if (grouping.checkBox.isSelected()) {
+                    String group = (String) grouping.groupCombo.getSelectedItem();
+                    groupedClasses.computeIfAbsent(group, k -> new HashSet<>()).add(grouping.className);
                 }
             }
+
+            // Create final class groups with concatenated names for combined groups
+            Map<String, Set<String>> finalGroups = new HashMap<>();
+            for (Map.Entry<String, Set<String>> entry : groupedClasses.entrySet()) {
+                if (!entry.getValue().isEmpty()) {
+                    if (entry.getValue().size() == 1) {
+                        // Single class group - use original name
+                        finalGroups.put(entry.getKey(), entry.getValue());
+                    } else {
+                        // Multiple classes - concatenate names
+                        String newGroupName = String.join("+", entry.getValue());
+                        finalGroups.put(newGroupName, entry.getValue());
+                    }
+                }
+            }
+
+            // Validate that we have at least one group with selected classes
+            if (finalGroups.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Please select at least one class.",
+                    "Invalid Selection",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Store the selected classes and their groupings
+            selectedClasses.clear();
+            classGroups = finalGroups;
+            finalGroups.values().forEach(selectedClasses::addAll);
+            
             dialog.dispose();
         });
+
         JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(e -> {
             selectedClasses.clear();
+            classGroups = null;
             dialog.dispose();
         });
+
         buttonPanel.add(okButton);
         buttonPanel.add(cancelButton);
 
@@ -112,6 +186,18 @@ public class CsvDataHandler {
         dialog.setVisible(true);
 
         return !selectedClasses.isEmpty();
+    }
+
+    private void updateAvailableGroups(List<ClassGrouping> groupings, Set<String> availableGroups) {
+        // Update combo boxes for selected checkboxes
+        groupings.forEach(g -> {
+            if (g.checkBox.isSelected()) {
+                String selected = (String) g.groupCombo.getSelectedItem();
+                g.groupCombo.removeAllItems();
+                availableGroups.forEach(group -> g.groupCombo.addItem(group));
+                g.groupCombo.setSelectedItem(selected);
+            }
+        });
     }
 
     public void loadCsvData(String filePath, DefaultTableModel tableModel, JTextArea statsTextArea) {
@@ -160,9 +246,26 @@ public class CsvDataHandler {
                 tableModel.setColumnIdentifiers(headers.toArray());
             }
 
-            // Add filtered data
+            // Add filtered data with transformed class labels
             for (String[] values : tempData) {
-                if (classColIndex == -1 || selectedClasses.contains(values[classColIndex])) {
+                if (classColIndex != -1) {
+                    String originalClass = values[classColIndex];
+                    if (selectedClasses.contains(originalClass)) {
+                        // Find the group this class belongs to
+                        String newClassName = classGroups.entrySet().stream()
+                            .filter(entry -> entry.getValue().contains(originalClass))
+                            .map(Map.Entry::getKey)
+                            .findFirst()
+                            .orElse(originalClass);
+                        
+                        // Create new row with transformed class label
+                        String[] newValues = values.clone();
+                        newValues[classColIndex] = newClassName;
+                        
+                        originalData.add(newValues);
+                        tableModel.addRow(newValues);
+                    }
+                } else {
                     originalData.add(values);
                     tableModel.addRow(values);
                 }
@@ -398,5 +501,9 @@ public class CsvDataHandler {
             normalizeOrDenormalizeData(table, statsTextArea);
         }
         isNormalized = !isNormalized;
+    }
+
+    public Map<String, Set<String>> getClassGroups() {
+        return classGroups;
     }
 }
