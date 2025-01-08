@@ -20,10 +20,11 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import javax.swing.border.Border;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
-import src.utils.SlopeAndDistanceFeatures;
 
 import src.managers.*;
 import src.table.ReorderableTableModel;
@@ -78,9 +79,9 @@ public class CsvViewer extends JFrame {
         getContentPane().setBackground(new Color(240, 240, 240));
     
         // Create main content panel with padding
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        JPanel mainPanel = new JPanel(new BorderLayout(4, 4));
         mainPanel.setBackground(new Color(240, 240, 240));
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
         setContentPane(mainPanel);
     
         dataHandler = new CsvDataHandler();
@@ -94,11 +95,12 @@ public class CsvViewer extends JFrame {
     
         buttonPanelManager = new ButtonPanelManager(this);
         JMenuBar buttonPanel = buttonPanelManager.createMenuBar();
+        buttonPanel.setBorder((Border) new BevelBorder(BevelBorder.RAISED));
         mainPanel.add(buttonPanel, BorderLayout.NORTH);
     
         statsTextArea = UIHelper.createTextArea(3, 0);
         statsScrollPane = CsvViewerUIHelper.createStatsScrollPane(statsTextArea);
-
+        
         // Initialize the thresholdSlider before PureRegionManager
         thresholdSlider = new JSlider(0, 100, 5);
         thresholdSlider.setMajorTickSpacing(20);
@@ -221,7 +223,7 @@ public class CsvViewer extends JFrame {
             switchToggleStatsButton(toggleStatsOffButton);
         } else {
             splitPane.setBottomComponent(statsPanel);
-            splitPane.setDividerSize(10);
+            splitPane.setDividerSize(4);
             splitPane.setDividerLocation(0.8);
             switchToggleStatsButton(toggleStatsOnButton);
         }

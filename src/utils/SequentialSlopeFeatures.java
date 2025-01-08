@@ -11,6 +11,7 @@ public class SequentialSlopeFeatures {
     private final CsvViewer csvViewer;
     private final DefaultTableModel tableModel;
     private final JTable table;
+    private boolean isForward = true; // Default direction
 
     public SequentialSlopeFeatures(CsvViewer csvViewer, DefaultTableModel tableModel, JTable table) {
         this.csvViewer = csvViewer;
@@ -88,6 +89,23 @@ public class SequentialSlopeFeatures {
         selectionPanel.add(selectNoneButton);
         dialog.add(selectionPanel, BorderLayout.NORTH);
 
+        // Add radio buttons for direction selection
+        JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JRadioButton forwardButton = new JRadioButton("Forward", true);
+        JRadioButton backwardButton = new JRadioButton("Backward");
+
+        ButtonGroup directionGroup = new ButtonGroup();
+        directionGroup.add(forwardButton);
+        directionGroup.add(backwardButton);
+
+        radioPanel.add(new JLabel("Select Direction:"));
+        radioPanel.add(forwardButton);
+        radioPanel.add(backwardButton);
+        dialog.add(radioPanel, BorderLayout.WEST);
+
+        forwardButton.addActionListener(e -> isForward = true);
+        backwardButton.addActionListener(e -> isForward = false);
+
         // OK/Cancel buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         JButton okButton = new JButton("OK");
@@ -129,8 +147,14 @@ public class SequentialSlopeFeatures {
         // Calculate slopes for selected columns
         for (int i = 0; i < selectedColumns.size(); i++) {
             int currentCol = selectedColumns.get(i);
-            int nextCol = selectedColumns.get((i + 1) % selectedColumns.size());
-            
+            int nextCol;
+
+            if (isForward) {
+                nextCol = selectedColumns.get((i + 1) % selectedColumns.size()); // Forward direction
+            } else {
+                nextCol = selectedColumns.get((i - 1 + selectedColumns.size()) % selectedColumns.size()); // Backward direction
+            }
+
             String columnName = csvViewer.getUniqueColumnName(
                 "Slope(" + tableModel.getColumnName(currentCol) + 
                 "/" + tableModel.getColumnName(nextCol) + ")");
@@ -160,4 +184,4 @@ public class SequentialSlopeFeatures {
             return false;
         }
     }
-} 
+}
