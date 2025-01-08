@@ -14,6 +14,12 @@ import java.util.Set;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
+import javax.swing.BoxLayout;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
+import java.util.Collections;
 
 public class CsvDataHandler {
     private List<String[]> originalData = new ArrayList<>();
@@ -26,36 +32,125 @@ public class CsvDataHandler {
     private Map<Integer, Double> originalMax = new HashMap<>();
     private Map<Integer, Double> originalMean = new HashMap<>();
     private Map<Integer, Double> originalStd = new HashMap<>();
+    private Set<String> selectedClasses = new HashSet<>();
+
+    private boolean showClassSelectionDialog(List<String> classes) {
+        JDialog dialog = new JDialog();
+        dialog.setTitle("Select Classes to Load");
+        dialog.setModal(true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+        List<JCheckBox> checkBoxes = new ArrayList<>();
+        
+        // Add "Select All" checkbox
+        JCheckBox selectAllBox = new JCheckBox("Select All", true);
+        selectAllBox.addActionListener(e -> {
+            boolean selected = selectAllBox.isSelected();
+            checkBoxes.forEach(box -> box.setSelected(selected));
+        });
+        mainPanel.add(selectAllBox);
+
+        // Add individual class checkboxes
+        for (String className : classes) {
+            JCheckBox checkBox = new JCheckBox(className, true);
+            checkBoxes.add(checkBox);
+            mainPanel.add(checkBox);
+        }
+
+        // Add OK and Cancel buttons
+        JPanel buttonPanel = new JPanel();
+        JButton okButton = new JButton("OK");
+        JButton cancelButton = new JButton("Cancel");
+
+        okButton.addActionListener(e -> {
+            selectedClasses.clear();
+            for (JCheckBox box : checkBoxes) {
+                if (box.isSelected()) {
+                    selectedClasses.add(box.getText());
+                }
+            }
+            dialog.dispose();
+        });
+
+        cancelButton.addActionListener(e -> {
+            selectedClasses.clear();
+            dialog.dispose();
+        });
+
+        buttonPanel.add(okButton);
+        buttonPanel.add(cancelButton);
+        mainPanel.add(buttonPanel);
+
+        dialog.add(mainPanel);
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+
+        return !selectedClasses.isEmpty();
+    }
 
     public void loadCsvData(String filePath, DefaultTableModel tableModel, JTextArea statsTextArea) {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             boolean isFirstLine = true;
+            List<String> headers = null;
+            List<String[]> tempData = new ArrayList<>();
+            Set<String> uniqueClasses = new HashSet<>();
+            int classColIndex = -1;
+
+            // First pass to collect classes and headers
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                if (isFirstLine) {
+                    headers = Arrays.asList(values);
+                    for (int i = 0; i < values.length; i++) {
+                        if (values[i].equalsIgnoreCase("class")) {
+                            classColIndex = i;
+                            break;
+                        }
+                    }
+                    isFirstLine = false;
+                } else if (classColIndex != -1) {
+                    uniqueClasses.add(values[classColIndex]);
+                    tempData.add(values);
+                }
+            }
+
+            // Show class selection dialog if we found classes
+            if (!uniqueClasses.isEmpty()) {
+                List<String> sortedClasses = new ArrayList<>(uniqueClasses);
+                Collections.sort(sortedClasses);
+                if (!showClassSelectionDialog(sortedClasses)) {
+                    return; // User cancelled or no classes selected
+                }
+            }
 
             // Clear existing data
             originalData.clear();
             tableModel.setRowCount(0);
             tableModel.setColumnCount(0);
 
-            while ((line = br.readLine()) != null) {
-                String[] values = line.split(",");
-                if (isFirstLine) {
-                    tableModel.setColumnIdentifiers(values);
-                    for (int i = 0; i < values.length; i++) {
-                        if (values[i].equalsIgnoreCase("class")) {
-                            classColumnIndex = i;
-                            break;
-                        }
-                    }
-                    isFirstLine = false;
-                } else {
+            // Set headers
+            if (headers != null) {
+                tableModel.setColumnIdentifiers(headers.toArray());
+            }
+
+            // Add filtered data
+            for (String[] values : tempData) {
+                if (classColIndex == -1 || selectedClasses.contains(values[classColIndex])) {
                     originalData.add(values);
                     tableModel.addRow(values);
                 }
             }
+
             updateStats(tableModel, statsTextArea);
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error loading CSV file: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Error loading CSV file: " + e.getMessage(), 
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
