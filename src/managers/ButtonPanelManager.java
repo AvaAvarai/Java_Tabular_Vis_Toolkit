@@ -84,6 +84,36 @@ public class ButtonPanelManager {
         addMenuItem(rowMenu, "Insert Row", "/icons/clone.png", _ -> csvViewer.insertRow());
         addMenuItem(rowMenu, "Delete Row", "/icons/clone.png", _ -> csvViewer.deleteRow());
         addMenuItem(rowMenu, "Clone Row", "/icons/clone.png", _ -> csvViewer.cloneSelectedRow());
+        rowMenu.addSeparator();
+        addMenuItem(rowMenu, "Revert Rows to Original", "/icons/revert.png", _ -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                int choice = JOptionPane.showConfirmDialog(csvViewer,
+                    "This will revert all rows to their original state but keep added columns.\nContinue?",
+                    "Revert Rows", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                    
+                if (choice == JOptionPane.YES_OPTION) {
+                    DefaultTableModel model = csvViewer.tableModel;
+                    List<List<String>> originalData = csvViewer.getStateManager().getOriginalData();
+                    
+                    // Reset row count to original
+                    model.setRowCount(originalData.size());
+                    
+                    // Restore original data for existing columns
+                    List<String> originalColumns = csvViewer.getStateManager().getOriginalColumnNames();
+                    for (int col = 0; col < model.getColumnCount(); col++) {
+                        String colName = model.getColumnName(col);
+                        if (originalColumns.contains(colName)) {
+                            int origColIndex = originalColumns.indexOf(colName);
+                            for (int row = 0; row < originalData.size(); row++) {
+                                model.setValueAt(originalData.get(row).get(origColIndex), row, col);
+                            }
+                        }
+                    }
+                }
+            }
+        });
         dataMenu.add(rowMenu);
 
         // Feature Engineering Menu

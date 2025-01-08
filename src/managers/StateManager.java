@@ -22,6 +22,7 @@ public class StateManager {
     private Color cellTextColor;
     private boolean differenceColumnsVisible;
     private Set<Integer> classColumns;
+    private List<List<String>> originalData = new ArrayList<>();
 
     public StateManager() {
         this.datasetName = "";
@@ -39,6 +40,7 @@ public class StateManager {
     }
 
     public void clearState() {
+        originalData.clear();
         originalColumnNames.clear();
         normalized = false;
         normalizationType = "minmax";
@@ -138,5 +140,16 @@ public class StateManager {
 
     public void addClassColumn(int columnIndex) {
         classColumns.add(columnIndex);
+    }
+
+    public List<List<String>> getOriginalData() {
+        return originalData;
+    }
+
+    public void setOriginalData(List<List<String>> data) {
+        this.originalData = new ArrayList<>();
+        for (List<String> row : data) {
+            this.originalData.add(new ArrayList<>(row));
+        }
     }
 }

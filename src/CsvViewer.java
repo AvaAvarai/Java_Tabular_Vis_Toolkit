@@ -263,6 +263,18 @@ public class CsvViewer extends JFrame {
 
             dataHandler.loadCsvData(filePath, tableModel, statsTextArea);
 
+            // Store original data
+            List<List<String>> originalData = new ArrayList<>();
+            for (int row = 0; row < tableModel.getRowCount(); row++) {
+                List<String> rowData = new ArrayList<>();
+                for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                    Object value = tableModel.getValueAt(row, col);
+                    rowData.add(value != null ? value.toString() : "");
+                }
+                originalData.add(rowData);
+            }
+            stateManager.setOriginalData(originalData);
+
             // Format decimal values
             for (int row = 0; row < tableModel.getRowCount(); row++) {
                 for (int col = 0; col < tableModel.getColumnCount(); col++) {
