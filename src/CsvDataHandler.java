@@ -44,13 +44,16 @@ public class CsvDataHandler {
         JCheckBox checkBox;
         JComboBox<String> groupCombo;
         String className;
+        JLabel currentGroupLabel;
 
         ClassGrouping(String className, boolean selected) {
             this.className = className;
             this.checkBox = new JCheckBox(className, selected);
             this.groupCombo = new JComboBox<>();
+            this.currentGroupLabel = new JLabel(className);
             checkBox.setFont(checkBox.getFont().deriveFont(11f));
             groupCombo.setFont(groupCombo.getFont().deriveFont(11f));
+            currentGroupLabel.setFont(currentGroupLabel.getFont().deriveFont(11f));
         }
     }
 
@@ -61,16 +64,16 @@ public class CsvDataHandler {
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
         dialog.setLayout(new BorderLayout(5, 5));
 
-        // Create panel with grid (2 columns: checkbox and combo box)
-        JPanel selectionPanel = new JPanel(new GridLayout(0, 2, 5, 2));
+        // Create panel with grid (3 columns: checkbox, combo box, and current group label)
+        JPanel selectionPanel = new JPanel(new GridLayout(0, 3, 5, 2));
         selectionPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
         List<ClassGrouping> classGroupings = new ArrayList<>();
-        Set<String> availableGroups = new HashSet<>();
+        Map<String, Set<String>> currentGroups = new HashMap<>();
         
         // Initially, each class gets its own group
         for (String className : classes) {
-            availableGroups.add(className);
+            currentGroups.put(className, new HashSet<>(Arrays.asList(className)));
         }
 
         // Create class groupings
@@ -78,22 +81,32 @@ public class CsvDataHandler {
             ClassGrouping grouping = new ClassGrouping(className, true);
             classGroupings.add(grouping);
             
-            // Add all available groups to combo box
-            availableGroups.forEach(group -> grouping.groupCombo.addItem(group));
+            // Add all classes as potential groups
+            grouping.groupCombo.addItem(className); // Always add own class first
+            classes.stream()
+                  .filter(c -> !c.equals(className))
+                  .forEach(c -> grouping.groupCombo.addItem(c));
+            
             // Set default selection to the class's own name
             grouping.groupCombo.setSelectedItem(className);
             
-            // Add item listener to checkbox to enable/disable combo box
+            // Add item listeners
             grouping.checkBox.addItemListener(e -> {
                 grouping.groupCombo.setEnabled(grouping.checkBox.isSelected());
+                updateGroupings(classGroupings, currentGroups);
+            });
+
+            grouping.groupCombo.addActionListener(e -> {
+                updateGroupings(classGroupings, currentGroups);
             });
 
             selectionPanel.add(grouping.checkBox);
             selectionPanel.add(grouping.groupCombo);
+            selectionPanel.add(grouping.currentGroupLabel);
         }
 
         JScrollPane scrollPane = new JScrollPane(selectionPanel);
-        scrollPane.setPreferredSize(new Dimension(400, Math.min(400, 50 * classes.size())));
+        scrollPane.setPreferredSize(new Dimension(500, Math.min(400, 50 * classes.size())));
         dialog.add(scrollPane, BorderLayout.CENTER);
 
         // Top panel with controls
@@ -186,6 +199,40 @@ public class CsvDataHandler {
         dialog.setVisible(true);
 
         return !selectedClasses.isEmpty();
+    }
+
+    private void updateGroupings(List<ClassGrouping> groupings, Map<String, Set<String>> currentGroups) {
+        // Clear current groups
+        currentGroups.clear();
+        
+        // Create temporary mapping of selected groupings
+        Map<String, Set<String>> tempGroups = new HashMap<>();
+        
+        // First pass: collect all groupings
+        for (ClassGrouping grouping : groupings) {
+            if (grouping.checkBox.isSelected()) {
+                String targetGroup = (String) grouping.groupCombo.getSelectedItem();
+                tempGroups.computeIfAbsent(targetGroup, k -> new HashSet<>()).add(grouping.className);
+            } else {
+                // If not selected, class stays in its own group
+                tempGroups.put(grouping.className, new HashSet<>(Arrays.asList(grouping.className)));
+            }
+        }
+        
+        // Second pass: create final groups and update labels
+        for (Map.Entry<String, Set<String>> entry : tempGroups.entrySet()) {
+            String groupName = entry.getValue().size() > 1 ? 
+                String.join("+", entry.getValue()) : 
+                entry.getKey();
+            currentGroups.put(groupName, entry.getValue());
+            
+            // Update labels for all classes in this group
+            for (ClassGrouping grouping : groupings) {
+                if (entry.getValue().contains(grouping.className)) {
+                    grouping.currentGroupLabel.setText(groupName);
+                }
+            }
+        }
     }
 
     private void updateAvailableGroups(List<ClassGrouping> groupings, Set<String> availableGroups) {
