@@ -23,6 +23,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
+import src.utils.SlopeAndDistanceFeatures;
 
 import src.managers.*;
 import src.table.ReorderableTableModel;
@@ -863,115 +864,6 @@ public class CsvViewer extends JFrame {
             JOptionPane.showMessageDialog(this, "Please select a row to clone.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-
-    public void calculateAndInsertSlopesAndDistances() {
-        List<Integer> numericColumnIndices = new ArrayList<>();
-        int numColumns = table.getColumnModel().getColumnCount();
-        
-        // Collect indices of numeric columns in the current column order
-        for (int i = 0; i < numColumns; i++) {
-            int modelIndex = table.convertColumnIndexToModel(i);
-            if (isColumnNumeric(modelIndex) && stateManager.getOriginalColumnNames().contains(tableModel.getColumnName(modelIndex))) {
-                numericColumnIndices.add(modelIndex);
-            }
-        }
-        
-        if (numericColumnIndices.size() < 2) {
-            JOptionPane.showMessageDialog(this, "At least two numeric columns are required to calculate slopes and distances.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        
-        // Calculate slope and distance for each pair of adjacent columns
-        for (int i = 0; i < numericColumnIndices.size() - 1; i++) {
-            int colIndex1 = numericColumnIndices.get(i);
-            int colIndex2 = numericColumnIndices.get(i + 1);
-            
-            String slopeColumnName = getUniqueColumnName("Slope(" + tableModel.getColumnName(colIndex1) + ":" + tableModel.getColumnName(colIndex2) + ")");
-            String distanceColumnName = getUniqueColumnName("Distance(" + tableModel.getColumnName(colIndex1) + ":" + tableModel.getColumnName(colIndex2) + ")");
-            
-            tableModel.addColumn(slopeColumnName);
-            tableModel.addColumn(distanceColumnName);
-            
-            for (int row = 0; row < tableModel.getRowCount(); row++) {
-                try {
-                    double value1 = Double.parseDouble(tableModel.getValueAt(row, colIndex1).toString());
-                    double value2 = Double.parseDouble(tableModel.getValueAt(row, colIndex2).toString());
-                    
-                    double slope = Math.atan2(value2 - value1, 1.0); // Calculate the angle of the line (slant of the polyline)
-                    double distance = value2 - value1; // Terms subtracted
-                    
-                    // Check for NaN, infinity, or other indeterminate forms
-                    if (Double.isNaN(slope) || Double.isInfinite(slope)) {
-                        slope = 0;
-                    }
-                    if (Double.isNaN(distance) || Double.isInfinite(distance)) {
-                        distance = 0;
-                    }
-                    
-                    tableModel.setValueAt(String.format("%.4f", slope), row, tableModel.findColumn(slopeColumnName));
-                    tableModel.setValueAt(String.format("%.4f", distance), row, tableModel.findColumn(distanceColumnName));
-                } catch (NumberFormatException | NullPointerException e) {
-                    tableModel.setValueAt("0.0000", row, tableModel.findColumn(slopeColumnName));
-                    tableModel.setValueAt("0.0000", row, tableModel.findColumn(distanceColumnName));
-                }
-            }
-        }
-        
-        // Calculate slope and distance between last and first column
-        int lastColIndex = numericColumnIndices.get(numericColumnIndices.size() - 1);
-        int firstColIndex = numericColumnIndices.get(0);
-        
-        String slopeColumnName = getUniqueColumnName("Slope(" + tableModel.getColumnName(lastColIndex) + ":" + tableModel.getColumnName(firstColIndex) + ")");
-        String distanceColumnName = getUniqueColumnName("Distance(" + tableModel.getColumnName(lastColIndex) + ":" + tableModel.getColumnName(firstColIndex) + ")");
-        
-        tableModel.addColumn(slopeColumnName);
-        tableModel.addColumn(distanceColumnName);
-        
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            try {
-                double value1 = Double.parseDouble(tableModel.getValueAt(row, lastColIndex).toString());
-                double value2 = Double.parseDouble(tableModel.getValueAt(row, firstColIndex).toString());
-                
-                double slope = Math.atan2(value2 - value1, 1.0); // Calculate the angle of the line (slant of the polyline)
-                double distance = value2 - value1; // Terms subtracted
-                
-                // Check for NaN, infinity, or other indeterminate forms
-                if (Double.isNaN(slope) || Double.isInfinite(slope)) {
-                    slope = 0;
-                }
-                if (Double.isNaN(distance) || Double.isInfinite(distance)) {
-                    distance = 0;
-                }
-                
-                tableModel.setValueAt(String.format("%.4f", slope), row, tableModel.findColumn(slopeColumnName));
-                tableModel.setValueAt(String.format("%.4f", distance), row, tableModel.findColumn(distanceColumnName));
-            } catch (NumberFormatException | NullPointerException e) {
-                tableModel.setValueAt("0.0000", row, tableModel.findColumn(slopeColumnName));
-                tableModel.setValueAt("0.0000", row, tableModel.findColumn(distanceColumnName));
-            }
-        }
-        
-        dataHandler.updateStats(tableModel, statsTextArea);
-        updateSelectedRowsLabel();
-    }
-        
-    private boolean isColumnNumeric(int colIndex) {
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            try {
-                Double.parseDouble(tableModel.getValueAt(row, colIndex).toString());
-            } catch (NumberFormatException e) {
-                return false; // If any value in the column is non-numeric, return false
-            }
-        }
-        return true;
-    }
-    
-    public void showCalculateSlopesAndDistancesDialog() {
-        int option = JOptionPane.showConfirmDialog(this, "Would you like to calculate and insert slopes and distances?", "Calculate Features", JOptionPane.YES_NO_OPTION);
-        if (option == JOptionPane.YES_OPTION) {
-            calculateAndInsertSlopesAndDistances();
-        }
-    }    
 
     public void exportCsvFile() {
         dataExporter.exportCsvFile();

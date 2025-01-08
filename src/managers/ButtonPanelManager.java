@@ -8,6 +8,8 @@ import src.classifiers.PrincipalComponentAnalysisClassifier;
 import src.utils.LinearDiscriminantAnalysis;
 import src.utils.PrincipalComponentAnalysis;
 import src.classifiers.RandomForestClassifier;
+import src.utils.SequentialSlopeFeatures;
+import src.utils.SequentialDistanceFeatures;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,9 +78,6 @@ public class ButtonPanelManager {
         addMenuItem(rowMenu, "Clone Row", "/icons/clone.png", _ -> csvViewer.cloneSelectedRow());
         dataMenu.add(rowMenu);
 
-        // Other data operations
-        addMenuItem(dataMenu, "Insert Slopes and Distances", "/icons/slopes_distances.png", _ -> csvViewer.showCalculateSlopesAndDistancesDialog());
-
         // Feature Engineering Menu
         JMenu featureMenu = new JMenu("Feature Engineering");
         featureMenu.setIcon(resizeIcon("/icons/trigon.png"));
@@ -111,6 +110,39 @@ public class ButtonPanelManager {
         addMenuItem(featureMenu, "Linear Discriminant Analysis", "/icons/ml.png", e -> {
             LinearDiscriminantAnalysis lda = new LinearDiscriminantAnalysis(csvViewer, csvViewer.tableModel);
             lda.insertLDAComponents();
+        });
+
+        // Add Slopes and Distances to Feature Engineering menu
+        /*
+        addMenuItem(featureMenu, "Calculate Slopes and Distances", "/icons/ml.png", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                SlopeAndDistanceFeatures features = new SlopeAndDistanceFeatures(
+                    csvViewer, csvViewer.tableModel, csvViewer.getTable());
+                features.showDimensionDialog();
+            }
+        });*/
+
+        // In Feature Engineering menu
+        addMenuItem(featureMenu, "Calculate Sequential Slopes", "/icons/rule.png", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                SequentialSlopeFeatures slopes = new SequentialSlopeFeatures(
+                    csvViewer, csvViewer.tableModel, csvViewer.getTable());
+                slopes.calculateSlopes();
+            }
+        });
+
+        addMenuItem(featureMenu, "Calculate Sequential Distances", "/icons/rule.png", e -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                SequentialDistanceFeatures distances = new SequentialDistanceFeatures(
+                    csvViewer, csvViewer.tableModel, csvViewer.getTable());
+                distances.calculateDistances();
+            }
         });
 
         // Visualization Options Menu
@@ -184,7 +216,7 @@ public class ButtonPanelManager {
         addMenuItem(analysisMenu, "Toggle Easy Cases", "/icons/easy.png", _ -> csvViewer.toggleEasyCases());
         addMenuItem(analysisMenu, "Show Covariance Matrix", "/icons/variance.png", _ -> csvViewer.showCovarianceMatrix());
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", _ -> csvViewer.showCovarianceSortDialog());
-        addMenuItem(analysisMenu, "Rule Tester", "/icons/rule_tester.png", _ -> csvViewer.showRuleTesterDialog());
+        addMenuItem(analysisMenu, "Rule Tester", "/icons/rule.png", _ -> csvViewer.showRuleTesterDialog());
 
         // Add all menus to menubar
         menuBar.add(fileMenu);
