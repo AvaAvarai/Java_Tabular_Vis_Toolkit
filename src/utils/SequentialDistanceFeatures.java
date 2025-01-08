@@ -89,7 +89,13 @@ public class SequentialDistanceFeatures {
         selectionPanel.add(selectNoneButton);
         dialog.add(selectionPanel, BorderLayout.NORTH);
 
-        // Add radio buttons for direction selection
+        // Add separator and radio buttons for direction selection
+        JPanel directionPanel = new JPanel();
+        directionPanel.setLayout(new BoxLayout(directionPanel, BoxLayout.Y_AXIS));
+
+        JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
+        separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1)); // Full width line
+
         JPanel radioPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         JRadioButton forwardButton = new JRadioButton("Forward", true);
         JRadioButton backwardButton = new JRadioButton("Backward");
@@ -98,13 +104,16 @@ public class SequentialDistanceFeatures {
         directionGroup.add(forwardButton);
         directionGroup.add(backwardButton);
 
+        forwardButton.addActionListener(e -> isForward = true);
+        backwardButton.addActionListener(e -> isForward = false);
+
         radioPanel.add(new JLabel("Select Direction:"));
         radioPanel.add(forwardButton);
         radioPanel.add(backwardButton);
-        dialog.add(radioPanel, BorderLayout.WEST);
 
-        forwardButton.addActionListener(e -> isForward = true);
-        backwardButton.addActionListener(e -> isForward = false);
+        directionPanel.add(separator);
+        directionPanel.add(radioPanel);
+        dialog.add(directionPanel, BorderLayout.SOUTH);
 
         // OK/Cancel buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -122,7 +131,7 @@ public class SequentialDistanceFeatures {
         });
         buttonPanel.add(okButton);
         buttonPanel.add(cancelButton);
-        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        directionPanel.add(buttonPanel);
 
         dialog.pack();
         dialog.setLocationRelativeTo(csvViewer);
