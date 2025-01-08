@@ -7,11 +7,13 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 
 public class CsvDataHandler {
     private List<String[]> originalData = new ArrayList<>();
@@ -19,6 +21,11 @@ public class CsvDataHandler {
     private boolean isNormalized = false;
     private String normalizationType = "minmax";
     private int classColumnIndex = -1; // Index of the detected class column
+    private Map<Integer, double[]> originalValues = new HashMap<>();
+    private Map<Integer, Double> originalMin = new HashMap<>();
+    private Map<Integer, Double> originalMax = new HashMap<>();
+    private Map<Integer, Double> originalMean = new HashMap<>();
+    private Map<Integer, Double> originalStd = new HashMap<>();
 
     public void loadCsvData(String filePath, DefaultTableModel tableModel, JTextArea statsTextArea) {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -53,10 +60,72 @@ public class CsvDataHandler {
     }
 
     public void normalizeOrDenormalizeData(JTable table, JTextArea statsTextArea) {
-        if (!isNormalized) {
-            normalizeData(table, statsTextArea);
-        } else {
-            denormalizeData(table, statsTextArea);
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        int rowCount = model.getRowCount();
+        int colCount = model.getColumnCount();
+
+        for (int col = 0; col < colCount; col++) {
+            if (isColumnNumeric(col, model)) {
+                double[] values = new double[rowCount];
+                boolean hasNulls = false;
+
+                // First pass - collect values and check for nulls
+                for (int row = 0; row < rowCount; row++) {
+                    Object value = model.getValueAt(row, col);
+                    if (value == null || value.toString().trim().isEmpty()) {
+                        hasNulls = true;
+                        values[row] = 0.0; // Default value for nulls
+                    } else {
+                        try {
+                            values[row] = Double.parseDouble(value.toString());
+                        } catch (NumberFormatException e) {
+                            values[row] = 0.0;
+                        }
+                    }
+                }
+
+                if (!hasNulls) {
+                    // Calculate min and max
+                    double min = Arrays.stream(values).min().orElse(0.0);
+                    double max = Arrays.stream(values).max().orElse(1.0);
+                    double mean = Arrays.stream(values).average().orElse(0.0);
+                    double std = calculateStd(values, mean);
+
+                    // Store original values for denormalization
+                    originalValues.put(col, values.clone());
+                    originalMin.put(col, min);
+                    originalMax.put(col, max);
+                    originalMean.put(col, mean);
+                    originalStd.put(col, std);
+
+                    // Normalize values
+                    for (int row = 0; row < rowCount; row++) {
+                        double normalizedValue;
+                        if (normalizationType.equals("minmax")) {
+                            normalizedValue = (values[row] - min) / (max - min);
+                        } else { // zscore
+                            normalizedValue = (values[row] - mean) / std;
+                        }
+                        model.setValueAt(String.format("%.4f", normalizedValue), row, col);
+                    }
+                }
+            }
+        }
+        updateStats(model, statsTextArea);
+    }
+
+    private boolean isColumnNumeric(int col, DefaultTableModel model) {
+        try {
+            for (int row = 0; row < model.getRowCount(); row++) {
+                Object value = model.getValueAt(row, col);
+                if (value != null && !value.toString().trim().isEmpty()) {
+                    Double.parseDouble(value.toString());
+                    return true;
+                }
+            }
+            return false;
+        } catch (NumberFormatException e) {
+            return false;
         }
     }
 
@@ -64,175 +133,25 @@ public class CsvDataHandler {
         return isNormalized;
     }
 
-    private void normalizeData(JTable table, JTextArea statsTextArea) {
-        if (originalData.isEmpty()) {
-            JOptionPane.showMessageDialog(null, "No data to normalize", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
+    public void denormalizeData(JTable table, JTextArea statsTextArea) {
+        DefaultTableModel model = (DefaultTableModel) table.getModel();
+        int rowCount = model.getRowCount();
+        int colCount = model.getColumnCount();
+
+        for (int col = 0; col < colCount; col++) {
+            if (originalValues.containsKey(col)) {
+                double[] values = originalValues.get(col);
+                for (int row = 0; row < rowCount; row++) {
+                    // Remove padding zeros when setting value back
+                    String originalValue = String.valueOf(values[row]);
+                    if (originalValue.endsWith(".0")) {
+                        originalValue = originalValue.substring(0, originalValue.length() - 2);
+                    }
+                    model.setValueAt(originalValue, row, col);
+                }
+            }
         }
-
-        SwingWorker<List<String[]>, Void> worker = new SwingWorker<>() {
-            @Override
-            protected List<String[]> doInBackground() {
-                int numColumns = originalData.get(0).length;
-                double[] minValues = new double[numColumns];
-                double[] maxValues = new double[numColumns];
-                double[] means = new double[numColumns];
-                double[] stdDevs = new double[numColumns];
-                boolean[] isNumerical = new boolean[numColumns];
-                int[] counts = new int[numColumns];
-
-                // Initialize arrays
-                for (int i = 0; i < numColumns; i++) {
-                    minValues[i] = Double.MAX_VALUE;
-                    maxValues[i] = Double.MIN_VALUE;
-                    means[i] = 0.0;
-                    stdDevs[i] = 0.0;
-                    isNumerical[i] = true;
-                    counts[i] = 0;
-                }
-
-                // First pass - calculate min, max, and means
-                for (String[] row : originalData) {
-                    for (int j = 0; j < numColumns; j++) {
-                        if (j == classColumnIndex) continue; // Skip class column
-
-                        try {
-                            if (row[j] != null && !row[j].trim().isEmpty()) {
-                                double value = Double.parseDouble(row[j]);
-                                minValues[j] = Math.min(minValues[j], value);
-                                maxValues[j] = Math.max(maxValues[j], value);
-                                means[j] += value;
-                                counts[j]++;
-                            }
-                        } catch (NumberFormatException e) {
-                            isNumerical[j] = false;
-                        }
-                    }
-                }
-
-                // Calculate means
-                for (int j = 0; j < numColumns; j++) {
-                    if (isNumerical[j] && counts[j] > 0) {
-                        means[j] /= counts[j];
-                    }
-                }
-
-                // Second pass - calculate standard deviations for z-score
-                if (normalizationType.equals("zscore")) {
-                    for (String[] row : originalData) {
-                        for (int j = 0; j < numColumns; j++) {
-                            if (j == classColumnIndex || !isNumerical[j]) continue; // Skip class column
-
-                            try {
-                                if (row[j] != null && !row[j].trim().isEmpty()) {
-                                    double value = Double.parseDouble(row[j]);
-                                    stdDevs[j] += Math.pow(value - means[j], 2);
-                                }
-                            } catch (NumberFormatException ignored) {}
-                        }
-                    }
-
-                    // Finalize standard deviations
-                    for (int j = 0; j < numColumns; j++) {
-                        if (isNumerical[j] && counts[j] > 1) {
-                            stdDevs[j] = Math.sqrt(stdDevs[j] / (counts[j] - 1));
-                        }
-                    }
-                }
-
-                // Create normalized data
-                List<String[]> normalizedData = new ArrayList<>();
-                DecimalFormat df = new DecimalFormat("#.####");
-
-                for (String[] row : originalData) {
-                    String[] normalizedRow = new String[numColumns];
-                    for (int j = 0; j < numColumns; j++) {
-                        if (j == classColumnIndex) {
-                            normalizedRow[j] = row[j]; // Retain original class column
-                        } else if (isNumerical[j]) {
-                            try {
-                                if (row[j] != null && !row[j].trim().isEmpty()) {
-                                    double value = Double.parseDouble(row[j]);
-                                    double normalizedValue;
-                                    if (normalizationType.equals("minmax")) {
-                                        double range = maxValues[j] - minValues[j];
-                                        normalizedValue = range != 0 ? (value - minValues[j]) / range : 0;
-                                    } else { // zscore
-                                        normalizedValue = stdDevs[j] != 0 ? (value - means[j]) / stdDevs[j] : 0;
-                                    }
-                                    normalizedRow[j] = df.format(normalizedValue);
-                                } else {
-                                    normalizedRow[j] = row[j];
-                                }
-                            } catch (NumberFormatException e) {
-                                normalizedRow[j] = row[j];
-                            }
-                        } else {
-                            normalizedRow[j] = row[j]; // Retain non-numeric data
-                        }
-                    }
-                    normalizedData.add(normalizedRow);
-                }
-                return normalizedData;
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    normalizedData = get();
-                    isNormalized = true;
-                    updateTableWithNormalizedData(table);
-                    updateStats((DefaultTableModel) table.getModel(), statsTextArea);
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "Error during normalization: " + e.getMessage(),
-                            "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        };
-
-        worker.execute();
-    }
-
-    private void denormalizeData(JTable table, JTextArea statsTextArea) {
-        SwingWorker<Void, Void> worker = new SwingWorker<>() {
-            @Override
-            protected Void doInBackground() {
-                return null; // Nothing to compute in the background
-            }
-
-            @Override
-            protected void done() {
-                isNormalized = false;
-                updateTableWithOriginalData(table);
-                updateStats((DefaultTableModel) table.getModel(), statsTextArea);
-            }
-        };
-
-        worker.execute();
-    }
-
-    private void updateTableWithNormalizedData(JTable table) {
-        DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
-        tableModel.setRowCount(0); // Clear existing data in the table
-
-        // Populate the table with normalized data
-        for (String[] row : normalizedData) {
-            tableModel.addRow(row);
-        }
-
-        table.repaint(); // Refresh the table display
-    }
-
-    private void updateTableWithOriginalData(JTable table) {
-        DefaultTableModel tableModel = (DefaultTableModel) table.getModel();
-        tableModel.setRowCount(0); // Clear existing data in the table
-
-        // Restore the original data
-        for (String[] row : originalData) {
-            tableModel.addRow(row);
-        }
-
-        table.repaint(); // Refresh the table display
+        updateStats(model, statsTextArea);
     }
 
     public void saveCsvData(String filePath, DefaultTableModel tableModel) {
@@ -345,5 +264,23 @@ public class CsvDataHandler {
 
     public void setNormalizationType(String type) {
         this.normalizationType = type;
+    }
+
+    private double calculateStd(double[] values, double mean) {
+        double sumSquaredDiff = 0.0;
+        for (double value : values) {
+            double diff = value - mean;
+            sumSquaredDiff += diff * diff;
+        }
+        return Math.sqrt(sumSquaredDiff / values.length);
+    }
+
+    public void toggleNormalization(JTable table, JTextArea statsTextArea) {
+        if (isNormalized) {
+            denormalizeData(table, statsTextArea);
+        } else {
+            normalizeOrDenormalizeData(table, statsTextArea);
+        }
+        isNormalized = !isNormalized;
     }
 }

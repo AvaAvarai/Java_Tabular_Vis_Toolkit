@@ -60,14 +60,19 @@ public class ButtonPanelManager {
         addMenuItem(normalizeMenu, "Min-Max Normalization", "/icons/normalize.png", _ -> {
             csvViewer.getStateManager().setNormalizationType("minmax");
             csvViewer.dataHandler.setNormalizationType("minmax");
-            csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
-            csvViewer.getStateManager().setNormalized(true);
+            csvViewer.dataHandler.toggleNormalization(csvViewer.getTable(), csvViewer.getStatsTextArea());
         });
         addMenuItem(normalizeMenu, "Z-Score Normalization", "/icons/normalize.png", _ -> {
             csvViewer.getStateManager().setNormalizationType("zscore");
             csvViewer.dataHandler.setNormalizationType("zscore");
-            csvViewer.dataHandler.normalizeOrDenormalizeData(csvViewer.getTable(), csvViewer.getStatsTextArea());
-            csvViewer.getStateManager().setNormalized(true);
+            csvViewer.dataHandler.toggleNormalization(csvViewer.getTable(), csvViewer.getStatsTextArea());
+        });
+        normalizeMenu.addSeparator();
+        addMenuItem(normalizeMenu, "Denormalize Data", "/icons/normalize.png", _ -> {
+            if (csvViewer.dataHandler.isDataNormalized()) {
+                csvViewer.dataHandler.toggleNormalization(csvViewer.getTable(), csvViewer.getStatsTextArea());
+                csvViewer.getStateManager().setNormalized(false);
+            }
         });
         dataMenu.add(normalizeMenu);
 
