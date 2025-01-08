@@ -18,15 +18,20 @@ import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 import java.util.Collections;
+import java.awt.BorderLayout;
+import java.awt.GridLayout;
+import java.awt.FlowLayout;
+import java.awt.Dimension;
+import javax.swing.JSeparator;
+import javax.swing.SwingConstants;
+import javax.swing.BorderFactory;
 
 public class CsvDataHandler {
     private List<String[]> originalData = new ArrayList<>();
     private List<String[]> normalizedData = new ArrayList<>();
     private boolean isNormalized = false;
     private String normalizationType = "minmax";
-    private int classColumnIndex = -1; // Index of the detected class column
     private Map<Integer, double[]> originalValues = new HashMap<>();
     private Map<Integer, Double> originalMin = new HashMap<>();
     private Map<Integer, Double> originalMax = new HashMap<>();
@@ -39,33 +44,48 @@ public class CsvDataHandler {
         dialog.setTitle("Select Classes to Load");
         dialog.setModal(true);
         dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.setLayout(new BorderLayout(5, 5));
 
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-
+        // Create panel with compact grid
+        JPanel checkBoxPanel = new JPanel(new GridLayout(0, 3, 5, 2)); // 3 columns, 5 horizontal gap, 2 vertical gap
+        checkBoxPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         List<JCheckBox> checkBoxes = new ArrayList<>();
-        
-        // Add "Select All" checkbox
-        JCheckBox selectAllBox = new JCheckBox("Select All", true);
-        selectAllBox.addActionListener(e -> {
-            boolean selected = selectAllBox.isSelected();
-            checkBoxes.forEach(box -> box.setSelected(selected));
-        });
-        mainPanel.add(selectAllBox);
 
-        // Add individual class checkboxes
         for (String className : classes) {
             JCheckBox checkBox = new JCheckBox(className, true);
+            checkBox.setFont(checkBox.getFont().deriveFont(11f)); // Slightly smaller font
             checkBoxes.add(checkBox);
-            mainPanel.add(checkBox);
+            checkBoxPanel.add(checkBox);
         }
 
-        // Add OK and Cancel buttons
-        JPanel buttonPanel = new JPanel();
-        JButton okButton = new JButton("OK");
-        JButton cancelButton = new JButton("Cancel");
+        JScrollPane scrollPane = new JScrollPane(checkBoxPanel);
+        scrollPane.setPreferredSize(new Dimension(400, Math.min(400, 30 * (classes.size() / 3 + 1))));
+        dialog.add(scrollPane, BorderLayout.CENTER);
 
+        // Add Select All/None buttons
+        JPanel selectionPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton selectAllButton = new JButton("Select All");
+        selectAllButton.addActionListener(e -> {
+            checkBoxes.forEach(box -> box.setSelected(true));
+        });
+        JButton selectNoneButton = new JButton("Select None");
+        selectNoneButton.addActionListener(e -> {
+            checkBoxes.forEach(box -> box.setSelected(false));
+        });
+        selectionPanel.add(selectAllButton);
+        selectionPanel.add(selectNoneButton);
+        dialog.add(selectionPanel, BorderLayout.NORTH);
+
+        // Add separator and buttons panel
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
+
+        JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
+        separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+
+        // OK/Cancel buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton okButton = new JButton("OK");
         okButton.addActionListener(e -> {
             selectedClasses.clear();
             for (JCheckBox box : checkBoxes) {
@@ -75,17 +95,18 @@ public class CsvDataHandler {
             }
             dialog.dispose();
         });
-
+        JButton cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(e -> {
             selectedClasses.clear();
             dialog.dispose();
         });
-
         buttonPanel.add(okButton);
         buttonPanel.add(cancelButton);
-        mainPanel.add(buttonPanel);
 
-        dialog.add(mainPanel);
+        bottomPanel.add(separator);
+        bottomPanel.add(buttonPanel);
+        dialog.add(bottomPanel, BorderLayout.SOUTH);
+
         dialog.pack();
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
