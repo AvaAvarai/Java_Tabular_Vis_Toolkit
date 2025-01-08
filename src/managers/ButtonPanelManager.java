@@ -10,6 +10,7 @@ import src.utils.PrincipalComponentAnalysis;
 import src.classifiers.RandomForestClassifier;
 import src.utils.SequentialSlopeFeatures;
 import src.utils.SequentialDistanceFeatures;
+import src.utils.SlopeAndDistanceFeatures;
 
 import javax.swing.*;
 import java.awt.*;
@@ -107,14 +108,13 @@ public class ButtonPanelManager {
         });
 
         // Add LDA Features to Feature Engineering menu
-        addMenuItem(featureMenu, "Linear Discriminant Analysis", "/icons/ml.png", e -> {
+        addMenuItem(featureMenu, "Linear Discriminant Analysis", "/icons/ml.png", _ -> {
             LinearDiscriminantAnalysis lda = new LinearDiscriminantAnalysis(csvViewer, csvViewer.tableModel);
             lda.insertLDAComponents();
         });
 
         // Add Slopes and Distances to Feature Engineering menu
-        /*
-        addMenuItem(featureMenu, "Calculate Slopes and Distances", "/icons/ml.png", e -> {
+        addMenuItem(featureMenu, "Calculate Slopes and Distances", "/icons/rule.png", _ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -122,10 +122,10 @@ public class ButtonPanelManager {
                     csvViewer, csvViewer.tableModel, csvViewer.getTable());
                 features.showDimensionDialog();
             }
-        });*/
+        });
 
         // In Feature Engineering menu
-        addMenuItem(featureMenu, "Calculate Sequential Slopes", "/icons/rule.png", e -> {
+        addMenuItem(featureMenu, "Calculate Sequential Slopes", "/icons/rule.png", _ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -135,7 +135,7 @@ public class ButtonPanelManager {
             }
         });
 
-        addMenuItem(featureMenu, "Calculate Sequential Distances", "/icons/rule.png", e -> {
+        addMenuItem(featureMenu, "Calculate Sequential Distances", "/icons/rule.png", _ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -202,7 +202,7 @@ public class ButtonPanelManager {
             }
         });
 
-        addMenuItem(mlMenu, "Random Forest", "/icons/rf.png", e -> {
+        addMenuItem(mlMenu, "Random Forest", "/icons/rf.png", _ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
