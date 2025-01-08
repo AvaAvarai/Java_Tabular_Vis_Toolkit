@@ -11,10 +11,12 @@ import src.classifiers.RandomForestClassifier;
 import src.utils.SequentialSlopeFeatures;
 import src.utils.SequentialDistanceFeatures;
 import src.utils.SlopeAndDistanceFeatures;
+import javax.swing.table.DefaultTableModel;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 public class ButtonPanelManager {
 
@@ -87,6 +89,36 @@ public class ButtonPanelManager {
         // Feature Engineering Menu
         JMenu featureMenu = new JMenu("Feature Engineering");
         featureMenu.setIcon(resizeIcon("/icons/trigon.png"));
+
+        // Add "Remove Engineered Columns" option at the top
+        addMenuItem(featureMenu, "Remove Engineered Columns", "/icons/remove.png", _ -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                List<String> originalColumns = csvViewer.getStateManager().getOriginalColumnNames();
+                DefaultTableModel model = csvViewer.tableModel;
+                
+                // Remove specific non-original columns by name
+                for (int i = model.getColumnCount() - 1; i >= 0; i--) {
+                    String colName = model.getColumnName(i);
+                    if (!originalColumns.contains(colName)) {
+                        // Remove this specific column
+                        for (int row = 0; row < model.getRowCount(); row++) {
+                            model.setValueAt(null, row, i);
+                        }
+                        // Shift remaining columns left
+                        for (int col = i; col < model.getColumnCount() - 1; col++) {
+                            for (int row = 0; row < model.getRowCount(); row++) {
+                                model.setValueAt(model.getValueAt(row, col + 1), row, col);
+                            }
+                        }
+                        model.setColumnCount(model.getColumnCount() - 1);
+                    }
+                }
+            }
+        });
+        
+        featureMenu.addSeparator();
 
         // Trigonometric submenu
         JMenu trigMenu = new JMenu("Trigonometric Operations");
