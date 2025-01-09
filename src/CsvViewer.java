@@ -110,7 +110,7 @@ public class CsvViewer extends JFrame {
         thresholdSlider.setToolTipText("Adjust threshold percentage");
 
         tableScrollPane = new JScrollPane(table);
-        trigColumnManager = new TrigonometricColumnManager(table);
+        trigColumnManager = new TrigonometricColumnManager(table, this);
         pureRegionManager = new PureRegionManager(this, tableModel, statsTextArea, thresholdSlider);
         visualizationManager = new VisualizationManager(this);
         dataExporter = new DataExporter(tableModel);
@@ -172,11 +172,7 @@ public class CsvViewer extends JFrame {
     }
 
     public void toggleTrigonometricColumns() {
-        trigColumnManager.toggleTrigonometricColumns(
-            stateManager.isNormalized(),
-            () -> dataHandler.normalizeOrDenormalizeData(table, statsTextArea),
-            () -> tableManager.updateTableData(dataHandler.getNormalizedData())
-        );
+        trigColumnManager.toggleTrigonometricColumns();
     }
 
     public void showStarCoordinatesPlot() {

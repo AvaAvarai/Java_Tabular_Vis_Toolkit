@@ -3,6 +3,7 @@ package src.managers;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
+import src.CsvViewer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,32 +13,18 @@ public class TrigonometricColumnManager {
     private List<String[]> originalData;
     private List<String> originalColumnNames;
     private boolean areDifferenceColumnsVisible = false;
+    private CsvViewer csvViewer;
 
-    public TrigonometricColumnManager(JTable table) {
+    public TrigonometricColumnManager(JTable table, CsvViewer csvViewer) {
         this.table = table;
         this.tableModel = (DefaultTableModel) table.getModel();
+        this.csvViewer = csvViewer;
     }
 
-    public void toggleTrigonometricColumns(boolean isNormalized, Runnable normalizeData, Runnable updateTableData) {
-        if (!isNormalized) {
-            int choice = JOptionPane.showConfirmDialog(null,
-                    "Data is not normalized. Normalization is required to insert trigonometric columns. Would you like to normalize the data now?",
-                    "Normalization Required",
-                    JOptionPane.YES_NO_OPTION);
-
-            if (choice == JOptionPane.YES_OPTION) {
-                normalizeData.run();
-                updateTableData.run();
-                isNormalized = true;
-            } else {
-                return;
-            }
-        }
-
+    public void toggleTrigonometricColumns() {
         if (areDifferenceColumnsVisible) {
-            removeTrigonometricColumns(); // If columns are visible, remove them
+            removeTrigonometricColumns();
         } else {
-            // No menu/dialog here - just add columns with default mode
             addTrigonometricColumns("Direct", false);
         }
 

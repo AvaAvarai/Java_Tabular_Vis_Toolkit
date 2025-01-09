@@ -24,7 +24,7 @@ Start menu screenshot:
 
 ## Getting Started
 
-To get started, run the build script from the project root directory. The script requires Java Development Kit (JDK) to be installed.
+To get started, run the build script from the project root directory. The script requires Java Development Kit (JDK) 21, or later, to be installed.
 
 On macOS/Linux:
 
