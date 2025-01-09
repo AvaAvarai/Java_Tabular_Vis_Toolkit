@@ -85,7 +85,7 @@ public class ButtonPanelManager {
         addMenuItem(rowMenu, "Delete Row", "/icons/clone.png", _ -> csvViewer.deleteRow());
         addMenuItem(rowMenu, "Clone Row", "/icons/clone.png", _ -> csvViewer.cloneSelectedRow());
         rowMenu.addSeparator();
-        addMenuItem(rowMenu, "Revert Rows to Original", "/icons/revert.png", _ -> {
+        addMenuItem(rowMenu, "Revert Rows to Original", "/icons/undo.png", _ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -121,7 +121,7 @@ public class ButtonPanelManager {
         featureMenu.setIcon(resizeIcon("/icons/trigon.png"));
 
         // Add "Remove Engineered Columns" option at the top
-        addMenuItem(featureMenu, "Remove Engineered Columns", "/icons/remove.png", _ -> {
+        addMenuItem(featureMenu, "Remove Engineered Columns", "/icons/undo.png", _ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
