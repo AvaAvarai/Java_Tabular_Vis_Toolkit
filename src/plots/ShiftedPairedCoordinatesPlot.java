@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -40,9 +39,6 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     private Map<Integer, Double> slopeValues; // Store calculated slopes for each line segment
     private JScrollPane mainScrollPane; // Store reference to main scroll pane
     private boolean showAttributeLabels = true; // Toggle for displaying attribute labels
-    private static final int PLOT_PADDING = 40;
-    private static final int PLOT_MARGIN = 20;
-    private Rectangle2D[] plotBounds; // Store the bounds of each plot area
 
     public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table) {
         this.data = data;
@@ -150,39 +146,25 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         plotPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
-                Point p = e.getPoint();
-                draggedPlot = findClickedPlot(p);
-                if (draggedPlot != null) {
-                    dragStartPoint = p;
-                    dragStartOffset = plotOffsets.get(draggedPlot);
-                    setCursor(Cursor.getPredefinedCursor(Cursor.MOVE_CURSOR));
-                }
+                int plotWidth = getWidth() / numPlots;
+                draggedPlot = e.getX() / plotWidth;
+                dragStartPoint = e.getPoint();
+                dragStartOffset = plotOffsets.get(draggedPlot);
             }
 
             @Override
             public void mouseReleased(MouseEvent e) {
-                if (draggedPlot != null) {
-                    setCursor(Cursor.getDefaultCursor());
-                    draggedPlot = null;
-                    dragStartPoint = null;
-                    dragStartOffset = null;
-                }
+                draggedPlot = null;
+                dragStartPoint = null;
+                dragStartOffset = null;
             }
         });
 
         plotPanel.addMouseMotionListener(new MouseAdapter() {
             @Override
-            public void mouseMoved(MouseEvent e) {
-                if (findClickedPlot(e.getPoint()) != null) {
-                    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-                } else {
-                    setCursor(Cursor.getDefaultCursor());
-                }
-            }
-
-            @Override
             public void mouseDragged(MouseEvent e) {
                 if (draggedPlot != null && dragStartPoint != null && dragStartOffset != null) {
+                    // Allow both x and y movement
                     int dx = e.getX() - dragStartPoint.x;
                     int dy = e.getY() - dragStartPoint.y;
                     plotOffsets.put(draggedPlot, new Point(dragStartOffset.x + dx, dragStartOffset.y + dy));
@@ -219,8 +201,6 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         mainPanel.add(LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses), BorderLayout.SOUTH);
 
         setContentPane(mainPanel);
-
-        plotBounds = new Rectangle2D[numPlots];
     }
 
     private void optimizeAxesPlacement() {
@@ -379,17 +359,6 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         }
     }
 
-    private Integer findClickedPlot(Point p) {
-        if (plotBounds == null) return null;
-        
-        for (int i = 0; i < plotBounds.length; i++) {
-            if (plotBounds[i] != null && plotBounds[i].contains(p.x / zoomLevel, p.y / zoomLevel)) {
-                return i;
-            }
-        }
-        return null;
-    }
-
     private class ShiftedPairedCoordinatesPanel extends JPanel {
         private static final int TITLE_PADDING = 20;
 
@@ -424,22 +393,6 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
 
             int plotWidth = getWidth() / numPlots;
             int plotHeight = getHeight() - titleHeight - TITLE_PADDING - 50;
-            int plotSize = Math.min(plotWidth, plotHeight) - 2 * PLOT_PADDING;
-
-            // Update plot bounds
-            for (int i = 0; i < numPlots; i++) {
-                Point offset = plotOffsets.get(i);
-                int x = i * plotWidth + PLOT_PADDING + offset.x;
-                int y = titleHeight + TITLE_PADDING + PLOT_MARGIN + offset.y;
-                
-                // Store the bounds of the actual plot area
-                plotBounds[i] = new Rectangle2D.Double(
-                    x, 
-                    y,
-                    plotSize + PLOT_PADDING,  // Add padding to make edges easier to grab
-                    plotSize + PLOT_PADDING
-                );
-            }
 
             // Draw axes first
             for (int i = 0; i < numPlots; i++) {
@@ -476,9 +429,9 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         }
 
         private void drawAxesAndLabels(Graphics2D g2, int x, int y, int width, int height, String xLabel, String yLabel) {
-            int plotSize = Math.min(width, height) - 2 * PLOT_PADDING;
-            int plotX = x + PLOT_PADDING;
-            int plotY = y + PLOT_MARGIN;
+            int plotSize = Math.min(width, height) - 40;
+            int plotX = x + 40;
+            int plotY = y + 20;
 
             double xScale = axisScales.get(xLabel);
             double yScale = axisScales.get(yLabel);
@@ -488,6 +441,8 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             g2.setColor(Color.BLACK);
             g2.drawLine(plotX, plotY + plotSize, plotX, plotY + plotSize - (int)(plotSize * yScale)); // Draw vertical axis growing up from origin
             g2.drawLine(plotX, plotY + plotSize, plotX + (int)(plotSize * xScale), plotY + plotSize);
+            g2.drawLine(plotX, plotY, plotX + plotSize, plotY);
+            g2.drawLine(plotX + plotSize, plotY, plotX + plotSize, plotY + plotSize);
 
             if (showAttributeLabels) {
                 g2.setFont(new Font("SansSerif", Font.PLAIN, 16));
@@ -537,7 +492,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                 if (!dir2) normY1 = 1 - normY1;
         
                 int x1 = plotX1 + (int) (plotSize * normX1 * scale1);
-                int y1 = plotY + plotSize - (int) (plotSize * normY1 * scale2) + offset.y;
+                int y1 = plotY + plotSize - (int) (plotSize * normY1 * scale2) + offset.y + 20;
         
                 if (i + 1 < numPlots) {
                     Point nextOffset = plotOffsets.get(i + 1);
@@ -563,7 +518,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                     if (!nextDir2) normY2 = 1 - normY2;
         
                     int x2 = plotX2 + (int) (plotSize * normX2 * nextScale1);
-                    int y2 = plotY + plotSize - (int) (plotSize * normY2 * nextScale2) + nextOffset.y;
+                    int y2 = plotY + plotSize - (int) (plotSize * normY2 * nextScale2) + nextOffset.y + 20;
                     
                     // Calculate slope between points
                     double slope = (y2 - y1) / (double)(x2 - x1);
@@ -612,7 +567,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                 if (!dir2) normY = 1 - normY;
 
                 int px = plotX + (int) (plotSize * normX * scale1);
-                int py = plotY + plotSize - (int) (plotSize * normY * scale2) + offset.y;
+                int py = plotY + plotSize - (int) (plotSize * normY * scale2) + offset.y + 20;
 
                 String classLabel = classLabels.get(row);
                 Color color = selectedRows.contains(row) ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
