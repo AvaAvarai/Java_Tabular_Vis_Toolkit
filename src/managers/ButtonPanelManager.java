@@ -228,12 +228,10 @@ public class ButtonPanelManager {
         // Machine Learning Menu
         JMenu mlMenu = new JMenu("Run ML Classifiers");
         mlMenu.setIcon(resizeIcon("/icons/ml.png"));
-        
-        addMenuItem(mlMenu, "Support Sum Machine", "/icons/combo.png", _ -> csvViewer.insertWeightedSumColumn());
 
         JMenuItem knnItem = new JMenuItem("k-Nearest Neighbors");
         knnItem.setIcon(resizeIcon("/icons/knn.png"));
-        knnItem.addActionListener(e -> {
+        knnItem.addActionListener(_ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {
@@ -277,6 +275,8 @@ public class ButtonPanelManager {
                 rf.insertForestClassification();
             }
         });
+
+        addMenuItem(mlMenu, "Support Sum Machine", "/icons/combo.png", _ -> csvViewer.insertWeightedSumColumn());
 
         analysisMenu.add(mlMenu);
 
