@@ -1060,34 +1060,37 @@ public class CsvViewer extends JFrame {
         // Select rows based on the selection mode
         table.clearSelection();
         for (int row = 0; row < tableModel.getRowCount(); row++) {
-            boolean withinBounds = requireAllAttributes ? true : false;
-            
-            for (int col : selectedColumns) {
-                try {
-                    double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
-                    boolean isWithinBound = (value >= minBounds.get(col) && value <= maxBounds.get(col));
-                    
-                    if (requireAllAttributes) {
-                        if (!isWithinBound) {
-                            withinBounds = false;
+            if (requireAllAttributes) {
+                // ALL mode: every selected attribute must be within its range
+                boolean allInRange = true;
+                for (int col : selectedColumns) {
+                    try {
+                        double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                        if (value < minBounds.get(col) || value > maxBounds.get(col)) {
+                            allInRange = false;
                             break;
                         }
-                    } else {
-                        if (isWithinBound) {
-                            withinBounds = true;
-                            break;
-                        }
-                    }
-                } catch (NumberFormatException e) {
-                    if (requireAllAttributes) {
-                        withinBounds = false;
+                    } catch (NumberFormatException e) {
+                        allInRange = false;
                         break;
                     }
                 }
-            }
-            
-            if (withinBounds) {
-                table.addRowSelectionInterval(row, row);
+                if (allInRange) {
+                    table.addRowSelectionInterval(row, row);
+                }
+            } else {
+                // ANY mode: at least one attribute must be within its range
+                for (int col : selectedColumns) {
+                    try {
+                        double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                        if (value >= minBounds.get(col) && value <= maxBounds.get(col)) {
+                            table.addRowSelectionInterval(row, row);
+                            break;  // Found one attribute in range, no need to check others
+                        }
+                    } catch (NumberFormatException e) {
+                        continue;
+                    }
+                }
             }
         }
 
@@ -1127,36 +1130,42 @@ public class CsvViewer extends JFrame {
             maxBounds.put(col, max);
         }
 
-        // Create list of rows to remove based on the selection mode
+        // Create list of rows to remove
         List<Integer> rowsToRemove = new ArrayList<>();
         for (int row = 0; row < tableModel.getRowCount(); row++) {
-            boolean withinBounds = requireAllAttributes ? true : false;
+            boolean keepRow = false;
             
-            for (int col : selectedColumns) {
-                try {
-                    double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
-                    boolean isWithinBound = (value >= minBounds.get(col) && value <= maxBounds.get(col));
-                    
-                    if (requireAllAttributes) {
-                        if (!isWithinBound) {
-                            withinBounds = false;
+            if (requireAllAttributes) {
+                // ALL mode: keep if every selected attribute is within its range
+                keepRow = true;
+                for (int col : selectedColumns) {
+                    try {
+                        double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                        if (value < minBounds.get(col) || value > maxBounds.get(col)) {
+                            keepRow = false;
                             break;
                         }
-                    } else {
-                        if (isWithinBound) {
-                            withinBounds = true;
-                            break;
-                        }
-                    }
-                } catch (NumberFormatException e) {
-                    if (requireAllAttributes) {
-                        withinBounds = false;
+                    } catch (NumberFormatException e) {
+                        keepRow = false;
                         break;
+                    }
+                }
+            } else {
+                // ANY mode: keep if at least one attribute is within its range
+                for (int col : selectedColumns) {
+                    try {
+                        double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                        if (value >= minBounds.get(col) && value <= maxBounds.get(col)) {
+                            keepRow = true;
+                            break;  // Found one attribute in range, no need to check others
+                        }
+                    } catch (NumberFormatException e) {
+                        continue;
                     }
                 }
             }
             
-            if (!withinBounds) {
+            if (!keepRow) {
                 rowsToRemove.add(row);
             }
         }
