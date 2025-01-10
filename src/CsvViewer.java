@@ -1215,5 +1215,42 @@ public class CsvViewer extends JFrame {
         }
         keepOnlyCasesWithinBounds(requireAllAttributes, allNumericalColumns);
     }
+
+    public void keepOnlySelectedRows() {
+        int[] selectedRows = table.getSelectedRows();
+        if (selectedRows.length == 0) {
+            JOptionPane.showMessageDialog(this, 
+                "Please select at least one row to keep.", 
+                "Selection Error", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Convert view indices to model indices and sort in descending order
+        List<Integer> selectedModelRows = new ArrayList<>();
+        for (int viewRow : selectedRows) {
+            selectedModelRows.add(table.convertRowIndexToModel(viewRow));
+        }
+        selectedModelRows.sort(Collections.reverseOrder());
+
+        // Create list of rows to remove (all unselected rows)
+        List<Integer> rowsToRemove = new ArrayList<>();
+        for (int row = tableModel.getRowCount() - 1; row >= 0; row--) {
+            if (!selectedModelRows.contains(row)) {
+                rowsToRemove.add(row);
+            }
+        }
+
+        // Remove unselected rows
+        for (int row : rowsToRemove) {
+            tableModel.removeRow(row);
+        }
+
+        // Update UI
+        table.clearSelection();
+        updateSelectedRowsLabel();
+        dataHandler.updateStats(tableModel, statsTextArea);
+        pureRegionManager.calculateAndDisplayPureRegions(thresholdSlider.getValue());
+    }
 }
 

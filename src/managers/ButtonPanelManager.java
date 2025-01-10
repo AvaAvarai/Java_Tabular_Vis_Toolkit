@@ -298,6 +298,8 @@ public class ButtonPanelManager {
         JMenu selectionMenu = new JMenu("Selection");
         selectionMenu.setIcon(resizeIcon("/icons/file.png"));
 
+        addMenuItem(selectionMenu, "Keep Only Selected Rows", "/icons/file.png", 
+            e -> csvViewer.keepOnlySelectedRows());
         addMenuItem(selectionMenu, "Select Cases Within Bounds...", "/icons/file.png", 
             e -> showAttributeSelectionDialog(false));
         addMenuItem(selectionMenu, "Keep Only Cases Within Bounds...", "/icons/file.png", 
