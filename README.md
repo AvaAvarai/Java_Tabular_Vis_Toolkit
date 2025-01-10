@@ -1,8 +1,8 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-This project is a research project for my study of the AdaBoost algorithm from a visual perspective and representation learning. To conduct this research, I have developed **JTabViz**, a Java-based multiplatform toolkit for machine learning (ML) data analysis, classification, and visualization. It is designed for the visualization and analysis of multidimensional (n-D) tabular ML data to discover and build classification models from first order logic rules. Further, it supports data augmentation, to explore how dataset changes impact trained models.
+This project is a software tool developed for a research project and study of the boosting classifier algorithms and representation learning. **JTabViz** is a Java-based cross-platform software toolkit for machine learning (ML) data analysis, classification, and visualization. It is designed for the visualization and analysis of multidimensional (n-D) tabular ML data to discover and build classification models from logical rules. With supports for feature engineering and data augmentation to analyze how dataset changes impact ML models.
 
-Currently, the project supports the following classifiers:
+Currently, the JTabViz software supports the following Machine ML classifiers:
 
 - Decision Tree Classifier
 - K Nearest Neighbors Classifier
@@ -60,7 +60,7 @@ GLCs generalize Cartesian Coordinates to n-D, with a subcategory being n-D to 2-
 | Circular/Polygon Coordinates | X                          | X                         | X                        |                             | X                       |                        |            |             |                   |              |                |                      |
 | Radar Plot     | X                                | X                         | X                        |                             | X                       |                        |            |             |                   |              |                |                      |
 | Concentric Coordinates           | X                                | X                         | X                        | X                           | X                       | X                      | X          | X           | X                 | X            | X              |                      |
-| In-Line Coordinates       | X                                | X                         | X                        | X                           |                         | X                      | X          |             |                   | X            |                |                      |
+| In-Line Coordinates       | X                                | X                         | X                        | X                           | X                       | X                      | X          |             |                   | X            |                |                      |
 
 ## Example Data Analysis
 
