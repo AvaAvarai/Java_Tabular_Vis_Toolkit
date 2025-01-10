@@ -1023,4 +1023,194 @@ public class CsvViewer extends JFrame {
             getClassShapes().put(newClass, availableShapes[shapeIndex]);
         }
     }
+
+    /**
+     * Selects all cases that fall within the numerical bounds defined by currently selected cases
+     */
+    public void selectCasesWithinBounds(boolean requireAllAttributes) {
+        int[] selectedRows = table.getSelectedRows();
+        if (selectedRows.length < 2) {
+            JOptionPane.showMessageDialog(this, 
+                "Please select at least two rows to define bounds.", 
+                "Selection Error", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Find all numerical columns
+        List<Integer> numericalColumns = new ArrayList<>();
+        for (int col = 0; col < tableModel.getColumnCount(); col++) {
+            try {
+                String value = tableModel.getValueAt(selectedRows[0], col).toString();
+                Double.parseDouble(value);
+                numericalColumns.add(col);
+            } catch (NumberFormatException e) {
+                // Skip non-numerical columns
+            }
+        }
+
+        if (numericalColumns.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "No numerical columns found.", 
+                "Selection Error", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Find min/max bounds for each numerical column
+        Map<Integer, Double> minBounds = new HashMap<>();
+        Map<Integer, Double> maxBounds = new HashMap<>();
+
+        for (int col : numericalColumns) {
+            double min = Double.MAX_VALUE;
+            double max = Double.MIN_VALUE;
+            for (int rowIndex : selectedRows) {
+                try {
+                    double value = Double.parseDouble(tableModel.getValueAt(rowIndex, col).toString());
+                    min = Math.min(min, value);
+                    max = Math.max(max, value);
+                } catch (NumberFormatException e) {
+                    // Skip invalid values
+                }
+            }
+            minBounds.put(col, min);
+            maxBounds.put(col, max);
+        }
+
+        // Select rows based on the selection mode
+        table.clearSelection();
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            boolean withinBounds = requireAllAttributes ? true : false;
+            
+            for (int col : numericalColumns) {
+                try {
+                    double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                    boolean isWithinBound = (value >= minBounds.get(col) && value <= maxBounds.get(col));
+                    
+                    if (requireAllAttributes) {
+                        if (!isWithinBound) {
+                            withinBounds = false;
+                            break;
+                        }
+                    } else {
+                        if (isWithinBound) {
+                            withinBounds = true;
+                            break;
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    if (requireAllAttributes) {
+                        withinBounds = false;
+                        break;
+                    }
+                }
+            }
+            
+            if (withinBounds) {
+                table.addRowSelectionInterval(row, row);
+            }
+        }
+
+        updateSelectedRowsLabel();
+    }
+
+    /**
+     * Keeps only the cases that fall within the numerical bounds defined by currently selected cases
+     */
+    public void keepOnlyCasesWithinBounds(boolean requireAllAttributes) {
+        int[] selectedRows = table.getSelectedRows();
+        if (selectedRows.length < 2) {
+            JOptionPane.showMessageDialog(this, 
+                "Please select at least two rows to define bounds.", 
+                "Selection Error", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Find all numerical columns
+        List<Integer> numericalColumns = new ArrayList<>();
+        for (int col = 0; col < tableModel.getColumnCount(); col++) {
+            try {
+                String value = tableModel.getValueAt(selectedRows[0], col).toString();
+                Double.parseDouble(value);
+                numericalColumns.add(col);
+            } catch (NumberFormatException e) {
+                // Skip non-numerical columns
+            }
+        }
+
+        if (numericalColumns.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "No numerical columns found.", 
+                "Selection Error", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Find min/max bounds for each numerical column
+        Map<Integer, Double> minBounds = new HashMap<>();
+        Map<Integer, Double> maxBounds = new HashMap<>();
+
+        for (int col : numericalColumns) {
+            double min = Double.MAX_VALUE;
+            double max = Double.MIN_VALUE;
+            for (int rowIndex : selectedRows) {
+                try {
+                    double value = Double.parseDouble(tableModel.getValueAt(rowIndex, col).toString());
+                    min = Math.min(min, value);
+                    max = Math.max(max, value);
+                } catch (NumberFormatException e) {
+                    // Skip invalid values
+                }
+            }
+            minBounds.put(col, min);
+            maxBounds.put(col, max);
+        }
+
+        // Create list of rows to remove based on the selection mode
+        List<Integer> rowsToRemove = new ArrayList<>();
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            boolean withinBounds = requireAllAttributes ? true : false;
+            
+            for (int col : numericalColumns) {
+                try {
+                    double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                    boolean isWithinBound = (value >= minBounds.get(col) && value <= maxBounds.get(col));
+                    
+                    if (requireAllAttributes) {
+                        if (!isWithinBound) {
+                            withinBounds = false;
+                            break;
+                        }
+                    } else {
+                        if (isWithinBound) {
+                            withinBounds = true;
+                            break;
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    if (requireAllAttributes) {
+                        withinBounds = false;
+                        break;
+                    }
+                }
+            }
+            
+            if (!withinBounds) {
+                rowsToRemove.add(row);
+            }
+        }
+
+        // Remove rows from bottom to top
+        for (int i = rowsToRemove.size() - 1; i >= 0; i--) {
+            tableModel.removeRow(rowsToRemove.get(i));
+        }
+
+        // Update UI
+        table.clearSelection();
+        updateSelectedRowsLabel();
+        dataHandler.updateStats(tableModel, statsTextArea);
+        pureRegionManager.calculateAndDisplayPureRegions(thresholdSlider.getValue());
+    }
 }
+

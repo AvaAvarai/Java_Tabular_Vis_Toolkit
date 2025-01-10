@@ -294,6 +294,25 @@ public class ButtonPanelManager {
         menuBar.add(analysisMenu);
         menuBar.add(mlMenu);
 
+        JMenu selectionMenu = new JMenu("Selection");
+        selectionMenu.setIcon(resizeIcon("/icons/file.png"));
+
+        JMenu selectCasesMenu = new JMenu("Select Cases Within Bounds");
+        addMenuItem(selectCasesMenu, "Any Attribute Within Bounds", "/icons/file.png", 
+            e -> csvViewer.selectCasesWithinBounds(false));
+        addMenuItem(selectCasesMenu, "All Attributes Within Bounds", "/icons/file.png", 
+            e -> csvViewer.selectCasesWithinBounds(true));
+        selectionMenu.add(selectCasesMenu);
+
+        JMenu keepCasesMenu = new JMenu("Keep Cases Within Bounds");
+        addMenuItem(keepCasesMenu, "Any Attribute Within Bounds", "/icons/file.png", 
+            e -> csvViewer.keepOnlyCasesWithinBounds(false));
+        addMenuItem(keepCasesMenu, "All Attributes Within Bounds", "/icons/file.png", 
+            e -> csvViewer.keepOnlyCasesWithinBounds(true));
+        selectionMenu.add(keepCasesMenu);
+
+        menuBar.add(selectionMenu);
+
         return menuBar;
     }
 
