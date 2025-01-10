@@ -1037,16 +1037,18 @@ public class CsvViewer extends JFrame {
             return;
         }
 
-        // Find min/max bounds for selected numerical columns
+        // Find min/max bounds for selected numerical columns from the current table state
         Map<Integer, Double> minBounds = new HashMap<>();
         Map<Integer, Double> maxBounds = new HashMap<>();
 
+        // Calculate bounds from the actual table values
         for (int col : selectedColumns) {
             double min = Double.MAX_VALUE;
             double max = Double.MIN_VALUE;
             for (int rowIndex : selectedRows) {
                 try {
-                    double value = Double.parseDouble(tableModel.getValueAt(rowIndex, col).toString());
+                    int modelRow = table.convertRowIndexToModel(rowIndex);
+                    double value = Double.parseDouble(table.getModel().getValueAt(modelRow, col).toString());
                     min = Math.min(min, value);
                     max = Math.max(max, value);
                 } catch (NumberFormatException e) {
@@ -1059,13 +1061,15 @@ public class CsvViewer extends JFrame {
 
         // Select rows based on the selection mode
         table.clearSelection();
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
+        int matchingRows = 0;
+        for (int viewRow = 0; viewRow < table.getRowCount(); viewRow++) {
             if (requireAllAttributes) {
                 // ALL mode: every selected attribute must be within its range
                 boolean allInRange = true;
                 for (int col : selectedColumns) {
                     try {
-                        double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                        int modelRow = table.convertRowIndexToModel(viewRow);
+                        double value = Double.parseDouble(tableModel.getValueAt(modelRow, col).toString());
                         if (value < minBounds.get(col) || value > maxBounds.get(col)) {
                             allInRange = false;
                             break;
@@ -1076,16 +1080,19 @@ public class CsvViewer extends JFrame {
                     }
                 }
                 if (allInRange) {
-                    table.addRowSelectionInterval(row, row);
+                    table.addRowSelectionInterval(viewRow, viewRow);
+                    matchingRows++;
                 }
             } else {
                 // ANY mode: at least one attribute must be within its range
                 for (int col : selectedColumns) {
                     try {
-                        double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                        int modelRow = table.convertRowIndexToModel(viewRow);
+                        double value = Double.parseDouble(tableModel.getValueAt(modelRow, col).toString());
                         if (value >= minBounds.get(col) && value <= maxBounds.get(col)) {
-                            table.addRowSelectionInterval(row, row);
-                            break;  // Found one attribute in range, no need to check others
+                            table.addRowSelectionInterval(viewRow, viewRow);
+                            matchingRows++;
+                            break;
                         }
                     } catch (NumberFormatException e) {
                         continue;
@@ -1093,7 +1100,6 @@ public class CsvViewer extends JFrame {
                 }
             }
         }
-
         updateSelectedRowsLabel();
     }
 
