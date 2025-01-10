@@ -8,6 +8,8 @@ import java.awt.geom.*;
 import java.util.*;
 import java.util.List;
 import src.utils.LegendUtils;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ParallelCoordinatesPlot extends JFrame {
 
@@ -247,77 +249,113 @@ public class ParallelCoordinatesPlot extends JFrame {
             }
         }
         private void drawData(Graphics2D g2) {
-            // Draw non-selected data first
-            for (int row = 0; row < data.get(0).size(); row++) {
-                if (!selectedRows.contains(row)) {
-                    List<Point2D.Double> points = new ArrayList<>();
-    
-                    for (String attributeName : visualOrder) { // Use visualOrder for drawing polylines
-                        int attributeIndex = attributeNames.indexOf(attributeName); // Get the original attribute index
-                        double value = data.get(attributeIndex).get(row);
-                        double normalizedValue = (value - globalMinValue) / (globalMaxValue - globalMinValue);
-    
-                        if (axisDirections.getOrDefault(attributeName, false)) {
-                            normalizedValue = 1 - normalizedValue;
-                        }
-    
-                        Point2D.Double pos = axisPositions.get(attributeName);
-                        double scale = axisScales.getOrDefault(attributeName, 1.0); // Get the scale for this axis
-                        int scaledHeight = (int) (AXIS_HEIGHT * scale); // Scale the axis height
-                        double y = pos.y + scaledHeight - normalizedValue * scaledHeight; // Scale the data down to the axis scale
-                        points.add(new Point2D.Double(pos.x, y));
-                    }
-    
-                    String classLabel = classLabels.get(row);
-                    if (hiddenClasses.contains(classLabel)) continue;
-    
-                    g2.setColor(classColors.getOrDefault(classLabel, Color.BLACK));
-                    g2.setStroke(new BasicStroke(1.0f)); // Default line thickness
-                    for (int i = 0; i < points.size() - 1; i++) {
-                        g2.draw(new Line2D.Double(points.get(i), points.get(i + 1)));
-                    }
-    
-                    // Draw class symbols as vertices
-                    for (Point2D.Double point : points) {
-                        Shape shape = classShapes.get(classLabel);
-                        g2.translate(point.x, point.y);
-                        g2.fill(shape);
-                        g2.translate(-point.x, -point.y);
-                    }
-                }
-            }
-    
-            // Draw selected data last to draw on top
-            for (int row : selectedRows) {
-                List<Point2D.Double> points = new ArrayList<>();
-    
-                for (String attributeName : visualOrder) { // Use visualOrder for drawing polylines
-                    int attributeIndex = attributeNames.indexOf(attributeName); // Get the original attribute index
-                    double value = data.get(attributeIndex).get(row);
-                    double normalizedValue = (value - globalMinValue) / (globalMaxValue - globalMinValue);
-    
-                    if (axisDirections.getOrDefault(attributeName, false)) {
-                        normalizedValue = 1 - normalizedValue;
-                    }
-                    
-                    Point2D.Double pos = axisPositions.get(attributeName);
-                    double scale = axisScales.getOrDefault(attributeName, 1.0); // Get the scale for this axis
-                    int scaledHeight = (int) (AXIS_HEIGHT * scale); // Scale the axis height
+            // Create a map to store line segments and their counts
+            Map<LineSegment, Integer> lineSegmentCounts = new HashMap<>();
+            
+            // First pass: Count overlapping line segments
+            countLineSegments(lineSegmentCounts, false); // non-selected lines
+            countLineSegments(lineSegmentCounts, true);  // selected lines
 
-                    double y = pos.y + scaledHeight - normalizedValue * scaledHeight; // Scale the data down to the axis scale
-                    points.add(new Point2D.Double(pos.x, y));
-                }
-    
+            // Find maximum density for normalization
+            int maxDensity = lineSegmentCounts.values().stream()
+                    .mapToInt(Integer::intValue)
+                    .max()
+                    .orElse(1);
+
+            // Second pass: Draw lines with appropriate thickness
+            drawLinesWithDensity(g2, lineSegmentCounts, maxDensity, false);
+            drawLinesWithDensity(g2, lineSegmentCounts, maxDensity, true);
+        }
+
+        // Add this class to store line segments
+        private static class LineSegment {
+            final int x1, y1, x2, y2;
+            
+            LineSegment(Point2D.Double p1, Point2D.Double p2) {
+                // Round coordinates to reduce floating point precision issues
+                this.x1 = (int) Math.round(p1.x);
+                this.y1 = (int) Math.round(p1.y);
+                this.x2 = (int) Math.round(p2.x);
+                this.y2 = (int) Math.round(p2.y);
+            }
+            
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (!(o instanceof LineSegment)) return false;
+                LineSegment that = (LineSegment) o;
+                return x1 == that.x1 && y1 == that.y1 && x2 == that.x2 && y2 == that.y2;
+            }
+            
+            @Override
+            public int hashCode() {
+                return Objects.hash(x1, y1, x2, y2);
+            }
+        }
+
+        private void countLineSegments(Map<LineSegment, Integer> lineSegmentCounts, boolean selectedOnly) {
+            List<Integer> rowsToProcess = selectedOnly ? selectedRows : 
+                IntStream.range(0, data.get(0).size())
+                        .filter(i -> !selectedRows.contains(i))
+                        .boxed()
+                        .collect(Collectors.toList());
+
+            for (int row : rowsToProcess) {
                 String classLabel = classLabels.get(row);
                 if (hiddenClasses.contains(classLabel)) continue;
-    
-                g2.setColor(Color.YELLOW); // Highlight selected cases
-                g2.setStroke(new BasicStroke(2.0f)); // Thicker line for selected cases
+
+                List<Point2D.Double> points = getPointsForRow(row);
+                
+                // Count line segments
                 for (int i = 0; i < points.size() - 1; i++) {
-                    g2.draw(new Line2D.Double(points.get(i), points.get(i + 1)));
+                    LineSegment segment = new LineSegment(points.get(i), points.get(i + 1));
+                    lineSegmentCounts.merge(segment, 1, Integer::sum);
                 }
-    
+            }
+        }
+
+        private void drawLinesWithDensity(Graphics2D g2, Map<LineSegment, Integer> lineSegmentCounts, 
+                                        int maxDensity, boolean selectedOnly) {
+            List<Integer> rowsToProcess = selectedOnly ? selectedRows : 
+                IntStream.range(0, data.get(0).size())
+                        .filter(i -> !selectedRows.contains(i))
+                        .boxed()
+                        .collect(Collectors.toList());
+
+            for (int row : rowsToProcess) {
+                String classLabel = classLabels.get(row);
+                if (hiddenClasses.contains(classLabel)) continue;
+
+                List<Point2D.Double> points = getPointsForRow(row);
+                Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+                
+                // Draw lines with varying thickness based on density
+                for (int i = 0; i < points.size() - 1; i++) {
+                    Point2D.Double p1 = points.get(i);
+                    Point2D.Double p2 = points.get(i + 1);
+                    
+                    LineSegment segment = new LineSegment(p1, p2);
+                    int count = lineSegmentCounts.getOrDefault(segment, 1);
+                    
+                    // Calculate thickness based on density
+                    float normalizedDensity = (float) count / maxDensity;
+                    float thickness = 1.0f + (normalizedDensity * 5.0f); // Scale from 1 to 6 pixels
+                    
+                    // Adjust color alpha based on density
+                    Color adjustedColor = new Color(
+                        baseColor.getRed(),
+                        baseColor.getGreen(),
+                        baseColor.getBlue(),
+                        Math.min(255, 50 + (int)(205 * normalizedDensity)) // Alpha from 50 to 255
+                    );
+                    
+                    g2.setStroke(new BasicStroke(selectedOnly ? thickness + 1.0f : thickness));
+                    g2.setColor(adjustedColor);
+                    g2.draw(new Line2D.Double(p1, p2));
+                }
+
                 // Draw class symbols as vertices
+                g2.setColor(baseColor);
                 for (Point2D.Double point : points) {
                     Shape shape = classShapes.get(classLabel);
                     g2.translate(point.x, point.y);
@@ -325,6 +363,28 @@ public class ParallelCoordinatesPlot extends JFrame {
                     g2.translate(-point.x, -point.y);
                 }
             }
+        }
+
+        private List<Point2D.Double> getPointsForRow(int row) {
+            List<Point2D.Double> points = new ArrayList<>();
+            
+            for (String attributeName : visualOrder) {
+                int attributeIndex = attributeNames.indexOf(attributeName);
+                double value = data.get(attributeIndex).get(row);
+                double normalizedValue = (value - globalMinValue) / (globalMaxValue - globalMinValue);
+
+                if (axisDirections.getOrDefault(attributeName, false)) {
+                    normalizedValue = 1 - normalizedValue;
+                }
+
+                Point2D.Double pos = axisPositions.get(attributeName);
+                double scale = axisScales.getOrDefault(attributeName, 1.0);
+                int scaledHeight = (int) (AXIS_HEIGHT * scale);
+                double y = pos.y + scaledHeight - normalizedValue * scaledHeight;
+                points.add(new Point2D.Double(pos.x, y));
+            }
+            
+            return points;
         }
     }
 } 
