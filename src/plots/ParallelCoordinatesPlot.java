@@ -27,6 +27,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private final double globalMaxValue;
     private final double globalMinValue;
     private boolean showAttributeLabels = true;
+    private boolean showDensity = true;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -77,7 +78,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         // Add the plot panel
         ParallelCoordinatesPanel plotPanel = new ParallelCoordinatesPanel();
-        plotPanel.setPreferredSize(new Dimension(attributeNames.size() * 150, 600)); // Adjust to fit all axes horizontally
+        plotPanel.setPreferredSize(new Dimension(attributeNames.size() * 150, 600));
 
         JScrollPane scrollPane = new JScrollPane(plotPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -88,11 +89,11 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         // Add a button to take a screenshot
         JButton screenshotButton = new JButton("Take Screenshot");
-        screenshotButton.addActionListener(e -> {
+        screenshotButton.addActionListener(_ -> {
             ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "ParallelCoordinates", datasetName);
         });
 
-        controlPanel.add(screenshotButton); // Add the button to the control panel
+        controlPanel.add(screenshotButton);
         
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         mainPanel.add(controlPanel, BorderLayout.NORTH);
@@ -110,11 +111,21 @@ public class ParallelCoordinatesPlot extends JFrame {
         
         // Add a button to toggle the attribute labels
         JToggleButton attributeLabelToggle = new JToggleButton("Show Labels");
-        attributeLabelToggle.addActionListener(e -> {
+        attributeLabelToggle.addActionListener(_ -> {
             showAttributeLabels = attributeLabelToggle.isSelected();
             repaint();
         });
-        attributeLabelToggle.setAlignmentX(Component.CENTER_ALIGNMENT); // Center align
+
+        // Add a button to toggle the density
+        JToggleButton densityToggle = new JToggleButton("Toggle Density");
+        densityToggle.addActionListener(_ -> {
+            showDensity = densityToggle.isSelected();
+            repaint();
+        });
+        densityToggle.setAlignmentX(Component.CENTER_ALIGNMENT);
+        controlPanel.add(densityToggle);
+
+        attributeLabelToggle.setAlignmentX(Component.CENTER_ALIGNMENT);
         controlPanel.add(attributeLabelToggle);
 
         for (String attributeName : attributeNames) {
@@ -248,6 +259,7 @@ public class ParallelCoordinatesPlot extends JFrame {
                 }
             }
         }
+        
         private void drawData(Graphics2D g2) {
             // Create a map to store line segments and their counts
             Map<LineSegment, Integer> lineSegmentCounts = new HashMap<>();
@@ -263,8 +275,13 @@ public class ParallelCoordinatesPlot extends JFrame {
                     .orElse(1);
 
             // Second pass: Draw lines with appropriate thickness
-            drawLinesWithDensity(g2, lineSegmentCounts, maxDensity, false);
-            drawLinesWithDensity(g2, lineSegmentCounts, maxDensity, true);
+            if (!showDensity) {
+                drawLines(g2, false);
+                drawLines(g2, true);
+            } else {
+                drawLinesWithDensity(g2, lineSegmentCounts, maxDensity, false);
+                drawLinesWithDensity(g2, lineSegmentCounts, maxDensity, true);
+            }
         }
 
         // Add this class to store line segments
@@ -310,6 +327,41 @@ public class ParallelCoordinatesPlot extends JFrame {
                 for (int i = 0; i < points.size() - 1; i++) {
                     LineSegment segment = new LineSegment(points.get(i), points.get(i + 1));
                     lineSegmentCounts.merge(segment, 1, Integer::sum);
+                }
+            }
+        }
+
+        private void drawLines(Graphics2D g2, boolean selectedOnly) {
+            List<Integer> rowsToProcess = selectedOnly ? selectedRows : 
+                IntStream.range(0, data.get(0).size())
+                        .filter(i -> !selectedRows.contains(i))
+                        .boxed()
+                        .collect(Collectors.toList());
+
+            for (int row : rowsToProcess) {
+                String classLabel = classLabels.get(row);
+                if (hiddenClasses.contains(classLabel)) continue;
+
+                List<Point2D.Double> points = getPointsForRow(row);
+                Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+                
+                // Draw lines with a fixed thickness
+                for (int i = 0; i < points.size() - 1; i++) {
+                    Point2D.Double p1 = points.get(i);
+                    Point2D.Double p2 = points.get(i + 1);
+                    
+                    g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                    g2.setColor(baseColor);
+                    g2.draw(new Line2D.Double(p1, p2));
+                }
+
+                // Draw class symbols as vertices
+                g2.setColor(baseColor);
+                for (Point2D.Double point : points) {
+                    Shape shape = classShapes.get(classLabel);
+                    g2.translate(point.x, point.y);
+                    g2.fill(shape);
+                    g2.translate(-point.x, -point.y);
                 }
             }
         }
