@@ -366,8 +366,7 @@ public class ParallelCoordinatesPlot extends JFrame {
             }
         }
 
-        private void drawLinesWithDensity(Graphics2D g2, Map<LineSegment, Integer> lineSegmentCounts, 
-                                        int maxDensity, boolean selectedOnly) {
+        private void drawLinesWithDensity(Graphics2D g2, Map<LineSegment, Integer> lineSegmentCounts, int maxDensity, boolean selectedOnly) {
             List<Integer> rowsToProcess = selectedOnly ? selectedRows : 
                 IntStream.range(0, data.get(0).size())
                         .filter(i -> !selectedRows.contains(i))

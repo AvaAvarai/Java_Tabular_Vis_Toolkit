@@ -17,6 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.util.ArrayList;
 
 public class ButtonPanelManager {
 
@@ -297,19 +298,10 @@ public class ButtonPanelManager {
         JMenu selectionMenu = new JMenu("Selection");
         selectionMenu.setIcon(resizeIcon("/icons/file.png"));
 
-        JMenu selectCasesMenu = new JMenu("Select Cases Within Bounds");
-        addMenuItem(selectCasesMenu, "Any Attribute Within Bounds", "/icons/file.png", 
-            e -> csvViewer.selectCasesWithinBounds(false));
-        addMenuItem(selectCasesMenu, "All Attributes Within Bounds", "/icons/file.png", 
-            e -> csvViewer.selectCasesWithinBounds(true));
-        selectionMenu.add(selectCasesMenu);
-
-        JMenu keepCasesMenu = new JMenu("Keep Cases Within Bounds");
-        addMenuItem(keepCasesMenu, "Any Attribute Within Bounds", "/icons/file.png", 
-            e -> csvViewer.keepOnlyCasesWithinBounds(false));
-        addMenuItem(keepCasesMenu, "All Attributes Within Bounds", "/icons/file.png", 
-            e -> csvViewer.keepOnlyCasesWithinBounds(true));
-        selectionMenu.add(keepCasesMenu);
+        addMenuItem(selectionMenu, "Select Cases Within Bounds...", "/icons/file.png", 
+            e -> showAttributeSelectionDialog(false));
+        addMenuItem(selectionMenu, "Keep Only Cases Within Bounds...", "/icons/file.png", 
+            e -> showAttributeSelectionDialog(true));
 
         menuBar.add(selectionMenu);
 
@@ -368,6 +360,86 @@ public class ButtonPanelManager {
         cancelButton.addActionListener(e -> dialog.dispose());
         buttonPanel.add(cancelButton);
         
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+    }
+
+    private void showAttributeSelectionDialog(boolean keepMode) {
+        JDialog dialog = new JDialog((Frame)null, "Select Attributes", true);
+        dialog.setLayout(new BorderLayout(5,5));
+        
+        // Create panel for checkboxes
+        JPanel checkboxPanel = new JPanel();
+        checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
+        
+        // Get column names and create checkboxes
+        List<JCheckBox> checkboxes = new ArrayList<>();
+        for (int i = 0; i < csvViewer.tableModel.getColumnCount(); i++) {
+            String colName = csvViewer.tableModel.getColumnName(i);
+            // Skip non-numerical columns
+            try {
+                Double.parseDouble(csvViewer.tableModel.getValueAt(0, i).toString());
+                JCheckBox cb = new JCheckBox(colName);
+                cb.setSelected(true); // Default to selected
+                checkboxes.add(cb);
+                checkboxPanel.add(cb);
+            } catch (NumberFormatException e) {
+                // Skip non-numerical columns
+            }
+        }
+        
+        // Add radio buttons for matching mode
+        JPanel matchPanel = new JPanel();
+        matchPanel.setBorder(BorderFactory.createTitledBorder("Matching Mode"));
+        ButtonGroup group = new ButtonGroup();
+        JRadioButton anyMatch = new JRadioButton("Match ANY selected attribute");
+        JRadioButton allMatch = new JRadioButton("Match ALL selected attributes");
+        anyMatch.setSelected(true); // Default to ANY
+        group.add(anyMatch);
+        group.add(allMatch);
+        matchPanel.add(anyMatch);
+        matchPanel.add(allMatch);
+        
+        // Main content panel
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.add(new JScrollPane(checkboxPanel), BorderLayout.CENTER);
+        contentPanel.add(matchPanel, BorderLayout.SOUTH);
+        dialog.add(contentPanel, BorderLayout.CENTER);
+        
+        // Add buttons
+        JPanel buttonPanel = new JPanel();
+        JButton okButton = new JButton("OK");
+        okButton.addActionListener(e -> {
+            List<Integer> selectedColumns = new ArrayList<>();
+            for (int i = 0; i < checkboxes.size(); i++) {
+                if (checkboxes.get(i).isSelected()) {
+                    selectedColumns.add(i);
+                }
+            }
+            if (selectedColumns.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, 
+                    "Please select at least one attribute.", 
+                    "Selection Error", 
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            boolean requireAllAttributes = allMatch.isSelected();
+            if (keepMode) {
+                csvViewer.keepOnlyCasesWithinBounds(requireAllAttributes, selectedColumns);
+            } else {
+                csvViewer.selectCasesWithinBounds(requireAllAttributes, selectedColumns);
+            }
+            dialog.dispose();
+        });
+        
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> dialog.dispose());
+        
+        buttonPanel.add(okButton);
+        buttonPanel.add(cancelButton);
         dialog.add(buttonPanel, BorderLayout.SOUTH);
         
         dialog.pack();

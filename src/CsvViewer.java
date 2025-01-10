@@ -1027,7 +1027,7 @@ public class CsvViewer extends JFrame {
     /**
      * Selects all cases that fall within the numerical bounds defined by currently selected cases
      */
-    public void selectCasesWithinBounds(boolean requireAllAttributes) {
+    public void selectCasesWithinBounds(boolean requireAllAttributes, List<Integer> selectedColumns) {
         int[] selectedRows = table.getSelectedRows();
         if (selectedRows.length < 2) {
             JOptionPane.showMessageDialog(this, 
@@ -1037,31 +1037,11 @@ public class CsvViewer extends JFrame {
             return;
         }
 
-        // Find all numerical columns
-        List<Integer> numericalColumns = new ArrayList<>();
-        for (int col = 0; col < tableModel.getColumnCount(); col++) {
-            try {
-                String value = tableModel.getValueAt(selectedRows[0], col).toString();
-                Double.parseDouble(value);
-                numericalColumns.add(col);
-            } catch (NumberFormatException e) {
-                // Skip non-numerical columns
-            }
-        }
-
-        if (numericalColumns.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "No numerical columns found.", 
-                "Selection Error", 
-                JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Find min/max bounds for each numerical column
+        // Find min/max bounds for selected numerical columns
         Map<Integer, Double> minBounds = new HashMap<>();
         Map<Integer, Double> maxBounds = new HashMap<>();
 
-        for (int col : numericalColumns) {
+        for (int col : selectedColumns) {
             double min = Double.MAX_VALUE;
             double max = Double.MIN_VALUE;
             for (int rowIndex : selectedRows) {
@@ -1082,7 +1062,7 @@ public class CsvViewer extends JFrame {
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             boolean withinBounds = requireAllAttributes ? true : false;
             
-            for (int col : numericalColumns) {
+            for (int col : selectedColumns) {
                 try {
                     double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
                     boolean isWithinBound = (value >= minBounds.get(col) && value <= maxBounds.get(col));
@@ -1117,7 +1097,7 @@ public class CsvViewer extends JFrame {
     /**
      * Keeps only the cases that fall within the numerical bounds defined by currently selected cases
      */
-    public void keepOnlyCasesWithinBounds(boolean requireAllAttributes) {
+    public void keepOnlyCasesWithinBounds(boolean requireAllAttributes, List<Integer> selectedColumns) {
         int[] selectedRows = table.getSelectedRows();
         if (selectedRows.length < 2) {
             JOptionPane.showMessageDialog(this, 
@@ -1127,31 +1107,11 @@ public class CsvViewer extends JFrame {
             return;
         }
 
-        // Find all numerical columns
-        List<Integer> numericalColumns = new ArrayList<>();
-        for (int col = 0; col < tableModel.getColumnCount(); col++) {
-            try {
-                String value = tableModel.getValueAt(selectedRows[0], col).toString();
-                Double.parseDouble(value);
-                numericalColumns.add(col);
-            } catch (NumberFormatException e) {
-                // Skip non-numerical columns
-            }
-        }
-
-        if (numericalColumns.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "No numerical columns found.", 
-                "Selection Error", 
-                JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Find min/max bounds for each numerical column
+        // Find min/max bounds for selected numerical columns
         Map<Integer, Double> minBounds = new HashMap<>();
         Map<Integer, Double> maxBounds = new HashMap<>();
 
-        for (int col : numericalColumns) {
+        for (int col : selectedColumns) {
             double min = Double.MAX_VALUE;
             double max = Double.MIN_VALUE;
             for (int rowIndex : selectedRows) {
@@ -1172,7 +1132,7 @@ public class CsvViewer extends JFrame {
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             boolean withinBounds = requireAllAttributes ? true : false;
             
-            for (int col : numericalColumns) {
+            for (int col : selectedColumns) {
                 try {
                     double value = Double.parseDouble(tableModel.getValueAt(row, col).toString());
                     boolean isWithinBound = (value >= minBounds.get(col) && value <= maxBounds.get(col));
@@ -1211,6 +1171,34 @@ public class CsvViewer extends JFrame {
         updateSelectedRowsLabel();
         dataHandler.updateStats(tableModel, statsTextArea);
         pureRegionManager.calculateAndDisplayPureRegions(thresholdSlider.getValue());
+    }
+
+    public void selectCasesWithinBounds(boolean requireAllAttributes) {
+        // Get all numerical columns
+        List<Integer> allNumericalColumns = new ArrayList<>();
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            try {
+                Double.parseDouble(tableModel.getValueAt(0, i).toString());
+                allNumericalColumns.add(i);
+            } catch (NumberFormatException e) {
+                // Skip non-numerical columns
+            }
+        }
+        selectCasesWithinBounds(requireAllAttributes, allNumericalColumns);
+    }
+
+    public void keepOnlyCasesWithinBounds(boolean requireAllAttributes) {
+        // Get all numerical columns
+        List<Integer> allNumericalColumns = new ArrayList<>();
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            try {
+                Double.parseDouble(tableModel.getValueAt(0, i).toString());
+                allNumericalColumns.add(i);
+            } catch (NumberFormatException e) {
+                // Skip non-numerical columns
+            }
+        }
+        keepOnlyCasesWithinBounds(requireAllAttributes, allNumericalColumns);
     }
 }
 
