@@ -180,7 +180,8 @@ public class LinearRegressionClassifier {
         tableModel.addColumn(formula.toString());
         int newColIndex = tableModel.getColumnCount() - 1;
 
-        // Calculate predicted values
+        // Calculate predictions
+        List<Double> predictions = new ArrayList<>();
         for (int row = 0; row < n; row++) {
             double predicted = coefficients[0]; // Intercept
             for (int j = 0; j < predictorVars.size(); j++) {
@@ -188,7 +189,24 @@ public class LinearRegressionClassifier {
                 predicted += coefficients[j + 1] * 
                     Double.parseDouble(tableModel.getValueAt(row, colIndex).toString());
             }
-            tableModel.setValueAt(df.format(predicted), row, newColIndex);
+            predictions.add(predicted);
+        }
+
+        // If data is normalized, normalize the predictions using min-max
+        if (csvViewer.dataHandler.isDataNormalized()) {
+            double min = Collections.min(predictions);
+            double max = Collections.max(predictions);
+            double range = max - min;
+            
+            for (int row = 0; row < n; row++) {
+                double normalizedValue = (predictions.get(row) - min) / range;
+                tableModel.setValueAt(df.format(normalizedValue), row, newColIndex);
+            }
+        } else {
+            System.out.println("Data is not normalized, using raw predictions...");
+            for (int row = 0; row < n; row++) {
+                tableModel.setValueAt(df.format(predictions.get(row)), row, newColIndex);
+            }
         }
 
         // Ensure proper sorting for the new column
