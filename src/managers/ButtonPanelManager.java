@@ -280,7 +280,7 @@ public class ButtonPanelManager {
 
         addMenuItem(mlMenu, "Support Sum Machine", "/icons/combo.png", _ -> csvViewer.insertWeightedSumColumn());
 
-        addMenuItem(mlMenu, "Linear Regression", "/icons/file.png", _ -> {
+        addMenuItem(mlMenu, "Linear Regression", "/icons/lda.png", _ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
                 csvViewer.noDataLoadedError();
             } else {

@@ -2,11 +2,14 @@ package src.classifiers;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
+
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.List;
 import src.CsvViewer;
+import src.table.NumericStringComparator;
 
 public class LinearRegressionClassifier {
     private final CsvViewer csvViewer;
@@ -186,6 +189,14 @@ public class LinearRegressionClassifier {
                     Double.parseDouble(tableModel.getValueAt(row, colIndex).toString());
             }
             tableModel.setValueAt(df.format(predicted), row, newColIndex);
+        }
+
+        // Ensure proper sorting for the new column
+        RowSorter<?> rowSorter = csvViewer.getTable().getRowSorter();
+        if (rowSorter instanceof TableRowSorter) {
+            @SuppressWarnings("unchecked")
+            TableRowSorter<DefaultTableModel> sorter = (TableRowSorter<DefaultTableModel>) rowSorter;
+            sorter.setComparator(newColIndex, new NumericStringComparator());
         }
 
         // Show class value mapping in a dialog
