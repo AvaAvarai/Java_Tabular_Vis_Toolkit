@@ -280,15 +280,21 @@ public class ButtonPanelManager {
 
         addMenuItem(mlMenu, "Support Sum Machine", "/icons/combo.png", _ -> csvViewer.insertWeightedSumColumn());
 
+        addMenuItem(mlMenu, "Linear Regression", "/icons/file.png", _ -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+            } else {
+                LinearRegressionClassifier lr = new LinearRegressionClassifier(csvViewer, csvViewer.tableModel);
+                lr.insertLinearRegression();
+            }
+        });
+
         analysisMenu.add(mlMenu);
 
         addMenuItem(analysisMenu, "Toggle Easy Cases", "/icons/easy.png", _ -> csvViewer.toggleEasyCases());
         addMenuItem(analysisMenu, "Show Covariance Matrix", "/icons/variance.png", _ -> csvViewer.showCovarianceMatrix());
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", _ -> csvViewer.showCovarianceSortDialog());
         addMenuItem(analysisMenu, "Rule Tester", "/icons/rule.png", _ -> csvViewer.showRuleTesterDialog());
-
-        addMenuItem(analysisMenu, "Linear Regression", "/icons/file.png",
-            _ -> new LinearRegressionClassifier(csvViewer, csvViewer.tableModel).insertLinearRegression());
 
         // Add all menus to menubar
         menuBar.add(fileMenu);
