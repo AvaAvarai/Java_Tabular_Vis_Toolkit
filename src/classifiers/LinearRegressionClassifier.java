@@ -24,52 +24,62 @@ public class LinearRegressionClassifier {
             return;
         }
 
-        // Get list of numeric columns
-        List<String> numericColumns = new ArrayList<>();
-        List<Integer> numericIndices = new ArrayList<>();
-        for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            if (isColumnNumeric(i) && !tableModel.getColumnName(i).equalsIgnoreCase("class")) {
-                numericColumns.add(tableModel.getColumnName(i));
-                numericIndices.add(i);
-            }
-        }
-
-        if (numericColumns.size() < 2) {
+        int classColumnIndex = csvViewer.getClassColumnIndex();
+        if (classColumnIndex == -1) {
             JOptionPane.showMessageDialog(csvViewer, 
-                "Need at least two numeric columns for regression.", 
+                "No class column found.", 
                 "Error", 
                 JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Create dialog for selecting variables
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(csvViewer.getTable()), "Multiple Linear Regression");
+        // Get list of numeric columns (excluding class column)
+        List<String> numericColumns = new ArrayList<>();
+        List<Integer> numericIndices = new ArrayList<>();
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            if (i != classColumnIndex && isColumnNumeric(i)) {
+                numericColumns.add(tableModel.getColumnName(i));
+                numericIndices.add(i);
+            }
+        }
+
+        if (numericColumns.isEmpty()) {
+            JOptionPane.showMessageDialog(csvViewer, 
+                "No numeric predictor columns found.", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Create dialog for selecting predictor variables
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(csvViewer.getTable()), 
+            "Multiple Linear Regression");
         dialog.setLayout(new BorderLayout(10, 10));
 
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Dependent variable selection
-        JPanel depPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        depPanel.add(new JLabel("Dependent Variable (Y):"));
-        JComboBox<String> dependentVar = new JComboBox<>(numericColumns.toArray(new String[0]));
-        depPanel.add(dependentVar);
-        mainPanel.add(depPanel);
+        // Show which column is being used as dependent variable
+        JLabel depLabel = new JLabel("Predicting class column: " + tableModel.getColumnName(classColumnIndex));
+        depLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        mainPanel.add(depLabel);
+        mainPanel.add(Box.createVerticalStrut(10));
 
-        // Independent variables selection
-        JPanel indepPanel = new JPanel();
-        indepPanel.setLayout(new BoxLayout(indepPanel, BoxLayout.Y_AXIS));
-        indepPanel.setBorder(BorderFactory.createTitledBorder("Independent Variables (X)"));
+        // Predictor variables selection
+        JPanel predictorPanel = new JPanel();
+        predictorPanel.setLayout(new BoxLayout(predictorPanel, BoxLayout.Y_AXIS));
+        predictorPanel.setBorder(BorderFactory.createTitledBorder("Select Predictor Variables"));
         
         Map<String, JCheckBox> checkboxes = new HashMap<>();
         for (String col : numericColumns) {
             JCheckBox cb = new JCheckBox(col);
+            cb.setSelected(true); // Default all to selected
             checkboxes.put(col, cb);
-            indepPanel.add(cb);
+            predictorPanel.add(cb);
         }
 
-        JScrollPane scrollPane = new JScrollPane(indepPanel);
+        JScrollPane scrollPane = new JScrollPane(predictorPanel);
         scrollPane.setPreferredSize(new Dimension(300, 200));
         mainPanel.add(scrollPane);
 
@@ -78,23 +88,22 @@ public class LinearRegressionClassifier {
         JButton cancelButton = new JButton("Cancel");
 
         okButton.addActionListener(e -> {
-            String depVarName = (String) dependentVar.getSelectedItem();
             List<String> selectedVars = new ArrayList<>();
             for (Map.Entry<String, JCheckBox> entry : checkboxes.entrySet()) {
-                if (entry.getValue().isSelected() && !entry.getKey().equals(depVarName)) {
+                if (entry.getValue().isSelected()) {
                     selectedVars.add(entry.getKey());
                 }
             }
 
             if (selectedVars.isEmpty()) {
                 JOptionPane.showMessageDialog(dialog, 
-                    "Please select at least one independent variable.", 
+                    "Please select at least one predictor variable.", 
                     "Selection Error", 
                     JOptionPane.WARNING_MESSAGE);
                 return;
             }
 
-            performRegression(depVarName, selectedVars);
+            performRegression(classColumnIndex, selectedVars);
             dialog.dispose();
         });
 
@@ -109,40 +118,58 @@ public class LinearRegressionClassifier {
         dialog.setVisible(true);
     }
 
-    private void performRegression(String depVarName, List<String> independentVars) {
+    private void performRegression(int classColumnIndex, List<String> predictorVars) {
         int n = tableModel.getRowCount();
-        int p = independentVars.size();
+        int p = predictorVars.size();
         
         // Create X matrix (with column of 1's for intercept) and Y vector
         double[][] X = new double[n][p + 1];
         double[] y = new double[n];
-        
-        int depColIndex = tableModel.findColumn(depVarName);
         Map<String, Integer> varIndices = new HashMap<>();
+
+        // Create class value mapping if class is categorical
+        Map<String, Double> classMapping = new HashMap<>();
+        List<String> uniqueClasses = new ArrayList<>();
+        
+        // Collect unique class values
+        for (int i = 0; i < n; i++) {
+            String classValue = tableModel.getValueAt(i, classColumnIndex).toString();
+            if (!uniqueClasses.contains(classValue)) {
+                uniqueClasses.add(classValue);
+            }
+        }
+
+        // Create evenly distributed values from 0 to 1 inclusive
+        for (int i = 0; i < uniqueClasses.size(); i++) {
+            double normalizedValue = uniqueClasses.size() > 1 ? 
+                i / (double)(uniqueClasses.size() - 1) : 1.0;
+            classMapping.put(uniqueClasses.get(i), normalizedValue);
+        }
         
         // Fill X and y matrices
         for (int i = 0; i < n; i++) {
             X[i][0] = 1.0; // Intercept term
-            for (int j = 0; j < independentVars.size(); j++) {
-                int colIndex = tableModel.findColumn(independentVars.get(j));
-                varIndices.put(independentVars.get(j), colIndex);
+            for (int j = 0; j < predictorVars.size(); j++) {
+                int colIndex = tableModel.findColumn(predictorVars.get(j));
+                varIndices.put(predictorVars.get(j), colIndex);
                 X[i][j + 1] = Double.parseDouble(tableModel.getValueAt(i, colIndex).toString());
             }
-            y[i] = Double.parseDouble(tableModel.getValueAt(i, depColIndex).toString());
+            String classValue = tableModel.getValueAt(i, classColumnIndex).toString();
+            y[i] = classMapping.get(classValue);
         }
 
-        // Calculate coefficients using normal equation: β = (X'X)^-1 X'y
+        // Calculate coefficients using normal equation
         double[] coefficients = calculateCoefficients(X, y);
         
         // Calculate R-squared
         double rSquared = calculateRSquared(X, y, coefficients);
 
         // Create formula string
-        StringBuilder formula = new StringBuilder(depVarName + " = ");
+        StringBuilder formula = new StringBuilder("Predicted_Class = ");
         formula.append(df.format(coefficients[0])); // Intercept
-        for (int i = 0; i < independentVars.size(); i++) {
+        for (int i = 0; i < predictorVars.size(); i++) {
             formula.append(" + ").append(df.format(coefficients[i + 1]))
-                  .append(independentVars.get(i));
+                  .append(predictorVars.get(i));
         }
         formula.append(" (R² = ").append(df.format(rSquared)).append(")");
 
@@ -153,13 +180,27 @@ public class LinearRegressionClassifier {
         // Calculate predicted values
         for (int row = 0; row < n; row++) {
             double predicted = coefficients[0]; // Intercept
-            for (int j = 0; j < independentVars.size(); j++) {
-                int colIndex = varIndices.get(independentVars.get(j));
+            for (int j = 0; j < predictorVars.size(); j++) {
+                int colIndex = varIndices.get(predictorVars.get(j));
                 predicted += coefficients[j + 1] * 
                     Double.parseDouble(tableModel.getValueAt(row, colIndex).toString());
             }
             tableModel.setValueAt(df.format(predicted), row, newColIndex);
         }
+
+        // Show class value mapping in a dialog
+        StringBuilder mappingInfo = new StringBuilder("Class Value Mapping:\n\n");
+        for (String className : uniqueClasses) {
+            mappingInfo.append(className)
+                      .append(" → ")
+                      .append(df.format(classMapping.get(className)))
+                      .append("\n");
+        }
+        
+        JOptionPane.showMessageDialog(csvViewer,
+            mappingInfo.toString(),
+            "Class Encoding Information",
+            JOptionPane.INFORMATION_MESSAGE);
     }
 
     private double[] calculateCoefficients(double[][] X, double[] y) {
