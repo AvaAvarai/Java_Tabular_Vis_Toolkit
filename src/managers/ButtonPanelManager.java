@@ -4,6 +4,7 @@ import src.CsvViewer;
 import src.UIHelper;
 import src.classifiers.DecisionTreeClassifier;
 import src.classifiers.LinearDiscriminantAnalysisClassifier;
+import src.classifiers.LinearRegressionClassifier;
 import src.classifiers.PrincipalComponentAnalysisClassifier;
 import src.utils.LinearDiscriminantAnalysis;
 import src.utils.PrincipalComponentAnalysis;
@@ -286,6 +287,9 @@ public class ButtonPanelManager {
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", _ -> csvViewer.showCovarianceSortDialog());
         addMenuItem(analysisMenu, "Rule Tester", "/icons/rule.png", _ -> csvViewer.showRuleTesterDialog());
 
+        addMenuItem(analysisMenu, "Linear Regression", "/icons/file.png",
+            _ -> new LinearRegressionClassifier(csvViewer, csvViewer.tableModel).insertLinearRegression());
+
         // Add all menus to menubar
         menuBar.add(fileMenu);
         menuBar.add(viewMenu);
@@ -299,11 +303,11 @@ public class ButtonPanelManager {
         selectionMenu.setIcon(resizeIcon("/icons/file.png"));
 
         addMenuItem(selectionMenu, "Keep Only Selected Rows", "/icons/file.png", 
-            e -> csvViewer.keepOnlySelectedRows());
+            _ -> csvViewer.keepOnlySelectedRows());
         addMenuItem(selectionMenu, "Select Cases Within Bounds...", "/icons/file.png", 
-            e -> showAttributeSelectionDialog(false));
+            _ -> showAttributeSelectionDialog(false));
         addMenuItem(selectionMenu, "Keep Only Cases Within Bounds...", "/icons/file.png", 
-            e -> showAttributeSelectionDialog(true));
+            _ -> showAttributeSelectionDialog(true));
 
         menuBar.add(selectionMenu);
 
