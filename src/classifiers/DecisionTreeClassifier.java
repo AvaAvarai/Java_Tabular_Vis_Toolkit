@@ -54,11 +54,11 @@ public class DecisionTreeClassifier {
         validationGroup.add(kFoldButton);
 
         // Split ratio spinner
-        JSpinner splitSpinner = new JSpinner(new SpinnerNumberModel(0.7, 0.1, 0.9, 0.1));
+        JSpinner splitSpinner = new JSpinner(new SpinnerNumberModel(0.7, 0.1, 1.0, 0.1));
         JLabel splitLabel = new JLabel("Train Split Ratio:");
         
         // K-fold spinner
-        JSpinner kFoldSpinner = new JSpinner(new SpinnerNumberModel(5, 2, 10, 1));
+        JSpinner kFoldSpinner = new JSpinner(new SpinnerNumberModel(5, 1, 10, 1));
         JLabel kFoldLabel = new JLabel("Number of Folds:");
         kFoldSpinner.setEnabled(false);
 
