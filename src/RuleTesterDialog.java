@@ -306,7 +306,17 @@ public class RuleTesterDialog extends JDialog {
     }
 
     private String[] getUniqueClassNames() {
-        int classColumnIndex = tableModel.getColumnCount() - 1;
+        int numColumns = tableModel.getColumnCount();
+        int classColumnIndex = -1;
+
+        // Find the class column index by checking various case-insensitive possibilities
+        for (int col = 0; col < numColumns; col++) {
+            String columnName = tableModel.getColumnName(col).toLowerCase();
+            if (columnName.equals("class")) {
+                classColumnIndex = col;
+                break;
+            }
+        }
         Set<String> uniqueClasses = new HashSet<>();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
             uniqueClasses.add((String) tableModel.getValueAt(i, classColumnIndex));
