@@ -19,6 +19,11 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Random;
+import java.awt.geom.Ellipse2D;
+import java.awt.Shape;
 
 public class ButtonPanelManager {
 
@@ -296,6 +301,29 @@ public class ButtonPanelManager {
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", _ -> csvViewer.showCovarianceSortDialog());
         addMenuItem(analysisMenu, "Rule Tester", "/icons/rule.png", _ -> csvViewer.showRuleTesterDialog());
 
+        addMenuItem(analysisMenu, "Insert Noise Cases...", "/icons/variance.png", _ -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+                return;
+            }
+
+            SpinnerNumberModel spinnerModel = new SpinnerNumberModel(10, 1, 1000, 1);
+            JSpinner spinner = new JSpinner(spinnerModel);
+            
+            int result = JOptionPane.showConfirmDialog(
+                csvViewer,
+                new Object[] {"Number of noise cases to generate:", spinner},
+                "Insert Noise Cases",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+            );
+            
+            if (result == JOptionPane.OK_OPTION) {
+                int numCases = (int)spinner.getValue();
+                insertNoiseCases(numCases);
+            }
+        });
+
         // Add all menus to menubar
         menuBar.add(fileMenu);
         menuBar.add(viewMenu);
@@ -457,5 +485,78 @@ public class ButtonPanelManager {
         dialog.pack();
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
+    }
+
+    private void insertNoiseCases(int numCases) {
+        boolean isNormalized = csvViewer.dataHandler.isDataNormalized();
+        Map<Integer, double[]> columnStats = new HashMap<>();
+        
+        // Calculate stats for each numeric column
+        for (int col = 0; col < csvViewer.tableModel.getColumnCount(); col++) {
+            try {
+                double sum = 0;
+                double sumSq = 0;
+                int count = 0;
+                
+                for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
+                    double value = Double.parseDouble(csvViewer.tableModel.getValueAt(row, col).toString());
+                    sum += value;
+                    sumSq += value * value;
+                    count++;
+                }
+                
+                double mean = sum / count;
+                double variance = (sumSq / count) - (mean * mean);
+                double stdDev = Math.sqrt(variance);
+                
+                if (isNormalized) {
+                    mean = 0.5;
+                    stdDev = 0.15;
+                }
+                
+                columnStats.put(col, new double[]{mean, stdDev});
+            } catch (NumberFormatException e) {
+                // Skip non-numeric columns
+            }
+        }
+        
+        // Add grey color and shape for the NOISE class if not already defined
+        if (!csvViewer.getClassColors().containsKey("NOISE")) {
+            csvViewer.getClassColors().put("NOISE", Color.GRAY);
+            
+            // Add a shape for the NOISE class - using a small filled circle
+            Shape noiseShape = new Ellipse2D.Double(-3, -3, 6, 6);
+            csvViewer.getClassShapes().put("NOISE", noiseShape);
+            
+            // Call the handler to properly register the new class
+            csvViewer.handleNewClass("NOISE");
+        }
+        
+        // Generate noise cases
+        Random random = new Random();
+        for (int i = 0; i < numCases; i++) {
+            Object[] rowData = new Object[csvViewer.tableModel.getColumnCount()];
+            
+            for (int col = 0; col < csvViewer.tableModel.getColumnCount(); col++) {
+                if (columnStats.containsKey(col)) {
+                    double[] stats = columnStats.get(col);
+                    double noise;
+                    if (isNormalized) {
+                        noise = Math.min(1.0, Math.max(0.0, random.nextGaussian() * stats[1] + stats[0]));
+                    } else {
+                        noise = random.nextGaussian() * stats[1] + stats[0];
+                    }
+                    rowData[col] = String.format("%.4f", noise);
+                } else {
+                    rowData[col] = "NOISE";  // For non-numeric columns
+                }
+            }
+            
+            csvViewer.tableModel.addRow(rowData);
+        }
+        
+        // Update UI
+        csvViewer.getDataHandler().updateStats(csvViewer.tableModel, csvViewer.getStatsTextArea());
+        csvViewer.getTable().repaint();
     }
 }
