@@ -54,7 +54,11 @@ public class TableManager {
         // Apply NumericStringComparator to all columns
         TableRowSorter<ReorderableTableModel> sorter = new TableRowSorter<>(tableModel);
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            sorter.setComparator(i, new NumericStringComparator());
+            final int column = i;
+            // Only apply numeric comparator to numeric columns
+            if (isNumericColumn(column)) {
+                sorter.setComparator(i, new NumericStringComparator());
+            }
         }
         csvViewer.getTable().setRowSorter(sorter);
     }
@@ -132,5 +136,20 @@ public class TableManager {
             // Set the width
             tableColumn.setPreferredWidth(preferredWidth);
         }
+    }
+
+    private boolean isNumericColumn(int column) {
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            Object value = tableModel.getValueAt(row, column);
+            if (value != null && !value.toString().trim().isEmpty()) {
+                try {
+                    Double.parseDouble(value.toString().trim());
+                    return true;  // If we can parse any value as a number, consider it a numeric column
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
+        }
+        return false;
     }
 }
