@@ -27,6 +27,8 @@ import java.awt.Shape;
 import java.util.stream.IntStream;
 import java.text.DecimalFormat;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.HashSet;
 
 public class ButtonPanelManager {
 
@@ -304,28 +306,14 @@ public class ButtonPanelManager {
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", _ -> csvViewer.showCovarianceSortDialog());
         addMenuItem(analysisMenu, "Rule Tester", "/icons/rule.png", _ -> csvViewer.showRuleTesterDialog());
 
-        addMenuItem(analysisMenu, "Insert Noise Cases...", "/icons/variance.png", _ -> {
-            if (csvViewer.dataHandler.isDataEmpty()) {
-                csvViewer.noDataLoadedError();
-                return;
-            }
-
-            SpinnerNumberModel spinnerModel = new SpinnerNumberModel(10, 1, 1000, 1);
-            JSpinner spinner = new JSpinner(spinnerModel);
-            
-            int result = JOptionPane.showConfirmDialog(
-                csvViewer,
-                new Object[] {"Number of noise cases to generate:", spinner},
-                "Insert Noise Cases",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE
-            );
-            
-            if (result == JOptionPane.OK_OPTION) {
-                int numCases = (int)spinner.getValue();
-                insertNoiseCases(numCases);
-            }
-        });
+        addMenuItem(analysisMenu, "Insert Noise Cases...", "/icons/variance.png", 
+            _ -> {
+                if (csvViewer.dataHandler.isDataEmpty()) {
+                    csvViewer.noDataLoadedError();
+                    return;
+                }
+                showNoiseDialog();
+            });
 
         addMenuItem(analysisMenu, "Insert Linear Function", "/icons/function.png", _ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
@@ -498,25 +486,133 @@ public class ButtonPanelManager {
         dialog.setVisible(true);
     }
 
-    private void insertNoiseCases(int numCases) {
+    private void showNoiseDialog() {
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(csvViewer.getTable()), 
+            "Insert Noise Cases");
+        dialog.setLayout(new BorderLayout(10, 10));
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Number of cases panel
+        JPanel countPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        SpinnerNumberModel spinnerModel = new SpinnerNumberModel(10, 1, 1000, 1);
+        JSpinner countSpinner = new JSpinner(spinnerModel);
+        countPanel.add(new JLabel("Number of noise cases:"));
+        countPanel.add(countSpinner);
+        mainPanel.add(countPanel);
+
+        // Distribution selection panel
+        JPanel distPanel = new JPanel();
+        distPanel.setLayout(new BoxLayout(distPanel, BoxLayout.Y_AXIS));
+        distPanel.setBorder(BorderFactory.createTitledBorder("Distribution"));
+
+        ButtonGroup group = new ButtonGroup();
+        JRadioButton gaussianButton = new JRadioButton("Gaussian (Normal) Distribution", true);
+        JRadioButton oneClassButton = new JRadioButton("Sample from One Class Distribution", false);
+        JRadioButton allClassesButton = new JRadioButton("Sample from All Classes Distribution", false);
+        
+        group.add(gaussianButton);
+        group.add(oneClassButton);
+        group.add(allClassesButton);
+
+        // Class selection combo box (for One Class option)
+        Set<String> uniqueClasses = new HashSet<>();
+        int classCol = csvViewer.getClassColumnIndex();
+        for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
+            uniqueClasses.add(csvViewer.tableModel.getValueAt(row, classCol).toString());
+        }
+        JComboBox<String> classBox = new JComboBox<>(uniqueClasses.toArray(new String[0]));
+        classBox.setEnabled(false);
+
+        oneClassButton.addActionListener(e -> classBox.setEnabled(true));
+        gaussianButton.addActionListener(e -> classBox.setEnabled(false));
+        allClassesButton.addActionListener(e -> classBox.setEnabled(false));
+
+        distPanel.add(gaussianButton);
+        distPanel.add(oneClassButton);
+        JPanel classPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        classPanel.add(new JLabel("    Class:"));
+        classPanel.add(classBox);
+        distPanel.add(classPanel);
+        distPanel.add(allClassesButton);
+
+        mainPanel.add(distPanel);
+
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton okButton = new JButton("OK");
+        JButton cancelButton = new JButton("Cancel");
+
+        okButton.addActionListener(e -> {
+            int numCases = (int)countSpinner.getValue();
+            String distribution = gaussianButton.isSelected() ? "gaussian" :
+                                oneClassButton.isSelected() ? "oneclass" : "allclasses";
+            String selectedClass = (String)classBox.getSelectedItem();
+            insertNoiseCases(numCases, distribution, selectedClass);
+            dialog.dispose();
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+        buttonPanel.add(okButton);
+        buttonPanel.add(cancelButton);
+
+        dialog.add(mainPanel, BorderLayout.CENTER);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        dialog.pack();
+        dialog.setLocationRelativeTo(csvViewer);
+        dialog.setVisible(true);
+    }
+
+    private void insertNoiseCases(int numCases, String distribution, String selectedClass) {
         boolean isNormalized = csvViewer.dataHandler.isDataNormalized();
         Map<Integer, double[]> columnStats = new HashMap<>();
         int[] selectedRows = csvViewer.getTable().getSelectedRows();
         boolean useSelectedBounds = selectedRows != null && selectedRows.length >= 2;
+        int classColumnIndex = csvViewer.getClassColumnIndex();
+        
+        // Get class-specific data if needed
+        Map<String, List<Integer>> classRows = new HashMap<>();
+        if (!distribution.equals("gaussian")) {
+            for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
+                String classValue = csvViewer.tableModel.getValueAt(row, classColumnIndex).toString();
+                classRows.computeIfAbsent(classValue, k -> new ArrayList<>()).add(row);
+            }
+        }
         
         // Calculate stats for each numeric column
         for (int col = 0; col < csvViewer.tableModel.getColumnCount(); col++) {
+            if (col == classColumnIndex) continue;
+            
             try {
                 double sum = 0, sumSq = 0, min = Double.MAX_VALUE, max = Double.MIN_VALUE;
                 int count = 0;
                 
-                // Use either selected rows or all rows
-                int[] rowsToUse = useSelectedBounds ? selectedRows : 
-                                 IntStream.range(0, csvViewer.tableModel.getRowCount()).toArray();
+                List<Integer> rowsToProcess = new ArrayList<>();
+                if (distribution.equals("oneclass")) {
+                    // Use only rows from selected class
+                    rowsToProcess.addAll(classRows.get(selectedClass));
+                } else if (distribution.equals("allclasses")) {
+                    // Use all rows
+                    for (int i = 0; i < csvViewer.tableModel.getRowCount(); i++) {
+                        rowsToProcess.add(i);
+                    }
+                } else {
+                    // For gaussian, use selected rows or all rows
+                    if (useSelectedBounds) {
+                        for (int viewRow : selectedRows) {
+                            rowsToProcess.add(csvViewer.getTable().convertRowIndexToModel(viewRow));
+                        }
+                    } else {
+                        for (int i = 0; i < csvViewer.tableModel.getRowCount(); i++) {
+                            rowsToProcess.add(i);
+                        }
+                    }
+                }
                 
-                for (int viewRow : rowsToUse) {
-                    int modelRow = csvViewer.getTable().convertRowIndexToModel(viewRow);
-                    double value = Double.parseDouble(csvViewer.tableModel.getValueAt(modelRow, col).toString());
+                for (int row : rowsToProcess) {
+                    double value = Double.parseDouble(csvViewer.tableModel.getValueAt(row, col).toString());
                     sum += value;
                     sumSq += value * value;
                     min = Math.min(min, value);
@@ -529,16 +625,12 @@ public class ButtonPanelManager {
                 double stdDev = Math.sqrt(variance);
                 
                 if (isNormalized) {
-                    if (useSelectedBounds) {
+                    mean = 0.5;
+                    stdDev = 0.15;
+                    if (useSelectedBounds || !distribution.equals("gaussian")) {
                         mean = (min + max) / 2.0;
-                        stdDev = (max - min) / 6.0;  // So ~99.7% of values fall within bounds
-                    } else {
-                        mean = 0.5;
-                        stdDev = 0.15;
+                        stdDev = (max - min) / 6.0;
                     }
-                } else if (useSelectedBounds) {
-                    mean = (min + max) / 2.0;
-                    stdDev = (max - min) / 6.0;
                 }
                 
                 columnStats.put(col, new double[]{mean, stdDev, min, max});
@@ -547,35 +639,35 @@ public class ButtonPanelManager {
             }
         }
         
-        // Add grey color and shape for the NOISE class if not already defined
-        if (!csvViewer.getClassColors().containsKey("NOISE")) {
-            csvViewer.getClassColors().put("NOISE", Color.GRAY);
-            Shape noiseShape = new Ellipse2D.Double(-3, -3, 6, 6);
-            csvViewer.getClassShapes().put("NOISE", noiseShape);
-            csvViewer.handleNewClass("NOISE");
-        }
-        
         // Generate noise cases
         Random random = new Random();
         for (int i = 0; i < numCases; i++) {
             Object[] rowData = new Object[csvViewer.tableModel.getColumnCount()];
             
+            // Set class value based on distribution
+            if (distribution.equals("oneclass")) {
+                rowData[classColumnIndex] = selectedClass + "-synthetic";
+            } else if (distribution.equals("allclasses")) {
+                // Use all classes distribution but mark with special name
+                rowData[classColumnIndex] = "All-classes-synthetic";
+            } else {
+                rowData[classColumnIndex] = "gaussian-synthetic";
+            }
+            
+            // Generate attribute values
             for (int col = 0; col < csvViewer.tableModel.getColumnCount(); col++) {
-                if (columnStats.containsKey(col)) {
+                if (col != classColumnIndex && columnStats.containsKey(col)) {
                     double[] stats = columnStats.get(col);
                     double noise;
                     if (isNormalized) {
                         noise = Math.min(1.0, Math.max(0.0, random.nextGaussian() * stats[1] + stats[0]));
-                    } else if (useSelectedBounds) {
-                        // Generate and clamp to selected bounds
+                    } else if (useSelectedBounds || !distribution.equals("gaussian")) {
                         noise = Math.min(stats[3], Math.max(stats[2], 
                                random.nextGaussian() * stats[1] + stats[0]));
                     } else {
                         noise = random.nextGaussian() * stats[1] + stats[0];
                     }
                     rowData[col] = String.format("%.4f", noise);
-                } else {
-                    rowData[col] = "NOISE";
                 }
             }
             
