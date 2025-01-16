@@ -25,6 +25,8 @@ import java.util.Random;
 import java.awt.geom.Ellipse2D;
 import java.awt.Shape;
 import java.util.stream.IntStream;
+import java.text.DecimalFormat;
+import java.util.Arrays;
 
 public class ButtonPanelManager {
 
@@ -325,6 +327,14 @@ public class ButtonPanelManager {
             }
         });
 
+        addMenuItem(analysisMenu, "Insert Linear Function", "/icons/function.png", _ -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+                return;
+            }
+            showLinearFunctionDialog();
+        });
+
         // Add all menus to menubar
         menuBar.add(fileMenu);
         menuBar.add(viewMenu);
@@ -574,5 +584,146 @@ public class ButtonPanelManager {
         
         csvViewer.getDataHandler().updateStats(csvViewer.tableModel, csvViewer.getStatsTextArea());
         csvViewer.getTable().repaint();
+    }
+
+    private void showLinearFunctionDialog() {
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(csvViewer.getTable()), 
+            "Insert Linear Function");
+        dialog.setLayout(new BorderLayout(10, 10));
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Intercept panel
+        JPanel interceptPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        interceptPanel.add(new JLabel("Intercept:"));
+        JTextField interceptField = new JTextField("0.0", 10);
+        interceptPanel.add(interceptField);
+        mainPanel.add(interceptPanel);
+
+        // Attributes panel
+        JPanel attributesPanel = new JPanel();
+        attributesPanel.setLayout(new BoxLayout(attributesPanel, BoxLayout.Y_AXIS));
+        attributesPanel.setBorder(BorderFactory.createTitledBorder("Attributes"));
+
+        List<JCheckBox> checkboxes = new ArrayList<>();
+        List<JTextField> coefficientFields = new ArrayList<>();
+
+        // Add row for each numeric attribute
+        for (int i = 0; i < csvViewer.tableModel.getColumnCount(); i++) {
+            String colName = csvViewer.tableModel.getColumnName(i);
+            if (isNumericColumn(i) && !colName.equalsIgnoreCase("class")) {
+                JPanel attrPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                
+                JCheckBox checkbox = new JCheckBox(colName, true);
+                checkboxes.add(checkbox);
+                attrPanel.add(checkbox);
+                
+                JTextField coeffField = new JTextField("0.0", 10);
+                coefficientFields.add(coeffField);
+                attrPanel.add(coeffField);
+                
+                attributesPanel.add(attrPanel);
+            }
+        }
+
+        JScrollPane scrollPane = new JScrollPane(attributesPanel);
+        scrollPane.setPreferredSize(new Dimension(400, 300));
+        mainPanel.add(scrollPane);
+
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton okButton = new JButton("OK");
+        JButton cancelButton = new JButton("Cancel");
+
+        okButton.addActionListener(e -> {
+            try {
+                double intercept = Double.parseDouble(interceptField.getText());
+                StringBuilder formula = new StringBuilder();
+                formula.append("f(x) = ").append(String.format("%.3f", intercept));
+                
+                // Create new column with computed values
+                DefaultTableModel model = csvViewer.tableModel;
+                int rowCount = model.getRowCount();
+                double[] results = new double[rowCount];
+                
+                // Initialize with intercept
+                Arrays.fill(results, intercept);
+                
+                // Add each selected attribute's contribution
+                for (int i = 0; i < checkboxes.size(); i++) {
+                    if (checkboxes.get(i).isSelected()) {
+                        String attrName = checkboxes.get(i).getText();
+                        double coeff = Double.parseDouble(coefficientFields.get(i).getText());
+                        
+                        if (coeff != 0.0) {
+                            formula.append(" + ")
+                                   .append(String.format("%.3f", coeff))
+                                   .append(attrName);
+                            
+                            int colIndex = model.findColumn(attrName);
+                            for (int row = 0; row < rowCount; row++) {
+                                double value = Double.parseDouble(model.getValueAt(row, colIndex).toString());
+                                results[row] += coeff * value;
+                            }
+                        }
+                    }
+                }
+                
+                // Add the new column
+                model.addColumn(formula.toString());
+                int newColIndex = model.getColumnCount() - 1;
+                
+                // If data is normalized, normalize the results
+                if (csvViewer.dataHandler.isDataNormalized()) {
+                    double min = Arrays.stream(results).min().getAsDouble();
+                    double max = Arrays.stream(results).max().getAsDouble();
+                    double range = max - min;
+                    
+                    // If all values are the same (range = 0), set all values to 0.5
+                    if (range == 0) {
+                        Arrays.fill(results, 0.0);  // When all inputs are 0, output should be 0
+                    } else {
+                        for (int row = 0; row < rowCount; row++) {
+                            results[row] = (results[row] - min) / range;
+                        }
+                    }
+                }
+                
+                // Fill in the values
+                DecimalFormat df = new DecimalFormat("#.###");
+                for (int row = 0; row < rowCount; row++) {
+                    model.setValueAt(df.format(results[row]), row, newColIndex);
+                }
+                
+                dialog.dispose();
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Please enter valid numeric values for coefficients.",
+                    "Invalid Input",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        buttonPanel.add(okButton);
+        buttonPanel.add(cancelButton);
+
+        dialog.add(mainPanel, BorderLayout.CENTER);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        dialog.pack();
+        dialog.setLocationRelativeTo(csvViewer);
+        dialog.setVisible(true);
+    }
+
+    private boolean isNumericColumn(int columnIndex) {
+        try {
+            Double.parseDouble(csvViewer.tableModel.getValueAt(0, columnIndex).toString());
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 }
