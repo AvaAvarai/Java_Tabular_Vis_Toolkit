@@ -72,6 +72,9 @@ public class TableManager {
             return;
         }
 
+        // Store current selection
+        int[] selectedRows = csvViewer.getTable().getSelectedRows();
+
         TableColumnModel columnModel = csvViewer.getTable().getColumnModel();
         columnModel.removeColumn(columnModel.getColumn(viewColumnIndex));
 
@@ -82,6 +85,13 @@ public class TableManager {
         }
 
         tableModel.setColumnCount(tableModel.getColumnCount() - 1);
+
+        // Restore selection
+        ListSelectionModel selectionModel = csvViewer.getTable().getSelectionModel();
+        selectionModel.clearSelection();
+        for (int row : selectedRows) {
+            selectionModel.addSelectionInterval(row, row);
+        }
 
         csvViewer.getDataHandler().updateStats(tableModel, csvViewer.getStatsTextArea());
         csvViewer.updateSelectedRowsLabel();
