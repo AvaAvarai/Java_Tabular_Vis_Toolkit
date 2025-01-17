@@ -29,11 +29,13 @@ import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 public class ButtonPanelManager {
 
     private final CsvViewer csvViewer;
     private JButton toggleButton;
+    private float currentHue = 0.42f;
 
     public ButtonPanelManager(CsvViewer csvViewer) {
         this.csvViewer = csvViewer;
@@ -567,9 +569,6 @@ public class ButtonPanelManager {
 
     private void insertNoiseCases(int numCases, String distribution, String selectedClass) {
         boolean isNormalized = csvViewer.dataHandler.isDataNormalized();
-        Map<Integer, double[]> columnStats = new HashMap<>();
-        int[] selectedRows = csvViewer.getTable().getSelectedRows();
-        boolean useSelectedBounds = selectedRows != null && selectedRows.length >= 2;
         int classColumnIndex = csvViewer.getClassColumnIndex();
         
         // Get class-specific data if needed
@@ -581,101 +580,143 @@ public class ButtonPanelManager {
             }
         }
         
-        // Calculate stats for each numeric column
+        // Calculate distribution stats for each numeric column
+        Map<Integer, DistributionStats> columnStats = new HashMap<>();
         for (int col = 0; col < csvViewer.tableModel.getColumnCount(); col++) {
             if (col == classColumnIndex) continue;
             
             try {
-                double sum = 0, sumSq = 0, min = Double.MAX_VALUE, max = Double.MIN_VALUE;
-                int count = 0;
-                
-                List<Integer> rowsToProcess = new ArrayList<>();
+                List<Integer> rowsToProcess;
                 if (distribution.equals("oneclass")) {
-                    // Use only rows from selected class
-                    rowsToProcess.addAll(classRows.get(selectedClass));
+                    rowsToProcess = classRows.get(selectedClass);
                 } else if (distribution.equals("allclasses")) {
-                    // Use all rows
-                    for (int i = 0; i < csvViewer.tableModel.getRowCount(); i++) {
-                        rowsToProcess.add(i);
-                    }
-                } else {
-                    // For gaussian, use selected rows or all rows
-                    if (useSelectedBounds) {
-                        for (int viewRow : selectedRows) {
-                            rowsToProcess.add(csvViewer.getTable().convertRowIndexToModel(viewRow));
-                        }
-                    } else {
-                        for (int i = 0; i < csvViewer.tableModel.getRowCount(); i++) {
-                            rowsToProcess.add(i);
-                        }
-                    }
+                    rowsToProcess = IntStream.range(0, csvViewer.tableModel.getRowCount())
+                        .boxed().collect(Collectors.toList());
+                } else { // gaussian
+                    rowsToProcess = csvViewer.getTable().getSelectedRowCount() > 1 ?
+                        Arrays.stream(csvViewer.getTable().getSelectedRows())
+                            .mapToObj(row -> csvViewer.getTable().convertRowIndexToModel(row))
+                            .collect(Collectors.toList()) :
+                        IntStream.range(0, csvViewer.tableModel.getRowCount())
+                            .boxed().collect(Collectors.toList());
                 }
                 
+                // Get all values for this column
+                List<Double> values = new ArrayList<>();
                 for (int row : rowsToProcess) {
-                    double value = Double.parseDouble(csvViewer.tableModel.getValueAt(row, col).toString());
-                    sum += value;
-                    sumSq += value * value;
-                    min = Math.min(min, value);
-                    max = Math.max(max, value);
-                    count++;
+                    values.add(Double.parseDouble(csvViewer.tableModel.getValueAt(row, col).toString()));
                 }
                 
-                double mean = sum / count;
-                double variance = (sumSq / count) - (mean * mean);
-                double stdDev = Math.sqrt(variance);
+                // Calculate distribution stats
+                double min = values.stream().mapToDouble(d -> d).min().getAsDouble();
+                double max = values.stream().mapToDouble(d -> d).max().getAsDouble();
                 
-                if (isNormalized) {
-                    mean = 0.5;
-                    stdDev = 0.15;
-                    if (useSelectedBounds || !distribution.equals("gaussian")) {
-                        mean = (min + max) / 2.0;
-                        stdDev = (max - min) / 6.0;
+                // Create histogram bins
+                int numBins = (int)Math.sqrt(values.size());  // Sturges' formula
+                double[] bins = new double[numBins];
+                int[] counts = new int[numBins];
+                double binWidth = (max - min) / numBins;
+                
+                // Fill bins
+                for (double value : values) {
+                    int binIndex = Math.min(numBins - 1, (int)((value - min) / binWidth));
+                    counts[binIndex]++;
+                    bins[binIndex] += value;
+                }
+                
+                // Calculate average value in each bin
+                for (int i = 0; i < numBins; i++) {
+                    if (counts[i] > 0) {
+                        bins[i] /= counts[i];
+                    } else {
+                        bins[i] = min + (i + 0.5) * binWidth;
                     }
                 }
                 
-                columnStats.put(col, new double[]{mean, stdDev, min, max});
+                columnStats.put(col, new DistributionStats(bins, counts, min, max));
+                
             } catch (NumberFormatException e) {
                 // Skip non-numeric columns
             }
         }
         
-        // Generate noise cases
+        // Generate cases using the calculated distributions
         Random random = new Random();
         for (int i = 0; i < numCases; i++) {
             Object[] rowData = new Object[csvViewer.tableModel.getColumnCount()];
             
-            // Set class value based on distribution
-            if (distribution.equals("oneclass")) {
-                rowData[classColumnIndex] = selectedClass + "-synthetic";
-            } else if (distribution.equals("allclasses")) {
-                // Use all classes distribution but mark with special name
-                rowData[classColumnIndex] = "All-classes-synthetic";
-            } else {
-                rowData[classColumnIndex] = "gaussian-synthetic";
+            // Handle class and colors...
+            String syntheticClass;
+            switch (distribution) {
+                case "gaussian":
+                    syntheticClass = "NOISE";
+                    break;
+                case "oneclass":
+                    syntheticClass = selectedClass + "-synthetic";
+                    break;
+                default: // allclasses
+                    syntheticClass = "ALL-synthetic";  // One single synthetic class for all-classes distribution
+                    break;
             }
             
-            // Generate attribute values
+            if (!csvViewer.getClassColors().containsKey(syntheticClass)) {
+                csvViewer.getClassColors().put(syntheticClass, Color.getHSBColor(currentHue, 0.8f, 0.9f));
+                Shape shape = new Ellipse2D.Double(-3, -3, 6, 6);
+                csvViewer.getClassShapes().put(syntheticClass, shape);
+                currentHue = (currentHue + 0.618034f) % 1f;
+            }
+            rowData[classColumnIndex] = syntheticClass;
+            
+            // Generate values according to density distribution
             for (int col = 0; col < csvViewer.tableModel.getColumnCount(); col++) {
                 if (col != classColumnIndex && columnStats.containsKey(col)) {
-                    double[] stats = columnStats.get(col);
-                    double noise;
-                    if (isNormalized) {
-                        noise = Math.min(1.0, Math.max(0.0, random.nextGaussian() * stats[1] + stats[0]));
-                    } else if (useSelectedBounds || !distribution.equals("gaussian")) {
-                        noise = Math.min(stats[3], Math.max(stats[2], 
-                               random.nextGaussian() * stats[1] + stats[0]));
-                    } else {
-                        noise = random.nextGaussian() * stats[1] + stats[0];
+                    DistributionStats stats = columnStats.get(col);
+                    
+                    // Sample from distribution using counts as weights
+                    int totalCount = Arrays.stream(stats.counts).sum();
+                    int target = random.nextInt(totalCount);
+                    int sum = 0;
+                    int selectedBin = 0;
+                    for (int bin = 0; bin < stats.counts.length; bin++) {
+                        sum += stats.counts[bin];
+                        if (sum > target) {
+                            selectedBin = bin;
+                            break;
+                        }
                     }
-                    rowData[col] = String.format("%.4f", noise);
+                    
+                    // Generate value within selected bin with small random variation
+                    double binValue = stats.bins[selectedBin];
+                    double binWidth = (stats.max - stats.min) / stats.bins.length;
+                    double value = binValue + (random.nextDouble() - 0.5) * binWidth;
+                    
+                    if (isNormalized) {
+                        value = Math.min(1.0, Math.max(0.0, value));
+                    }
+                    rowData[col] = String.format("%.4f", value);
                 }
             }
             
             csvViewer.tableModel.addRow(rowData);
         }
         
+        // Update UI
         csvViewer.getDataHandler().updateStats(csvViewer.tableModel, csvViewer.getStatsTextArea());
         csvViewer.getTable().repaint();
+    }
+
+    private static class DistributionStats {
+        final double[] bins;
+        final int[] counts;
+        final double min;
+        final double max;
+        
+        DistributionStats(double[] bins, int[] counts, double min, double max) {
+            this.bins = bins;
+            this.counts = counts;
+            this.min = min;
+            this.max = max;
+        }
     }
 
     private void showLinearFunctionDialog() {
@@ -791,7 +832,7 @@ public class ButtonPanelManager {
                 
                 dialog.dispose();
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(dialog,
+                JOptionPane.showMessageDialog(dialog, 
                     "Please enter valid numeric values for coefficients.",
                     "Invalid Input",
                     JOptionPane.ERROR_MESSAGE);
@@ -799,7 +840,7 @@ public class ButtonPanelManager {
         });
 
         cancelButton.addActionListener(e -> dialog.dispose());
-
+        
         buttonPanel.add(okButton);
         buttonPanel.add(cancelButton);
 
@@ -814,7 +855,7 @@ public class ButtonPanelManager {
         try {
             Double.parseDouble(csvViewer.tableModel.getValueAt(0, columnIndex).toString());
             return true;
-        } catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
             return false;
         }
     }
