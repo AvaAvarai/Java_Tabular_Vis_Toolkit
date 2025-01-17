@@ -671,24 +671,31 @@ public class ButtonPanelManager {
             for (int col = 0; col < csvViewer.tableModel.getColumnCount(); col++) {
                 if (col != classColumnIndex && columnStats.containsKey(col)) {
                     DistributionStats stats = columnStats.get(col);
-                    
-                    // Sample from distribution using counts as weights
-                    int totalCount = Arrays.stream(stats.counts).sum();
-                    int target = random.nextInt(totalCount);
-                    int sum = 0;
-                    int selectedBin = 0;
-                    for (int bin = 0; bin < stats.counts.length; bin++) {
-                        sum += stats.counts[bin];
-                        if (sum > target) {
-                            selectedBin = bin;
-                            break;
+                    double value;
+
+                    if (distribution.equals("gaussian")) {
+                        // For gaussian, use proper normal distribution
+                        double mean = (stats.max + stats.min) / 2.0;
+                        double stdDev = (stats.max - stats.min) / 6.0;  // So ~99.7% falls within range
+                        value = random.nextGaussian() * stdDev + mean;
+                    } else {
+                        // For class distributions, use histogram sampling
+                        int totalCount = Arrays.stream(stats.counts).sum();
+                        int target = random.nextInt(totalCount);
+                        int sum = 0;
+                        int selectedBin = 0;
+                        for (int bin = 0; bin < stats.counts.length; bin++) {
+                            sum += stats.counts[bin];
+                            if (sum > target) {
+                                selectedBin = bin;
+                                break;
+                            }
                         }
+                        
+                        double binValue = stats.bins[selectedBin];
+                        double binWidth = (stats.max - stats.min) / stats.bins.length;
+                        value = binValue + (random.nextDouble() - 0.5) * binWidth;
                     }
-                    
-                    // Generate value within selected bin with small random variation
-                    double binValue = stats.bins[selectedBin];
-                    double binWidth = (stats.max - stats.min) / stats.bins.length;
-                    double value = binValue + (random.nextDouble() - 0.5) * binWidth;
                     
                     if (isNormalized) {
                         value = Math.min(1.0, Math.max(0.0, value));
