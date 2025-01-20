@@ -120,10 +120,12 @@ public class ParallelCoordinatesPlot extends JFrame {
         
         // Add a button to toggle the attribute labels
         JToggleButton attributeLabelToggle = new JToggleButton("Show Labels");
+        attributeLabelToggle.setSelected(showAttributeLabels);
         attributeLabelToggle.addActionListener(_ -> {
             showAttributeLabels = attributeLabelToggle.isSelected();
             repaint();
         });
+        controlPanel.add(attributeLabelToggle);
 
         // Add a button group for density modes
         ButtonGroup densityButtonGroup = new ButtonGroup();
