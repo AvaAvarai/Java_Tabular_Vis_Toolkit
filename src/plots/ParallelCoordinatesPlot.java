@@ -34,6 +34,15 @@ public class ParallelCoordinatesPlot extends JFrame {
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
     private static final int AXIS_HEIGHT = 400;
 
+    // Add this enum to represent density modes
+    private enum DensityMode {
+        NO_DENSITY,
+        DENSITY_WITH_OPACITY,
+        DENSITY_WITH_THICKNESS
+    }
+
+    private DensityMode currentDensityMode = DensityMode.NO_DENSITY; // Default density mode
+
     public ParallelCoordinatesPlot(List<List<Double>> data, List<String> attributeNames,
                                    Map<String, Color> classColors, Map<String, Shape> classShapes,
                                    List<String> classLabels, List<Integer> selectedRows, String datasetName) {
@@ -116,17 +125,36 @@ public class ParallelCoordinatesPlot extends JFrame {
             repaint();
         });
 
-        // Add a button to toggle the density
-        JToggleButton densityToggle = new JToggleButton("Toggle Density");
-        densityToggle.addActionListener(_ -> {
-            showDensity = densityToggle.isSelected();
+        // Add a button group for density modes
+        ButtonGroup densityButtonGroup = new ButtonGroup();
+
+        // Add a button for no density
+        JRadioButton noDensityButton = new JRadioButton("No Density");
+        noDensityButton.setSelected(true);
+        noDensityButton.addActionListener(e -> {
+            currentDensityMode = DensityMode.NO_DENSITY;
             repaint();
         });
-        densityToggle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        controlPanel.add(densityToggle);
+        densityButtonGroup.add(noDensityButton);
+        controlPanel.add(noDensityButton);
 
-        attributeLabelToggle.setAlignmentX(Component.CENTER_ALIGNMENT);
-        controlPanel.add(attributeLabelToggle);
+        // Add a button for density with opacity
+        JRadioButton opacityDensityButton = new JRadioButton("Density with Opacity");
+        opacityDensityButton.addActionListener(e -> {
+            currentDensityMode = DensityMode.DENSITY_WITH_OPACITY;
+            repaint();
+        });
+        densityButtonGroup.add(opacityDensityButton);
+        controlPanel.add(opacityDensityButton);
+
+        // Add a button for density with thickness
+        JRadioButton thicknessDensityButton = new JRadioButton("Density with Thickness");
+        thicknessDensityButton.addActionListener(e -> {
+            currentDensityMode = DensityMode.DENSITY_WITH_THICKNESS;
+            repaint();
+        });
+        densityButtonGroup.add(thicknessDensityButton);
+        controlPanel.add(thicknessDensityButton);
 
         for (String attributeName : attributeNames) {
             // Create a panel for each attribute
@@ -274,13 +302,20 @@ public class ParallelCoordinatesPlot extends JFrame {
                     .max()
                     .orElse(1);
 
-            // Second pass: Draw lines with appropriate thickness
-            if (!showDensity) {
-                drawLines(g2, false);
-                drawLines(g2, true);
-            } else {
-                drawLinesWithDensity(g2, lineSegmentCounts, maxDensity, false);
-                drawLinesWithDensity(g2, lineSegmentCounts, maxDensity, true);
+            // Second pass: Draw lines based on the selected density mode
+            switch (currentDensityMode) {
+                case NO_DENSITY:
+                    drawLines(g2, false);
+                    drawLines(g2, true);
+                    break;
+                case DENSITY_WITH_OPACITY:
+                    drawLinesWithOpacity(g2, lineSegmentCounts, maxDensity, false);
+                    drawLinesWithOpacity(g2, lineSegmentCounts, maxDensity, true);
+                    break;
+                case DENSITY_WITH_THICKNESS:
+                    drawLinesWithDensity(g2, lineSegmentCounts, maxDensity, false);
+                    drawLinesWithDensity(g2, lineSegmentCounts, maxDensity, true);
+                    break;
             }
         }
 
@@ -388,20 +423,54 @@ public class ParallelCoordinatesPlot extends JFrame {
                     LineSegment segment = new LineSegment(p1, p2);
                     int count = lineSegmentCounts.getOrDefault(segment, 1);
                     
-                    // Calculate thickness based on density
+                    // Calculate thickness based on density, starting from a minimum thickness
                     float normalizedDensity = (float) count / maxDensity;
-                    float thickness = 1.0f + (normalizedDensity * 5.0f); // Scale from 1 to 6 pixels
+                    float thickness = 0.5f + (normalizedDensity * 9.5f); // Scale from 0.5 to 10.0 pixels
                     
-                    // Adjust color alpha based on density
-                    Color adjustedColor = new Color(
-                        baseColor.getRed(),
-                        baseColor.getGreen(),
-                        baseColor.getBlue(),
-                        Math.min(255, 50 + (int)(205 * normalizedDensity)) // Alpha from 50 to 255
-                    );
+                    g2.setStroke(new BasicStroke(thickness)); // Set the stroke thickness
+                    g2.setColor(baseColor);
+                    g2.draw(new Line2D.Double(p1, p2));
+                }
+
+                // Draw class symbols as vertices
+                g2.setColor(baseColor);
+                for (Point2D.Double point : points) {
+                    Shape shape = classShapes.get(classLabel);
+                    g2.translate(point.x, point.y);
+                    g2.fill(shape);
+                    g2.translate(-point.x, -point.y);
+                }
+            }
+        }
+
+        private void drawLinesWithOpacity(Graphics2D g2, Map<LineSegment, Integer> lineSegmentCounts, int maxDensity, boolean selectedOnly) {
+            List<Integer> rowsToProcess = selectedOnly ? selectedRows : 
+                IntStream.range(0, data.get(0).size())
+                        .filter(i -> !selectedRows.contains(i))
+                        .boxed()
+                        .collect(Collectors.toList());
+
+            for (int row : rowsToProcess) {
+                String classLabel = classLabels.get(row);
+                if (hiddenClasses.contains(classLabel)) continue;
+
+                List<Point2D.Double> points = getPointsForRow(row);
+                Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+                
+                // Draw lines with varying opacity based on density
+                for (int i = 0; i < points.size() - 1; i++) {
+                    Point2D.Double p1 = points.get(i);
+                    Point2D.Double p2 = points.get(i + 1);
                     
-                    g2.setStroke(new BasicStroke(selectedOnly ? thickness + 1.0f : thickness));
-                    g2.setColor(adjustedColor);
+                    LineSegment segment = new LineSegment(p1, p2);
+                    int count = lineSegmentCounts.getOrDefault(segment, 1);
+                    
+                    // Calculate opacity based on density
+                    float normalizedDensity = (float) count / maxDensity;
+                    int alpha = (int) (normalizedDensity * 255); // Scale alpha from 0 to 255
+                    g2.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha));
+                    g2.setStroke(new BasicStroke(1.0f)); // Fixed thickness
+                    
                     g2.draw(new Line2D.Double(p1, p2));
                 }
 
