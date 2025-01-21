@@ -488,7 +488,7 @@ public class CsvViewer extends JFrame {
             }
         }
 
-        covariancePairs.sort((p1, p2) -> Double.compare(p2.getCovariance(), p1.getCovariance()));
+        covariancePairs.sort((p1, p2) -> Double.compare(p1.getCovariance(), p2.getCovariance()));
 
         TableColumnModel columnModel = table.getColumnModel();
         for (int i = 0; i < covariancePairs.size(); i++) {
