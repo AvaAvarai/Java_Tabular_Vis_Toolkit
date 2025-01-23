@@ -14,10 +14,13 @@ public class MultiLayerPerceptronClassifier {
     private double learningRate = 0.1;
     private int epochs = 100;
     private int hiddenLayerSize = 4;
-    private double[][] inputWeights;  // Weights between input and hidden layer
-    private double[][] outputWeights; // Weights between hidden and output layer
-    private double[] hiddenBiases;    // Biases for hidden layer
-    private double[] outputBiases;     // Biases for output layer
+    private long seed = 42;
+    private double[][] inputWeights;
+    private double[][] outputWeights;
+    private double[] hiddenBiases;
+    private double[] outputBiases;
+    private Random random;
+    private List<Integer> selectedFeatures;
     
     public MultiLayerPerceptronClassifier(CsvViewer csvViewer, DefaultTableModel tableModel) {
         this.csvViewer = csvViewer;
@@ -34,27 +37,58 @@ public class MultiLayerPerceptronClassifier {
     }
 
     private void showConfigDialog() {
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(csvViewer.getTable()), 
-                                   "MLP Configuration");
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(csvViewer.getTable()), "MLP Configuration");
         dialog.setLayout(new BorderLayout(10, 10));
 
-        JPanel mainPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        // Parameter inputs panel
+        JPanel paramsPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+        
         // Learning rate input
-        mainPanel.add(new JLabel("Learning Rate:"));
+        paramsPanel.add(new JLabel("Learning Rate:"));
         JTextField learningRateField = new JTextField(String.valueOf(learningRate));
-        mainPanel.add(learningRateField);
+        paramsPanel.add(learningRateField);
 
         // Epochs input
-        mainPanel.add(new JLabel("Epochs:"));
+        paramsPanel.add(new JLabel("Epochs:"));
         JTextField epochsField = new JTextField(String.valueOf(epochs));
-        mainPanel.add(epochsField);
+        paramsPanel.add(epochsField);
 
         // Hidden layer size input
-        mainPanel.add(new JLabel("Hidden Layer Size:"));
+        paramsPanel.add(new JLabel("Hidden Layer Size:"));
         JTextField hiddenLayerField = new JTextField(String.valueOf(hiddenLayerSize));
-        mainPanel.add(hiddenLayerField);
+        paramsPanel.add(hiddenLayerField);
+
+        // Random seed input
+        paramsPanel.add(new JLabel("Random Seed:"));
+        JTextField seedField = new JTextField(String.valueOf(seed));
+        paramsPanel.add(seedField);
+
+        mainPanel.add(paramsPanel);
+        mainPanel.add(Box.createVerticalStrut(10));
+
+        // Feature selection panel
+        JPanel featurePanel = new JPanel();
+        featurePanel.setLayout(new BoxLayout(featurePanel, BoxLayout.Y_AXIS));
+        featurePanel.setBorder(BorderFactory.createTitledBorder("Select Features"));
+
+        List<JCheckBox> featureCheckboxes = new ArrayList<>();
+        int classColumnIndex = csvViewer.getClassColumnIndex();
+        
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            if (i != classColumnIndex) {
+                JCheckBox checkBox = new JCheckBox(tableModel.getColumnName(i), true);
+                featureCheckboxes.add(checkBox);
+                featurePanel.add(checkBox);
+            }
+        }
+
+        JScrollPane scrollPane = new JScrollPane(featurePanel);
+        scrollPane.setPreferredSize(new Dimension(300, 150));
+        mainPanel.add(scrollPane);
 
         // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -66,121 +100,132 @@ public class MultiLayerPerceptronClassifier {
                 learningRate = Double.parseDouble(learningRateField.getText());
                 epochs = Integer.parseInt(epochsField.getText());
                 hiddenLayerSize = Integer.parseInt(hiddenLayerField.getText());
+                seed = Long.parseLong(seedField.getText());
+                
+                // Get selected features
+                selectedFeatures = new ArrayList<>();
+                int featureIndex = 0;
+                for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                    if (i != classColumnIndex) {
+                        if (featureCheckboxes.get(featureIndex).isSelected()) {
+                            selectedFeatures.add(i);
+                        }
+                        featureIndex++;
+                    }
+                }
+
+                if (selectedFeatures.isEmpty()) {
+                    JOptionPane.showMessageDialog(dialog, 
+                        "Please select at least one feature.", 
+                        "Error", 
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
                 dialog.dispose();
                 trainAndPredict();
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(dialog, 
                     "Please enter valid numeric values.", 
-                    "Invalid Input", 
+                    "Error", 
                     JOptionPane.ERROR_MESSAGE);
             }
         });
 
         cancelButton.addActionListener(e -> dialog.dispose());
-
         buttonPanel.add(okButton);
         buttonPanel.add(cancelButton);
 
         dialog.add(mainPanel, BorderLayout.CENTER);
         dialog.add(buttonPanel, BorderLayout.SOUTH);
         dialog.pack();
-        dialog.setLocationRelativeTo(csvViewer);
+        dialog.setLocationRelativeTo(csvViewer.getTable());
         dialog.setVisible(true);
     }
 
     private void trainAndPredict() {
+        random = new Random(seed);
         int classColumnIndex = csvViewer.getClassColumnIndex();
-        if (classColumnIndex == -1) {
-            JOptionPane.showMessageDialog(csvViewer, "No class column found.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
+        
         // Prepare data
-        List<double[]> features = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        Set<String> uniqueLabels = new HashSet<>();
-        Map<String, Double> labelMap = new HashMap<>();
+        List<double[]> inputs = new ArrayList<>();
+        List<Double> targets = new ArrayList<>();
+        Map<String, Double> classMap = new HashMap<>();
+        List<String> uniqueClasses = new ArrayList<>();
 
-        // First pass - collect unique labels
+        // Get unique classes and create normalized mapping
         for (int row = 0; row < tableModel.getRowCount(); row++) {
-            String label = tableModel.getValueAt(row, classColumnIndex).toString();
-            uniqueLabels.add(label);
-        }
-
-        // Create normalized mapping for labels
-        List<String> sortedLabels = new ArrayList<>(uniqueLabels);
-        Collections.sort(sortedLabels);
-        for (int i = 0; i < sortedLabels.size(); i++) {
-            labelMap.put(sortedLabels.get(i), i / (double)(sortedLabels.size() - 1));
-        }
-
-        // Second pass - collect features and labels
-        int numFeatures = tableModel.getColumnCount() - 1;
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            double[] featureRow = new double[numFeatures];
-            int featureIndex = 0;
-            for (int col = 0; col < tableModel.getColumnCount(); col++) {
-                if (col != classColumnIndex) {
-                    featureRow[featureIndex++] = Double.parseDouble(tableModel.getValueAt(row, col).toString());
-                }
+            String className = tableModel.getValueAt(row, classColumnIndex).toString();
+            if (!uniqueClasses.contains(className)) {
+                uniqueClasses.add(className);
             }
-            features.add(featureRow);
-            labels.add(tableModel.getValueAt(row, classColumnIndex).toString());
+        }
+        
+        // Create normalized class mapping
+        for (int i = 0; i < uniqueClasses.size(); i++) {
+            classMap.put(uniqueClasses.get(i), i / (double)(uniqueClasses.size() - 1));
+        }
+
+        // Collect and normalize input data
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            double[] input = new double[selectedFeatures.size()];
+            for (int i = 0; i < selectedFeatures.size(); i++) {
+                input[i] = Double.parseDouble(tableModel.getValueAt(row, selectedFeatures.get(i)).toString());
+            }
+            inputs.add(input);
+            targets.add(classMap.get(tableModel.getValueAt(row, classColumnIndex).toString()));
         }
 
         // Initialize network
-        initializeNetwork(numFeatures);
+        initializeNetwork(selectedFeatures.size());
 
         // Train network
-        train(features, labels, labelMap);
+        train(inputs, targets);
 
-        // Make predictions
+        // Add predictions column
         String columnName = csvViewer.getUniqueColumnName("MLP_Prediction");
         tableModel.addColumn(columnName);
         int predictionColumnIndex = tableModel.getColumnCount() - 1;
-        
+
+        // Make predictions
         DecimalFormat df = new DecimalFormat("#.###");
         for (int row = 0; row < tableModel.getRowCount(); row++) {
-            double[] input = features.get(row);
+            double[] input = inputs.get(row);
             double prediction = predict(input);
             tableModel.setValueAt(df.format(prediction), row, predictionColumnIndex);
         }
     }
 
-    private void initializeNetwork(int numFeatures) {
-        Random random = new Random(42);
-        
-        // Initialize weights with random values between -1 and 1
-        inputWeights = new double[numFeatures][hiddenLayerSize];
+    private void initializeNetwork(int inputSize) {
+        inputWeights = new double[inputSize][hiddenLayerSize];
         outputWeights = new double[hiddenLayerSize][1];
-        
-        for (int i = 0; i < numFeatures; i++) {
-            for (int j = 0; j < hiddenLayerSize; j++) {
-                inputWeights[i][j] = random.nextDouble() * 2 - 1;
-            }
-        }
-        
-        for (int i = 0; i < hiddenLayerSize; i++) {
-            outputWeights[i][0] = random.nextDouble() * 2 - 1;
-        }
-        
-        // Initialize biases
         hiddenBiases = new double[hiddenLayerSize];
         outputBiases = new double[1];
-        
-        for (int i = 0; i < hiddenLayerSize; i++) {
-            hiddenBiases[i] = random.nextDouble() * 2 - 1;
+
+        // Initialize weights with Xavier/Glorot initialization
+        double inputScale = Math.sqrt(2.0 / (inputSize + hiddenLayerSize));
+        double outputScale = Math.sqrt(2.0 / (hiddenLayerSize + 1));
+
+        for (int i = 0; i < inputSize; i++) {
+            for (int j = 0; j < hiddenLayerSize; j++) {
+                inputWeights[i][j] = (random.nextDouble() * 2 - 1) * inputScale;
+            }
         }
-        outputBiases[0] = random.nextDouble() * 2 - 1;
+
+        for (int i = 0; i < hiddenLayerSize; i++) {
+            outputWeights[i][0] = (random.nextDouble() * 2 - 1) * outputScale;
+            hiddenBiases[i] = 0;
+        }
+        outputBiases[0] = 0;
     }
 
-    private void train(List<double[]> features, List<String> labels, Map<String, Double> labelMap) {
+    private void train(List<double[]> inputs, List<Double> targets) {
         for (int epoch = 0; epoch < epochs; epoch++) {
             double totalError = 0;
             
-            for (int i = 0; i < features.size(); i++) {
-                double[] input = features.get(i);
-                double target = labelMap.get(labels.get(i));
+            for (int i = 0; i < inputs.size(); i++) {
+                double[] input = inputs.get(i);
+                double target = targets.get(i);
                 
                 // Forward pass
                 double[] hiddenLayer = new double[hiddenLayerSize];
