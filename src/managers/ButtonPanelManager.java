@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.stream.Collectors;
+import src.classifiers.MultiLayerPerceptronClassifier;
 
 public class ButtonPanelManager {
 
@@ -299,6 +300,11 @@ public class ButtonPanelManager {
                 LinearRegressionClassifier lr = new LinearRegressionClassifier(csvViewer, csvViewer.tableModel);
                 lr.insertLinearRegression();
             }
+        });
+
+        addMenuItem(mlMenu, "Multi-Layer Perceptron", "/icons/mlp.png", _ -> {
+            MultiLayerPerceptronClassifier mlp = new MultiLayerPerceptronClassifier(csvViewer, csvViewer.tableModel);
+            mlp.insertMLPClassification();
         });
 
         analysisMenu.add(mlMenu);
