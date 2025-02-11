@@ -13,7 +13,7 @@ import java.net.URI;
 
 public class MainMenu extends JFrame {
 
-    private static final String VERSION = "0.1.0";
+    private static final String VERSION = "0.2.0";
 
     private static final Color BACKGROUND_COLOR_TOP = new Color(30, 30, 30);
     private static final Color BACKGROUND_COLOR_BOTTOM = new Color(50, 80, 120);
@@ -105,12 +105,12 @@ public class MainMenu extends JFrame {
         add(footerLabel, BorderLayout.SOUTH);
 
         // Action listeners
-        buttons[0].addActionListener(e -> openCsvViewer());
-        buttons[1].addActionListener(e -> openGitHub());
-        buttons[2].addActionListener(e -> showAboutDialog());
-        buttons[3].addActionListener(e -> openFolder("datasets"));
-        buttons[4].addActionListener(e -> openFolder("screenshots"));
-        buttons[5].addActionListener(e -> System.exit(0));
+        buttons[0].addActionListener(_ -> openCsvViewer());
+        buttons[1].addActionListener(_ -> openGitHub());
+        buttons[2].addActionListener(_ -> showAboutDialog());
+        buttons[3].addActionListener(_ -> openFolder("datasets"));
+        buttons[4].addActionListener(_ -> openFolder("screenshots"));
+        buttons[5].addActionListener(_ -> System.exit(0));
 
         // Draw frame on glass pane
         setGlassPane(new JComponent() {
@@ -120,8 +120,7 @@ public class MainMenu extends JFrame {
                 Graphics2D g2d = (Graphics2D) g;
                 g2d.setColor(FRAME_COLOR);
                 g2d.setStroke(new BasicStroke(FRAME_THICKNESS));
-                g2d.drawRect(FRAME_THICKNESS/2, FRAME_THICKNESS/2, 
-                            getWidth()-FRAME_THICKNESS, getHeight()-FRAME_THICKNESS);
+                g2d.drawRect(FRAME_THICKNESS/2, FRAME_THICKNESS/2, getWidth()-FRAME_THICKNESS, getHeight()-FRAME_THICKNESS);
             }
         });
         getGlassPane().setVisible(true);

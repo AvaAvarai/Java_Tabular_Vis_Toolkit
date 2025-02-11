@@ -1,6 +1,8 @@
 package src.plots;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+
 import src.utils.ScreenshotUtils;
 import java.awt.*;
 import java.awt.event.*;
@@ -94,7 +96,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-        JPanel controlPanel = createControlPanel();
+        JScrollPane controlPanel = createControlPanel();
 
         // Add a button to take a screenshot
         JButton screenshotButton = new JButton("Take Screenshot");
@@ -111,7 +113,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         setContentPane(mainPanel);
     }
 
-    private JPanel createControlPanel() {
+    private JScrollPane createControlPanel() {
         // Create a panel to hold the controls for each attribute
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
@@ -200,7 +202,7 @@ public class ParallelCoordinatesPlot extends JFrame {
             controlPanel.add(attributePanel);
         }
     
-        return controlPanel;
+        return new JScrollPane(controlPanel);
     }
 
     private class ParallelCoordinatesPanel extends JPanel {
