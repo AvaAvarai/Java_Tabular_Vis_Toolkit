@@ -347,7 +347,6 @@ public class CsvViewer extends JFrame {
             options,
             options[0]
         );
-
         if (choice == 0) {
             // Existing covariance sort logic
             java.util.List<String> attributes = new ArrayList<>();
@@ -355,14 +354,18 @@ public class CsvViewer extends JFrame {
 
             for (int i = 0; i < tableModel.getColumnCount(); i++) {
                 if (i != classColumnIndex) {
-                    attributes.add(tableModel.getColumnName(i));
+                    String columnName = tableModel.getColumnName(i);
+                    if (columnName.length() > 40) {
+                        columnName = columnName.substring(0, 37) + "...";
+                    }
+                    attributes.add(columnName);
                 }
             }
 
             String selectedAttribute = (String) JOptionPane.showInputDialog(
                 this,
                 "Select an attribute to sort by covariance:",
-                "Covariance Column Sort",
+                "Covariance Column Sort", 
                 JOptionPane.PLAIN_MESSAGE,
                 null,
                 attributes.toArray(new String[0]),
@@ -370,7 +373,18 @@ public class CsvViewer extends JFrame {
             );
 
             if (selectedAttribute != null) {
-                sortColumnsByCovariance(selectedAttribute);
+                // Get original column name if it was truncated
+                String originalName = selectedAttribute;
+                if (selectedAttribute.endsWith("...")) {
+                    for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                        String fullName = tableModel.getColumnName(i);
+                        if (fullName.startsWith(selectedAttribute.substring(0, 37))) {
+                            originalName = fullName;
+                            break;
+                        }
+                    }
+                }
+                sortColumnsByCovariance(originalName);
             }
         } else if (choice == 1) {
             sortColumnsByHamiltonianPath();
