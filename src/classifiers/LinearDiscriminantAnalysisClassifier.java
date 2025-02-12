@@ -26,7 +26,7 @@ public class LinearDiscriminantAnalysisClassifier {
             JOptionPane.showMessageDialog(csvViewer, "No class column found.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-
+        // TODO: make an option to select if the user wants to put function to the name or not
         // Get unique classes and their counts
         Map<String, List<double[]>> classData = new HashMap<>();
         Set<String> uniqueClasses = new HashSet<>();
@@ -45,7 +45,7 @@ public class LinearDiscriminantAnalysisClassifier {
                 }
             }
             
-            classData.computeIfAbsent(className, k -> new ArrayList<>()).add(features);
+            classData.computeIfAbsent(className, _ -> new ArrayList<>()).add(features);
         }
 
         // Calculate class means
@@ -123,11 +123,24 @@ public class LinearDiscriminantAnalysisClassifier {
         // Find eigenvectors using power iteration
         double[][] eigenVectors = powerIteration(M, 1); // Get only the first eigenvector
 
-        // Project data onto LDA space
-        String columnName = csvViewer.getUniqueColumnName("LDA");
-        tableModel.addColumn(columnName);
-        int newColIndex = tableModel.getColumnCount() - 1;
+        // Build the LDA function string
+        StringBuilder ldaFunction = new StringBuilder("LDA = ");
         DecimalFormat df = new DecimalFormat("#.####");
+        int featureIndex = 0;
+        for (int col = 0; col < tableModel.getColumnCount(); col++) {
+            if (col != classColumnIndex) {
+                double coefficient = eigenVectors[featureIndex][0];
+                if (featureIndex > 0 && coefficient >= 0) {
+                    ldaFunction.append(" + ");
+                }
+                ldaFunction.append(df.format(coefficient)).append(tableModel.getColumnName(col));
+                featureIndex++;
+            }
+        }
+
+        // Project data onto LDA space
+        tableModel.addColumn(ldaFunction.toString());
+        int newColIndex = tableModel.getColumnCount() - 1;
 
         // Project and normalize to [0,1] range
         double minProj = Double.MAX_VALUE;
@@ -136,7 +149,7 @@ public class LinearDiscriminantAnalysisClassifier {
 
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             double[] features = new double[numFeatures];
-            int featureIndex = 0;
+            featureIndex = 0;
             for (int col = 0; col < tableModel.getColumnCount() - 1; col++) {
                 if (col != classColumnIndex) {
                     features[featureIndex++] = Double.parseDouble(tableModel.getValueAt(row, col).toString());
