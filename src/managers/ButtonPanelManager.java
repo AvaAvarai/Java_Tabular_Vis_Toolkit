@@ -66,7 +66,8 @@ public class ButtonPanelManager {
         addMenuItem(viewMenu, "Concentric Coordinates", "/icons/start.png", _ -> csvViewer.showConcentricCoordinatesPlot());
         addMenuItem(viewMenu, "Line Coordinates", "/icons/start.png", _ -> csvViewer.showLineCoordinatesPlot());
         addMenuItem(viewMenu, "Decision Tree", "/icons/start.png", _ -> csvViewer.showDecisionTreeVisualization());
-
+        addMenuItem(viewMenu, "Collocated Paired Coordinates", "/icons/start.png", _ -> csvViewer.showCollocatedPairedCoordinates());
+        
         // Data Menu
         JMenu dataMenu = new JMenu("Data Operations");
         dataMenu.setIcon(resizeIcon("/icons/normalize.png"));

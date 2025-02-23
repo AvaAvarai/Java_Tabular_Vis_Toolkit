@@ -179,6 +179,10 @@ public class CsvViewer extends JFrame {
         visualizationManager.showStarCoordinatesPlot();
     }
 
+    public void showCollocatedPairedCoordinates() {
+        visualizationManager.showCollocatedPairedCoordinates();
+    }
+
     public void insertWeightedSumColumn() {
         if (tableModel.getColumnCount() == 0) {
             noDataLoadedError();
