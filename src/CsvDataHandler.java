@@ -372,6 +372,10 @@ public class CsvDataHandler {
                         } else { // zscore
                             normalizedValue = (values[row] - mean) / std;
                         }
+                        // Ensure NaN is not returned
+                        if (Double.isNaN(normalizedValue)) {
+                            normalizedValue = 0.0; // Default value for NaN
+                        }
                         model.setValueAt(String.format("%.4f", normalizedValue), row, col);
                     }
                 }
