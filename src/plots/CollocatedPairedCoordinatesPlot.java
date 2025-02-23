@@ -22,7 +22,6 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
     private List<String> classLabels;
     private List<Integer> selectedRows;
     private JTable table;
-    private double zoomLevel = 1.0;
     private Set<String> hiddenClasses;
 
     public CollocatedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, JTable table) {
@@ -57,7 +56,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
 
     private class CollocatedPairedCoordinatesPanel extends JPanel {
         public CollocatedPairedCoordinatesPanel() {
-            setBackground(Color.WHITE);
+            setBackground(new Color(0xC0C0C0));
         }
 
         @Override
@@ -68,29 +67,36 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             }
 
             Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.scale(zoomLevel, zoomLevel);
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);  
 
             int width = getWidth();
             int height = getHeight();
             int padding = 50;
             int plotSize = Math.min(width, height) - 2 * padding;
-            int centerX = width / 2;
-            int centerY = height / 2;
 
             g2.setColor(Color.BLACK);
             g2.drawRect(padding, padding, plotSize, plotSize);
 
+            // Draw non-selected lines first
             for (int i = 0; i < table.getRowCount(); i++) {
                 int row = table.convertRowIndexToModel(i);
                 String classLabel = classLabels.get(row);
-                if (!hiddenClasses.contains(classLabel)) {
-                    drawPolyline(g2, row, padding, plotSize);
+                if (!hiddenClasses.contains(classLabel) && !selectedRows.contains(row)) {
+                    drawPolyline(g2, row, padding, plotSize, false);
+                }
+            }
+
+            // Draw selected lines last to highlight them
+            for (int i = 0; i < table.getRowCount(); i++) {
+                int row = table.convertRowIndexToModel(i);
+                String classLabel = classLabels.get(row);
+                if (!hiddenClasses.contains(classLabel) && selectedRows.contains(row)) {
+                    drawPolyline(g2, row, padding, plotSize, true);
                 }
             }
         }
 
-        private void drawPolyline(Graphics2D g2, int row, int padding, int plotSize) {
+        private void drawPolyline(Graphics2D g2, int row, int padding, int plotSize, boolean isSelected) {
             List<Point> points = new ArrayList<>();
             int numAttributes = attributeNames.size();
 
@@ -105,7 +111,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             if (points.size() < 2) return;
 
             String classLabel = classLabels.get(row);
-            Color color = selectedRows.contains(row) ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+            Color color = isSelected ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
             g2.setColor(color);
             g2.setStroke(new BasicStroke(1.5f));
             
