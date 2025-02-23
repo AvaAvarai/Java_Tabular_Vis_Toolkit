@@ -24,7 +24,6 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
     private JTable table;
     private double zoomLevel = 1.0;
     private Set<String> hiddenClasses;
-    private boolean showAttributeLabels = true;
 
     public CollocatedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, JTable table) {
         this.data = data;
@@ -44,23 +43,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(Color.WHITE);
 
-        // Zoom slider
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JSlider zoomSlider = new JSlider(JSlider.HORIZONTAL, 50, 200, 100);
-        zoomSlider.addChangeListener(e -> {
-            zoomLevel = zoomSlider.getValue() / 100.0;
-            repaint();
-        });
-        controlPanel.add(new JLabel("Zoom: "));
-        controlPanel.add(zoomSlider);
-
-        // Attribute labels toggle
-        JToggleButton attributeLabelsToggle = new JToggleButton("Show Labels");
-        attributeLabelsToggle.addActionListener(e -> {
-            showAttributeLabels = attributeLabelsToggle.isSelected();
-            repaint();
-        });
-        controlPanel.add(attributeLabelsToggle);
 
         mainPanel.add(controlPanel, BorderLayout.NORTH);
         
