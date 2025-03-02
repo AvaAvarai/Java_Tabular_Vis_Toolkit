@@ -6,15 +6,40 @@ import src.CsvViewer;
 import java.util.*;
 import java.text.DecimalFormat;
 
+/**
+ * This class implements the Linear Discriminant Analysis (LDA) algorithm for dimensionality reduction.
+ * It is designed to work with CSV data and provides a method to insert the LDA classification into the data model.
+ * The LDA algorithm supports multiple classes and uses the power iteration method to find the eigenvectors.
+ */
 public class LinearDiscriminantAnalysisClassifier {
     private final CsvViewer csvViewer;
     private final DefaultTableModel tableModel;
 
+    /**
+     * Constructor for LinearDiscriminantAnalysisClassifier.
+     * 
+     * @param csvViewer The CSV viewer object that provides access to the CSV data.
+     * @param tableModel The table model that represents the CSV data.
+     */
     public LinearDiscriminantAnalysisClassifier(CsvViewer csvViewer, DefaultTableModel tableModel) {
         this.csvViewer = csvViewer;
         this.tableModel = tableModel;
     }
 
+    /**
+     * Inserts the LDA classification into the table model.
+     * This method performs the following steps:
+     * 1. Checks if there is any data loaded.
+     * 2. Identifies the class column index.
+     * 3. Collects data by class and calculates class means.
+     * 4. Calculates the global mean.
+     * 5. Computes the within-class scatter matrix (Sw) and between-class scatter matrix (Sb).
+     * 6. Calculates the inverse of Sw and multiplies it by Sb to find the projection matrix.
+     * 7. Finds the eigenvectors of the projection matrix using power iteration.
+     * 8. Builds the LDA function string based on the eigenvectors.
+     * 9. Projects the data onto the LDA space and normalizes the projections to [0,1] range.
+     * 10. Adds the LDA classification to the table model.
+     */
     public void insertLDAClassification() {
         if (tableModel.getColumnCount() == 0) {
             csvViewer.noDataLoadedError();
@@ -45,7 +70,7 @@ public class LinearDiscriminantAnalysisClassifier {
                 }
             }
             
-            classData.computeIfAbsent(className, _ -> new ArrayList<>()).add(features);
+            classData.computeIfAbsent(className, k -> new ArrayList<>()).add(features);
         }
 
         // Calculate class means
@@ -121,7 +146,7 @@ public class LinearDiscriminantAnalysisClassifier {
         double[][] M = multiply(SwInv, Sb);
 
         // Find eigenvectors using power iteration
-        double[][] eigenVectors = powerIteration(M, 1); // Get only the first eigenvector
+        double[][] eigenVectors = powerIteration(M, uniqueClasses.size()); // Get all eigenvectors
 
         // Build the LDA function string
         StringBuilder ldaFunction = new StringBuilder("LDA = ");
@@ -174,6 +199,12 @@ public class LinearDiscriminantAnalysisClassifier {
         }
     }
 
+    /**
+     * Calculates the inverse of a matrix using Gaussian elimination.
+     * 
+     * @param matrix The matrix to invert.
+     * @return The inverse of the matrix.
+     */
     private double[][] inverse(double[][] matrix) {
         int n = matrix.length;
         double[][] augmented = new double[n][2*n];
@@ -210,6 +241,13 @@ public class LinearDiscriminantAnalysisClassifier {
         return inverse;
     }
 
+    /**
+     * Multiplies two matrices.
+     * 
+     * @param A The first matrix.
+     * @param B The second matrix.
+     * @return The product of A and B.
+     */
     private double[][] multiply(double[][] A, double[][] B) {
         int m = A.length;
         int n = B[0].length;
@@ -227,6 +265,13 @@ public class LinearDiscriminantAnalysisClassifier {
         return result;
     }
 
+    /**
+     * Finds the eigenvectors of a matrix using power iteration.
+     * 
+     * @param matrix The matrix to find eigenvectors for.
+     * @param numComponents The number of eigenvectors to find.
+     * @return The eigenvectors of the matrix.
+     */
     private double[][] powerIteration(double[][] matrix, int numComponents) {
         int n = matrix.length;
         double[][] eigenvectors = new double[n][numComponents];
