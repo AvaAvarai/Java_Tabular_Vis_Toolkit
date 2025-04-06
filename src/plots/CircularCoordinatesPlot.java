@@ -24,6 +24,7 @@ public class CircularCoordinatesPlot extends JFrame {
     private boolean showLabels = true; // Track if labels should be shown
     private boolean usePolygon = false; // Track if polygon should be used instead of circle
     private boolean dynamicMode = false; // Track if dynamic mode should be used
+    private boolean connectEnds = true; // Track if the last and first vertices should be connected
     private Map<String, Double> maxSumPerClass = new HashMap<>(); // Track max sum of each class
 
     // Font settings
@@ -103,6 +104,14 @@ public class CircularCoordinatesPlot extends JFrame {
             repaint();
         });
         controlPanel.add(dynamicModeToggle);
+
+        // Add connect ends toggle
+        JToggleButton connectEndsToggle = new JToggleButton("Connect Ends", true);
+        connectEndsToggle.addActionListener(e -> {
+            connectEnds = connectEndsToggle.isSelected();
+            repaint();
+        });
+        controlPanel.add(connectEndsToggle);
 
         add(controlPanel, BorderLayout.NORTH);
 
@@ -351,7 +360,7 @@ public class CircularCoordinatesPlot extends JFrame {
             }
             
             // Connect last point to first point
-            if (!dynamicMode) {
+            if (connectEnds && (!dynamicMode || usePolygon)) {
                 Point2D.Double p1 = points[numAttributes - 1];
                 Point2D.Double p2 = points[0];
                 double ctrlX1 = centerX + (p1.x - centerX) * (1 - curveHeight/100.0);

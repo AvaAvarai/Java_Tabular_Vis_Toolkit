@@ -23,7 +23,7 @@ if exist README.md (
 
 REM Compile all Java files explicitly
 echo Compiling Java files...
-javac --enable-preview --release 21 -d out -cp "libs/*" src/Main.java src/classifiers/*.java src/utils/*.java src/managers/*.java src/table/*.java src/plots/*.java src/*.java
+javac --enable-preview --release 23 -d out -cp "libs/*" src/Main.java src/classifiers/*.java src/utils/*.java src/managers/*.java src/table/*.java src/plots/*.java src/*.java
 
 REM Check if compilation was successful
 if %errorlevel% neq 0 (

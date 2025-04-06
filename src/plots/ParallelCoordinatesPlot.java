@@ -100,7 +100,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         // Add a button to take a screenshot
         JButton screenshotButton = new JButton("Take Screenshot");
-        screenshotButton.addActionListener(_ -> {
+        screenshotButton.addActionListener(e -> {
             ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "ParallelCoordinates", datasetName);
         });
 
