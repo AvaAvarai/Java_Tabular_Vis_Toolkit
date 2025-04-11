@@ -185,9 +185,20 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 List<Point> points = new ArrayList<>();
                 int numAttributes = attributeNames.size();
 
-                for (int i = 0; i < numAttributes - 1; i += 2) {
+                // Loop over attributes in pairs, but handle odd number of attributes
+                for (int i = 0; i < numAttributes; i += 2) {
                     double xValue = normalize(data.get(i).get(row), i);
-                    double yValue = normalize(data.get(i + 1).get(row), i + 1);
+                    
+                    // If this is the last attribute and it's odd, duplicate the value for y
+                    double yValue;
+                    if (i == numAttributes - 1) {
+                        // Odd number of attributes, duplicate the last one
+                        yValue = xValue;
+                    } else {
+                        // Normal case, use the next attribute
+                        yValue = normalize(data.get(i + 1).get(row), i + 1);
+                    }
+                    
                     int x = (int) (xValue * 100); // Use a scale factor for calculations
                     int y = (int) (yValue * 100);
                     points.add(new Point(x, y));
@@ -215,9 +226,20 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             List<Point> points = new ArrayList<>();
             int numAttributes = attributeNames.size();
 
-            for (int i = 0; i < numAttributes - 1; i += 2) {
+            // Loop over attributes in pairs, but handle odd number of attributes
+            for (int i = 0; i < numAttributes; i += 2) {
                 double xValue = normalize(data.get(i).get(row), i);
-                double yValue = normalize(data.get(i + 1).get(row), i + 1);
+                
+                // If this is the last attribute and it's odd, duplicate the value for y
+                double yValue;
+                if (i == numAttributes - 1) {
+                    // Odd number of attributes, duplicate the last one
+                    yValue = xValue;
+                } else {
+                    // Normal case, use the next attribute
+                    yValue = normalize(data.get(i + 1).get(row), i + 1);
+                }
+                
                 int x = padding + (int) (xValue * plotSize);
                 int y = padding + (int) ((1 - yValue) * plotSize);
                 points.add(new Point(x, y));
