@@ -82,20 +82,20 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
         // Create custom labels for the slider
         Hashtable<Integer, JLabel> labelTable = new Hashtable<>();
         labelTable.put(0, new JLabel("0.00"));
-        labelTable.put(25, new JLabel("0.06"));
-        labelTable.put(50, new JLabel("0.12"));
-        labelTable.put(75, new JLabel("0.18"));
-        labelTable.put(100, new JLabel("0.25"));
+        labelTable.put(25, new JLabel("0.25"));
+        labelTable.put(50, new JLabel("0.50"));
+        labelTable.put(75, new JLabel("0.75"));
+        labelTable.put(100, new JLabel("1.00"));
         unitVectorSlider.setLabelTable(labelTable);
         
-        multiplierLabel = new JLabel(String.format("%.3fx", 0.25 * (unitVectorSlider.getValue() / 100.0)));
+        multiplierLabel = new JLabel(String.format("%.2fx", unitVectorSlider.getValue() / 100.0));
         
         unitVectorSlider.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                // Map the 0-100 range to 0-0.25 for finer control
-                unitVectorMultiplier = 0.25 * (unitVectorSlider.getValue() / 100.0);
-                multiplierLabel.setText(String.format("%.3fx", unitVectorMultiplier));
+                // Map the 0-100 range to 0-1.0 for full range from zero to original length
+                unitVectorMultiplier = unitVectorSlider.getValue() / 100.0;
+                multiplierLabel.setText(String.format("%.2fx", unitVectorMultiplier));
                 if (plotPanel != null) {
                     plotPanel.repaint();
                 }
@@ -268,15 +268,17 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     // Skip drawing if vector is too small
                     if (vectorLength < 0.001) continue;
                     
-                    // Normalize the vector length to 0-1 range
-                    double normalizedLength = (vectorLength - minVectorLength) / (maxVectorLength - minVectorLength);
+                    // Use original direction but scale by the multiplier directly
+                    // We're not using min/max normalization anymore, just direct scaling
+                    double scaledLength = vectorLength * unitVectorMultiplier;
                     
-                    // Apply unit vector multiplier
-                    normalizedLength *= unitVectorMultiplier;
+                    // Calculate the new endpoint using the scaled length
+                    double nx = currentStartPoint.x + (dx / vectorLength) * scaledLength;
+                    double ny = currentStartPoint.y + (dy / vectorLength) * scaledLength;
                     
-                    // Calculate the new endpoint using the normalized length but starting from currentStartPoint
-                    double nx = currentStartPoint.x + (dx / vectorLength) * normalizedLength * vectorLength;
-                    double ny = currentStartPoint.y + (dy / vectorLength) * normalizedLength * vectorLength;
+                    // Ensure the endpoint stays within the plot boundaries
+                    nx = Math.max(padding, Math.min(padding + plotSize, nx));
+                    ny = Math.max(padding, Math.min(padding + plotSize, ny));
                     
                     // Draw the normalized line segment
                     g2.drawLine(currentStartPoint.x, currentStartPoint.y, (int)nx, (int)ny);
