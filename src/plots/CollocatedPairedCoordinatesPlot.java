@@ -252,11 +252,14 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             g2.setColor(color);
             g2.setStroke(new BasicStroke(1.5f));
             
-            for (int i = 0; i < points.size() - 1; i++) {
-                Point p1 = points.get(i);
-                Point p2 = points.get(i + 1);
+            if (normalizeVectors) {
+                // For normalized vectors, create a connected chain
+                Point currentStartPoint = points.get(0); // Start with the first point
                 
-                if (normalizeVectors) {
+                for (int i = 0; i < points.size() - 1; i++) {
+                    Point p1 = points.get(i);
+                    Point p2 = points.get(i + 1);
+                    
                     // Calculate the vector direction and length
                     double dx = p2.x - p1.x;
                     double dy = p2.y - p1.y;
@@ -271,16 +274,25 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     // Apply unit vector multiplier
                     normalizedLength *= unitVectorMultiplier;
                     
-                    // Calculate the new endpoint using the normalized length
-                    double nx = p1.x + (dx / vectorLength) * normalizedLength * vectorLength;
-                    double ny = p1.y + (dy / vectorLength) * normalizedLength * vectorLength;
+                    // Calculate the new endpoint using the normalized length but starting from currentStartPoint
+                    double nx = currentStartPoint.x + (dx / vectorLength) * normalizedLength * vectorLength;
+                    double ny = currentStartPoint.y + (dy / vectorLength) * normalizedLength * vectorLength;
                     
                     // Draw the normalized line segment
-                    g2.drawLine(p1.x, p1.y, (int)nx, (int)ny);
+                    g2.drawLine(currentStartPoint.x, currentStartPoint.y, (int)nx, (int)ny);
                     
                     // Draw arrow at the end of the normalized line
-                    drawArrow(g2, p1.x, p1.y, (int)nx, (int)ny);
-                } else {
+                    drawArrow(g2, currentStartPoint.x, currentStartPoint.y, (int)nx, (int)ny);
+                    
+                    // Update the start point for the next vector
+                    currentStartPoint = new Point((int)nx, (int)ny);
+                }
+            } else {
+                // For non-normalized vectors, draw as before
+                for (int i = 0; i < points.size() - 1; i++) {
+                    Point p1 = points.get(i);
+                    Point p2 = points.get(i + 1);
+                    
                     // Draw the regular line segment
                     g2.drawLine(p1.x, p1.y, p2.x, p2.y);
                     
