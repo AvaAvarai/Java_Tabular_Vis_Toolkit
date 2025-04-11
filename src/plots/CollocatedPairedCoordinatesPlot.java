@@ -116,16 +116,44 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             g2.setStroke(new BasicStroke(1.5f));
             
             for (int i = 0; i < points.size() - 1; i++) {
-                g2.drawLine(points.get(i).x, points.get(i).y, points.get(i + 1).x, points.get(i + 1).y);
+                Point p1 = points.get(i);
+                Point p2 = points.get(i + 1);
+                
+                // Draw the line segment
+                g2.drawLine(p1.x, p1.y, p2.x, p2.y);
+                
+                // Draw arrow at the end of the line
+                drawArrow(g2, p1.x, p1.y, p2.x, p2.y);
             }
+        }
+        
+        private void drawArrow(Graphics2D g2, int x1, int y1, int x2, int y2) {
+            // Arrow head size
+            int arrowSize = 8;
             
-            // Draw scatter points
-            Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
-            for (Point p : points) {
-                g2.translate(p.x, p.y);
-                g2.fill(shape);
-                g2.translate(-p.x, -p.y);
-            }
+            // Calculate the angle of the line
+            double dx = x2 - x1;
+            double dy = y2 - y1;
+            double angle = Math.atan2(dy, dx);
+            
+            // Create the arrow head
+            int[] xPoints = new int[3];
+            int[] yPoints = new int[3];
+            
+            // Arrow tip at the end point
+            xPoints[0] = x2;
+            yPoints[0] = y2;
+            
+            // First arrow wing
+            xPoints[1] = (int) (x2 - arrowSize * Math.cos(angle - Math.PI/6));
+            yPoints[1] = (int) (y2 - arrowSize * Math.sin(angle - Math.PI/6));
+            
+            // Second arrow wing
+            xPoints[2] = (int) (x2 - arrowSize * Math.cos(angle + Math.PI/6));
+            yPoints[2] = (int) (y2 - arrowSize * Math.sin(angle + Math.PI/6));
+            
+            // Draw the arrow head
+            g2.fillPolygon(xPoints, yPoints, 3);
         }
 
         private double normalize(double value, int attributeIndex) {
