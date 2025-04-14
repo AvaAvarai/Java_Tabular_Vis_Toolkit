@@ -488,4 +488,142 @@ public class VisualizationManager {
         );
         plot.setVisible(true);
     }
+    
+    public void showMultiRowParallelCoordinatesPlot() {
+        if (csvViewer.tableModel.getColumnCount() == 0) {
+            csvViewer.noDataLoadedError();
+            return;
+        }
+
+        List<List<Double>> numericalData = new ArrayList<>();
+        List<String> attributeNames = new ArrayList<>();
+        List<String> classLabels = new ArrayList<>();
+
+        int classColumnIndex = csvViewer.getClassColumnIndex();
+        TableColumnModel columnModel = csvViewer.table.getColumnModel();
+
+        // First, collect the attribute names in the current view order
+        for (int col = 0; col < columnModel.getColumnCount(); col++) {
+            int modelIndex = csvViewer.table.convertColumnIndexToModel(col);
+            if (modelIndex != classColumnIndex) {
+                attributeNames.add(csvViewer.tableModel.getColumnName(modelIndex));
+                numericalData.add(new ArrayList<>()); // Initialize lists for each attribute
+            }
+        }
+
+        // Then collect data only for visible rows
+        for (int viewRow = 0; viewRow < csvViewer.table.getRowCount(); viewRow++) {
+            int modelRow = csvViewer.table.convertRowIndexToModel(viewRow);
+            
+            // Check if all columns for this row can be parsed as numbers
+            boolean allNumeric = true;
+            int dataIndex = 0;
+            
+            for (int viewCol = 0; viewCol < columnModel.getColumnCount(); viewCol++) {
+                int modelCol = csvViewer.table.convertColumnIndexToModel(viewCol);
+                if (modelCol != classColumnIndex) {
+                    try {
+                        Double.parseDouble(csvViewer.tableModel.getValueAt(modelRow, modelCol).toString());
+                    } catch (NumberFormatException e) {
+                        allNumeric = false;
+                        break;
+                    }
+                }
+            }
+
+            if (allNumeric) {
+                // Add the numeric data for this row
+                dataIndex = 0;
+                for (int viewCol = 0; viewCol < columnModel.getColumnCount(); viewCol++) {
+                    int modelCol = csvViewer.table.convertColumnIndexToModel(viewCol);
+                    if (modelCol != classColumnIndex) {
+                        double value = Double.parseDouble(csvViewer.tableModel.getValueAt(modelRow, modelCol).toString());
+                        numericalData.get(dataIndex++).add(value);
+                    }
+                }
+                // Add the class label for this row
+                classLabels.add((String) csvViewer.tableModel.getValueAt(modelRow, classColumnIndex));
+            }
+        }
+
+        // Only proceed if we have numeric data
+        if (!numericalData.isEmpty() && !numericalData.get(0).isEmpty()) {
+            List<Integer> selectedRows = new ArrayList<>();
+            // Convert selected rows to indices in our filtered dataset
+            int[] selectedViewRows = csvViewer.table.getSelectedRows();
+            int dataRowIndex = 0;
+            
+            for (int viewRow = 0; viewRow < csvViewer.table.getRowCount(); viewRow++) {
+                int modelRow = csvViewer.table.convertRowIndexToModel(viewRow);
+                boolean isNumericRow = true;
+                
+                // Check if this row is all numeric
+                for (int viewCol = 0; viewCol < columnModel.getColumnCount(); viewCol++) {
+                    int modelCol = csvViewer.table.convertColumnIndexToModel(viewCol);
+                    if (modelCol != classColumnIndex) {
+                        try {
+                            Double.parseDouble(csvViewer.tableModel.getValueAt(modelRow, modelCol).toString());
+                        } catch (NumberFormatException e) {
+                            isNumericRow = false;
+                            break;
+                        }
+                    }
+                }
+                
+                if (isNumericRow) {
+                    // If this row is selected in the view, add its index in our filtered dataset
+                    for (int selectedViewRow : selectedViewRows) {
+                        if (viewRow == selectedViewRow) {
+                            selectedRows.add(dataRowIndex);
+                            break;
+                        }
+                    }
+                    dataRowIndex++;
+                }
+            }
+
+            checkAndHandleNewClasses(classLabels);
+
+            // Calculate default number of rows based on attribute count
+            int attributeCount = attributeNames.size();
+            int defaultRows = Math.min(5, attributeCount);
+            
+            // Show dialog to get number of rows from user
+            String input = JOptionPane.showInputDialog(
+                csvViewer,
+                "Enter number of rows for the Multi-Row Parallel Coordinates Plot (1-" + attributeCount + "):",
+                "Multi-Row Parallel Coordinates",
+                JOptionPane.QUESTION_MESSAGE
+            );
+            
+            // Validate input
+            int numRows;
+            try {
+                numRows = Integer.parseInt(input);
+                if (numRows < 1) numRows = 1;
+                if (numRows > attributeCount) numRows = attributeCount;
+            } catch (NumberFormatException | NullPointerException e) {
+                numRows = defaultRows; // Default if input is invalid or canceled
+            }
+
+            // Create and show the plot
+            MultiRowParallelCoordinatesPlot plot = new MultiRowParallelCoordinatesPlot(
+                numericalData,
+                attributeNames,
+                csvViewer.getClassColors(),
+                csvViewer.getClassShapes(),
+                classLabels,
+                selectedRows,
+                csvViewer.getDatasetName(),
+                numRows
+            );
+            plot.setSize(1024, Math.min(900, 200 + numRows * 300)); // Adjust size based on row count
+            plot.setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(csvViewer, 
+                "No numeric data available to visualize.", 
+                "Visualization Error", 
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
 }

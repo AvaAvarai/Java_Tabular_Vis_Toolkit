@@ -1270,5 +1270,9 @@ public class CsvViewer extends JFrame {
         dataHandler.updateStats(tableModel, statsTextArea);
         pureRegionManager.calculateAndDisplayPureRegions(thresholdSlider.getValue());
     }
+
+    public void showMultiRowParallelCoordinatesPlot() {
+        visualizationManager.showMultiRowParallelCoordinatesPlot();
+    }
 }
 

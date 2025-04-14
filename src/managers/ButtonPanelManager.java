@@ -60,6 +60,7 @@ public class ButtonPanelManager {
         JMenu viewMenu = new JMenu("View Visualizations");
         viewMenu.setIcon(resizeIcon("/icons/start.png"));
         addMenuItem(viewMenu, "Parallel Coordinates", "/icons/start.png", _ -> csvViewer.showParallelCoordinatesPlot());
+        addMenuItem(viewMenu, "Multi-Row Parallel Coordinates", "/icons/start.png", _ -> csvViewer.showMultiRowParallelCoordinatesPlot());
         addMenuItem(viewMenu, "Shifted Paired Coordinates", "/icons/start.png", _ -> csvViewer.showShiftedPairedCoordinates());
         addMenuItem(viewMenu, "Collocated Paired Coordinates", "/icons/start.png", _ -> csvViewer.showCollocatedPairedCoordinates());
         addMenuItem(viewMenu, "Circular/Polygonal Coordinates", "/icons/start.png", _ -> csvViewer.showCircularCoordinatesPlot());
