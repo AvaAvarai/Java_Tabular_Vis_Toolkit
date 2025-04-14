@@ -329,8 +329,22 @@ public class CsvDataHandler {
         DefaultTableModel model = (DefaultTableModel) table.getModel();
         int rowCount = model.getRowCount();
         int colCount = model.getColumnCount();
+        
+        // Find the class column index
+        int classColumnIndex = -1;
+        for (int col = 0; col < colCount; col++) {
+            if (model.getColumnName(col).equalsIgnoreCase("class")) {
+                classColumnIndex = col;
+                break;
+            }
+        }
 
         for (int col = 0; col < colCount; col++) {
+            // Skip the class column
+            if (col == classColumnIndex) {
+                continue;
+            }
+            
             if (isColumnNumeric(col, model)) {
                 double[] values = new double[rowCount];
                 boolean hasNulls = false;
