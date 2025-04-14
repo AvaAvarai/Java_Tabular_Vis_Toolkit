@@ -62,6 +62,7 @@ public class ButtonPanelManager {
         addMenuItem(viewMenu, "Parallel Coordinates", "/icons/start.png", _ -> csvViewer.showParallelCoordinatesPlot());
         addMenuItem(viewMenu, "Multi-Row Parallel Coordinates", "/icons/start.png", _ -> csvViewer.showMultiRowParallelCoordinatesPlot());
         addMenuItem(viewMenu, "Shifted Paired Coordinates", "/icons/start.png", _ -> csvViewer.showShiftedPairedCoordinates());
+        addMenuItem(viewMenu, "Multi-Row Shifted Paired Coordinates", "/icons/start.png", _ -> csvViewer.showMultiRowShiftedPairedCoordinatesPlot());
         addMenuItem(viewMenu, "Collocated Paired Coordinates", "/icons/start.png", _ -> csvViewer.showCollocatedPairedCoordinates());
         addMenuItem(viewMenu, "Circular/Polygonal Coordinates", "/icons/start.png", _ -> csvViewer.showCircularCoordinatesPlot());
         addMenuItem(viewMenu, "Traditional Star Coordinates", "/icons/start.png", _ -> csvViewer.showStarCoordinatesPlot());

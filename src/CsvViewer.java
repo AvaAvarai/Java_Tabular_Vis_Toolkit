@@ -1274,5 +1274,9 @@ public class CsvViewer extends JFrame {
     public void showMultiRowParallelCoordinatesPlot() {
         visualizationManager.showMultiRowParallelCoordinatesPlot();
     }
+
+    public void showMultiRowShiftedPairedCoordinatesPlot() {
+        visualizationManager.showMultiRowShiftedPairedCoordinatesPlot();
+    }
 }
 
