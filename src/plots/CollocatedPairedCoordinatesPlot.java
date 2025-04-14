@@ -73,7 +73,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
         sliderPanel.add(new JLabel("Unit Vector Length: "));
         
         // Create slider for controlling unit vector length in a more focused range (0-0.25)
-        JSlider unitVectorSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 25);
+        JSlider unitVectorSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);
         unitVectorSlider.setMajorTickSpacing(25);
         unitVectorSlider.setMinorTickSpacing(5);
         unitVectorSlider.setPaintTicks(true);
@@ -284,7 +284,16 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     g2.drawLine(currentStartPoint.x, currentStartPoint.y, (int)nx, (int)ny);
                     
                     // Draw arrow at the end of the normalized line
-                    drawArrow(g2, currentStartPoint.x, currentStartPoint.y, (int)nx, (int)ny);
+                    // If multiplier is 0, use a small fixed length for the arrow to show direction
+                    if (unitVectorMultiplier == 0) {
+                        // Use a small fixed length (5 pixels) to show direction
+                        double arrowLength = 5.0;
+                        double arrowX = currentStartPoint.x + (dx / vectorLength) * arrowLength;
+                        double arrowY = currentStartPoint.y + (dy / vectorLength) * arrowLength;
+                        drawArrow(g2, currentStartPoint.x, currentStartPoint.y, (int)arrowX, (int)arrowY);
+                    } else {
+                        drawArrow(g2, currentStartPoint.x, currentStartPoint.y, (int)nx, (int)ny);
+                    }
                     
                     // Update the start point for the next vector
                     currentStartPoint = new Point((int)nx, (int)ny);
