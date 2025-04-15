@@ -163,6 +163,9 @@ public class VisualizationManager {
         List<String> attributeNames = new ArrayList<>();
         List<String> classLabels = new ArrayList<>();
 
+        // Get the class column index first to exclude it from data collection
+        int classColumnIndex = csvViewer.getClassColumnIndex();
+        
         TableColumnModel columnModel = csvViewer.table.getColumnModel();
         int columnCount = columnModel.getColumnCount();
         int[] columnOrder = new int[columnCount];
@@ -171,6 +174,11 @@ public class VisualizationManager {
         }
 
         for (int col = 0; col < columnOrder.length; col++) {
+            // Skip the class column entirely - it's not used for plotting
+            if (columnOrder[col] == classColumnIndex) {
+                continue;
+            }
+            
             boolean isNumeric = true;
             List<Double> columnData = new ArrayList<>();
             for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
@@ -189,9 +197,10 @@ public class VisualizationManager {
             }
         }
 
+        // Collect class labels separately
         for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
             if (!csvViewer.getHiddenRows().contains(row)) {
-                classLabels.add((String) csvViewer.tableModel.getValueAt(row, csvViewer.getClassColumnIndex()));
+                classLabels.add((String) csvViewer.tableModel.getValueAt(row, classColumnIndex));
             }
         }
 
