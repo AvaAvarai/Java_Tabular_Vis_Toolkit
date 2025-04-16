@@ -4,3 +4,4 @@ screenshots/export/*
 .DS_STORE
 out/*
 .*
+*.py
