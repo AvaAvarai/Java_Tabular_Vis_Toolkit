@@ -12,6 +12,7 @@ public class SequentialDistanceFeatures {
     private final DefaultTableModel tableModel;
     private final JTable table;
     private boolean isForward = true; // Default direction for calculations
+    private boolean useAbsoluteDistance = false; // Flag for absolute distance
 
     public SequentialDistanceFeatures(CsvViewer csvViewer, DefaultTableModel tableModel, JTable table) {
         this.csvViewer = csvViewer;
@@ -111,8 +112,15 @@ public class SequentialDistanceFeatures {
         radioPanel.add(forwardButton);
         radioPanel.add(backwardButton);
 
+        // Add checkbox for absolute distance option
+        JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JCheckBox absoluteDistanceCheckbox = new JCheckBox("Use Absolute Distance", useAbsoluteDistance);
+        absoluteDistanceCheckbox.addActionListener(e -> useAbsoluteDistance = absoluteDistanceCheckbox.isSelected());
+        optionsPanel.add(absoluteDistanceCheckbox);
+
         directionPanel.add(separator);
         directionPanel.add(radioPanel);
+        directionPanel.add(optionsPanel);
         dialog.add(directionPanel, BorderLayout.SOUTH);
 
         // OK/Cancel buttons
@@ -164,8 +172,9 @@ public class SequentialDistanceFeatures {
                 nextCol = selectedColumns.get((i - 1 + selectedColumns.size()) % selectedColumns.size()); // Backward direction
             }
 
+            String absPrefix = useAbsoluteDistance ? "Abs" : "";
             String columnName = csvViewer.getUniqueColumnName(
-                "Distance(" + tableModel.getColumnName(currentCol) + 
+                absPrefix + "Distance(" + tableModel.getColumnName(currentCol) + 
                 "-" + tableModel.getColumnName(nextCol) + ")");
             
             tableModel.addColumn(columnName);
@@ -177,6 +186,9 @@ public class SequentialDistanceFeatures {
                     double next = Double.parseDouble(tableModel.getValueAt(row, nextCol).toString());
                     
                     double distance = next - current;
+                    if (useAbsoluteDistance) {
+                        distance = Math.abs(distance);
+                    }
                     tableModel.setValueAt(String.format("%.4f", distance), row, newColIndex);
                 } catch (NumberFormatException e) {
                     tableModel.setValueAt("0.0000", row, newColIndex);

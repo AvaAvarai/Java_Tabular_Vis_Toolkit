@@ -12,6 +12,7 @@ public class SlopeAndDistanceFeatures {
     private final CsvViewer csvViewer;
     private final DefaultTableModel tableModel;
     private final JTable table;
+    private boolean useAbsoluteDistance = false; // Flag for absolute distance
 
     public SlopeAndDistanceFeatures(CsvViewer csvViewer, DefaultTableModel tableModel, JTable table) {
         this.csvViewer = csvViewer;
@@ -88,6 +89,21 @@ public class SlopeAndDistanceFeatures {
         selectionPanel.add(selectNoneButton);
         dialog.add(selectionPanel, BorderLayout.NORTH);
 
+        // Add options panel for absolute distance
+        JPanel optionsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JCheckBox absoluteDistanceCheckbox = new JCheckBox("Use Absolute Distance", useAbsoluteDistance);
+        absoluteDistanceCheckbox.addActionListener(e -> useAbsoluteDistance = absoluteDistanceCheckbox.isSelected());
+        optionsPanel.add(absoluteDistanceCheckbox);
+
+        JPanel southPanel = new JPanel();
+        southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.Y_AXIS));
+        
+        // Add separator
+        JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
+        separator.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+        southPanel.add(separator);
+        southPanel.add(optionsPanel);
+
         JPanel buttonPanel = new JPanel();
         JButton okButton = new JButton("OK");
         okButton.addActionListener(e -> {
@@ -114,7 +130,9 @@ public class SlopeAndDistanceFeatures {
         cancelButton.addActionListener(e -> dialog.dispose());
         buttonPanel.add(cancelButton);
 
-        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        southPanel.add(buttonPanel);
+        dialog.add(southPanel, BorderLayout.SOUTH);
+        
         dialog.pack();
         dialog.setLocationRelativeTo(csvViewer);
         dialog.setVisible(true);
@@ -135,10 +153,11 @@ public class SlopeAndDistanceFeatures {
                 .reduce((a, b) -> a + "," + b)
                 .get();
 
+            String absPrefix = useAbsoluteDistance ? "Abs" : "";
             String slopeCol = csvViewer.getUniqueColumnName(
                 dim + "D_Slope(" + point1Name + ")/(" + point2Name + ")");
             String distCol = csvViewer.getUniqueColumnName(
-                dim + "D_Distance(" + point1Name + ")-(" + point2Name + ")");
+                dim + "D_" + absPrefix + "Distance(" + point1Name + ")-(" + point2Name + ")");
             
             tableModel.addColumn(slopeCol);
             tableModel.addColumn(distCol);
@@ -169,6 +188,11 @@ public class SlopeAndDistanceFeatures {
                         if (d + 1 < dim) {
                             distance += (p1[d] * p1[d+1]) - (p2[d] * p2[d+1]);
                         }
+                    }
+                    
+                    // Apply absolute distance if selected
+                    if (useAbsoluteDistance) {
+                        distance = Math.abs(distance);
                     }
                     
                     tableModel.setValueAt(String.format("%.4f", slope), row, slopeIndex);
