@@ -74,23 +74,83 @@ public class TableManager {
 
         // Store current selection
         int[] selectedRows = csvViewer.getTable().getSelectedRows();
-
+        
+        // Save column order mapping
         TableColumnModel columnModel = csvViewer.getTable().getColumnModel();
-        columnModel.removeColumn(columnModel.getColumn(viewColumnIndex));
-
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            for (int col = modelColumnIndex; col < tableModel.getColumnCount() - 1; col++) {
-                tableModel.setValueAt(tableModel.getValueAt(row, col + 1), row, col);
-            }
+        int columnCount = columnModel.getColumnCount();
+        int[] viewToModelMap = new int[columnCount];
+        for (int i = 0; i < columnCount; i++) {
+            viewToModelMap[i] = csvViewer.getTable().convertColumnIndexToModel(i);
         }
 
-        tableModel.setColumnCount(tableModel.getColumnCount() - 1);
+        // Remove column from view
+        columnModel.removeColumn(columnModel.getColumn(viewColumnIndex));
+        
+        // Remove data from model by creating a new dataset without the deleted column
+        int newColumnCount = tableModel.getColumnCount() - 1;
+        Object[][] newData = new Object[tableModel.getRowCount()][newColumnCount];
+        String[] newColumnNames = new String[newColumnCount];
+        
+        // Copy column names (skipping the deleted one)
+        int newColIndex = 0;
+        for (int col = 0; col < tableModel.getColumnCount(); col++) {
+            if (col != modelColumnIndex) {
+                newColumnNames[newColIndex++] = tableModel.getColumnName(col);
+            }
+        }
+        
+        // Copy data (skipping the deleted column)
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            newColIndex = 0;
+            for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                if (col != modelColumnIndex) {
+                    newData[row][newColIndex++] = tableModel.getValueAt(row, col);
+                }
+            }
+        }
+        
+        // Update the model with new data
+        tableModel.setColumnCount(0); // Clear existing columns
+        tableModel.setRowCount(0);    // Clear existing rows
+        
+        // Add new columns
+        for (String columnName : newColumnNames) {
+            tableModel.addColumn(columnName);
+        }
+        
+        // Add new rows
+        for (Object[] rowData : newData) {
+            tableModel.addRow(rowData);
+        }
+        
+        // Restore column order (accounting for the removed column)
+        // Create a mapping that preserves original order but skips the deleted column
+        for (int i = 0; i < viewToModelMap.length; i++) {
+            // Skip the deleted column
+            if (i == viewColumnIndex) continue;
+            
+            int targetViewIndex = i < viewColumnIndex ? i : i - 1;
+            int originalModelIndex = viewToModelMap[i];
+            
+            // Adjust model index if it's after the deleted column
+            if (originalModelIndex > modelColumnIndex) {
+                originalModelIndex--;
+            }
+            
+            // Move column to preserve order
+            int currentViewIndex = csvViewer.getTable().convertColumnIndexToView(originalModelIndex);
+            if (currentViewIndex != targetViewIndex) {
+                csvViewer.getTable().moveColumn(currentViewIndex, targetViewIndex);
+            }
+        }
 
         // Restore selection
         ListSelectionModel selectionModel = csvViewer.getTable().getSelectionModel();
         selectionModel.clearSelection();
         for (int row : selectedRows) {
-            selectionModel.addSelectionInterval(row, row);
+            if (row < csvViewer.getTable().getRowCount()) {
+                selectionModel.addSelectionInterval(row, row);
+            }
         }
 
         csvViewer.getDataHandler().updateStats(tableModel, csvViewer.getStatsTextArea());
