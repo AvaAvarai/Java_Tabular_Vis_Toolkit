@@ -1,6 +1,6 @@
 # JTabViz: Java Tabular Visualization Toolkit
 
-This project is a software tool developed for a research project and study of the boosting classifier algorithms and representation learning. **JTabViz** is a Java-based cross-platform software toolkit for machine learning (ML) data analysis, classification, and visualization. It is designed for the visualization and analysis of multidimensional (n-D) tabular ML data to discover and build classification models from logical rules. With supports for feature engineering and data augmentation to analyze how dataset changes impact ML models.
+**JTabViz** is a Java-based cross-platform software toolkit for machine learning (ML) data analysis, classification, and visualization. Originally developed to assist with classifier boosting and interactive classification research. It is designed for the visualization and analysis of multidimensional (n-D) tabular ML data to discover and build classification models from logical rules. With supports for feature engineering and data augmentation to analyze how dataset changes impact ML models. Fully interactive and transparent for interpretable model designing.
 
 Currently, the JTabViz software supports the following Machine ML classifiers:
 
@@ -47,7 +47,9 @@ GLCs generalize Cartesian Coordinates to n-D, with a subcategory being n-D to 2-
 | GLC Type | Acronym | Description |
 | --- | --- | --- |
 | Parallel Coordinates | PC | Drawing all coordinate axes in 2D located parallel to each other. |
+| Multirow Parallel Coordinates | Multi-PC | Parallel Coordinates with multiple rows of axes drawn. |
 | Shifted Paired Coordinates | SPC | Drawing each pair of attributes in 2D as a shifted cartesian plane, connecting cases with polylines. |
+| Multirow Shifted Paired Coordinates | Multi-SPC | Shifted Paired Coordinates with multiple rows of axes drawn. |
 | Collocated Paired Coordinates | CPC | Drawing each pair of attributes in 2D as a collocated cartesian plane, connecting cases with polylines. |
 | Circular Coordinates | SCC & DCC | Drawing all coordinate axes in 2D as a circle, connecting cases with polylines, circle can be made a polygon or a circle either static or dynamic. |
 | Star Coordinates | SC | Drawing all coordinate axes in 2D as a star shape, connecting cases with polylines. |
