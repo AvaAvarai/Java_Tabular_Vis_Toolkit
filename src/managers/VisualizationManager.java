@@ -370,16 +370,55 @@ public class VisualizationManager {
     }
 
     public void showDecisionTreeVisualization() {
-
+        // Get attribute names from table columns
         List<String> attributeNames = new ArrayList<>();
         for (int i = 0; i < csvViewer.getTable().getColumnCount(); i++) {
             attributeNames.add(csvViewer.getTable().getColumnName(i));
         }
+        
         int labelColumnIndex = csvViewer.getClassColumnIndex();
-        DecisionTreeModel decisionTree = new DecisionTreeModel(csvViewer.getDataHandler().isDataNormalized() ? csvViewer.getDataHandler().getNormalizedData() : csvViewer.getDataHandler().getOriginalData(), attributeNames, labelColumnIndex);
+        boolean isDataNormalized = csvViewer.getDataHandler().isDataNormalized();
+        
+        // Collect data directly from the table model
+        List<String[]> data = new ArrayList<>();
+        
+        // Process each visible row in the table
+        for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
+            if (!csvViewer.getHiddenRows().contains(row)) {
+                String[] rowData = new String[attributeNames.size()];
+                for (int col = 0; col < attributeNames.size(); col++) {
+                    Object value = csvViewer.tableModel.getValueAt(row, col);
+                    rowData[col] = value != null ? value.toString() : "";
+                }
+                data.add(rowData);
+            }
+        }
+        
+        // Verify we have data to work with
+        if (data.isEmpty()) {
+            JOptionPane.showMessageDialog(csvViewer, 
+                "No data available to create the decision tree.", 
+                "Visualization Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Create decision tree model with verified data
+        DecisionTreeModel decisionTree = new DecisionTreeModel(data, attributeNames, labelColumnIndex);
         TreeNode root = decisionTree.getRoot();
+        
+        // Verify tree was created successfully
+        if (root == null) {
+            JOptionPane.showMessageDialog(csvViewer, 
+                "Could not create decision tree with the current data.", 
+                "Visualization Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Create and display the tree visualization
         JFrame frame = new JFrame("Decision Tree Visualization");
-        DecisionTreePlot treePanel = new DecisionTreePlot(root, attributeNames, csvViewer.getClassColors());
+        DecisionTreePlot treePanel = new DecisionTreePlot(root, attributeNames, csvViewer.getClassColors(), isDataNormalized);
 
         JScrollPane scrollPane = new JScrollPane(treePanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);

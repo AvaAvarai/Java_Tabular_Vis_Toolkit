@@ -26,11 +26,17 @@ public class DecisionTreePlot extends JPanel {
     private int treeWidth;
     private int treeHeight;
     private Point lastMousePos;
+    private boolean isNormalized;
 
     public DecisionTreePlot(DecisionTreeModel.TreeNode root, List<String> attributeNames, Map<String, Color> classColors) {
+        this(root, attributeNames, classColors, false);
+    }
+    
+    public DecisionTreePlot(DecisionTreeModel.TreeNode root, List<String> attributeNames, Map<String, Color> classColors, boolean isNormalized) {
         this.root = root;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
+        this.isNormalized = isNormalized;
         setPreferredSize(new Dimension(800, 600));  // Set a default size
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -91,6 +97,7 @@ public class DecisionTreePlot extends JPanel {
         if (root != null) {
             drawTree(g2d, root, treeWidth / 2, 50);
         }
+        
         g2d.dispose();
     }
 

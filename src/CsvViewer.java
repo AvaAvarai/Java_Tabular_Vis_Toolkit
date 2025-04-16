@@ -69,7 +69,7 @@ public class CsvViewer extends JFrame {
         this.mainMenu = mainMenu;
         stateManager = new StateManager();
     
-        setTitle("CSV Viewer");
+        setTitle("JTabViz");
         setSize(1200, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
