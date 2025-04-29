@@ -437,8 +437,13 @@ public class ConcentricCoordinatesPlot extends JFrame {
             if (!attributeDirections.get(attribute)) {
                 normalizedValue = 1.0 - normalizedValue;
             }
-            double angle = (normalizedValue * 2 * Math.PI) - (Math.PI / 2) + attributeRotations.get(attribute);
-            double radius = (i + 1) * (maxRadius / numAttributes);
+            
+            // Value determines angle around the circle
+            double attributeRotation = attributeRotations.get(attribute);
+            double angle = (1.5 * Math.PI) - (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
+            
+            // Each attribute has its own fixed circle
+            double radius = (i + 1) * (maxRadius / numAttributes) * attributeRadii.get(attribute);
             double x = centerX + radius * Math.cos(angle);
             double y = centerY + radius * Math.sin(angle);
             points.add(new Point2D.Double(x, y));
@@ -695,12 +700,13 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     normalizedValue = 1.0 - normalizedValue;
                 }
 
-                // Apply both global and individual attribute rotations
-                double attributeRotation = attributeRotations.get(attributeNames.get(i));
-                double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment) + attributeRotation;
+                // Value determines angle around the circle
+                double attributeRotation = attributeRotations.get(attribute);
+                double angle = (1.5 * Math.PI) - (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
                 
                 if (concentricMode) {
                     double radius = attributeRadii.get(attribute);
+                    // Each attribute has its own fixed circle
                     int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * radius);
                     double x = centerX + currentRadius * Math.cos(angle);
                     double y = centerY + currentRadius * Math.sin(angle);
@@ -771,11 +777,13 @@ public class ConcentricCoordinatesPlot extends JFrame {
                         normalizedValue = 1.0 - normalizedValue;
                     }
 
-                    double attributeRotation = attributeRotations.get(attributeNames.get(i));
-                    double angle = -(Math.PI - piAdjustment) / 2 + normalizedValue * 2 * (Math.PI - piAdjustment) + attributeRotation;
+                    // Value determines angle around the circle
+                    double attributeRotation = attributeRotations.get(attribute);
+                    double angle = (1.5 * Math.PI) - (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
                     
                     if (concentricMode) {
                         double radius = attributeRadii.get(attribute);
+                        // Fixed radius for each attribute's circle
                         int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * radius);
                         double x = centerX + currentRadius * Math.cos(angle);
                         double y = centerY + currentRadius * Math.sin(angle);
@@ -816,14 +824,24 @@ public class ConcentricCoordinatesPlot extends JFrame {
             int numAttributes = attributeNames.size();
             for (int i = 0; i < numAttributes; i++) {
                 if (concentricMode) {
+                    // For each attribute circle, draw its label at the top of the circle
                     int currentRadius = (i + 1) * (maxRadius / numAttributes);
+                    double radius = attributeRadii.get(attributeNames.get(i));
+                    int adjustedRadius = (int)(currentRadius * radius);
                     
-                    // Apply rotation to label position
-                    double attributeRotation = attributeRotations.get(attributeNames.get(i));
-                    double labelAngle = -(Math.PI / 2) + attributeRotation; // Start from top (12 o'clock)
+                    // Place label at the top of each circle
+                    double labelAngle = (1.5 * Math.PI) + attributeRotations.get(attributeNames.get(i)) + piAdjustment;
                     
-                    int x = centerX + (int)((currentRadius + 20) * Math.cos(labelAngle));
-                    int y = centerY + (int)((currentRadius + 20) * Math.sin(labelAngle));
+                    int x = centerX + (int)(adjustedRadius * Math.cos(labelAngle));
+                    int y = centerY + (int)(adjustedRadius * Math.sin(labelAngle));
+                    
+                    // Center the text
+                    FontMetrics fm = g2.getFontMetrics();
+                    int textWidth = fm.stringWidth(attributeNames.get(i));
+                    int textHeight = fm.getHeight();
+                    x -= textWidth / 2;
+                    y -= 5;
+                    
                     g2.drawString(attributeNames.get(i), x, y);
                 } else {
                     int spacing = maxRadius / (numAttributes + 1);

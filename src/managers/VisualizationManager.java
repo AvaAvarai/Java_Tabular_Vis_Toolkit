@@ -440,6 +440,7 @@ public class VisualizationManager {
         List<String> attributeNames = new ArrayList<>();
         List<String> classLabels = new ArrayList<>();
 
+        int classColumnIndex = csvViewer.getClassColumnIndex();
         TableColumnModel columnModel = csvViewer.table.getColumnModel();
         int columnCount = columnModel.getColumnCount();
         int[] columnOrder = new int[columnCount];
@@ -448,12 +449,19 @@ public class VisualizationManager {
         }
 
         for (int col = 0; col < columnOrder.length; col++) {
+            int modelIndex = columnOrder[col];
+            
+            // Skip the class column
+            if (modelIndex == classColumnIndex) {
+                continue;
+            }
+            
             boolean isNumeric = true;
             List<Double> columnData = new ArrayList<>();
             for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
                 if (!csvViewer.getHiddenRows().contains(row)) {
                     try {
-                        columnData.add(Double.parseDouble(csvViewer.tableModel.getValueAt(row, columnOrder[col]).toString()));
+                        columnData.add(Double.parseDouble(csvViewer.tableModel.getValueAt(row, modelIndex).toString()));
                     } catch (NumberFormatException e) {
                         isNumeric = false;
                         break;
@@ -462,13 +470,13 @@ public class VisualizationManager {
             }
             if (isNumeric) {
                 data.add(columnData);
-                attributeNames.add(csvViewer.tableModel.getColumnName(columnOrder[col]));
+                attributeNames.add(csvViewer.tableModel.getColumnName(modelIndex));
             }
         }
 
         for (int row = 0; row < csvViewer.tableModel.getRowCount(); row++) {
             if (!csvViewer.getHiddenRows().contains(row)) {
-                classLabels.add((String) csvViewer.tableModel.getValueAt(row, csvViewer.getClassColumnIndex()));
+                classLabels.add((String) csvViewer.tableModel.getValueAt(row, classColumnIndex));
             }
         }
 
