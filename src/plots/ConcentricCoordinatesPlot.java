@@ -440,7 +440,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
             
             // Value determines angle around the circle
             double attributeRotation = attributeRotations.get(attribute);
-            double angle = (1.5 * Math.PI) - (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
+            double angle = (1.5 * Math.PI) + (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
             
             // Each attribute has its own fixed circle
             double radius = (i + 1) * (maxRadius / numAttributes) * attributeRadii.get(attribute);
@@ -702,7 +702,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
                 // Value determines angle around the circle
                 double attributeRotation = attributeRotations.get(attribute);
-                double angle = (1.5 * Math.PI) - (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
+                double angle = (1.5 * Math.PI) + (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
                 
                 if (concentricMode) {
                     double radius = attributeRadii.get(attribute);
@@ -779,7 +779,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
                     // Value determines angle around the circle
                     double attributeRotation = attributeRotations.get(attribute);
-                    double angle = (1.5 * Math.PI) - (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
+                    double angle = (1.5 * Math.PI) + (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
                     
                     if (concentricMode) {
                         double radius = attributeRadii.get(attribute);
