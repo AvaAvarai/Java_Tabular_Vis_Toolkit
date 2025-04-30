@@ -5,3 +5,4 @@ screenshots/export/*
 out/*
 .*
 *.py
+*.log

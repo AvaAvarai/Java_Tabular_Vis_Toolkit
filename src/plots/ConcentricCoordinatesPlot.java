@@ -32,7 +32,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private List<Integer> hiddenRows;
     private double globalMaxValue;
     private ConcentricCoordinatesPanel plotPanel;
-    private double piAdjustment = 0.05;
+    private double piAdjustment = 0.0;
     private boolean showLabels = true;
     private boolean closeLoop = true;
     private boolean concentricMode = true;
