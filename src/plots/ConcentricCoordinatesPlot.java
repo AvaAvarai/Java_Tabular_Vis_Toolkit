@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.awt.geom.Path2D;
 import src.utils.LegendUtils;
+import java.util.Objects;
 
 public class ConcentricCoordinatesPlot extends JFrame {
 
@@ -36,6 +37,12 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private boolean showLabels = true;
     private boolean closeLoop = true;
     private boolean concentricMode = true;
+    private enum DensityMode {
+        NO_DENSITY,
+        DENSITY_WITH_OPACITY,
+        DENSITY_WITH_THICKNESS
+    }
+    private DensityMode currentDensityMode = DensityMode.NO_DENSITY;
     private Map<String, Boolean> normalizeAttributes = new HashMap<>();
     private Map<String, Double> attributeRotations = new HashMap<>();
     private Map<String, Boolean> attributeDirections = new HashMap<>();
@@ -163,6 +170,37 @@ public class ConcentricCoordinatesPlot extends JFrame {
             // Add PI adjustment slider
             JPanel globalControlPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
             globalControlPanel.setBackground(Color.WHITE);
+            
+            // Add density mode buttons
+            ButtonGroup densityButtonGroup = new ButtonGroup();
+
+            // No density button
+            JRadioButton noDensityButton = new JRadioButton("No Density");
+            noDensityButton.setSelected(true);
+            noDensityButton.addActionListener(e -> {
+                currentDensityMode = DensityMode.NO_DENSITY;
+                plotPanel.repaint();
+            });
+            densityButtonGroup.add(noDensityButton);
+            globalControlPanel.add(noDensityButton);
+
+            // Density with opacity button
+            JRadioButton opacityDensityButton = new JRadioButton("Density with Opacity");
+            opacityDensityButton.addActionListener(e -> {
+                currentDensityMode = DensityMode.DENSITY_WITH_OPACITY;
+                plotPanel.repaint();
+            });
+            densityButtonGroup.add(opacityDensityButton);
+            globalControlPanel.add(opacityDensityButton);
+
+            // Density with thickness button
+            JRadioButton thicknessDensityButton = new JRadioButton("Density with Thickness");
+            thicknessDensityButton.addActionListener(e -> {
+                currentDensityMode = DensityMode.DENSITY_WITH_THICKNESS;
+                plotPanel.repaint();
+            });
+            densityButtonGroup.add(thicknessDensityButton);
+            globalControlPanel.add(thicknessDensityButton);
             
             // Add zoom slider
             JLabel zoomLabel = new JLabel("Zoom: ");
@@ -572,6 +610,32 @@ public class ConcentricCoordinatesPlot extends JFrame {
     }
 
     private class ConcentricCoordinatesPanel extends JPanel {
+        // Add LineSegment class to track identical segments
+        private static class LineSegment {
+            final int x1, y1, x2, y2;
+            
+            LineSegment(Point2D.Double p1, Point2D.Double p2) {
+                // Round coordinates to reduce floating point precision issues
+                this.x1 = (int) Math.round(p1.x);
+                this.y1 = (int) Math.round(p1.y);
+                this.x2 = (int) Math.round(p2.x);
+                this.y2 = (int) Math.round(p2.y);
+            }
+            
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (!(o instanceof LineSegment)) return false;
+                LineSegment that = (LineSegment) o;
+                return x1 == that.x1 && y1 == that.y1 && x2 == that.x2 && y2 == that.y2;
+            }
+            
+            @Override
+            public int hashCode() {
+                return Objects.hash(x1, y1, x2, y2);
+            }
+        }
+        
         public ConcentricCoordinatesPanel() {
             setBackground(new Color(0, 0, 0, 0));
         }
@@ -625,13 +689,19 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 drawIndividualAxes(g2, centerX, centerY, maxRadius);
             }
 
-            // Draw the concentric coordinates for each data point
-            for (int row = 0; row < data.get(0).size(); row++) {
-                String classLabel = classLabels.get(row);
-                if (!hiddenClasses.contains(classLabel)) {
-                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+            // Check if we should use density visualization
+            if (currentDensityMode != DensityMode.NO_DENSITY) {
+                drawWithDensity(g2, centerX, centerY, maxRadius);
+            } else {
+                // Draw the concentric coordinates for each data point
+                for (int row = 0; row < data.get(0).size(); row++) {
+                    String classLabel = classLabels.get(row);
+                    if (!hiddenClasses.contains(classLabel)) {
+                        drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+                    }
                 }
             }
+            
             if (showConvexHulls) {
                 Map<String, List<Point2D.Double>> classPoints = new HashMap<>();
                 for (int row = 0; row < data.get(0).size(); row++) {
@@ -725,16 +795,13 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
             String classLabel = classLabels.get(row);
             Color color = classColors.getOrDefault(classLabel, Color.BLACK);
-            g2.setColor(color);
-
-            // Draw lines connecting the points across the circles
-            g2.setStroke(new BasicStroke(1.0f));
-            for (int i = 0; i < numAttributes - 1; i++) {
-                g2.draw(new Line2D.Double(points[i], points[i + 1]));
-            }
             
-            if (closeLoop) {
-                g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
+            // Choose drawing method based on density mode
+            if (currentDensityMode == DensityMode.NO_DENSITY) {
+                drawStandardLines(g2, points, color, numAttributes);
+            } else {
+                // For density modes, the actual drawing is done in separate methods
+                return;
             }
 
             // Draw the shapes at the points
@@ -745,8 +812,27 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 g2.translate(-points[i].x, -points[i].y);
             }
         }
+        
+        private void drawStandardLines(Graphics2D g2, Point2D.Double[] points, Color color, int numAttributes) {
+            g2.setColor(color);
+            g2.setStroke(new BasicStroke(1.0f));
+            
+            // Draw lines connecting the points across the circles
+            for (int i = 0; i < numAttributes - 1; i++) {
+                g2.draw(new Line2D.Double(points[i], points[i + 1]));
+            }
+            
+            if (closeLoop) {
+                g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
+            }
+        }
 
         private void drawHighlights(Graphics2D g2, int centerX, int centerY, int maxRadius) {
+            // Skip if there are no selected rows or if we're in density mode (highlights already handled there)
+            if (selectedRows.isEmpty() || currentDensityMode != DensityMode.NO_DENSITY) {
+                return;
+            }
+            
             g2.setColor(Color.YELLOW);
             g2.setStroke(new BasicStroke(2.0f));
 
@@ -756,63 +842,24 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     continue;
                 }
 
-                int numAttributes = attributeNames.size();
-                Point2D.Double[] points = new Point2D.Double[numAttributes];
+                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
 
-                for (int i = 0; i < numAttributes; i++) {
-                    double value = data.get(i).get(row);
-                    double normalizedValue;
-                    
-                    String attribute = attributeNames.get(i);
-                    if (normalizeAttributes.get(attribute)) {
-                        double min = attributeMinValues.get(attribute);
-                        double max = attributeMaxValues.get(attribute);
-                        normalizedValue = (value - min) / (max - min);
-                    } else {
-                        normalizedValue = value / globalMaxValue;
-                    }
-                    
-                    // Apply direction toggle
-                    if (!attributeDirections.get(attribute)) {
-                        normalizedValue = 1.0 - normalizedValue;
-                    }
-
-                    // Value determines angle around the circle
-                    double attributeRotation = attributeRotations.get(attribute);
-                    double angle = (1.5 * Math.PI) + (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
-                    
-                    if (concentricMode) {
-                        double radius = attributeRadii.get(attribute);
-                        // Fixed radius for each attribute's circle
-                        int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * radius);
-                        double x = centerX + currentRadius * Math.cos(angle);
-                        double y = centerY + currentRadius * Math.sin(angle);
-                        points[i] = new Point2D.Double(x, y);
-                    } else {
-                        int spacing = maxRadius / (numAttributes + 1);
-                        Point pos = axisPositions.getOrDefault(attributeNames.get(i),
-                            new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
-                        double radius = attributeRadii.get(attribute);
-                        int adjustedSpacing = (int)(spacing * radius);
-                        double pointX = pos.x + adjustedSpacing * Math.cos(angle);
-                        double pointY = pos.y + adjustedSpacing * Math.sin(angle);
-                        points[i] = new Point2D.Double(pointX, pointY);
-                    }
-                }
-
-                for (int i = 0; i < numAttributes - 1; i++) {
-                    g2.draw(new Line2D.Double(points[i], points[i + 1]));
+                // Draw lines connecting the points
+                for (int i = 0; i < points.size() - 1; i++) {
+                    g2.draw(new Line2D.Double(points.get(i), points.get(i + 1)));
                 }
                 
-                if (closeLoop) {
-                    g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
+                // Draw closing line if needed
+                if (closeLoop && points.size() > 1) {
+                    g2.draw(new Line2D.Double(points.get(points.size() - 1), points.get(0)));
                 }
 
-                for (int i = 0; i < numAttributes; i++) {
-                    g2.translate(points[i].x, points[i].y);
-                    Shape shape = classShapes.getOrDefault(classLabels.get(row), new Ellipse2D.Double(-4.5, -4.5, 9, 9));
+                // Draw point shapes
+                for (Point2D.Double point : points) {
+                    g2.translate(point.x, point.y);
+                    Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-4.5, -4.5, 9, 9));
                     g2.fill(shape);
-                    g2.translate(-points[i].x, -points[i].y);
+                    g2.translate(-point.x, -point.y);
                 }
             }
         }
@@ -848,6 +895,197 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     Point pos = axisPositions.getOrDefault(attributeNames.get(i),
                         new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
                     g2.drawString(attributeNames.get(i), pos.x - 20, pos.y - spacing - 10);
+                }
+            }
+        }
+
+        private void drawWithDensity(Graphics2D g2, int centerX, int centerY, int maxRadius) {
+            // Create a map to store line segments and their counts
+            Map<LineSegment, Integer> lineSegmentCounts = new HashMap<>();
+            
+            // First pass: Count overlapping line segments
+            countLineSegments(lineSegmentCounts, false, centerX, centerY, maxRadius); // non-selected lines
+            countLineSegments(lineSegmentCounts, true, centerX, centerY, maxRadius);  // selected lines
+
+            // Find maximum density for normalization
+            int maxDensity = lineSegmentCounts.values().stream()
+                    .mapToInt(Integer::intValue)
+                    .max()
+                    .orElse(1);
+
+            // Draw the lines with appropriate density visualization
+            if (currentDensityMode == DensityMode.DENSITY_WITH_OPACITY) {
+                drawLinesWithOpacity(g2, lineSegmentCounts, maxDensity, false, centerX, centerY, maxRadius);
+                drawLinesWithOpacity(g2, lineSegmentCounts, maxDensity, true, centerX, centerY, maxRadius);
+            } else if (currentDensityMode == DensityMode.DENSITY_WITH_THICKNESS) {
+                drawLinesWithThickness(g2, lineSegmentCounts, maxDensity, false, centerX, centerY, maxRadius);
+                drawLinesWithThickness(g2, lineSegmentCounts, maxDensity, true, centerX, centerY, maxRadius);
+            }
+        }
+
+        private void countLineSegments(Map<LineSegment, Integer> lineSegmentCounts, boolean selectedOnly, int centerX, int centerY, int maxRadius) {
+            List<Integer> rowsToProcess;
+            if (selectedOnly) {
+                rowsToProcess = selectedRows;
+            } else {
+                rowsToProcess = new ArrayList<>();
+                for (int i = 0; i < data.get(0).size(); i++) {
+                    if (!selectedRows.contains(i) && !hiddenRows.contains(i)) {
+                        rowsToProcess.add(i);
+                    }
+                }
+            }
+
+            for (int row : rowsToProcess) {
+                String classLabel = classLabels.get(row);
+                if (hiddenClasses.contains(classLabel)) continue;
+
+                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
+                
+                // Count line segments
+                for (int i = 0; i < points.size() - 1; i++) {
+                    LineSegment segment = new LineSegment(points.get(i), points.get(i + 1));
+                    lineSegmentCounts.put(segment, lineSegmentCounts.getOrDefault(segment, 0) + 1);
+                }
+                
+                // Count the closing segment if needed
+                if (closeLoop && points.size() > 1) {
+                    LineSegment closingSegment = new LineSegment(points.get(points.size() - 1), points.get(0));
+                    lineSegmentCounts.put(closingSegment, lineSegmentCounts.getOrDefault(closingSegment, 0) + 1);
+                }
+            }
+        }
+
+        private void drawLinesWithOpacity(Graphics2D g2, Map<LineSegment, Integer> lineSegmentCounts, int maxDensity, 
+                                          boolean selectedOnly, int centerX, int centerY, int maxRadius) {
+            List<Integer> rowsToProcess;
+            if (selectedOnly) {
+                rowsToProcess = selectedRows;
+            } else {
+                rowsToProcess = new ArrayList<>();
+                for (int i = 0; i < data.get(0).size(); i++) {
+                    if (!selectedRows.contains(i) && !hiddenRows.contains(i)) {
+                        rowsToProcess.add(i);
+                    }
+                }
+            }
+
+            for (int row : rowsToProcess) {
+                String classLabel = classLabels.get(row);
+                if (hiddenClasses.contains(classLabel)) continue;
+
+                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
+                Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+                
+                // Draw lines with opacity based on density
+                for (int i = 0; i < points.size() - 1; i++) {
+                    Point2D.Double p1 = points.get(i);
+                    Point2D.Double p2 = points.get(i + 1);
+                    
+                    LineSegment segment = new LineSegment(p1, p2);
+                    int count = lineSegmentCounts.getOrDefault(segment, 1);
+                    
+                    // Calculate opacity based on density
+                    float normalizedDensity = (float) count / maxDensity;
+                    int alpha = (int) (normalizedDensity * 255); // Scale from 0 to 255
+                    Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha);
+                    
+                    g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                    g2.setColor(adjustedColor);
+                    g2.draw(new Line2D.Double(p1, p2));
+                }
+                
+                // Draw closing line if needed
+                if (closeLoop && points.size() > 1) {
+                    Point2D.Double first = points.get(0);
+                    Point2D.Double last = points.get(points.size() - 1);
+                    
+                    LineSegment segment = new LineSegment(last, first);
+                    int count = lineSegmentCounts.getOrDefault(segment, 1);
+                    
+                    float normalizedDensity = (float) count / maxDensity;
+                    int alpha = (int) (normalizedDensity * 255);
+                    Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha);
+                    
+                    g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                    g2.setColor(adjustedColor);
+                    g2.draw(new Line2D.Double(last, first));
+                }
+
+                // Draw the shapes at the points
+                g2.setColor(baseColor);
+                for (Point2D.Double point : points) {
+                    Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
+                    g2.translate(point.x, point.y);
+                    g2.fill(shape);
+                    g2.translate(-point.x, -point.y);
+                }
+            }
+        }
+
+        private void drawLinesWithThickness(Graphics2D g2, Map<LineSegment, Integer> lineSegmentCounts, int maxDensity, 
+                                            boolean selectedOnly, int centerX, int centerY, int maxRadius) {
+            List<Integer> rowsToProcess;
+            if (selectedOnly) {
+                rowsToProcess = selectedRows;
+            } else {
+                rowsToProcess = new ArrayList<>();
+                for (int i = 0; i < data.get(0).size(); i++) {
+                    if (!selectedRows.contains(i) && !hiddenRows.contains(i)) {
+                        rowsToProcess.add(i);
+                    }
+                }
+            }
+
+            for (int row : rowsToProcess) {
+                String classLabel = classLabels.get(row);
+                if (hiddenClasses.contains(classLabel)) continue;
+
+                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
+                Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+                
+                // Draw lines with thickness based on density
+                for (int i = 0; i < points.size() - 1; i++) {
+                    Point2D.Double p1 = points.get(i);
+                    Point2D.Double p2 = points.get(i + 1);
+                    
+                    LineSegment segment = new LineSegment(p1, p2);
+                    int count = lineSegmentCounts.getOrDefault(segment, 1);
+                    
+                    // Calculate thickness based on density, starting from a minimum thickness
+                    float normalizedDensity = (float) count / maxDensity;
+                    float thickness = 0.5f + (normalizedDensity * 9.5f); // Scale from 0.5 to 10.0 pixels
+                    if (selectedOnly) thickness += 1.0f; // Make selected lines slightly thicker
+                    
+                    g2.setStroke(new BasicStroke(thickness));
+                    g2.setColor(baseColor);
+                    g2.draw(new Line2D.Double(p1, p2));
+                }
+                
+                // Draw closing line if needed
+                if (closeLoop && points.size() > 1) {
+                    Point2D.Double first = points.get(0);
+                    Point2D.Double last = points.get(points.size() - 1);
+                    
+                    LineSegment segment = new LineSegment(last, first);
+                    int count = lineSegmentCounts.getOrDefault(segment, 1);
+                    
+                    float normalizedDensity = (float) count / maxDensity;
+                    float thickness = 0.5f + (normalizedDensity * 9.5f);
+                    if (selectedOnly) thickness += 1.0f;
+                    
+                    g2.setStroke(new BasicStroke(thickness));
+                    g2.setColor(baseColor);
+                    g2.draw(new Line2D.Double(last, first));
+                }
+
+                // Draw the shapes at the points
+                g2.setColor(baseColor);
+                for (Point2D.Double point : points) {
+                    Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
+                    g2.translate(point.x, point.y);
+                    g2.fill(shape);
+                    g2.translate(-point.x, -point.y);
                 }
             }
         }
