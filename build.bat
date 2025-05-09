@@ -1,51 +1,51 @@
 @echo off
+setlocal enabledelayedexpansion
 
-REM Requirements to run this script:
-REM - Java Development Kit (JDK) installed and configured
-REM - The script should be run from the project root directory
+REM Detect Java version (major only)
+for /f "tokens=3" %%i in ('java -version 2^>^&1 ^| findstr /i "version"') do (
+    set "JAVA_VERSION=%%~i"
+)
 
+REM Strip quotes and split major version
+set "JAVA_VERSION=%JAVA_VERSION:"=%"
+for /f "tokens=1 delims=." %%j in ("%JAVA_VERSION%") do (
+    set "JAVA_MAJOR=%%j"
+)
+
+REM Proceed with build
 echo Building JTabViz...
 
-REM Create the output directory if it doesn't exist
 if not exist out (
     mkdir out
 )
 
-REM Copy all resources to the output directory if they don't exist
 echo Copying resources...
-xcopy /E /I /Y resources\graphics out\graphics
-xcopy /E /I /Y resources\icons out\icons
+xcopy /E /I /Y resources\graphics out\graphics >nul
+xcopy /E /I /Y resources\icons out\icons >nul
 
-REM Copy the README.md file to the output directory if it exists
 if exist README.md (
-    copy README.md out\
+    copy README.md out\ >nul
 )
 
-REM Compile all Java files explicitly
-echo Compiling Java files...
-javac --enable-preview --release 23 -d out -cp "libs/*" src/Main.java src/classifiers/*.java src/utils/*.java src/managers/*.java src/table/*.java src/plots/*.java src/*.java
+echo Compiling Java files using --release %JAVA_MAJOR%...
+javac --enable-preview --release %JAVA_MAJOR% -d out -cp "libs/*" src/Main.java src/classifiers/*.java src/utils/*.java src/managers/*.java src/table/*.java src/plots/*.java src/*.java
 
-REM Check if compilation was successful
 if %errorlevel% neq 0 (
     echo Compilation failed.
     pause
     exit /b %errorlevel%
 )
 
-REM Create the manifest file
 echo Main-Class: src.Main> out\MANIFEST.MF
 
-REM Package everything into a single JAR file
 echo Creating JAR file...
 jar cfm out\JTabViz.jar out\MANIFEST.MF -C out .
 
-REM Check if JAR creation was successful
 if %errorlevel% neq 0 (
     echo JAR creation failed.
     pause
     exit /b %errorlevel%
 )
 
-echo Build successful! JAR file created at out\JTabViz.jar
-echo Running the application...
+echo Build successful! Running application...
 start /min java --enable-preview -jar out\JTabViz.jar
