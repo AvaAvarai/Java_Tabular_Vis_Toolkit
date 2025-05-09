@@ -21,6 +21,8 @@ import java.util.Set;
 import java.awt.geom.Path2D;
 import src.utils.LegendUtils;
 import java.util.Objects;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 public class ConcentricCoordinatesPlot extends JFrame {
 
@@ -409,6 +411,16 @@ public class ConcentricCoordinatesPlot extends JFrame {
         setFocusable(true);
         requestFocusInWindow();
 
+        // Add key listener to the frame instead of the panel
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_A) { // 'A' key for alignment
+                    plotPanel.alignHighlightedCases();
+                }
+            }
+        });
+
         // Add components to main panel
         mainPanel.add(plotScrollPane, BorderLayout.CENTER);
         mainPanel.add(LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses), BorderLayout.SOUTH);
@@ -638,6 +650,56 @@ public class ConcentricCoordinatesPlot extends JFrame {
         
         public ConcentricCoordinatesPanel() {
             setBackground(new Color(0, 0, 0, 0));
+        }
+
+        public void alignHighlightedCases() {
+            if (selectedRows.isEmpty()) {
+                return;
+            }
+
+            // Calculate mean values for highlighted cases
+            List<Double> meanValues = new ArrayList<>();
+            for (int i = 0; i < attributeNames.size(); i++) {
+                double sum = 0;
+                for (int row : selectedRows) {
+                    double value = data.get(i).get(row);
+                    String attribute = attributeNames.get(i);
+                    if (normalizeAttributes.get(attribute)) {
+                        double min = attributeMinValues.get(attribute);
+                        double max = attributeMaxValues.get(attribute);
+                        value = (value - min) / (max - min);
+                    } else {
+                        value = value / globalMaxValue;
+                    }
+                    if (!attributeDirections.get(attribute)) {
+                        value = 1.0 - value;
+                    }
+                    sum += value;
+                }
+                meanValues.add(sum / selectedRows.size());
+            }
+
+            // Calculate required rotations to align means vertically
+            for (int i = 0; i < attributeNames.size(); i++) {
+                String attribute = attributeNames.get(i);
+                double meanValue = meanValues.get(i);
+                double currentAngle = (1.5 * Math.PI) + (meanValue * 2 * Math.PI) + attributeRotations.get(attribute) + piAdjustment;
+                double targetAngle = 1.5 * Math.PI; // Straight up
+                double rotationAdjustment = targetAngle - currentAngle;
+                
+                // Update rotation
+                double newRotation = attributeRotations.get(attribute) + rotationAdjustment;
+                attributeRotations.put(attribute, newRotation);
+                
+                // Update rotation slider if it exists
+                JSlider rotationSlider = attributeSliders.get(attribute);
+                if (rotationSlider != null) {
+                    int degrees = (int)(newRotation * 180 / Math.PI);
+                    rotationSlider.setValue(degrees);
+                }
+            }
+
+            repaint();
         }
 
         @Override
