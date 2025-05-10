@@ -1031,6 +1031,26 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     }
                 }
             }
+            
+            // THIS IS A HACK WE SHOULD FIX THIS TO DRAW THE SMALL SYMBOLS ON TOP OF THE LARGER ONES
+            // Sort rows to process so that benign classes are drawn after malignant ones
+            // This ensures benign classes appear on top of malignant ones
+            Collections.sort(rowsToProcess, new Comparator<Integer>() {
+                @Override
+                public int compare(Integer row1, Integer row2) {
+                    String class1 = classLabels.get(row1);
+                    String class2 = classLabels.get(row2);
+                    
+                    // If one is "benign" and the other is "malignant", put benign last (on top)
+                    if (class1.equalsIgnoreCase("benign") && class2.equalsIgnoreCase("malignant")) {
+                        return 1; // benign comes after malignant
+                    } else if (class1.equalsIgnoreCase("malignant") && class2.equalsIgnoreCase("benign")) {
+                        return -1; // malignant comes before benign
+                    } else {
+                        return class1.compareTo(class2); // alphabetical for other classes
+                    }
+                }
+            });
 
             for (int row : rowsToProcess) {
                 String classLabel = classLabels.get(row);
