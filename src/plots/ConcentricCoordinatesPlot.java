@@ -801,12 +801,36 @@ public class ConcentricCoordinatesPlot extends JFrame {
             if (currentDensityMode != DensityMode.NO_DENSITY) {
                 drawWithDensity(g2, centerX, centerY, maxRadius);
             } else {
-                // Draw the concentric coordinates for each data point
+                // Sort rows to draw benign on top of malignant
+                List<Integer> sortedRows = new ArrayList<>();
+                List<Integer> benignRows = new ArrayList<>();
+                List<Integer> malignantRows = new ArrayList<>();
+                List<Integer> otherRows = new ArrayList<>();
+                
                 for (int row = 0; row < data.get(0).size(); row++) {
+                    if (hiddenRows.contains(row)) continue;
+                    
                     String classLabel = classLabels.get(row);
-                    if (!hiddenClasses.contains(classLabel)) {
-                        drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+                    if (hiddenClasses.contains(classLabel)) continue;
+                    
+                    if (classLabel.equalsIgnoreCase("benign")) {
+                        benignRows.add(row);
+                    } else if (classLabel.equalsIgnoreCase("malignant")) {
+                        malignantRows.add(row);
+                    } else {
+                        otherRows.add(row);
                     }
+                }
+                
+                // Draw in order: malignant, other, benign (so benign appears on top)
+                for (int row : malignantRows) {
+                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+                }
+                for (int row : otherRows) {
+                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+                }
+                for (int row : benignRows) {
+                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
                 }
             }
             
@@ -926,7 +950,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
         private void drawStandardLines(Graphics2D g2, Point2D.Double[] points, Color color, int numAttributes) {
             g2.setColor(color);
             g2.setStroke(new BasicStroke(1.0f));
-            
+
             // Draw lines connecting the points across the circles
             for (int i = 0; i < numAttributes - 1; i++) {
                 g2.draw(new Line2D.Double(points[i], points[i + 1]));
