@@ -38,6 +38,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private double piAdjustment = 0.0;
     private boolean showLabels = true;
     private boolean closeLoop = true;
+    private double axisGap = 0.0; // Gap between first and last attribute positions
     private boolean concentricMode = true;
     private enum DensityMode {
         NO_DENSITY,
@@ -259,6 +260,26 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 plotPanel.repaint();
             });
     
+            // Add gap size slider
+            JLabel gapLabel = new JLabel("Axis Gap: ");
+            JSlider gapSlider = new JSlider(JSlider.HORIZONTAL, 0, 50, 0);
+            gapSlider.setMajorTickSpacing(10);
+            gapSlider.setMinorTickSpacing(5);
+            gapSlider.setPaintTicks(true);
+            gapSlider.setPaintLabels(true);
+            Hashtable<Integer, JLabel> gapLabels = new Hashtable<>();
+            gapLabels.put(0, new JLabel("0%"));
+            gapLabels.put(10, new JLabel("10%"));
+            gapLabels.put(20, new JLabel("20%"));
+            gapLabels.put(30, new JLabel("30%"));
+            gapLabels.put(40, new JLabel("40%"));
+            gapLabels.put(50, new JLabel("50%"));
+            gapSlider.setLabelTable(gapLabels);
+            gapSlider.addChangeListener(e -> {
+                axisGap = gapSlider.getValue() / 100.0;
+                plotPanel.repaint();
+            });
+    
             // Add label toggle button
             JToggleButton labelToggle = new JToggleButton("Show Labels", true);
             labelToggle.addActionListener(e -> {
@@ -340,6 +361,8 @@ public class ConcentricCoordinatesPlot extends JFrame {
         globalControlPanel.add(zoomSlider);
         globalControlPanel.add(sliderLabel);
         globalControlPanel.add(piSlider);
+        globalControlPanel.add(gapLabel);
+        globalControlPanel.add(gapSlider);
         globalControlPanel.add(labelToggle);
         globalControlPanel.add(loopToggle);
         globalControlPanel.add(concentricToggle);
@@ -478,6 +501,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private List<Point2D.Double> getPolylinePoints(int row, int centerX, int centerY, int maxRadius) {
         List<Point2D.Double> points = new ArrayList<>();
         int numAttributes = attributeNames.size();
+        
         for (int i = 0; i < numAttributes; i++) {
             String attribute = attributeNames.get(i);
             double value = data.get(i).get(row);
@@ -490,13 +514,35 @@ public class ConcentricCoordinatesPlot extends JFrame {
             
             // Value determines angle around the circle
             double attributeRotation = attributeRotations.get(attribute);
-            double angle = (1.5 * Math.PI) + (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
             
-            // Each attribute has its own fixed circle
-            double radius = (i + 1) * (maxRadius / numAttributes) * attributeRadii.get(attribute);
-            double x = centerX + radius * Math.cos(angle);
-            double y = centerY + radius * Math.sin(angle);
-            points.add(new Point2D.Double(x, y));
+            if (concentricMode) {
+                // In concentric mode, apply the gap between attributes
+                // Calculate what portion of circle to use (adjust for gap)
+                double usedPortion = 1.0 - axisGap;
+                // Use normalized value to calculate angle, adjusting for gap
+                double angle = (1.5 * Math.PI) + (normalizedValue * usedPortion * 2 * Math.PI) + attributeRotation + piAdjustment;
+                
+                // Each attribute has its own fixed circle
+                double radius = (i + 1) * (maxRadius / numAttributes) * attributeRadii.get(attribute);
+                double x = centerX + radius * Math.cos(angle);
+                double y = centerY + radius * Math.sin(angle);
+                points.add(new Point2D.Double(x, y));
+            } else {
+                // In freeform mode, use the axis-specific positions
+                Point pos = axisPositions.getOrDefault(attribute, 
+                    new Point(centerX + (i - numAttributes/2) * (maxRadius / (numAttributes + 1)) * 2, centerY));
+                
+                // Use the normalized value to calculate distance from axis center
+                double axisRadius = (maxRadius / (numAttributes + 1)) * attributeRadii.get(attribute);
+                
+                // Apply the gap in the angle calculation
+                double usedPortion = 1.0 - axisGap;
+                double angle = (1.5 * Math.PI) + (normalizedValue * usedPortion * 2 * Math.PI) + attributeRotation + piAdjustment;
+                
+                double x = pos.x + axisRadius * Math.cos(angle);
+                double y = pos.y + axisRadius * Math.sin(angle);
+                points.add(new Point2D.Double(x, y));
+            }
         }
         return points;
     }    
@@ -834,12 +880,14 @@ public class ConcentricCoordinatesPlot extends JFrame {
 
                 // Value determines angle around the circle
                 double attributeRotation = attributeRotations.get(attribute);
-                double angle = (1.5 * Math.PI) + (normalizedValue * 2 * Math.PI) + attributeRotation + piAdjustment;
+                
+                // Apply the gap adjustment to the angle calculation
+                double usedPortion = 1.0 - axisGap;
+                double angle = (1.5 * Math.PI) + (normalizedValue * usedPortion * 2 * Math.PI) + attributeRotation + piAdjustment;
                 
                 if (concentricMode) {
-                    double radius = attributeRadii.get(attribute);
                     // Each attribute has its own fixed circle
-                    int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * radius);
+                    int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * attributeRadii.get(attribute));
                     double x = centerX + currentRadius * Math.cos(angle);
                     double y = centerY + currentRadius * Math.sin(angle);
                     points[i] = new Point2D.Double(x, y);
@@ -885,7 +933,40 @@ public class ConcentricCoordinatesPlot extends JFrame {
             }
             
             if (closeLoop) {
-                g2.draw(new Line2D.Double(points[numAttributes - 1], points[0]));
+                Point2D.Double first = points[0];
+                Point2D.Double last = points[numAttributes - 1];
+                
+                // Check if we should draw with a gap
+                if (axisGap > 0) {
+                    // Calculate direction vector
+                    double dx = first.x - last.x;
+                    double dy = first.y - last.y;
+                    double length = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (length > 0) {
+                        // Normalize and scale by gap size
+                        dx /= length;
+                        dy /= length;
+                        
+                        // Calculate new endpoints with gap
+                        Point2D.Double gapStart = new Point2D.Double(
+                            last.x + dx * length * axisGap / 2,
+                            last.y + dy * length * axisGap / 2
+                        );
+                        
+                        Point2D.Double gapEnd = new Point2D.Double(
+                            first.x - dx * length * axisGap / 2,
+                            first.y - dy * length * axisGap / 2
+                        );
+                        
+                        // Draw the two segments of the closing line with a gap
+                        g2.draw(new Line2D.Double(last, gapStart));
+                        g2.draw(new Line2D.Double(gapEnd, first));
+                    }
+                } else {
+                    // No gap, draw direct line
+                    g2.draw(new Line2D.Double(last, first));
+                }
             }
         }
 
@@ -1082,16 +1163,63 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     Point2D.Double first = points.get(0);
                     Point2D.Double last = points.get(points.size() - 1);
                     
-                    LineSegment segment = new LineSegment(last, first);
-                    int count = lineSegmentCounts.getOrDefault(segment, 1);
-                    
-                    float normalizedDensity = (float) count / maxDensity;
-                    int alpha = (int) (normalizedDensity * 255);
-                    Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha);
-                    
-                    g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
-                    g2.setColor(adjustedColor);
-                    g2.draw(new Line2D.Double(last, first));
+                    if (axisGap <= 0.0) {
+                        // No gap, draw direct line
+                        LineSegment segment = new LineSegment(last, first);
+                        int count = lineSegmentCounts.getOrDefault(segment, 1);
+                        
+                        float normalizedDensity = (float) count / maxDensity;
+                        int alpha = (int) (normalizedDensity * 255);
+                        Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha);
+                        
+                        g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                        g2.setColor(adjustedColor);
+                        g2.draw(new Line2D.Double(last, first));
+                    } else {
+                        // Calculate direction vector
+                        double dx = first.x - last.x;
+                        double dy = first.y - last.y;
+                        double length = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (length > 0) {
+                            // Normalize and scale by gap size
+                            dx /= length;
+                            dy /= length;
+                            
+                            // Calculate new endpoints with gap
+                            Point2D.Double gapStart = new Point2D.Double(
+                                last.x + dx * length * axisGap / 2,
+                                last.y + dy * length * axisGap / 2
+                            );
+                            
+                            Point2D.Double gapEnd = new Point2D.Double(
+                                first.x - dx * length * axisGap / 2,
+                                first.y - dy * length * axisGap / 2
+                            );
+                            
+                            // Draw the two segments with appropriate opacity
+                            LineSegment segment1 = new LineSegment(last, gapStart);
+                            LineSegment segment2 = new LineSegment(gapEnd, first);
+                            
+                            int count1 = lineSegmentCounts.getOrDefault(segment1, 1);
+                            int count2 = lineSegmentCounts.getOrDefault(segment2, 1);
+                            
+                            float normalizedDensity1 = (float) count1 / maxDensity;
+                            float normalizedDensity2 = (float) count2 / maxDensity;
+                            
+                            Color adjustedColor1 = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 
+                                                          (int)(normalizedDensity1 * 255));
+                            Color adjustedColor2 = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 
+                                                          (int)(normalizedDensity2 * 255));
+                            
+                            g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                            g2.setColor(adjustedColor1);
+                            g2.draw(new Line2D.Double(last, gapStart));
+                            
+                            g2.setColor(adjustedColor2);
+                            g2.draw(new Line2D.Double(gapEnd, first));
+                        }
+                    }
                 }
 
                 // Draw the shapes at the points with full opacity
@@ -1120,6 +1248,26 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     }
                 }
             }
+
+            // THIS IS A HACK WE SHOULD FIX THIS TO DRAW THE SMALL SYMBOLS ON TOP OF THE LARGER ONES
+            // Sort rows to process so that benign classes are drawn after malignant ones
+            // This ensures benign classes appear on top of malignant ones
+            Collections.sort(rowsToProcess, new Comparator<Integer>() {
+                @Override
+                public int compare(Integer row1, Integer row2) {
+                    String class1 = classLabels.get(row1);
+                    String class2 = classLabels.get(row2);
+                    
+                    // If one is "benign" and the other is "malignant", put benign last (on top)
+                    if (class1.equalsIgnoreCase("benign") && class2.equalsIgnoreCase("malignant")) {
+                        return 1; // benign comes after malignant
+                    } else if (class1.equalsIgnoreCase("malignant") && class2.equalsIgnoreCase("benign")) {
+                        return -1; // malignant comes before benign
+                    } else {
+                        return class1.compareTo(class2); // alphabetical for other classes
+                    }
+                }
+            });
 
             for (int row : rowsToProcess) {
                 String classLabel = classLabels.get(row);
@@ -1151,16 +1299,65 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     Point2D.Double first = points.get(0);
                     Point2D.Double last = points.get(points.size() - 1);
                     
-                    LineSegment segment = new LineSegment(last, first);
-                    int count = lineSegmentCounts.getOrDefault(segment, 1);
-                    
-                    float normalizedDensity = (float) count / maxDensity;
-                    float thickness = 0.5f + (normalizedDensity * 9.5f);
-                    if (selectedOnly) thickness += 1.0f;
-                    
-                    g2.setStroke(new BasicStroke(thickness));
-                    g2.setColor(baseColor);
-                    g2.draw(new Line2D.Double(last, first));
+                    if (axisGap <= 0.0) {
+                        // No gap, draw direct line
+                        LineSegment segment = new LineSegment(last, first);
+                        int count = lineSegmentCounts.getOrDefault(segment, 1);
+                        
+                        float normalizedDensity = (float) count / maxDensity;
+                        float thickness = 0.5f + (normalizedDensity * 9.5f);
+                        if (selectedOnly) thickness += 1.0f;
+                        
+                        g2.setStroke(new BasicStroke(thickness));
+                        g2.setColor(baseColor);
+                        g2.draw(new Line2D.Double(last, first));
+                    } else {
+                        // Calculate direction vector
+                        double dx = first.x - last.x;
+                        double dy = first.y - last.y;
+                        double length = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (length > 0) {
+                            // Normalize and scale by gap size
+                            dx /= length;
+                            dy /= length;
+                            
+                            // Calculate new endpoints with gap
+                            Point2D.Double gapStart = new Point2D.Double(
+                                last.x + dx * length * axisGap / 2,
+                                last.y + dy * length * axisGap / 2
+                            );
+                            
+                            Point2D.Double gapEnd = new Point2D.Double(
+                                first.x - dx * length * axisGap / 2,
+                                first.y - dy * length * axisGap / 2
+                            );
+                            
+                            // Draw the two segments with appropriate thickness
+                            LineSegment segment1 = new LineSegment(last, gapStart);
+                            LineSegment segment2 = new LineSegment(gapEnd, first);
+                            
+                            int count1 = lineSegmentCounts.getOrDefault(segment1, 1);
+                            int count2 = lineSegmentCounts.getOrDefault(segment2, 1);
+                            
+                            float normalizedDensity1 = (float) count1 / maxDensity;
+                            float normalizedDensity2 = (float) count2 / maxDensity;
+                            
+                            float thickness1 = 0.5f + (normalizedDensity1 * 9.5f);
+                            float thickness2 = 0.5f + (normalizedDensity2 * 9.5f);
+                            if (selectedOnly) {
+                                thickness1 += 1.0f;
+                                thickness2 += 1.0f;
+                            }
+                            
+                            g2.setColor(baseColor);
+                            g2.setStroke(new BasicStroke(thickness1));
+                            g2.draw(new Line2D.Double(last, gapStart));
+                            
+                            g2.setStroke(new BasicStroke(thickness2));
+                            g2.draw(new Line2D.Double(gapEnd, first));
+                        }
+                    }
                 }
 
                 // Draw the shapes at the points
