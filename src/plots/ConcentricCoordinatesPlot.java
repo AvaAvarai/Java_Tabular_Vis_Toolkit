@@ -1074,8 +1074,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     g2.draw(new Line2D.Double(last, first));
                 }
 
-                // Draw the shapes at the points
-                g2.setColor(baseColor);
+                // Draw the shapes at the points with full opacity
+                // Use the original base color (full opacity) for vertices
+                Color fullOpacityColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 255);
+                g2.setColor(fullOpacityColor);
                 for (Point2D.Double point : points) {
                     Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
                     g2.translate(point.x, point.y);
