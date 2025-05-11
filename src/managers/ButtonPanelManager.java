@@ -352,6 +352,8 @@ public class ButtonPanelManager {
             _ -> showAttributeSelectionDialog(false));
         addMenuItem(selectionMenu, "Keep Only Cases Within Bounds...", "/icons/file.png", 
             _ -> showAttributeSelectionDialog(true));
+        addMenuItem(selectionMenu, "Select Cases in Pure Regions", "/icons/easy.png", 
+            _ -> csvViewer.selectCasesInPureRegions());
 
         menuBar.add(selectionMenu);
 

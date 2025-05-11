@@ -33,6 +33,7 @@ import src.utils.ShapeUtils;
 import src.utils.CovariancePairUtils;
 import src.classifiers.SupportSumMachineClassifier;
 import src.classifiers.KNearestNeighborsClassifier;
+import src.utils.PureRegionUtils;
 
 public class CsvViewer extends JFrame {
     public JTable table;
@@ -1277,6 +1278,69 @@ public class CsvViewer extends JFrame {
 
     public void showMultiRowShiftedPairedCoordinatesPlot() {
         visualizationManager.showMultiRowShiftedPairedCoordinatesPlot();
+    }
+
+    /**
+     * Selects all cases that fall within pure regions (regions where all cases have the same class label)
+     * A case is selected if at least one of its attribute values falls within a pure region
+     */
+    public void selectCasesInPureRegions() {
+        int classColumnIndex = getClassColumnIndex();
+        if (classColumnIndex == -1) {
+            JOptionPane.showMessageDialog(this, 
+                "No class column found. Please ensure there is a column named 'class'.", 
+                "Selection Error", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Get the current threshold value
+        int thresholdValue = thresholdSlider.getValue();
+        
+        // Get pure regions using PureRegionUtils
+        java.util.List<src.utils.PureRegionUtils> pureRegions = 
+            src.utils.PureRegionUtils.calculatePureRegions(tableModel, thresholdValue, classColumnIndex);
+        
+        if (pureRegions.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "No pure regions found with current threshold (" + thresholdValue + "%).", 
+                "No Pure Regions", 
+                JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        // Clear current selection
+        table.clearSelection();
+        
+        // For each row, check if it falls within any pure region
+        for (int viewRow = 0; viewRow < table.getRowCount(); viewRow++) {
+            int modelRow = table.convertRowIndexToModel(viewRow);
+            
+            // For each pure region
+            for (src.utils.PureRegionUtils region : pureRegions) {
+                try {
+                    // Get the column index for this attribute
+                    int attributeColumnIndex = tableModel.findColumn(region.getAttributeName());
+                    if (attributeColumnIndex != -1) {
+                        // Get the value for this column and row
+                        double value = Double.parseDouble(tableModel.getValueAt(modelRow, attributeColumnIndex).toString());
+                        String className = tableModel.getValueAt(modelRow, classColumnIndex).toString();
+                        
+                        // Check if value falls within the pure region and has the matching class
+                        if (value >= region.getStart() && value <= region.getEnd() && 
+                            className.equals(region.getCurrentClass())) {
+                            // Value is in pure region, select this row
+                            table.addRowSelectionInterval(viewRow, viewRow);
+                            break; // No need to check other regions for this row
+                        }
+                    }
+                } catch (NumberFormatException e) {
+                    // Skip non-numeric values
+                }
+            }
+        }
+        
+        updateSelectedRowsLabel();
     }
 }
 
