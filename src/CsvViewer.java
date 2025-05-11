@@ -1371,9 +1371,31 @@ public class CsvViewer extends JFrame {
             int uniqueCount = uniqueRows.size();
             cumulativeSelectedRows.addAll(regionRows);
             
-            sb.append(String.format("Attribute: %s, Range: %.2f to %.2f, Class: %s, Total: %d cases, Unique added: %d cases\n",
-                    region.getAttributeName(), region.getStart(), region.getEnd(),
-                    region.getCurrentClass(), regionRows.size(), uniqueCount));
+            // Format the condition using mathematical notation
+            String condition;
+            String attributeName = "F(x" + region.getAttributeName().replace(" ", "_") + ")";
+            double start = region.getStart();
+            double end = region.getEnd();
+            
+            if (Math.abs(start - end) < 0.0001) {
+                // Single point
+                condition = String.format("%s == %.4f", attributeName, start);
+            } else if (start == Double.MIN_VALUE || start == 0) {
+                // Only upper bound
+                condition = String.format("%s <= %.4f", attributeName, end);
+            } else if (end == Double.MAX_VALUE) {
+                // Only lower bound
+                condition = String.format("%s >= %.4f", attributeName, start);
+            } else {
+                // Range with both bounds
+                condition = String.format("%.4f <= %s <= %.4f", start, attributeName, end);
+            }
+            
+            // Remove trailing zeros
+            condition = condition.replace(".0000", "").replaceAll("([0-9])0+([^0-9]|$)", "$1$2");
+            
+            sb.append(String.format("%s, Class: %s, Total: %d cases, Unique added: %d cases\n",
+                    condition, region.getCurrentClass(), regionRows.size(), uniqueCount));
         }
         
         sb.append(String.format("Total selected cases: %d\n", selectedModelRows.size()));
