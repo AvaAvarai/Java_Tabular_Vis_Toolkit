@@ -1312,6 +1312,17 @@ public class CsvViewer extends JFrame {
         // Clear current selection
         table.clearSelection();
         
+        // To track already selected rows
+        java.util.Set<Integer> selectedModelRows = new java.util.HashSet<>();
+        
+        // Maps to track which cases are selected by each rule
+        java.util.Map<src.utils.PureRegionUtils, java.util.Set<Integer>> regionToRows = new java.util.LinkedHashMap<>();
+        
+        // Initialize the map for each region
+        for (src.utils.PureRegionUtils region : pureRegions) {
+            regionToRows.put(region, new java.util.HashSet<>());
+        }
+        
         // For each row, check if it falls within any pure region
         for (int viewRow = 0; viewRow < table.getRowCount(); viewRow++) {
             int modelRow = table.convertRowIndexToModel(viewRow);
@@ -1329,9 +1340,15 @@ public class CsvViewer extends JFrame {
                         // Check if value falls within the pure region and has the matching class
                         if (value >= region.getStart() && value <= region.getEnd() && 
                             className.equals(region.getCurrentClass())) {
-                            // Value is in pure region, select this row
-                            table.addRowSelectionInterval(viewRow, viewRow);
-                            break; // No need to check other regions for this row
+                            // Add this row to the region's set of rows
+                            regionToRows.get(region).add(modelRow);
+                            
+                            // If not already selected, select this row
+                            if (!selectedModelRows.contains(modelRow)) {
+                                table.addRowSelectionInterval(viewRow, viewRow);
+                                selectedModelRows.add(modelRow);
+                            }
+                            // Don't break - we want to check all regions to count which rows they cover
                         }
                     }
                 } catch (NumberFormatException e) {
@@ -1339,6 +1356,28 @@ public class CsvViewer extends JFrame {
                 }
             }
         }
+        
+        // Build information about pure regions and their unique contributions
+        StringBuilder sb = new StringBuilder();
+        sb.append("\nSelected Pure Regions (threshold " + thresholdValue + "%):\n");
+        
+        java.util.Set<Integer> cumulativeSelectedRows = new java.util.HashSet<>();
+        
+        for (src.utils.PureRegionUtils region : pureRegions) {
+            java.util.Set<Integer> regionRows = regionToRows.get(region);
+            java.util.Set<Integer> uniqueRows = new java.util.HashSet<>(regionRows);
+            uniqueRows.removeAll(cumulativeSelectedRows);
+            
+            int uniqueCount = uniqueRows.size();
+            cumulativeSelectedRows.addAll(regionRows);
+            
+            sb.append(String.format("Attribute: %s, Range: %.2f to %.2f, Class: %s, Total: %d cases, Unique added: %d cases\n",
+                    region.getAttributeName(), region.getStart(), region.getEnd(),
+                    region.getCurrentClass(), regionRows.size(), uniqueCount));
+        }
+        
+        sb.append(String.format("Total selected cases: %d\n", selectedModelRows.size()));
+        statsTextArea.append(sb.toString());
         
         updateSelectedRowsLabel();
     }
