@@ -1403,5 +1403,81 @@ public class CsvViewer extends JFrame {
         
         updateSelectedRowsLabel();
     }
+
+    /**
+     * Adds a new row containing the mean values of all selected rows.
+     * For numeric columns, calculates the arithmetic mean.
+     * For non-numeric columns, uses the class column value if available, otherwise leaves blank.
+     */
+    public void addMeanCase() {
+        int[] selectedRows = table.getSelectedRows();
+        if (selectedRows.length == 0) {
+            JOptionPane.showMessageDialog(this, 
+                "Please select at least one row to calculate mean.", 
+                "Selection Error", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int numColumns = tableModel.getColumnCount();
+        Object[] meanRow = new Object[numColumns];
+        int classColumnIndex = getClassColumnIndex();
+        String className = "";
+
+        // If we have a class column and selected rows, use the class of the first selected row
+        if (classColumnIndex != -1 && selectedRows.length > 0) {
+            int modelRow = table.convertRowIndexToModel(selectedRows[0]);
+            className = tableModel.getValueAt(modelRow, classColumnIndex).toString();
+        }
+
+        // Calculate mean for each column
+        for (int col = 0; col < numColumns; col++) {
+            // Skip class column - we'll handle it separately
+            if (col == classColumnIndex) {
+                meanRow[col] = className + " (mean)";
+                continue;
+            }
+
+            double sum = 0;
+            int validValueCount = 0;
+            boolean isNumeric = true;
+
+            // Sum values for this column across all selected rows
+            for (int selectedRow : selectedRows) {
+                int modelRow = table.convertRowIndexToModel(selectedRow);
+                Object value = tableModel.getValueAt(modelRow, col);
+                if (value != null) {
+                    try {
+                        sum += Double.parseDouble(value.toString());
+                        validValueCount++;
+                    } catch (NumberFormatException e) {
+                        isNumeric = false;
+                        break;
+                    }
+                }
+            }
+
+            // Calculate mean if we have valid values
+            if (isNumeric && validValueCount > 0) {
+                double mean = sum / validValueCount;
+                // Format the mean value to match existing decimal format
+                meanRow[col] = formatDecimalWithoutScientificNotation(mean);
+            } else {
+                // Use empty string for non-numeric columns
+                meanRow[col] = "";
+            }
+        }
+
+        // Add the mean row to the table
+        tableModel.addRow(meanRow);
+        
+        // Update the stats and select the new row
+        dataHandler.updateStats(tableModel, statsTextArea);
+        int newRowIndex = tableModel.getRowCount() - 1;
+        table.setRowSelectionInterval(table.convertRowIndexToView(newRowIndex), table.convertRowIndexToView(newRowIndex));
+        
+        // Update the status label
+        updateSelectedRowsLabel();
+    }
 }
 

@@ -317,6 +317,8 @@ public class ButtonPanelManager {
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", _ -> csvViewer.showCovarianceSortDialog());
         addMenuItem(analysisMenu, "Rule Tester", "/icons/rule.png", _ -> csvViewer.showRuleTesterDialog());
 
+        addMenuItem(analysisMenu, "Add Mean Case", "/icons/clone.png", _ -> csvViewer.addMeanCase());
+
         addMenuItem(analysisMenu, "Insert Noise Cases", "/icons/variance.png", 
             _ -> {
                 if (csvViewer.dataHandler.isDataEmpty()) {
