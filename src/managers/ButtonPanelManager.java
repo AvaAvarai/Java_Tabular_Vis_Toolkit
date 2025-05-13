@@ -319,6 +319,14 @@ public class ButtonPanelManager {
 
         addMenuItem(analysisMenu, "Add Mean Case", "/icons/clone.png", _ -> csvViewer.addMeanCase());
 
+        addMenuItem(analysisMenu, "Select Nearest Neighbors", "/icons/knn.png", _ -> {
+            if (csvViewer.dataHandler.isDataEmpty()) {
+                csvViewer.noDataLoadedError();
+                return;
+            }
+            showNearestNeighborsDialog();
+        });
+
         addMenuItem(analysisMenu, "Insert Noise Cases", "/icons/variance.png", 
             _ -> {
                 if (csvViewer.dataHandler.isDataEmpty()) {
@@ -878,5 +886,40 @@ public class ButtonPanelManager {
             } catch (NumberFormatException e) {
             return false;
         }
+    }
+
+    private void showNearestNeighborsDialog() {
+        JDialog dialog = new JDialog((Frame)null, "Nearest Neighbors Selection", true);
+        dialog.setLayout(new BorderLayout(5,5));
+        
+        JPanel panel = new JPanel(new GridLayout(0,2,5,5));
+        
+        // Create spinner for number of neighbors
+        SpinnerNumberModel spinnerModel = new SpinnerNumberModel(5, 1, 100, 1);
+        JSpinner neighborSpinner = new JSpinner(spinnerModel);
+        panel.add(new JLabel("Number of neighbors per selected case:"));
+        panel.add(neighborSpinner);
+        
+        dialog.add(panel, BorderLayout.CENTER);
+        
+        // Buttons
+        JPanel buttonPanel = new JPanel();
+        JButton okButton = new JButton("OK");
+        okButton.addActionListener(e -> {
+            int neighborsCount = (Integer)neighborSpinner.getValue();
+            csvViewer.selectNearestNeighbors(neighborsCount);
+            dialog.dispose();
+        });
+        buttonPanel.add(okButton);
+        
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.addActionListener(e -> dialog.dispose());
+        buttonPanel.add(cancelButton);
+        
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        
+        dialog.pack();
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
     }
 }

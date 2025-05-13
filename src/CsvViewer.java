@@ -1479,5 +1479,160 @@ public class CsvViewer extends JFrame {
         // Update the status label
         updateSelectedRowsLabel();
     }
+
+    /**
+     * Selects the X nearest neighbors for each currently selected case.
+     * Uses Euclidean distance to find neighbors in the feature space.
+     * 
+     * @param neighborsCount The number of neighbors to select for each selected case
+     */
+    public void selectNearestNeighbors(int neighborsCount) {
+        int[] selectedRows = table.getSelectedRows();
+        
+        if (selectedRows.length == 0) {
+            JOptionPane.showMessageDialog(this, 
+                "Please select at least one row to find nearest neighbors.", 
+                "Selection Error", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Get all numeric columns (exclude class column)
+        int classColumnIndex = getClassColumnIndex();
+        List<Integer> numericColumnIndices = new ArrayList<>();
+        
+        for (int col = 0; col < tableModel.getColumnCount(); col++) {
+            if (col != classColumnIndex) {
+                try {
+                    // Check if the column is numeric by trying to parse the first value
+                    Double.parseDouble(tableModel.getValueAt(0, col).toString());
+                    numericColumnIndices.add(col);
+                } catch (NumberFormatException e) {
+                    // Skip non-numeric columns
+                }
+            }
+        }
+        
+        if (numericColumnIndices.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "No numeric columns found to calculate distances.", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Check if "NN" color is registered, if not, create a new distinctive color for NN class
+        if (!stateManager.getClassColors().containsKey("NN")) {
+            // Use a bright cyan color that stands out for nearest neighbors
+            stateManager.getClassColors().put("NN", new Color(0, 204, 255));
+            
+            // Also generate a shape for this class
+            Shape nnShape = new Ellipse2D.Double(-4, -4, 8, 8);
+            stateManager.getClassShapes().put("NN", nnShape);
+        }
+        
+        // Convert selected rows to model indices
+        List<Integer> selectedModelRows = new ArrayList<>();
+        for (int viewRow : selectedRows) {
+            selectedModelRows.add(table.convertRowIndexToModel(viewRow));
+        }
+        
+        // Track all rows to be selected (including original selection)
+        Set<Integer> rowsToSelect = new HashSet<>(selectedModelRows);
+        Set<Integer> neighborRowsToClassify = new HashSet<>(); // Track rows that will be marked as "NN"
+        
+        // For each selected row, find its nearest neighbors
+        for (int selectedRow : selectedModelRows) {
+            // Calculate distances to all other rows
+            List<RowDistance> distances = new ArrayList<>();
+            
+            for (int row = 0; row < tableModel.getRowCount(); row++) {
+                // Skip comparing to self
+                if (row == selectedRow) continue;
+                
+                double distance = calculateEuclideanDistance(selectedRow, row, numericColumnIndices);
+                distances.add(new RowDistance(row, distance));
+            }
+            
+            // Sort by distance (ascending)
+            Collections.sort(distances);
+            
+            // Add the nearest X neighbors
+            int neighborsToAdd = Math.min(neighborsCount, distances.size());
+            for (int i = 0; i < neighborsToAdd; i++) {
+                int neighborRow = distances.get(i).row;
+                rowsToSelect.add(neighborRow);
+                
+                // Only mark as "NN" if this row isn't from the original selection
+                if (!selectedModelRows.contains(neighborRow)) {
+                    neighborRowsToClassify.add(neighborRow);
+                }
+            }
+        }
+        
+        // Set the class of nearest neighbors to "NN"
+        if (classColumnIndex != -1) {
+            for (int row : neighborRowsToClassify) {
+                tableModel.setValueAt("NN", row, classColumnIndex);
+            }
+        }
+        
+        // Clear current selection and select all identified rows
+        table.clearSelection();
+        for (int modelRow : rowsToSelect) {
+            int viewRow = table.convertRowIndexToView(modelRow);
+            table.addRowSelectionInterval(viewRow, viewRow);
+        }
+        
+        updateSelectedRowsLabel();
+        
+        // Display info about how many rows were selected
+        statsTextArea.append("\nSelected " + rowsToSelect.size() + 
+            " rows including " + selectedModelRows.size() + 
+            " original rows and " + neighborRowsToClassify.size() + 
+            " nearest neighbors marked as 'NN'.\n");
+    }
+    
+    // Helper class to store row index and its distance
+    private static class RowDistance implements Comparable<RowDistance> {
+        int row;
+        double distance;
+        
+        RowDistance(int row, double distance) {
+            this.row = row;
+            this.distance = distance;
+        }
+        
+        @Override
+        public int compareTo(RowDistance other) {
+            return Double.compare(this.distance, other.distance);
+        }
+    }
+    
+    /**
+     * Calculates Euclidean distance between two rows using only specified columns
+     */
+    private double calculateEuclideanDistance(int row1, int row2, List<Integer> columns) {
+        double sumSquaredDiff = 0.0;
+        int validDimensions = 0;
+        
+        for (int col : columns) {
+            try {
+                double val1 = Double.parseDouble(tableModel.getValueAt(row1, col).toString());
+                double val2 = Double.parseDouble(tableModel.getValueAt(row2, col).toString());
+                
+                double diff = val1 - val2;
+                sumSquaredDiff += diff * diff;
+                validDimensions++;
+            } catch (NumberFormatException e) {
+                // Skip invalid values
+            }
+        }
+        
+        // If no valid dimensions were found, return maximum distance
+        if (validDimensions == 0) return Double.MAX_VALUE;
+        
+        return Math.sqrt(sumSquaredDiff);
+    }
 }
 

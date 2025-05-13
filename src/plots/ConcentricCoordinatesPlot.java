@@ -805,6 +805,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 List<Integer> sortedRows = new ArrayList<>();
                 List<Integer> benignRows = new ArrayList<>();
                 List<Integer> malignantRows = new ArrayList<>();
+                List<Integer> nnRows = new ArrayList<>();  // Add a new list for NN class
                 List<Integer> otherRows = new ArrayList<>();
                 
                 for (int row = 0; row < data.get(0).size(); row++) {
@@ -813,7 +814,9 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     String classLabel = classLabels.get(row);
                     if (hiddenClasses.contains(classLabel)) continue;
                     
-                    if (classLabel.equalsIgnoreCase("benign")) {
+                    if (classLabel.equalsIgnoreCase("NN")) {
+                        nnRows.add(row);  // Collect NN rows separately
+                    } else if (classLabel.equalsIgnoreCase("benign")) {
                         benignRows.add(row);
                     } else if (classLabel.equalsIgnoreCase("malignant")) {
                         malignantRows.add(row);
@@ -822,7 +825,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     }
                 }
                 
-                // Draw in order: malignant, other, benign (so benign appears on top)
+                // Draw in order: malignant, other, benign, NN (so NN appears on top of all)
                 for (int row : malignantRows) {
                     drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
                 }
@@ -830,6 +833,9 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
                 }
                 for (int row : benignRows) {
+                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+                }
+                for (int row : nnRows) {
                     drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
                 }
             }
@@ -1137,125 +1143,40 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 }
             }
             
-            // THIS IS A HACK WE SHOULD FIX THIS TO DRAW THE SMALL SYMBOLS ON TOP OF THE LARGER ONES
-            // Sort rows to process so that benign classes are drawn after malignant ones
-            // This ensures benign classes appear on top of malignant ones
-            Collections.sort(rowsToProcess, new Comparator<Integer>() {
-                @Override
-                public int compare(Integer row1, Integer row2) {
-                    String class1 = classLabels.get(row1);
-                    String class2 = classLabels.get(row2);
-                    
-                    // If one is "benign" and the other is "malignant", put benign last (on top)
-                    if (class1.equalsIgnoreCase("benign") && class2.equalsIgnoreCase("malignant")) {
-                        return 1; // benign comes after malignant
-                    } else if (class1.equalsIgnoreCase("malignant") && class2.equalsIgnoreCase("benign")) {
-                        return -1; // malignant comes before benign
-                    } else {
-                        return class1.compareTo(class2); // alphabetical for other classes
-                    }
-                }
-            });
-
+            // Sort rows to draw benign on top of malignant
+            List<Integer> sortedRows = new ArrayList<>();
+            List<Integer> benignRows = new ArrayList<>();
+            List<Integer> malignantRows = new ArrayList<>();
+            List<Integer> nnRows = new ArrayList<>();  // Add a new list for NN class
+            List<Integer> otherRows = new ArrayList<>();
+            
             for (int row : rowsToProcess) {
                 String classLabel = classLabels.get(row);
                 if (hiddenClasses.contains(classLabel)) continue;
-
-                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
-                Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
                 
-                // Draw lines with opacity based on density
-                for (int i = 0; i < points.size() - 1; i++) {
-                    Point2D.Double p1 = points.get(i);
-                    Point2D.Double p2 = points.get(i + 1);
-                    
-                    LineSegment segment = new LineSegment(p1, p2);
-                    int count = lineSegmentCounts.getOrDefault(segment, 1);
-                    
-                    // Calculate opacity based on density
-                    float normalizedDensity = (float) count / maxDensity;
-                    int alpha = (int) (normalizedDensity * 255); // Scale from 0 to 255
-                    Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha);
-                    
-                    g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
-                    g2.setColor(adjustedColor);
-                    g2.draw(new Line2D.Double(p1, p2));
+                if (classLabel.equalsIgnoreCase("NN")) {
+                    nnRows.add(row);  // Collect NN rows separately
+                } else if (classLabel.equalsIgnoreCase("benign")) {
+                    benignRows.add(row);
+                } else if (classLabel.equalsIgnoreCase("malignant")) {
+                    malignantRows.add(row);
+                } else {
+                    otherRows.add(row);
                 }
-                
-                // Draw closing line if needed
-                if (closeLoop && points.size() > 1) {
-                    Point2D.Double first = points.get(0);
-                    Point2D.Double last = points.get(points.size() - 1);
-                    
-                    if (axisGap <= 0.0) {
-                        // No gap, draw direct line
-                        LineSegment segment = new LineSegment(last, first);
-                        int count = lineSegmentCounts.getOrDefault(segment, 1);
-                        
-                        float normalizedDensity = (float) count / maxDensity;
-                        int alpha = (int) (normalizedDensity * 255);
-                        Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha);
-                        
-                        g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
-                        g2.setColor(adjustedColor);
-                        g2.draw(new Line2D.Double(last, first));
-                    } else {
-                        // Calculate direction vector
-                        double dx = first.x - last.x;
-                        double dy = first.y - last.y;
-                        double length = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (length > 0) {
-                            // Normalize and scale by gap size
-                            dx /= length;
-                            dy /= length;
-                            
-                            // Calculate new endpoints with gap
-                            Point2D.Double gapStart = new Point2D.Double(
-                                last.x + dx * length * axisGap / 2,
-                                last.y + dy * length * axisGap / 2
-                            );
-                            
-                            Point2D.Double gapEnd = new Point2D.Double(
-                                first.x - dx * length * axisGap / 2,
-                                first.y - dy * length * axisGap / 2
-                            );
-                            
-                            // Draw the two segments with appropriate opacity
-                            LineSegment segment1 = new LineSegment(last, gapStart);
-                            LineSegment segment2 = new LineSegment(gapEnd, first);
-                            
-                            int count1 = lineSegmentCounts.getOrDefault(segment1, 1);
-                            int count2 = lineSegmentCounts.getOrDefault(segment2, 1);
-                            
-                            float normalizedDensity1 = (float) count1 / maxDensity;
-                            float normalizedDensity2 = (float) count2 / maxDensity;
-                            
-                            Color adjustedColor1 = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 
-                                                          (int)(normalizedDensity1 * 255));
-                            Color adjustedColor2 = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 
-                                                          (int)(normalizedDensity2 * 255));
-                            
-                            g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
-                            g2.setColor(adjustedColor1);
-                            g2.draw(new Line2D.Double(last, gapStart));
-                            
-                            g2.setColor(adjustedColor2);
-                            g2.draw(new Line2D.Double(gapEnd, first));
-                        }
-                    }
-                }
-
-                // Draw the shapes at the points with full opacity
-                // Use the original base color (full opacity) for vertices
-                Color fullOpacityColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 255);
-                g2.setColor(fullOpacityColor);
-                for (Point2D.Double point : points) {
-                    Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
-                    g2.translate(point.x, point.y);
-                    g2.fill(shape);
-                    g2.translate(-point.x, -point.y);
-                }
+            }
+            
+            // Draw in order: malignant, other, benign, NN (so NN appears on top of all)
+            for (int row : malignantRows) {
+                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+            }
+            for (int row : otherRows) {
+                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+            }
+            for (int row : benignRows) {
+                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+            }
+            for (int row : nnRows) {
+                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
             }
         }
 
@@ -1273,125 +1194,40 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 }
             }
 
-            // THIS IS A HACK WE SHOULD FIX THIS TO DRAW THE SMALL SYMBOLS ON TOP OF THE LARGER ONES
-            // Sort rows to process so that benign classes are drawn after malignant ones
-            // This ensures benign classes appear on top of malignant ones
-            Collections.sort(rowsToProcess, new Comparator<Integer>() {
-                @Override
-                public int compare(Integer row1, Integer row2) {
-                    String class1 = classLabels.get(row1);
-                    String class2 = classLabels.get(row2);
-                    
-                    // If one is "benign" and the other is "malignant", put benign last (on top)
-                    if (class1.equalsIgnoreCase("benign") && class2.equalsIgnoreCase("malignant")) {
-                        return 1; // benign comes after malignant
-                    } else if (class1.equalsIgnoreCase("malignant") && class2.equalsIgnoreCase("benign")) {
-                        return -1; // malignant comes before benign
-                    } else {
-                        return class1.compareTo(class2); // alphabetical for other classes
-                    }
-                }
-            });
-
+            // Sort rows to draw benign on top of malignant
+            List<Integer> sortedRows = new ArrayList<>();
+            List<Integer> benignRows = new ArrayList<>();
+            List<Integer> malignantRows = new ArrayList<>();
+            List<Integer> nnRows = new ArrayList<>();  // Add a new list for NN class
+            List<Integer> otherRows = new ArrayList<>();
+            
             for (int row : rowsToProcess) {
                 String classLabel = classLabels.get(row);
                 if (hiddenClasses.contains(classLabel)) continue;
-
-                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
-                Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
                 
-                // Draw lines with thickness based on density
-                for (int i = 0; i < points.size() - 1; i++) {
-                    Point2D.Double p1 = points.get(i);
-                    Point2D.Double p2 = points.get(i + 1);
-                    
-                    LineSegment segment = new LineSegment(p1, p2);
-                    int count = lineSegmentCounts.getOrDefault(segment, 1);
-                    
-                    // Calculate thickness based on density, starting from a minimum thickness
-                    float normalizedDensity = (float) count / maxDensity;
-                    float thickness = 0.5f + (normalizedDensity * 9.5f); // Scale from 0.5 to 10.0 pixels
-                    if (selectedOnly) thickness += 1.0f; // Make selected lines slightly thicker
-                    
-                    g2.setStroke(new BasicStroke(thickness));
-                    g2.setColor(baseColor);
-                    g2.draw(new Line2D.Double(p1, p2));
+                if (classLabel.equalsIgnoreCase("NN")) {
+                    nnRows.add(row);  // Collect NN rows separately
+                } else if (classLabel.equalsIgnoreCase("benign")) {
+                    benignRows.add(row);
+                } else if (classLabel.equalsIgnoreCase("malignant")) {
+                    malignantRows.add(row);
+                } else {
+                    otherRows.add(row);
                 }
-                
-                // Draw closing line if needed
-                if (closeLoop && points.size() > 1) {
-                    Point2D.Double first = points.get(0);
-                    Point2D.Double last = points.get(points.size() - 1);
-                    
-                    if (axisGap <= 0.0) {
-                        // No gap, draw direct line
-                        LineSegment segment = new LineSegment(last, first);
-                        int count = lineSegmentCounts.getOrDefault(segment, 1);
-                        
-                        float normalizedDensity = (float) count / maxDensity;
-                        float thickness = 0.5f + (normalizedDensity * 9.5f);
-                        if (selectedOnly) thickness += 1.0f;
-                        
-                        g2.setStroke(new BasicStroke(thickness));
-                        g2.setColor(baseColor);
-                        g2.draw(new Line2D.Double(last, first));
-                    } else {
-                        // Calculate direction vector
-                        double dx = first.x - last.x;
-                        double dy = first.y - last.y;
-                        double length = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (length > 0) {
-                            // Normalize and scale by gap size
-                            dx /= length;
-                            dy /= length;
-                            
-                            // Calculate new endpoints with gap
-                            Point2D.Double gapStart = new Point2D.Double(
-                                last.x + dx * length * axisGap / 2,
-                                last.y + dy * length * axisGap / 2
-                            );
-                            
-                            Point2D.Double gapEnd = new Point2D.Double(
-                                first.x - dx * length * axisGap / 2,
-                                first.y - dy * length * axisGap / 2
-                            );
-                            
-                            // Draw the two segments with appropriate thickness
-                            LineSegment segment1 = new LineSegment(last, gapStart);
-                            LineSegment segment2 = new LineSegment(gapEnd, first);
-                            
-                            int count1 = lineSegmentCounts.getOrDefault(segment1, 1);
-                            int count2 = lineSegmentCounts.getOrDefault(segment2, 1);
-                            
-                            float normalizedDensity1 = (float) count1 / maxDensity;
-                            float normalizedDensity2 = (float) count2 / maxDensity;
-                            
-                            float thickness1 = 0.5f + (normalizedDensity1 * 9.5f);
-                            float thickness2 = 0.5f + (normalizedDensity2 * 9.5f);
-                            if (selectedOnly) {
-                                thickness1 += 1.0f;
-                                thickness2 += 1.0f;
-                            }
-                            
-                            g2.setColor(baseColor);
-                            g2.setStroke(new BasicStroke(thickness1));
-                            g2.draw(new Line2D.Double(last, gapStart));
-                            
-                            g2.setStroke(new BasicStroke(thickness2));
-                            g2.draw(new Line2D.Double(gapEnd, first));
-                        }
-                    }
-                }
-
-                // Draw the shapes at the points
-                g2.setColor(baseColor);
-                for (Point2D.Double point : points) {
-                    Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
-                    g2.translate(point.x, point.y);
-                    g2.fill(shape);
-                    g2.translate(-point.x, -point.y);
-                }
+            }
+            
+            // Draw in order: malignant, other, benign, NN (so NN appears on top of all)
+            for (int row : malignantRows) {
+                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+            }
+            for (int row : otherRows) {
+                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+            }
+            for (int row : benignRows) {
+                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+            }
+            for (int row : nnRows) {
+                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
             }
         }
     }
