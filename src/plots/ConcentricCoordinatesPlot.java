@@ -1143,11 +1143,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 }
             }
             
-            // Sort rows to draw benign on top of malignant
-            List<Integer> sortedRows = new ArrayList<>();
-            List<Integer> benignRows = new ArrayList<>();
+            // Sort rows to draw benign on top of malignant, and NN on top of all
             List<Integer> malignantRows = new ArrayList<>();
-            List<Integer> nnRows = new ArrayList<>();  // Add a new list for NN class
+            List<Integer> benignRows = new ArrayList<>();
+            List<Integer> nnRows = new ArrayList<>();
             List<Integer> otherRows = new ArrayList<>();
             
             for (int row : rowsToProcess) {
@@ -1155,7 +1154,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 if (hiddenClasses.contains(classLabel)) continue;
                 
                 if (classLabel.equalsIgnoreCase("NN")) {
-                    nnRows.add(row);  // Collect NN rows separately
+                    nnRows.add(row);
                 } else if (classLabel.equalsIgnoreCase("benign")) {
                     benignRows.add(row);
                 } else if (classLabel.equalsIgnoreCase("malignant")) {
@@ -1166,17 +1165,116 @@ public class ConcentricCoordinatesPlot extends JFrame {
             }
             
             // Draw in order: malignant, other, benign, NN (so NN appears on top of all)
-            for (int row : malignantRows) {
-                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-            }
-            for (int row : otherRows) {
-                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-            }
-            for (int row : benignRows) {
-                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-            }
-            for (int row : nnRows) {
-                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+            drawRowsWithOpacity(g2, malignantRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
+            drawRowsWithOpacity(g2, otherRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
+            drawRowsWithOpacity(g2, benignRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
+            drawRowsWithOpacity(g2, nnRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
+        }
+        
+        private void drawRowsWithOpacity(Graphics2D g2, List<Integer> rows, Map<LineSegment, Integer> lineSegmentCounts,
+                                        int maxDensity, boolean selectedOnly, int centerX, int centerY, int maxRadius) {
+            for (int row : rows) {
+                String classLabel = classLabels.get(row);
+                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
+                Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+                
+                // Draw lines with opacity based on density
+                for (int i = 0; i < points.size() - 1; i++) {
+                    Point2D.Double p1 = points.get(i);
+                    Point2D.Double p2 = points.get(i + 1);
+                    
+                    LineSegment segment = new LineSegment(p1, p2);
+                    int count = lineSegmentCounts.getOrDefault(segment, 1);
+                    
+                    // Calculate opacity based on density, ensure it's at least 30% opaque
+                    float normalizedDensity = (float) count / maxDensity;
+                    int alpha = Math.max(75, (int) (normalizedDensity * 255)); // Never fully transparent
+                    Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), 
+                                                  baseColor.getBlue(), alpha);
+                    
+                    g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                    g2.setColor(adjustedColor);
+                    g2.draw(new Line2D.Double(p1, p2));
+                }
+                
+                // Draw closing line if needed
+                if (closeLoop && points.size() > 1) {
+                    Point2D.Double first = points.get(0);
+                    Point2D.Double last = points.get(points.size() - 1);
+                    
+                    if (axisGap <= 0.0) {
+                        // No gap, draw direct line
+                        LineSegment segment = new LineSegment(last, first);
+                        int count = lineSegmentCounts.getOrDefault(segment, 1);
+                        
+                        float normalizedDensity = (float) count / maxDensity;
+                        int alpha = Math.max(75, (int) (normalizedDensity * 255));
+                        Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), 
+                                                       baseColor.getBlue(), alpha);
+                        
+                        g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                        g2.setColor(adjustedColor);
+                        g2.draw(new Line2D.Double(last, first));
+                    } else {
+                        // Calculate direction vector
+                        double dx = first.x - last.x;
+                        double dy = first.y - last.y;
+                        double length = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (length > 0) {
+                            // Normalize and scale by gap size
+                            dx /= length;
+                            dy /= length;
+                            
+                            // Calculate new endpoints with gap
+                            Point2D.Double gapStart = new Point2D.Double(
+                                last.x + dx * length * axisGap / 2,
+                                last.y + dy * length * axisGap / 2
+                            );
+                            
+                            Point2D.Double gapEnd = new Point2D.Double(
+                                first.x - dx * length * axisGap / 2,
+                                first.y - dy * length * axisGap / 2
+                            );
+                            
+                            // Draw the two segments with appropriate opacity
+                            LineSegment segment1 = new LineSegment(last, gapStart);
+                            LineSegment segment2 = new LineSegment(gapEnd, first);
+                            
+                            int count1 = lineSegmentCounts.getOrDefault(segment1, 1);
+                            int count2 = lineSegmentCounts.getOrDefault(segment2, 1);
+                            
+                            float normalizedDensity1 = (float) count1 / maxDensity;
+                            float normalizedDensity2 = (float) count2 / maxDensity;
+                            
+                            int alpha1 = Math.max(75, (int) (normalizedDensity1 * 255));
+                            int alpha2 = Math.max(75, (int) (normalizedDensity2 * 255));
+                            
+                            Color adjustedColor1 = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 
+                                                         alpha1);
+                            Color adjustedColor2 = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 
+                                                         alpha2);
+                            
+                            g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                            g2.setColor(adjustedColor1);
+                            g2.draw(new Line2D.Double(last, gapStart));
+                            
+                            g2.setColor(adjustedColor2);
+                            g2.draw(new Line2D.Double(gapEnd, first));
+                        }
+                    }
+                }
+
+                // Draw the shapes at the points with full opacity
+                // Use the original base color (full opacity) for vertices
+                Color fullOpacityColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 255);
+                g2.setColor(fullOpacityColor);
+                for (Point2D.Double point : points) {
+                    Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
+                    g2.translate(point.x, point.y);
+                    g2.fill(shape);
+                    g2.translate(-point.x, -point.y);
+                }
             }
         }
 
@@ -1194,11 +1292,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 }
             }
 
-            // Sort rows to draw benign on top of malignant
-            List<Integer> sortedRows = new ArrayList<>();
-            List<Integer> benignRows = new ArrayList<>();
+            // Sort rows to draw benign on top of malignant, and NN on top of all
             List<Integer> malignantRows = new ArrayList<>();
-            List<Integer> nnRows = new ArrayList<>();  // Add a new list for NN class
+            List<Integer> benignRows = new ArrayList<>();
+            List<Integer> nnRows = new ArrayList<>();
             List<Integer> otherRows = new ArrayList<>();
             
             for (int row : rowsToProcess) {
@@ -1206,7 +1303,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 if (hiddenClasses.contains(classLabel)) continue;
                 
                 if (classLabel.equalsIgnoreCase("NN")) {
-                    nnRows.add(row);  // Collect NN rows separately
+                    nnRows.add(row);
                 } else if (classLabel.equalsIgnoreCase("benign")) {
                     benignRows.add(row);
                 } else if (classLabel.equalsIgnoreCase("malignant")) {
@@ -1217,17 +1314,111 @@ public class ConcentricCoordinatesPlot extends JFrame {
             }
             
             // Draw in order: malignant, other, benign, NN (so NN appears on top of all)
-            for (int row : malignantRows) {
-                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-            }
-            for (int row : otherRows) {
-                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-            }
-            for (int row : benignRows) {
-                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-            }
-            for (int row : nnRows) {
-                drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
+            drawRowsWithThickness(g2, malignantRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
+            drawRowsWithThickness(g2, otherRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
+            drawRowsWithThickness(g2, benignRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
+            drawRowsWithThickness(g2, nnRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
+        }
+        
+        private void drawRowsWithThickness(Graphics2D g2, List<Integer> rows, Map<LineSegment, Integer> lineSegmentCounts,
+                                        int maxDensity, boolean selectedOnly, int centerX, int centerY, int maxRadius) {
+            for (int row : rows) {
+                String classLabel = classLabels.get(row);
+                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
+                Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+                
+                // Draw lines with thickness based on density
+                for (int i = 0; i < points.size() - 1; i++) {
+                    Point2D.Double p1 = points.get(i);
+                    Point2D.Double p2 = points.get(i + 1);
+                    
+                    LineSegment segment = new LineSegment(p1, p2);
+                    int count = lineSegmentCounts.getOrDefault(segment, 1);
+                    
+                    // Calculate thickness based on density, starting from a minimum thickness
+                    float normalizedDensity = (float) count / maxDensity;
+                    float thickness = 0.5f + (normalizedDensity * 5.5f); // Scale from 0.5 to 6.0 pixels
+                    if (selectedOnly) thickness += 1.0f; // Make selected lines slightly thicker
+                    
+                    g2.setStroke(new BasicStroke(thickness));
+                    g2.setColor(baseColor);
+                    g2.draw(new Line2D.Double(p1, p2));
+                }
+                
+                // Draw closing line if needed
+                if (closeLoop && points.size() > 1) {
+                    Point2D.Double first = points.get(0);
+                    Point2D.Double last = points.get(points.size() - 1);
+                    
+                    if (axisGap <= 0.0) {
+                        // No gap, draw direct line
+                        LineSegment segment = new LineSegment(last, first);
+                        int count = lineSegmentCounts.getOrDefault(segment, 1);
+                        
+                        float normalizedDensity = (float) count / maxDensity;
+                        float thickness = 0.5f + (normalizedDensity * 5.5f);
+                        if (selectedOnly) thickness += 1.0f;
+                        
+                        g2.setStroke(new BasicStroke(thickness));
+                        g2.setColor(baseColor);
+                        g2.draw(new Line2D.Double(last, first));
+                    } else {
+                        // Calculate direction vector
+                        double dx = first.x - last.x;
+                        double dy = first.y - last.y;
+                        double length = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (length > 0) {
+                            // Normalize and scale by gap size
+                            dx /= length;
+                            dy /= length;
+                            
+                            // Calculate new endpoints with gap
+                            Point2D.Double gapStart = new Point2D.Double(
+                                last.x + dx * length * axisGap / 2,
+                                last.y + dy * length * axisGap / 2
+                            );
+                            
+                            Point2D.Double gapEnd = new Point2D.Double(
+                                first.x - dx * length * axisGap / 2,
+                                first.y - dy * length * axisGap / 2
+                            );
+                            
+                            // Draw the two segments with appropriate thickness
+                            LineSegment segment1 = new LineSegment(last, gapStart);
+                            LineSegment segment2 = new LineSegment(gapEnd, first);
+                            
+                            int count1 = lineSegmentCounts.getOrDefault(segment1, 1);
+                            int count2 = lineSegmentCounts.getOrDefault(segment2, 1);
+                            
+                            float normalizedDensity1 = (float) count1 / maxDensity;
+                            float normalizedDensity2 = (float) count2 / maxDensity;
+                            
+                            float thickness1 = 0.5f + (normalizedDensity1 * 5.5f);
+                            float thickness2 = 0.5f + (normalizedDensity2 * 5.5f);
+                            if (selectedOnly) {
+                                thickness1 += 1.0f;
+                                thickness2 += 1.0f;
+                            }
+                            
+                            g2.setColor(baseColor);
+                            g2.setStroke(new BasicStroke(thickness1));
+                            g2.draw(new Line2D.Double(last, gapStart));
+                            
+                            g2.setStroke(new BasicStroke(thickness2));
+                            g2.draw(new Line2D.Double(gapEnd, first));
+                        }
+                    }
+                }
+
+                // Draw the shapes at the points
+                g2.setColor(baseColor);
+                for (Point2D.Double point : points) {
+                    Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
+                    g2.translate(point.x, point.y);
+                    g2.fill(shape);
+                    g2.translate(-point.x, -point.y);
+                }
             }
         }
     }
