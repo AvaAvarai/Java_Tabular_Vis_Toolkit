@@ -318,7 +318,12 @@ public class CsvViewer extends JFrame {
     }
 
     private String formatDecimalWithoutScientificNotation(double value) {
-        DecimalFormat decimalFormat = new DecimalFormat("#.##########################");
+        int precision = stateManager.getDecimalPrecision();
+        StringBuilder formatPattern = new StringBuilder("#.");
+        for (int i = 0; i < precision; i++) {
+            formatPattern.append("#");
+        }
+        DecimalFormat decimalFormat = new DecimalFormat(formatPattern.toString());
         decimalFormat.setDecimalSeparatorAlwaysShown(false);
         return decimalFormat.format(value);
     }
@@ -1633,6 +1638,33 @@ public class CsvViewer extends JFrame {
         if (validDimensions == 0) return Double.MAX_VALUE;
         
         return Math.sqrt(sumSquaredDiff);
+    }
+
+    /**
+     * Sets the decimal precision for formatting numbers and refreshes the table display
+     * @param precision Number of decimal places to show
+     */
+    public void setDecimalPrecision(int precision) {
+        stateManager.setDecimalPrecision(precision);
+        
+        // Format all numeric cells in the table with the new precision
+        for (int row = 0; row < tableModel.getRowCount(); row++) {
+            for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                Object value = tableModel.getValueAt(row, col);
+                if (value != null && isNumeric(value.toString())) {
+                    try {
+                        double numericValue = Double.parseDouble(value.toString());
+                        tableModel.setValueAt(formatDecimalWithoutScientificNotation(numericValue), row, col);
+                    } catch (NumberFormatException e) {
+                        // Skip non-numeric values
+                    }
+                }
+            }
+        }
+        
+        // Update stats to reflect new precision
+        dataHandler.updateStats(tableModel, statsTextArea);
+        statsTextArea.append("\nDecimal precision set to " + precision + " places.\n");
     }
 }
 

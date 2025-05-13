@@ -238,6 +238,29 @@ public class ButtonPanelManager {
         addMenuItem(visualizationMenu, "Toggle Highlight Blanks", "/icons/heatmap.png", _ -> csvViewer.highlightBlanks());
         addMenuItem(visualizationMenu, "Font Settings", "/icons/fontcolor.png", _ -> csvViewer.showFontSettingsDialog());
         addMenuItem(visualizationMenu, "Set Class Colors", "/icons/setcolor.png", _ -> csvViewer.showColorPickerDialog());
+        
+        // Add decimal precision submenu
+        JMenu precisionMenu = new JMenu("Set Decimal Precision");
+        precisionMenu.setIcon(resizeIcon("/icons/function.png"));
+        
+        // Add radio buttons for precision options
+        ButtonGroup precisionGroup = new ButtonGroup();
+        
+        for (int i = 0; i <= 6; i++) {
+            final int precision = i;
+            JRadioButtonMenuItem precisionItem = new JRadioButtonMenuItem(i + " decimal places");
+            
+            // Check the current precision setting
+            if (precision == csvViewer.getStateManager().getDecimalPrecision()) {
+                precisionItem.setSelected(true);
+            }
+            
+            precisionItem.addActionListener(_ -> csvViewer.setDecimalPrecision(precision));
+            precisionGroup.add(precisionItem);
+            precisionMenu.add(precisionItem);
+        }
+        
+        visualizationMenu.add(precisionMenu);
 
         // Analysis Menu
         JMenu analysisMenu = new JMenu("Analysis Tools");

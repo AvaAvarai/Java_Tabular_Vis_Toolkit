@@ -23,6 +23,7 @@ public class StateManager {
     private boolean differenceColumnsVisible;
     private Set<Integer> classColumns;
     private List<List<String>> originalData = new ArrayList<>();
+    private int decimalPrecision = 4; // Default precision is 4 decimal places
 
     public StateManager() {
         this.datasetName = "";
@@ -52,6 +53,7 @@ public class StateManager {
         cellTextColor = Color.BLACK;
         differenceColumnsVisible = false;
         classColumns.clear();
+        // Don't reset decimal precision during state clear
     }
 
     public String getDatasetName() {
@@ -151,5 +153,13 @@ public class StateManager {
         for (List<String> row : data) {
             this.originalData.add(new ArrayList<>(row));
         }
+    }
+
+    public int getDecimalPrecision() {
+        return decimalPrecision;
+    }
+
+    public void setDecimalPrecision(int decimalPrecision) {
+        this.decimalPrecision = decimalPrecision;
     }
 }
