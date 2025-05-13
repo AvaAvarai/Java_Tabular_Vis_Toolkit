@@ -40,6 +40,8 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private boolean closeLoop = true;
     private double axisGap = 0.0; // Gap between first and last attribute positions
     private boolean concentricMode = true;
+    private boolean highlightPureVertices = false; // New variable for pure vertices feature
+    private float pureVertexScaleFactor = 1.5f; // Scale factor for pure vertices
     private enum DensityMode {
         NO_DENSITY,
         DENSITY_WITH_OPACITY,
@@ -343,479 +345,1002 @@ public class ConcentricCoordinatesPlot extends JFrame {
             JToggleButton convexHullToggle = new JToggleButton("Show Convex Hulls", false);
             convexHullToggle.addActionListener(e -> {
                 showConvexHulls = convexHullToggle.isSelected();
-            plotPanel.repaint();
-        });
+                plotPanel.repaint();
+            });
 
-        // Add global normalization toggle
-        JToggleButton normalizeAllToggle = new JToggleButton("Normalize All", true);
-        normalizeAllToggle.addActionListener(e -> {
-            boolean normalizeAll = normalizeAllToggle.isSelected();
+            // Add pure vertices toggle
+            JToggleButton pureVertexToggle = new JToggleButton("Highlight Pure Vertices", false);
+            pureVertexToggle.addActionListener(e -> {
+                highlightPureVertices = pureVertexToggle.isSelected();
+                plotPanel.repaint();
+            });
+
+            // Add pure vertex size slider
+            JPanel pureVertexPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            pureVertexPanel.setBackground(Color.WHITE);
+            JLabel pureVertexSizeLabel = new JLabel("Pure Vertex Size: ");
+            JSlider pureVertexSizeSlider = new JSlider(JSlider.HORIZONTAL, 100, 300, 150);
+            pureVertexSizeSlider.setPreferredSize(new Dimension(120, 40));
+            pureVertexSizeSlider.setMajorTickSpacing(50);
+            pureVertexSizeSlider.setMinorTickSpacing(25);
+            pureVertexSizeSlider.setPaintTicks(true);
+            pureVertexSizeSlider.setPaintLabels(true);
+            Hashtable<Integer, JLabel> sizeLabels = new Hashtable<>();
+            sizeLabels.put(100, new JLabel("1x"));
+            sizeLabels.put(150, new JLabel("1.5x"));
+            sizeLabels.put(200, new JLabel("2x"));
+            sizeLabels.put(250, new JLabel("2.5x"));
+            sizeLabels.put(300, new JLabel("3x"));
+            pureVertexSizeSlider.setLabelTable(sizeLabels);
+            pureVertexSizeSlider.addChangeListener(e -> {
+                pureVertexScaleFactor = pureVertexSizeSlider.getValue() / 100.0f;
+                plotPanel.repaint();
+            });
+            pureVertexPanel.add(pureVertexSizeLabel);
+            pureVertexPanel.add(pureVertexSizeSlider);
+
+            // Add global normalization toggle
+            JToggleButton normalizeAllToggle = new JToggleButton("Normalize All", true);
+            normalizeAllToggle.addActionListener(e -> {
+                boolean normalizeAll = normalizeAllToggle.isSelected();
+                for (String attribute : attributeNames) {
+                    normalizeAttributes.put(attribute, normalizeAll);
+                    normalizeToggles.get(attribute).setSelected(normalizeAll);
+                }
+                plotPanel.repaint();
+            });
+
+            globalControlPanel.add(zoomLabel);
+            globalControlPanel.add(zoomSlider);
+            globalControlPanel.add(sliderLabel);
+            globalControlPanel.add(piSlider);
+            globalControlPanel.add(gapLabel);
+            globalControlPanel.add(gapSlider);
+            globalControlPanel.add(labelToggle);
+            globalControlPanel.add(loopToggle);
+            globalControlPanel.add(concentricToggle);
+            globalControlPanel.add(optimizeButton);
+            globalControlPanel.add(normalizeAllToggle);
+            globalControlPanel.add(convexHullToggle);
+            globalControlPanel.add(pureVertexToggle);
+            globalControlPanel.add(pureVertexPanel);
+            
+            controlPanel.add(globalControlPanel);
+
+            // Add individual attribute rotation sliders, radius sliders, direction toggles, and normalization toggles
+            JPanel attributeSlidersPanel = new JPanel();
+            attributeSlidersPanel.setLayout(new BoxLayout(attributeSlidersPanel, BoxLayout.Y_AXIS));
+            attributeSlidersPanel.setBackground(Color.WHITE);
+            attributeSlidersPanel.setBorder(BorderFactory.createTitledBorder("Attribute Controls"));
+
             for (String attribute : attributeNames) {
-                normalizeAttributes.put(attribute, normalizeAll);
-                normalizeToggles.get(attribute).setSelected(normalizeAll);
+                JPanel sliderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                sliderPanel.setBackground(Color.WHITE);
+                
+                JLabel label = new JLabel(attribute + ": ");
+                
+                // Rotation slider
+                JSlider rotationSlider = new JSlider(JSlider.HORIZONTAL, 0, 360, 0);
+                rotationSlider.setPreferredSize(new Dimension(200, 40));
+                rotationSlider.addChangeListener(e -> {
+                    attributeRotations.put(attribute, rotationSlider.getValue() * Math.PI / 180);
+                    plotPanel.repaint();
+                });
+                attributeSliders.put(attribute, rotationSlider);
+                
+                // Radius slider
+                JSlider radiusSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);
+                radiusSlider.setPreferredSize(new Dimension(200, 40));
+                radiusSlider.addChangeListener(e -> {
+                    attributeRadii.put(attribute, radiusSlider.getValue() / 100.0);
+                    plotPanel.repaint();
+                });
+                radiusSliders.put(attribute, radiusSlider);
+                
+                JCheckBox directionToggle = new JCheckBox("Reverse", false);
+                directionToggle.addActionListener(e -> {
+                    attributeDirections.put(attribute, !directionToggle.isSelected());
+                    plotPanel.repaint();
+                });
+                attributeToggles.put(attribute, directionToggle);
+                
+                JCheckBox normalizeToggle = new JCheckBox("Normalize", true);
+                normalizeToggle.addActionListener(e -> {
+                    normalizeAttributes.put(attribute, normalizeToggle.isSelected());
+                    plotPanel.repaint();
+                });
+                normalizeToggles.put(attribute, normalizeToggle);
+                
+                sliderPanel.add(label);
+                sliderPanel.add(new JLabel("Rotation:"));
+                sliderPanel.add(rotationSlider);
+                sliderPanel.add(new JLabel("Radius:"));
+                sliderPanel.add(radiusSlider);
+                sliderPanel.add(directionToggle);
+                sliderPanel.add(normalizeToggle);
+                attributeSlidersPanel.add(sliderPanel);
             }
-            plotPanel.repaint();
-        });
 
-        globalControlPanel.add(zoomLabel);
-        globalControlPanel.add(zoomSlider);
-        globalControlPanel.add(sliderLabel);
-        globalControlPanel.add(piSlider);
-        globalControlPanel.add(gapLabel);
-        globalControlPanel.add(gapSlider);
-        globalControlPanel.add(labelToggle);
-        globalControlPanel.add(loopToggle);
-        globalControlPanel.add(concentricToggle);
-        globalControlPanel.add(optimizeButton);
-        globalControlPanel.add(normalizeAllToggle);
-        globalControlPanel.add(convexHullToggle);
-        
-        controlPanel.add(globalControlPanel);
+            JScrollPane sliderScrollPane = new JScrollPane(attributeSlidersPanel);
+            sliderScrollPane.setPreferredSize(new Dimension(300, 150));
+            controlPanel.add(sliderScrollPane);
 
-        // Add individual attribute rotation sliders, radius sliders, direction toggles, and normalization toggles
-        JPanel attributeSlidersPanel = new JPanel();
-        attributeSlidersPanel.setLayout(new BoxLayout(attributeSlidersPanel, BoxLayout.Y_AXIS));
-        attributeSlidersPanel.setBackground(Color.WHITE);
-        attributeSlidersPanel.setBorder(BorderFactory.createTitledBorder("Attribute Controls"));
+            // Ensure the JFrame is focusable to capture key events
+            setFocusable(true);
+            requestFocusInWindow();
 
-        for (String attribute : attributeNames) {
-            JPanel sliderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            sliderPanel.setBackground(Color.WHITE);
-            
-            JLabel label = new JLabel(attribute + ": ");
-            
-            // Rotation slider
-            JSlider rotationSlider = new JSlider(JSlider.HORIZONTAL, 0, 360, 0);
-            rotationSlider.setPreferredSize(new Dimension(200, 40));
-            rotationSlider.addChangeListener(e -> {
-                attributeRotations.put(attribute, rotationSlider.getValue() * Math.PI / 180);
-                plotPanel.repaint();
-            });
-            attributeSliders.put(attribute, rotationSlider);
-            
-            // Radius slider
-            JSlider radiusSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);
-            radiusSlider.setPreferredSize(new Dimension(200, 40));
-            radiusSlider.addChangeListener(e -> {
-                attributeRadii.put(attribute, radiusSlider.getValue() / 100.0);
-                plotPanel.repaint();
-            });
-            radiusSliders.put(attribute, radiusSlider);
-            
-            JCheckBox directionToggle = new JCheckBox("Reverse", false);
-            directionToggle.addActionListener(e -> {
-                attributeDirections.put(attribute, !directionToggle.isSelected());
-                plotPanel.repaint();
-            });
-            attributeToggles.put(attribute, directionToggle);
-            
-            JCheckBox normalizeToggle = new JCheckBox("Normalize", true);
-            normalizeToggle.addActionListener(e -> {
-                normalizeAttributes.put(attribute, normalizeToggle.isSelected());
-                plotPanel.repaint();
-            });
-            normalizeToggles.put(attribute, normalizeToggle);
-            
-            sliderPanel.add(label);
-            sliderPanel.add(new JLabel("Rotation:"));
-            sliderPanel.add(rotationSlider);
-            sliderPanel.add(new JLabel("Radius:"));
-            sliderPanel.add(radiusSlider);
-            sliderPanel.add(directionToggle);
-            sliderPanel.add(normalizeToggle);
-            attributeSlidersPanel.add(sliderPanel);
-        }
-
-        JScrollPane sliderScrollPane = new JScrollPane(attributeSlidersPanel);
-        sliderScrollPane.setPreferredSize(new Dimension(300, 150));
-        controlPanel.add(sliderScrollPane);
-
-        // Ensure the JFrame is focusable to capture key events
-        setFocusable(true);
-        requestFocusInWindow();
-
-        // Add key listener to the frame instead of the panel
-        addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_A) { // 'A' key for alignment
-                    plotPanel.alignHighlightedCases();
+            // Add key listener to the frame instead of the panel
+            addKeyListener(new KeyAdapter() {
+                @Override
+                public void keyPressed(KeyEvent e) {
+                    if (e.getKeyCode() == KeyEvent.VK_A) { // 'A' key for alignment
+                        plotPanel.alignHighlightedCases();
+                    }
                 }
-            }
-        });
+            });
 
-        // Add components to main panel
-        mainPanel.add(plotScrollPane, BorderLayout.CENTER);
-        mainPanel.add(LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses), BorderLayout.SOUTH);
-        mainPanel.add(controlPanel, BorderLayout.NORTH);
+            // Add components to main panel
+            mainPanel.add(plotScrollPane, BorderLayout.CENTER);
+            mainPanel.add(LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses), BorderLayout.SOUTH);
+            mainPanel.add(controlPanel, BorderLayout.NORTH);
 
-        setContentPane(mainPanel);
-    }
-
-    private List<Point2D.Double> computeConvexHull(List<Point2D.Double> points) {
-        points.sort(Comparator.comparingDouble((Point2D.Double p) -> p.x).thenComparingDouble(p -> p.y));
-        List<Point2D.Double> lower = new ArrayList<>();
-        for (Point2D.Double p : points) {
-            while (lower.size() >= 2 && cross(lower.get(lower.size() - 2), lower.get(lower.size() - 1), p) <= 0) {
-                lower.remove(lower.size() - 1);
-            }
-            lower.add(p);
+            setContentPane(mainPanel);
         }
-        List<Point2D.Double> upper = new ArrayList<>();
-        for (int i = points.size() - 1; i >= 0; i--) {
-            Point2D.Double p = points.get(i);
-            while (upper.size() >= 2 && cross(upper.get(upper.size() - 2), upper.get(upper.size() - 1), p) <= 0) {
-                upper.remove(upper.size() - 1);
-            }
-            upper.add(p);
-        }
-        lower.remove(lower.size() - 1);
-        upper.remove(upper.size() - 1);
-        lower.addAll(upper);
-        return lower;
-    }
 
-    private double cross(Point2D.Double o, Point2D.Double a, Point2D.Double b) {
-        return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
-    }
-
-    private void drawConvexHulls(Graphics2D g2, Map<String, List<Point2D.Double>> classPoints) {
-        for (Map.Entry<String, List<Point2D.Double>> entry : classPoints.entrySet()) {
-            String classLabel = entry.getKey();
-            List<Point2D.Double> hull = computeConvexHull(entry.getValue());
-            g2.setColor(new Color(classColors.getOrDefault(classLabel, Color.BLACK).getRGB() & 0xFFFFFF | 0x66000000, true));
-            Path2D.Double path = new Path2D.Double();
-            for (int i = 0; i < hull.size(); i++) {
-                Point2D.Double p = hull.get(i);
-                if (i == 0) {
-                    path.moveTo(p.x, p.y);
-                } else {
-                    path.lineTo(p.x, p.y);
+        private List<Point2D.Double> computeConvexHull(List<Point2D.Double> points) {
+            points.sort(Comparator.comparingDouble((Point2D.Double p) -> p.x).thenComparingDouble(p -> p.y));
+            List<Point2D.Double> lower = new ArrayList<>();
+            for (Point2D.Double p : points) {
+                while (lower.size() >= 2 && cross(lower.get(lower.size() - 2), lower.get(lower.size() - 1), p) <= 0) {
+                    lower.remove(lower.size() - 1);
                 }
+                lower.add(p);
             }
-            path.closePath();
-            g2.fill(path);
-        }
-    }
-    
-    private List<Point2D.Double> getPolylinePoints(int row, int centerX, int centerY, int maxRadius) {
-        List<Point2D.Double> points = new ArrayList<>();
-        int numAttributes = attributeNames.size();
-        
-        for (int i = 0; i < numAttributes; i++) {
-            String attribute = attributeNames.get(i);
-            double value = data.get(i).get(row);
-            double normalizedValue = normalizeAttributes.get(attribute)
-                    ? (value - attributeMinValues.get(attribute)) / (attributeMaxValues.get(attribute) - attributeMinValues.get(attribute))
-                    : value / globalMaxValue;
-            if (!attributeDirections.get(attribute)) {
-                normalizedValue = 1.0 - normalizedValue;
-            }
-            
-            // Value determines angle around the circle
-            double attributeRotation = attributeRotations.get(attribute);
-            
-            if (concentricMode) {
-                // In concentric mode, apply the gap between attributes
-                // Calculate what portion of circle to use (adjust for gap)
-                double usedPortion = 1.0 - axisGap;
-                // Use normalized value to calculate angle, adjusting for gap
-                double angle = (1.5 * Math.PI) + (normalizedValue * usedPortion * 2 * Math.PI) + attributeRotation + piAdjustment;
-                
-                // Each attribute has its own fixed circle
-                double radius = (i + 1) * (maxRadius / numAttributes) * attributeRadii.get(attribute);
-                double x = centerX + radius * Math.cos(angle);
-                double y = centerY + radius * Math.sin(angle);
-                points.add(new Point2D.Double(x, y));
-            } else {
-                // In freeform mode, use the axis-specific positions
-                Point pos = axisPositions.getOrDefault(attribute, 
-                    new Point(centerX + (i - numAttributes/2) * (maxRadius / (numAttributes + 1)) * 2, centerY));
-                
-                // Use the normalized value to calculate distance from axis center
-                double axisRadius = (maxRadius / (numAttributes + 1)) * attributeRadii.get(attribute);
-                
-                // Apply the gap in the angle calculation
-                double usedPortion = 1.0 - axisGap;
-                double angle = (1.5 * Math.PI) + (normalizedValue * usedPortion * 2 * Math.PI) + attributeRotation + piAdjustment;
-                
-                double x = pos.x + axisRadius * Math.cos(angle);
-                double y = pos.y + axisRadius * Math.sin(angle);
-                points.add(new Point2D.Double(x, y));
-            }
-        }
-        return points;
-    }    
-
-    private void optimizeAxesLayout() {
-        int centerX = plotPanel.getWidth() / 2;
-        int centerY = plotPanel.getHeight() / 2;
-        int maxRadius = Math.min(centerX, centerY) - 50;
-        int numAttributes = attributeNames.size();
-        
-        // Calculate correlation matrix between attributes
-        double[][] correlations = calculateCorrelationMatrix();
-        
-        // Create list of attribute indices to optimize
-        List<Integer> indices = new ArrayList<>();
-        for (int i = 0; i < numAttributes; i++) {
-            indices.add(i);
-        }
-        
-        // Optimize attribute order based on correlations
-        optimizeAttributeOrder(indices, correlations);
-        
-        // Position axes based on optimized order
-        for (int i = 0; i < numAttributes; i++) {
-            String attribute = attributeNames.get(indices.get(i));
-            double angle = 2 * Math.PI * i / numAttributes;
-            
-            // Set optimized position
-            int x = centerX + (int)(maxRadius * 0.6 * Math.cos(angle));
-            int y = centerY + (int)(maxRadius * 0.6 * Math.sin(angle));
-            axisPositions.put(attribute, new Point(x, y));
-            
-            // Set optimized rotation
-            attributeRotations.put(attribute, angle);
-            
-            // Set optimized direction based on correlations
-            boolean shouldReverse = calculateShouldReverse(indices.get(i), correlations);
-            attributeDirections.put(attribute, !shouldReverse);
-            
-            // Set optimized radius based on correlation strength
-            double avgCorrelation = calculateAverageCorrelation(indices.get(i), correlations);
-            double radius = Math.abs(avgCorrelation); // Scale radius between 0.0 and 1.0
-            attributeRadii.put(attribute, radius);
-        }
-    }
-    
-    private double calculateAverageCorrelation(int attrIndex, double[][] correlations) {
-        double sum = 0;
-        int count = 0;
-        for (int i = 0; i < correlations.length; i++) {
-            if (i != attrIndex) {
-                sum += Math.abs(correlations[attrIndex][i]);
-                count++;
-            }
-        }
-        return count > 0 ? sum / count : 0;
-    }
-    
-    private double[][] calculateCorrelationMatrix() {
-        int n = attributeNames.size();
-        double[][] correlations = new double[n][n];
-        
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++) {
-                List<Double> attr1 = data.get(i);
-                List<Double> attr2 = data.get(j);
-                correlations[i][j] = calculateCorrelation(attr1, attr2);
-            }
-        }
-        
-        return correlations;
-    }
-    
-    private double calculateCorrelation(List<Double> x, List<Double> y) {
-        int n = x.size();
-        double sumX = 0, sumY = 0, sumXY = 0;
-        double sumX2 = 0, sumY2 = 0;
-        
-        for (int i = 0; i < n; i++) {
-            sumX += x.get(i);
-            sumY += y.get(i);
-            sumXY += x.get(i) * y.get(i);
-            sumX2 += x.get(i) * x.get(i);
-            sumY2 += y.get(i) * y.get(i);
-        }
-        
-        double numerator = n * sumXY - sumX * sumY;
-        double denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-        
-        return denominator == 0 ? 0 : numerator / denominator;
-    }
-    
-    private void optimizeAttributeOrder(List<Integer> indices, double[][] correlations) {
-        // Simple greedy algorithm to place highly correlated attributes adjacent to each other
-        for (int i = 1; i < indices.size(); i++) {
-            int bestIndex = i;
-            double bestCorrelation = Math.abs(correlations[indices.get(i-1)][indices.get(i)]);
-            
-            for (int j = i + 1; j < indices.size(); j++) {
-                double correlation = Math.abs(correlations[indices.get(i-1)][indices.get(j)]);
-                if (correlation > bestCorrelation) {
-                    bestCorrelation = correlation;
-                    bestIndex = j;
+            List<Point2D.Double> upper = new ArrayList<>();
+            for (int i = points.size() - 1; i >= 0; i--) {
+                Point2D.Double p = points.get(i);
+                while (upper.size() >= 2 && cross(upper.get(upper.size() - 2), upper.get(upper.size() - 1), p) <= 0) {
+                    upper.remove(upper.size() - 1);
                 }
+                upper.add(p);
             }
-            
-            if (bestIndex != i) {
-                Collections.swap(indices, i, bestIndex);
-            }
-        }
-    }
-    
-    private boolean calculateShouldReverse(int attrIndex, double[][] correlations) {
-        // Count negative correlations with other attributes
-        int negativeCount = 0;
-        for (int i = 0; i < correlations.length; i++) {
-            if (i != attrIndex && correlations[attrIndex][i] < 0) {
-                negativeCount++;
-            }
-        }
-        // Reverse if more than half correlations are negative
-        return negativeCount > correlations.length / 2;
-    }
-
-    private class ConcentricCoordinatesPanel extends JPanel {
-        // Add LineSegment class to track identical segments
-        private static class LineSegment {
-            final int x1, y1, x2, y2;
-            
-            LineSegment(Point2D.Double p1, Point2D.Double p2) {
-                // Round coordinates to reduce floating point precision issues
-                this.x1 = (int) Math.round(p1.x);
-                this.y1 = (int) Math.round(p1.y);
-                this.x2 = (int) Math.round(p2.x);
-                this.y2 = (int) Math.round(p2.y);
-            }
-            
-            @Override
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (!(o instanceof LineSegment)) return false;
-                LineSegment that = (LineSegment) o;
-                return x1 == that.x1 && y1 == that.y1 && x2 == that.x2 && y2 == that.y2;
-            }
-            
-            @Override
-            public int hashCode() {
-                return Objects.hash(x1, y1, x2, y2);
-            }
-        }
-        
-        public ConcentricCoordinatesPanel() {
-            setBackground(new Color(0, 0, 0, 0));
+            lower.remove(lower.size() - 1);
+            upper.remove(upper.size() - 1);
+            lower.addAll(upper);
+            return lower;
         }
 
-        public void alignHighlightedCases() {
-            if (selectedRows.isEmpty()) {
-                return;
-            }
+        private double cross(Point2D.Double o, Point2D.Double a, Point2D.Double b) {
+            return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+        }
 
-            // Calculate mean values for highlighted cases
-            List<Double> meanValues = new ArrayList<>();
-            for (int i = 0; i < attributeNames.size(); i++) {
-                double sum = 0;
-                for (int row : selectedRows) {
-                    double value = data.get(i).get(row);
-                    String attribute = attributeNames.get(i);
-                    if (normalizeAttributes.get(attribute)) {
-                        double min = attributeMinValues.get(attribute);
-                        double max = attributeMaxValues.get(attribute);
-                        value = (value - min) / (max - min);
+        private void drawConvexHulls(Graphics2D g2, Map<String, List<Point2D.Double>> classPoints) {
+            for (Map.Entry<String, List<Point2D.Double>> entry : classPoints.entrySet()) {
+                String classLabel = entry.getKey();
+                List<Point2D.Double> hull = computeConvexHull(entry.getValue());
+                g2.setColor(new Color(classColors.getOrDefault(classLabel, Color.BLACK).getRGB() & 0xFFFFFF | 0x66000000, true));
+                Path2D.Double path = new Path2D.Double();
+                for (int i = 0; i < hull.size(); i++) {
+                    Point2D.Double p = hull.get(i);
+                    if (i == 0) {
+                        path.moveTo(p.x, p.y);
                     } else {
-                        value = value / globalMaxValue;
+                        path.lineTo(p.x, p.y);
                     }
-                    if (!attributeDirections.get(attribute)) {
-                        value = 1.0 - value;
-                    }
-                    sum += value;
                 }
-                meanValues.add(sum / selectedRows.size());
+                path.closePath();
+                g2.fill(path);
             }
-
-            // Calculate required rotations to align means vertically
-            for (int i = 0; i < attributeNames.size(); i++) {
+        }
+        
+        private List<Point2D.Double> getPolylinePoints(int row, int centerX, int centerY, int maxRadius) {
+            List<Point2D.Double> points = new ArrayList<>();
+            int numAttributes = attributeNames.size();
+            
+            for (int i = 0; i < numAttributes; i++) {
                 String attribute = attributeNames.get(i);
-                double meanValue = meanValues.get(i);
-                double currentAngle = (1.5 * Math.PI) + (meanValue * 2 * Math.PI) + attributeRotations.get(attribute) + piAdjustment;
-                double targetAngle = 1.5 * Math.PI; // Straight up
-                double rotationAdjustment = targetAngle - currentAngle;
+                double value = data.get(i).get(row);
+                double normalizedValue = normalizeAttributes.get(attribute)
+                        ? (value - attributeMinValues.get(attribute)) / (attributeMaxValues.get(attribute) - attributeMinValues.get(attribute))
+                        : value / globalMaxValue;
+                if (!attributeDirections.get(attribute)) {
+                    normalizedValue = 1.0 - normalizedValue;
+                }
                 
-                // Update rotation
-                double newRotation = attributeRotations.get(attribute) + rotationAdjustment;
-                attributeRotations.put(attribute, newRotation);
+                // Value determines angle around the circle
+                double attributeRotation = attributeRotations.get(attribute);
                 
-                // Update rotation slider if it exists
-                JSlider rotationSlider = attributeSliders.get(attribute);
-                if (rotationSlider != null) {
-                    int degrees = (int)(newRotation * 180 / Math.PI);
-                    rotationSlider.setValue(degrees);
+                if (concentricMode) {
+                    // In concentric mode, apply the gap between attributes
+                    // Calculate what portion of circle to use (adjust for gap)
+                    double usedPortion = 1.0 - axisGap;
+                    // Use normalized value to calculate angle, adjusting for gap
+                    double angle = (1.5 * Math.PI) + (normalizedValue * usedPortion * 2 * Math.PI) + attributeRotation + piAdjustment;
+                    
+                    // Each attribute has its own fixed circle
+                    double radius = (i + 1) * (maxRadius / numAttributes) * attributeRadii.get(attribute);
+                    double x = centerX + radius * Math.cos(angle);
+                    double y = centerY + radius * Math.sin(angle);
+                    points.add(new Point2D.Double(x, y));
+                } else {
+                    // In freeform mode, use the axis-specific positions
+                    Point pos = axisPositions.getOrDefault(attribute, 
+                        new Point(centerX + (i - numAttributes/2) * (maxRadius / (numAttributes + 1)) * 2, centerY));
+                    
+                    // Use the normalized value to calculate distance from axis center
+                    double axisRadius = (maxRadius / (numAttributes + 1)) * attributeRadii.get(attribute);
+                    
+                    // Apply the gap in the angle calculation
+                    double usedPortion = 1.0 - axisGap;
+                    double angle = (1.5 * Math.PI) + (normalizedValue * usedPortion * 2 * Math.PI) + attributeRotation + piAdjustment;
+                    
+                    double x = pos.x + axisRadius * Math.cos(angle);
+                    double y = pos.y + axisRadius * Math.sin(angle);
+                    points.add(new Point2D.Double(x, y));
                 }
             }
+            return points;
+        }    
 
-            repaint();
+        private void optimizeAxesLayout() {
+            int centerX = plotPanel.getWidth() / 2;
+            int centerY = plotPanel.getHeight() / 2;
+            int maxRadius = Math.min(centerX, centerY) - 50;
+            int numAttributes = attributeNames.size();
+            
+            // Calculate correlation matrix between attributes
+            double[][] correlations = calculateCorrelationMatrix();
+            
+            // Create list of attribute indices to optimize
+            List<Integer> indices = new ArrayList<>();
+            for (int i = 0; i < numAttributes; i++) {
+                indices.add(i);
+            }
+            
+            // Optimize attribute order based on correlations
+            optimizeAttributeOrder(indices, correlations);
+            
+            // Position axes based on optimized order
+            for (int i = 0; i < numAttributes; i++) {
+                String attribute = attributeNames.get(indices.get(i));
+                double angle = 2 * Math.PI * i / numAttributes;
+                
+                // Set optimized position
+                int x = centerX + (int)(maxRadius * 0.6 * Math.cos(angle));
+                int y = centerY + (int)(maxRadius * 0.6 * Math.sin(angle));
+                axisPositions.put(attribute, new Point(x, y));
+                
+                // Set optimized rotation
+                attributeRotations.put(attribute, angle);
+                
+                // Set optimized direction based on correlations
+                boolean shouldReverse = calculateShouldReverse(indices.get(i), correlations);
+                attributeDirections.put(attribute, !shouldReverse);
+                
+                // Set optimized radius based on correlation strength
+                double avgCorrelation = calculateAverageCorrelation(indices.get(i), correlations);
+                double radius = Math.abs(avgCorrelation); // Scale radius between 0.0 and 1.0
+                attributeRadii.put(attribute, radius);
+            }
+        }
+        
+        private double calculateAverageCorrelation(int attrIndex, double[][] correlations) {
+            double sum = 0;
+            int count = 0;
+            for (int i = 0; i < correlations.length; i++) {
+                if (i != attrIndex) {
+                    sum += Math.abs(correlations[attrIndex][i]);
+                    count++;
+                }
+            }
+            return count > 0 ? sum / count : 0;
+        }
+        
+        private double[][] calculateCorrelationMatrix() {
+            int n = attributeNames.size();
+            double[][] correlations = new double[n][n];
+            
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    List<Double> attr1 = data.get(i);
+                    List<Double> attr2 = data.get(j);
+                    correlations[i][j] = calculateCorrelation(attr1, attr2);
+                }
+            }
+            
+            return correlations;
+        }
+        
+        private double calculateCorrelation(List<Double> x, List<Double> y) {
+            int n = x.size();
+            double sumX = 0, sumY = 0, sumXY = 0;
+            double sumX2 = 0, sumY2 = 0;
+            
+            for (int i = 0; i < n; i++) {
+                sumX += x.get(i);
+                sumY += y.get(i);
+                sumXY += x.get(i) * y.get(i);
+                sumX2 += x.get(i) * x.get(i);
+                sumY2 += y.get(i) * y.get(i);
+            }
+            
+            double numerator = n * sumXY - sumX * sumY;
+            double denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
+            
+            return denominator == 0 ? 0 : numerator / denominator;
+        }
+        
+        private void optimizeAttributeOrder(List<Integer> indices, double[][] correlations) {
+            // Simple greedy algorithm to place highly correlated attributes adjacent to each other
+            for (int i = 1; i < indices.size(); i++) {
+                int bestIndex = i;
+                double bestCorrelation = Math.abs(correlations[indices.get(i-1)][indices.get(i)]);
+                
+                for (int j = i + 1; j < indices.size(); j++) {
+                    double correlation = Math.abs(correlations[indices.get(i-1)][indices.get(j)]);
+                    if (correlation > bestCorrelation) {
+                        bestCorrelation = correlation;
+                        bestIndex = j;
+                    }
+                }
+                
+                if (bestIndex != i) {
+                    Collections.swap(indices, i, bestIndex);
+                }
+            }
+        }
+        
+        private boolean calculateShouldReverse(int attrIndex, double[][] correlations) {
+            // Count negative correlations with other attributes
+            int negativeCount = 0;
+            for (int i = 0; i < correlations.length; i++) {
+                if (i != attrIndex && correlations[attrIndex][i] < 0) {
+                    negativeCount++;
+                }
+            }
+            // Reverse if more than half correlations are negative
+            return negativeCount > correlations.length / 2;
         }
 
-        @Override
-        protected void paintComponent(Graphics g) {
-            super.paintComponent(g);
-            if (data == null || attributeNames == null) {
-                return;
-            }
-
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            
-            // Get the center point of the viewport
-            Rectangle viewRect = plotScrollPane.getViewport().getViewRect();
-            int centerX = viewRect.x + viewRect.width / 2;
-            int centerY = viewRect.y + viewRect.height / 2;
-            
-            // Translate to center before scaling
-            g2.translate(centerX, centerY);
-            g2.scale(zoomLevel, zoomLevel);
-            g2.translate(-centerX, -centerY);
-
-            // Set the background color for the entire panel to white
-            g2.setColor(Color.WHITE);
-            g2.fillRect(0, 0, getWidth(), getHeight());
-
-            // Draw the title
-            String title = "Concentric Coordinates Plot";
-            g2.setFont(TITLE_FONT);
-            FontMetrics fm = g2.getFontMetrics(TITLE_FONT);
-            int titleWidth = fm.stringWidth(title);
-            int titleHeight = fm.getHeight();
-            g2.setColor(Color.BLACK);
-            g2.drawString(title, (getWidth() - titleWidth) / 2, titleHeight);
-
-            // Fill the plot area with light grey background
-            g2.setColor(new Color(0xC0C0C0));
-            g2.fillRect(0, titleHeight + TITLE_PADDING, getWidth(), getHeight() - titleHeight - TITLE_PADDING);
-
-            // Calculate center and radius for the plot
-            centerX = getWidth() / 2;
-            centerY = (getHeight() - titleHeight - TITLE_PADDING) / 2 + titleHeight + TITLE_PADDING;
-            int maxRadius = Math.min(centerX, (getHeight() - titleHeight - TITLE_PADDING) / 2) - 50;
-
-            // Draw concentric axes
-            if (concentricMode) {
-                drawConcentricAxes(g2, centerX, centerY, maxRadius);
-            } else {
-                drawIndividualAxes(g2, centerX, centerY, maxRadius);
-            }
-
-            // Check if we should use density visualization
-            if (currentDensityMode != DensityMode.NO_DENSITY) {
-                drawWithDensity(g2, centerX, centerY, maxRadius);
-            } else {
-                // Sort rows to draw benign on top of malignant
-                List<Integer> sortedRows = new ArrayList<>();
-                List<Integer> benignRows = new ArrayList<>();
-                List<Integer> malignantRows = new ArrayList<>();
-                List<Integer> nnRows = new ArrayList<>();  // Add a new list for NN class
-                List<Integer> otherRows = new ArrayList<>();
+        private class ConcentricCoordinatesPanel extends JPanel {
+            // Add LineSegment class to track identical segments
+            private static class LineSegment {
+                final int x1, y1, x2, y2;
                 
+                LineSegment(Point2D.Double p1, Point2D.Double p2) {
+                    // Round coordinates to reduce floating point precision issues
+                    this.x1 = (int) Math.round(p1.x);
+                    this.y1 = (int) Math.round(p1.y);
+                    this.x2 = (int) Math.round(p2.x);
+                    this.y2 = (int) Math.round(p2.y);
+                }
+                
+                @Override
+                public boolean equals(Object o) {
+                    if (this == o) return true;
+                    if (!(o instanceof LineSegment)) return false;
+                    LineSegment that = (LineSegment) o;
+                    return x1 == that.x1 && y1 == that.y1 && x2 == that.x2 && y2 == that.y2;
+                }
+                
+                @Override
+                public int hashCode() {
+                    return Objects.hash(x1, y1, x2, y2);
+                }
+            }
+            
+            // Class to represent a vertex with its position and set of class labels
+            private static class Vertex {
+                final int x, y;
+                final Set<String> classLabels = new HashSet<>();
+                final Set<Integer> rowIndices = new HashSet<>(); // Store which rows contain this vertex
+                
+                Vertex(Point2D.Double point) {
+                    this.x = (int) Math.round(point.x);
+                    this.y = (int) Math.round(point.y);
+                }
+                
+                boolean isPure() {
+                    return classLabels.size() == 1;
+                }
+                
+                @Override
+                public boolean equals(Object o) {
+                    if (this == o) return true;
+                    if (!(o instanceof Vertex)) return false;
+                    Vertex that = (Vertex) o;
+                    return x == that.x && y == that.y;
+                }
+                
+                @Override
+                public int hashCode() {
+                    return Objects.hash(x, y);
+                }
+            }
+            
+            public ConcentricCoordinatesPanel() {
+                setBackground(new Color(0, 0, 0, 0));
+            }
+
+            // Method to find pure vertices (vertices with only one class) and rows that go through them
+            private Map<String, Set<Vertex>> identifyPureVertices(int centerX, int centerY, int maxRadius, Set<Integer> rowsWithPureVertices) {
+                Map<Point, Vertex> vertexMap = new HashMap<>();
+                Map<String, Set<Vertex>> pureVerticesByClass = new HashMap<>();
+                
+                // Collect all vertices and their associated classes and rows
                 for (int row = 0; row < data.get(0).size(); row++) {
                     if (hiddenRows.contains(row)) continue;
                     
                     String classLabel = classLabels.get(row);
                     if (hiddenClasses.contains(classLabel)) continue;
                     
+                    List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
+                    
+                    for (Point2D.Double point : points) {
+                        Point roundedPoint = new Point((int)Math.round(point.x), (int)Math.round(point.y));
+                        Vertex vertex = vertexMap.computeIfAbsent(roundedPoint, k -> new Vertex(point));
+                        vertex.classLabels.add(classLabel);
+                        vertex.rowIndices.add(row); // Track which row contains this vertex
+                    }
+                }
+                
+                // Extract vertices with only one class and identify rows that go through them
+                for (Vertex vertex : vertexMap.values()) {
+                    if (vertex.isPure()) {
+                        String classLabel = vertex.classLabels.iterator().next(); // Get the single class
+                        pureVerticesByClass.computeIfAbsent(classLabel, k -> new HashSet<>()).add(vertex);
+                        
+                        // Add all rows that go through this pure vertex to the set
+                        rowsWithPureVertices.addAll(vertex.rowIndices);
+                    }
+                }
+                
+                return pureVerticesByClass;
+            }
+            
+            // Check if a point is a pure vertex (with any class)
+            private boolean isPureVertex(Point2D.Double point, Map<String, Set<Vertex>> pureVerticesByClass) {
+                Point roundedPoint = new Point((int)Math.round(point.x), (int)Math.round(point.y));
+                Vertex testVertex = new Vertex(point);
+                
+                // Check across all classes if this point is a pure vertex for any class
+                for (Set<Vertex> classVertices : pureVerticesByClass.values()) {
+                    if (classVertices.contains(testVertex)) {
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+            
+            // Get the class of a pure vertex (if it is one)
+            private String getPureVertexClass(Point2D.Double point, Map<String, Set<Vertex>> pureVerticesByClass) {
+                Point roundedPoint = new Point((int)Math.round(point.x), (int)Math.round(point.y));
+                Vertex testVertex = new Vertex(point);
+                
+                for (Map.Entry<String, Set<Vertex>> entry : pureVerticesByClass.entrySet()) {
+                    if (entry.getValue().contains(testVertex)) {
+                        return entry.getKey();
+                    }
+                }
+                
+                return null;
+            }
+
+            public void alignHighlightedCases() {
+                if (selectedRows.isEmpty()) {
+                    return;
+                }
+
+                // Calculate mean values for highlighted cases
+                List<Double> meanValues = new ArrayList<>();
+                for (int i = 0; i < attributeNames.size(); i++) {
+                    double sum = 0;
+                    for (int row : selectedRows) {
+                        double value = data.get(i).get(row);
+                        String attribute = attributeNames.get(i);
+                        if (normalizeAttributes.get(attribute)) {
+                            double min = attributeMinValues.get(attribute);
+                            double max = attributeMaxValues.get(attribute);
+                            value = (value - min) / (max - min);
+                        } else {
+                            value = value / globalMaxValue;
+                        }
+                        if (!attributeDirections.get(attribute)) {
+                            value = 1.0 - value;
+                        }
+                        sum += value;
+                    }
+                    meanValues.add(sum / selectedRows.size());
+                }
+
+                // Calculate required rotations to align means vertically
+                for (int i = 0; i < attributeNames.size(); i++) {
+                    String attribute = attributeNames.get(i);
+                    double meanValue = meanValues.get(i);
+                    double currentAngle = (1.5 * Math.PI) + (meanValue * 2 * Math.PI) + attributeRotations.get(attribute) + piAdjustment;
+                    double targetAngle = 1.5 * Math.PI; // Straight up
+                    double rotationAdjustment = targetAngle - currentAngle;
+                    
+                    // Update rotation
+                    double newRotation = attributeRotations.get(attribute) + rotationAdjustment;
+                    attributeRotations.put(attribute, newRotation);
+                    
+                    // Update rotation slider if it exists
+                    JSlider rotationSlider = attributeSliders.get(attribute);
+                    if (rotationSlider != null) {
+                        int degrees = (int)(newRotation * 180 / Math.PI);
+                        rotationSlider.setValue(degrees);
+                    }
+                }
+
+                repaint();
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (data == null || attributeNames == null) {
+                    return;
+                }
+
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                // Get the center point of the viewport
+                Rectangle viewRect = plotScrollPane.getViewport().getViewRect();
+                int centerX = viewRect.x + viewRect.width / 2;
+                int centerY = viewRect.y + viewRect.height / 2;
+                
+                // Translate to center before scaling
+                g2.translate(centerX, centerY);
+                g2.scale(zoomLevel, zoomLevel);
+                g2.translate(-centerX, -centerY);
+
+                // Set the background color for the entire panel to white
+                g2.setColor(Color.WHITE);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+
+                // Draw the title
+                String title = "Concentric Coordinates Plot";
+                g2.setFont(TITLE_FONT);
+                FontMetrics fm = g2.getFontMetrics(TITLE_FONT);
+                int titleWidth = fm.stringWidth(title);
+                int titleHeight = fm.getHeight();
+                g2.setColor(Color.BLACK);
+                g2.drawString(title, (getWidth() - titleWidth) / 2, titleHeight);
+
+                // Fill the plot area with light grey background
+                g2.setColor(new Color(0xC0C0C0));
+                g2.fillRect(0, titleHeight + TITLE_PADDING, getWidth(), getHeight() - titleHeight - TITLE_PADDING);
+
+                // Calculate center and radius for the plot
+                centerX = getWidth() / 2;
+                centerY = (getHeight() - titleHeight - TITLE_PADDING) / 2 + titleHeight + TITLE_PADDING;
+                int maxRadius = Math.min(centerX, (getHeight() - titleHeight - TITLE_PADDING) / 2) - 50;
+
+                // Draw concentric axes
+                if (concentricMode) {
+                    drawConcentricAxes(g2, centerX, centerY, maxRadius);
+                } else {
+                    drawIndividualAxes(g2, centerX, centerY, maxRadius);
+                }
+
+                // Identify pure vertices if the feature is enabled
+                Map<String, Set<Vertex>> pureVertices = null;
+                Set<Integer> rowsWithPureVertices = new HashSet<>(); // Track rows that have pure vertices
+                
+                if (highlightPureVertices) {
+                    pureVertices = identifyPureVertices(centerX, centerY, maxRadius, rowsWithPureVertices);
+                }
+
+                // Check if we should use density visualization
+                if (currentDensityMode != DensityMode.NO_DENSITY) {
+                    drawWithDensity(g2, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                } else {
+                    // Sort rows to draw benign on top of malignant
+                    List<Integer> sortedRows = new ArrayList<>();
+                    List<Integer> benignRows = new ArrayList<>();
+                    List<Integer> malignantRows = new ArrayList<>();
+                    List<Integer> nnRows = new ArrayList<>();  // Add a new list for NN class
+                    List<Integer> otherRows = new ArrayList<>();
+                    
+                    for (int row = 0; row < data.get(0).size(); row++) {
+                        if (hiddenRows.contains(row)) continue;
+                        
+                        String classLabel = classLabels.get(row);
+                        if (hiddenClasses.contains(classLabel)) continue;
+                        
+                        if (classLabel.equalsIgnoreCase("NN")) {
+                            nnRows.add(row);  // Collect NN rows separately
+                        } else if (classLabel.equalsIgnoreCase("benign")) {
+                            benignRows.add(row);
+                        } else if (classLabel.equalsIgnoreCase("malignant")) {
+                            malignantRows.add(row);
+                        } else {
+                            otherRows.add(row);
+                        }
+                    }
+                    
+                    // Draw in order: malignant, other, benign, NN (so NN appears on top of all)
+                    for (int row : malignantRows) {
+                        drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                    }
+                    for (int row : otherRows) {
+                        drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                    }
+                    for (int row : benignRows) {
+                        drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                    }
+                    for (int row : nnRows) {
+                        drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                    }
+                }
+                
+                if (showConvexHulls) {
+                    Map<String, List<Point2D.Double>> classPoints = new HashMap<>();
+                    for (int row = 0; row < data.get(0).size(); row++) {
+                        String classLabel = classLabels.get(row);
+                        if (!hiddenClasses.contains(classLabel)) {
+                            classPoints.computeIfAbsent(classLabel, k -> new ArrayList<>()).addAll(getPolylinePoints(row, centerX, centerY, maxRadius));
+                        }
+                    }
+                    drawConvexHulls(g2, classPoints);
+                }            
+
+                // Draw attribute labels if enabled
+                if (showLabels) {
+                    drawAttributeLabels(g2, centerX, centerY, maxRadius);
+                }
+
+                // Draw highlights for selected rows
+                drawHighlights(g2, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+            }
+
+            private void drawConcentricAxes(Graphics2D g2, int centerX, int centerY, int maxRadius) {
+                g2.setColor(Color.BLACK);
+                int numAttributes = attributeNames.size();
+                for (int i = 0; i < numAttributes; i++) {
+                    String attribute = attributeNames.get(i);
+                    double radius = attributeRadii.get(attribute);
+                    int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * radius);
+                    g2.draw(new Ellipse2D.Double(centerX - currentRadius, centerY - currentRadius, 2 * currentRadius, 2 * currentRadius));
+                }
+            }
+
+            private void drawIndividualAxes(Graphics2D g2, int centerX, int centerY, int maxRadius) {
+                g2.setColor(Color.BLACK);
+                int numAttributes = attributeNames.size();
+                int spacing = maxRadius / (numAttributes + 1);
+                
+                for (int i = 0; i < numAttributes; i++) {
+                    String attribute = attributeNames.get(i);
+                    Point pos = axisPositions.getOrDefault(attribute, 
+                        new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
+                    double radius = attributeRadii.get(attribute);
+                    int adjustedSpacing = (int)(spacing * radius);
+                    g2.draw(new Ellipse2D.Double(pos.x - adjustedSpacing, pos.y - adjustedSpacing, adjustedSpacing * 2, adjustedSpacing * 2));
+                }
+            }
+
+            private Shape scaleShape(Shape originalShape, float scale) {
+                // Handle all shape types by using affine transform
+                if (Math.abs(scale - 1.0f) < 0.001f) {
+                    return originalShape; // No scaling needed
+                }
+                
+                // Create scaling transform
+                java.awt.geom.AffineTransform transform = new java.awt.geom.AffineTransform();
+                transform.scale(scale, scale);
+                
+                // Return scaled shape
+                return transform.createTransformedShape(originalShape);
+            }
+
+            private void drawConcentricCoordinates(Graphics2D g2, int row, int centerX, int centerY, int maxRadius, Map<String, Set<Vertex>> pureVertices, Set<Integer> rowsWithPureVertices) {
+                int numAttributes = attributeNames.size();
+                Point2D.Double[] points = new Point2D.Double[numAttributes];
+                boolean[] isPure = new boolean[numAttributes]; // Track which points are pure
+
+                // If this row has any pure vertices and the feature is enabled, skip drawing lines
+                boolean skipLines = highlightPureVertices && rowsWithPureVertices.contains(row);
+
+                for (int i = 0; i < numAttributes; i++) {
+                    double value = data.get(i).get(row);
+                    double normalizedValue;
+                    
+                    String attribute = attributeNames.get(i);
+                    if (normalizeAttributes.get(attribute)) {
+                        double min = attributeMinValues.get(attribute);
+                        double max = attributeMaxValues.get(attribute);
+                        normalizedValue = (value - min) / (max - min);
+                    } else {
+                        normalizedValue = value / globalMaxValue;
+                    }
+                    
+                    // Apply direction toggle
+                    if (!attributeDirections.get(attribute)) {
+                        normalizedValue = 1.0 - normalizedValue;
+                    }
+
+                    // Value determines angle around the circle
+                    double attributeRotation = attributeRotations.get(attribute);
+                    
+                    // Apply the gap adjustment to the angle calculation
+                    double usedPortion = 1.0 - axisGap;
+                    double angle = (1.5 * Math.PI) + (normalizedValue * usedPortion * 2 * Math.PI) + attributeRotation + piAdjustment;
+                    
+                    if (concentricMode) {
+                        // Each attribute has its own fixed circle
+                        int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * attributeRadii.get(attribute));
+                        double x = centerX + currentRadius * Math.cos(angle);
+                        double y = centerY + currentRadius * Math.sin(angle);
+                        points[i] = new Point2D.Double(x, y);
+                    } else {
+                        int spacing = maxRadius / (numAttributes + 1);
+                        Point pos = axisPositions.getOrDefault(attributeNames.get(i),
+                            new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
+                        double radius = attributeRadii.get(attribute);
+                        int adjustedSpacing = (int)(spacing * radius);
+                        double pointX = pos.x + adjustedSpacing * Math.cos(angle);
+                        double pointY = pos.y + adjustedSpacing * Math.sin(angle);
+                        points[i] = new Point2D.Double(pointX, pointY);
+                    }
+                }
+
+                String classLabel = classLabels.get(row);
+                Color color = classColors.getOrDefault(classLabel, Color.BLACK);
+                
+                // Check if any point is a pure vertex
+                if (pureVertices != null) {
+                    for (int i = 0; i < numAttributes; i++) {
+                        isPure[i] = isPureVertex(points[i], pureVertices);
+                    }
+                }
+                
+                // Choose drawing method based on density mode
+                if (currentDensityMode == DensityMode.NO_DENSITY) {
+                    // Only draw lines if this row should not be skipped
+                    if (!skipLines) {
+                        drawStandardLines(g2, points, color, numAttributes, isPure);
+                    }
+                } else {
+                    // For density modes, the actual drawing is done in separate methods
+                    return;
+                }
+
+                // Draw the shapes at the points
+                for (int i = 0; i < numAttributes; i++) {
+                    // Scale up pure vertices
+                    float scale = (pureVertices != null && isPure[i]) ? pureVertexScaleFactor : 1.0f;
+                    
+                    // Get the correct color for this vertex
+                    Color vertexColor;
+                    if (isPure[i]) {
+                        // If it's a pure vertex, use the color of the class it belongs to
+                        String pureClass = getPureVertexClass(points[i], pureVertices);
+                        vertexColor = classColors.getOrDefault(pureClass, color);
+                    } else {
+                        // Otherwise use this row's class color
+                        vertexColor = color;
+                    }
+                    
+                    // Set the color
+                    g2.setColor(vertexColor);
+                    
+                    g2.translate(points[i].x, points[i].y);
+                    Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
+                    
+                    // Scale the shape if this is a pure vertex
+                    if (scale > 1.0f) {
+                        shape = scaleShape(shape, scale);
+                    }
+                    
+                    g2.fill(shape);
+                    g2.translate(-points[i].x, -points[i].y);
+                }
+            }
+            
+            private void drawStandardLines(Graphics2D g2, Point2D.Double[] points, Color color, int numAttributes, boolean[] isPure) {
+                g2.setColor(color);
+                g2.setStroke(new BasicStroke(1.0f));
+
+                // Draw lines connecting the points across the circles
+                for (int i = 0; i < numAttributes - 1; i++) {
+                    g2.draw(new Line2D.Double(points[i], points[i + 1]));
+                }
+                
+                if (closeLoop) {
+                    Point2D.Double first = points[0];
+                    Point2D.Double last = points[numAttributes - 1];
+                    
+                    // Check if we should draw with a gap
+                    if (axisGap > 0) {
+                        // Calculate direction vector
+                        double dx = first.x - last.x;
+                        double dy = first.y - last.y;
+                        double length = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (length > 0) {
+                            // Normalize and scale by gap size
+                            dx /= length;
+                            dy /= length;
+                            
+                            // Calculate new endpoints with gap
+                            Point2D.Double gapStart = new Point2D.Double(
+                                last.x + dx * length * axisGap / 2,
+                                last.y + dy * length * axisGap / 2
+                            );
+                            
+                            Point2D.Double gapEnd = new Point2D.Double(
+                                first.x - dx * length * axisGap / 2,
+                                first.y - dy * length * axisGap / 2
+                            );
+                            
+                            // Draw the two segments of the closing line with a gap
+                            g2.draw(new Line2D.Double(last, gapStart));
+                            g2.draw(new Line2D.Double(gapEnd, first));
+                        }
+                    } else {
+                        // No gap, draw direct line
+                        g2.draw(new Line2D.Double(last, first));
+                    }
+                }
+            }
+
+            private void drawHighlights(Graphics2D g2, int centerX, int centerY, int maxRadius, Map<String, Set<Vertex>> pureVertices, Set<Integer> rowsWithPureVertices) {
+                // Skip if there are no selected rows or if we're in density mode (highlights already handled there)
+                if (selectedRows.isEmpty() || currentDensityMode != DensityMode.NO_DENSITY) {
+                    return;
+                }
+                
+                g2.setColor(Color.YELLOW);
+                g2.setStroke(new BasicStroke(2.0f));
+
+                for (int row : selectedRows) {
+                    String classLabel = classLabels.get(row);
+                    if (hiddenClasses.contains(classLabel)) {
+                        continue;
+                    }
+
+                    List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
+                    boolean[] isPure = null;
+                    
+                    // Check if any points are pure vertices
+                    if (pureVertices != null) {
+                        isPure = new boolean[points.size()];
+                        for (int i = 0; i < points.size(); i++) {
+                            isPure[i] = isPureVertex(points.get(i), pureVertices);
+                        }
+                    }
+
+                    // If this row has any pure vertices and the feature is enabled, skip drawing lines
+                    boolean skipLines = highlightPureVertices && rowsWithPureVertices.contains(row);
+
+                    // Draw lines connecting the points
+                    if (!skipLines) {
+                        for (int i = 0; i < points.size() - 1; i++) {
+                            g2.draw(new Line2D.Double(points.get(i), points.get(i + 1)));
+                        }
+                        
+                        // Draw closing line if needed
+                        if (closeLoop && points.size() > 1) {
+                            g2.draw(new Line2D.Double(points.get(points.size() - 1), points.get(0)));
+                        }
+                    }
+
+                    // Draw point shapes
+                    for (int i = 0; i < points.size(); i++) {
+                        Point2D.Double point = points.get(i);
+                        // Scale up pure vertices
+                        float scale = (highlightPureVertices && isPure != null && isPure[i]) ? pureVertexScaleFactor : 1.0f;
+                        
+                        // Use yellow for highlight color unless it's a pure vertex from a different class
+                        Color vertexColor = Color.YELLOW;
+                        
+                        g2.setColor(vertexColor);
+                        g2.translate(point.x, point.y);
+                        Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-4.5, -4.5, 9, 9));
+                        
+                        // Scale the shape if it's a pure vertex
+                        if (scale > 1.0f) {
+                            shape = scaleShape(shape, scale);
+                        }
+                        
+                        g2.fill(shape);
+                        g2.translate(-point.x, -point.y);
+                    }
+                }
+            }
+
+            private void drawWithDensity(Graphics2D g2, int centerX, int centerY, int maxRadius, Map<String, Set<Vertex>> pureVertices, Set<Integer> rowsWithPureVertices) {
+                // Create a map to store line segments and their counts
+                Map<LineSegment, Integer> lineSegmentCounts = new HashMap<>();
+                
+                // First pass: Count overlapping line segments
+                countLineSegments(lineSegmentCounts, false, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices); // non-selected lines
+                countLineSegments(lineSegmentCounts, true, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);  // selected lines
+
+                // Find maximum density for normalization
+                int maxDensity = lineSegmentCounts.values().stream()
+                        .mapToInt(Integer::intValue)
+                        .max()
+                        .orElse(1);
+
+                // Draw the lines with appropriate density visualization
+                if (currentDensityMode == DensityMode.DENSITY_WITH_OPACITY) {
+                    drawLinesWithOpacity(g2, lineSegmentCounts, maxDensity, false, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                    drawLinesWithOpacity(g2, lineSegmentCounts, maxDensity, true, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                } else if (currentDensityMode == DensityMode.DENSITY_WITH_THICKNESS) {
+                    drawLinesWithThickness(g2, lineSegmentCounts, maxDensity, false, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                    drawLinesWithThickness(g2, lineSegmentCounts, maxDensity, true, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                }
+            }
+
+            private void countLineSegments(Map<LineSegment, Integer> lineSegmentCounts, boolean selectedOnly, int centerX, int centerY, int maxRadius, Map<String, Set<Vertex>> pureVertices, Set<Integer> rowsWithPureVertices) {
+                List<Integer> rowsToProcess;
+                if (selectedOnly) {
+                    rowsToProcess = selectedRows;
+                } else {
+                    rowsToProcess = new ArrayList<>();
+                    for (int i = 0; i < data.get(0).size(); i++) {
+                        if (!selectedRows.contains(i) && !hiddenRows.contains(i)) {
+                            rowsToProcess.add(i);
+                        }
+                    }
+                }
+
+                for (int row : rowsToProcess) {
+                    String classLabel = classLabels.get(row);
+                    if (hiddenClasses.contains(classLabel)) continue;
+
+                    // If this row has any pure vertices and the feature is enabled, skip counting its lines
+                    if (highlightPureVertices && rowsWithPureVertices.contains(row)) {
+                        continue;
+                    }
+
+                    List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
+                    
+                    // Count line segments
+                    for (int i = 0; i < points.size() - 1; i++) {
+                        LineSegment segment = new LineSegment(points.get(i), points.get(i + 1));
+                        lineSegmentCounts.put(segment, lineSegmentCounts.getOrDefault(segment, 0) + 1);
+                    }
+                    
+                    // Count the closing segment if needed
+                    if (closeLoop && points.size() > 1) {
+                        LineSegment closingSegment = new LineSegment(points.get(points.size() - 1), points.get(0));
+                        lineSegmentCounts.put(closingSegment, lineSegmentCounts.getOrDefault(closingSegment, 0) + 1);
+                    }
+                }
+            }
+
+            private void drawLinesWithOpacity(Graphics2D g2, Map<LineSegment, Integer> lineSegmentCounts, int maxDensity, 
+                                              boolean selectedOnly, int centerX, int centerY, int maxRadius, Map<String, Set<Vertex>> pureVertices, Set<Integer> rowsWithPureVertices) {
+                List<Integer> rowsToProcess;
+                if (selectedOnly) {
+                    rowsToProcess = selectedRows;
+                } else {
+                    rowsToProcess = new ArrayList<>();
+                    for (int i = 0; i < data.get(0).size(); i++) {
+                        if (!selectedRows.contains(i) && !hiddenRows.contains(i)) {
+                            rowsToProcess.add(i);
+                        }
+                    }
+                }
+                
+                // Sort rows to draw benign on top of malignant, and NN on top of all
+                List<Integer> malignantRows = new ArrayList<>();
+                List<Integer> benignRows = new ArrayList<>();
+                List<Integer> nnRows = new ArrayList<>();
+                List<Integer> otherRows = new ArrayList<>();
+                
+                for (int row : rowsToProcess) {
+                    String classLabel = classLabels.get(row);
+                    if (hiddenClasses.contains(classLabel)) continue;
+                    
                     if (classLabel.equalsIgnoreCase("NN")) {
-                        nnRows.add(row);  // Collect NN rows separately
+                        nnRows.add(row);
                     } else if (classLabel.equalsIgnoreCase("benign")) {
                         benignRows.add(row);
                     } else if (classLabel.equalsIgnoreCase("malignant")) {
@@ -826,600 +1351,374 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 }
                 
                 // Draw in order: malignant, other, benign, NN (so NN appears on top of all)
-                for (int row : malignantRows) {
-                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-                }
-                for (int row : otherRows) {
-                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-                }
-                for (int row : benignRows) {
-                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-                }
-                for (int row : nnRows) {
-                    drawConcentricCoordinates(g2, row, centerX, centerY, maxRadius);
-                }
+                drawRowsWithOpacity(g2, malignantRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                drawRowsWithOpacity(g2, otherRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                drawRowsWithOpacity(g2, benignRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                drawRowsWithOpacity(g2, nnRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
             }
             
-            if (showConvexHulls) {
-                Map<String, List<Point2D.Double>> classPoints = new HashMap<>();
-                for (int row = 0; row < data.get(0).size(); row++) {
+            private void drawRowsWithOpacity(Graphics2D g2, List<Integer> rows, Map<LineSegment, Integer> lineSegmentCounts,
+                                      int maxDensity, boolean selectedOnly, int centerX, int centerY, int maxRadius, Map<String, Set<Vertex>> pureVertices, Set<Integer> rowsWithPureVertices) {
+                for (int row : rows) {
                     String classLabel = classLabels.get(row);
-                    if (!hiddenClasses.contains(classLabel)) {
-                        classPoints.computeIfAbsent(classLabel, k -> new ArrayList<>()).addAll(getPolylinePoints(row, centerX, centerY, maxRadius));
+                    List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
+                    Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+                    
+                    boolean[] isPure = null;
+                    // Check if any points are pure vertices
+                    if (highlightPureVertices && pureVertices != null) {
+                        isPure = new boolean[points.size()];
+                        for (int i = 0; i < points.size(); i++) {
+                            isPure[i] = isPureVertex(points.get(i), pureVertices);
+                        }
                     }
-                }
-                drawConvexHulls(g2, classPoints);
-            }            
-
-            // Draw attribute labels if enabled
-            if (showLabels) {
-                drawAttributeLabels(g2, centerX, centerY, maxRadius);
-            }
-
-            // Draw highlights for selected rows
-            drawHighlights(g2, centerX, centerY, maxRadius);
-        }
-
-        private void drawConcentricAxes(Graphics2D g2, int centerX, int centerY, int maxRadius) {
-            g2.setColor(Color.BLACK);
-            int numAttributes = attributeNames.size();
-            for (int i = 0; i < numAttributes; i++) {
-                String attribute = attributeNames.get(i);
-                double radius = attributeRadii.get(attribute);
-                int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * radius);
-                g2.draw(new Ellipse2D.Double(centerX - currentRadius, centerY - currentRadius, 2 * currentRadius, 2 * currentRadius));
-            }
-        }
-
-        private void drawIndividualAxes(Graphics2D g2, int centerX, int centerY, int maxRadius) {
-            g2.setColor(Color.BLACK);
-            int numAttributes = attributeNames.size();
-            int spacing = maxRadius / (numAttributes + 1);
-            
-            for (int i = 0; i < numAttributes; i++) {
-                String attribute = attributeNames.get(i);
-                Point pos = axisPositions.getOrDefault(attribute, 
-                    new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
-                double radius = attributeRadii.get(attribute);
-                int adjustedSpacing = (int)(spacing * radius);
-                g2.draw(new Ellipse2D.Double(pos.x - adjustedSpacing, pos.y - adjustedSpacing, adjustedSpacing * 2, adjustedSpacing * 2));
-            }
-        }
-
-        private void drawConcentricCoordinates(Graphics2D g2, int row, int centerX, int centerY, int maxRadius) {
-            int numAttributes = attributeNames.size();
-            Point2D.Double[] points = new Point2D.Double[numAttributes];
-
-            for (int i = 0; i < numAttributes; i++) {
-                double value = data.get(i).get(row);
-                double normalizedValue;
-                
-                String attribute = attributeNames.get(i);
-                if (normalizeAttributes.get(attribute)) {
-                    double min = attributeMinValues.get(attribute);
-                    double max = attributeMaxValues.get(attribute);
-                    normalizedValue = (value - min) / (max - min);
-                } else {
-                    normalizedValue = value / globalMaxValue;
-                }
-                
-                // Apply direction toggle
-                if (!attributeDirections.get(attribute)) {
-                    normalizedValue = 1.0 - normalizedValue;
-                }
-
-                // Value determines angle around the circle
-                double attributeRotation = attributeRotations.get(attribute);
-                
-                // Apply the gap adjustment to the angle calculation
-                double usedPortion = 1.0 - axisGap;
-                double angle = (1.5 * Math.PI) + (normalizedValue * usedPortion * 2 * Math.PI) + attributeRotation + piAdjustment;
-                
-                if (concentricMode) {
-                    // Each attribute has its own fixed circle
-                    int currentRadius = (int)((i + 1) * (maxRadius / numAttributes) * attributeRadii.get(attribute));
-                    double x = centerX + currentRadius * Math.cos(angle);
-                    double y = centerY + currentRadius * Math.sin(angle);
-                    points[i] = new Point2D.Double(x, y);
-                } else {
-                    int spacing = maxRadius / (numAttributes + 1);
-                    Point pos = axisPositions.getOrDefault(attributeNames.get(i),
-                        new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
-                    double radius = attributeRadii.get(attribute);
-                    int adjustedSpacing = (int)(spacing * radius);
-                    double pointX = pos.x + adjustedSpacing * Math.cos(angle);
-                    double pointY = pos.y + adjustedSpacing * Math.sin(angle);
-                    points[i] = new Point2D.Double(pointX, pointY);
-                }
-            }
-
-            String classLabel = classLabels.get(row);
-            Color color = classColors.getOrDefault(classLabel, Color.BLACK);
-            
-            // Choose drawing method based on density mode
-            if (currentDensityMode == DensityMode.NO_DENSITY) {
-                drawStandardLines(g2, points, color, numAttributes);
-            } else {
-                // For density modes, the actual drawing is done in separate methods
-                return;
-            }
-
-            // Draw the shapes at the points
-            for (int i = 0; i < numAttributes; i++) {
-                g2.translate(points[i].x, points[i].y);
-                Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
-                g2.fill(shape);
-                g2.translate(-points[i].x, -points[i].y);
-            }
-        }
-        
-        private void drawStandardLines(Graphics2D g2, Point2D.Double[] points, Color color, int numAttributes) {
-            g2.setColor(color);
-            g2.setStroke(new BasicStroke(1.0f));
-
-            // Draw lines connecting the points across the circles
-            for (int i = 0; i < numAttributes - 1; i++) {
-                g2.draw(new Line2D.Double(points[i], points[i + 1]));
-            }
-            
-            if (closeLoop) {
-                Point2D.Double first = points[0];
-                Point2D.Double last = points[numAttributes - 1];
-                
-                // Check if we should draw with a gap
-                if (axisGap > 0) {
-                    // Calculate direction vector
-                    double dx = first.x - last.x;
-                    double dy = first.y - last.y;
-                    double length = Math.sqrt(dx * dx + dy * dy);
                     
-                    if (length > 0) {
-                        // Normalize and scale by gap size
-                        dx /= length;
-                        dy /= length;
-                        
-                        // Calculate new endpoints with gap
-                        Point2D.Double gapStart = new Point2D.Double(
-                            last.x + dx * length * axisGap / 2,
-                            last.y + dy * length * axisGap / 2
-                        );
-                        
-                        Point2D.Double gapEnd = new Point2D.Double(
-                            first.x - dx * length * axisGap / 2,
-                            first.y - dy * length * axisGap / 2
-                        );
-                        
-                        // Draw the two segments of the closing line with a gap
-                        g2.draw(new Line2D.Double(last, gapStart));
-                        g2.draw(new Line2D.Double(gapEnd, first));
-                    }
-                } else {
-                    // No gap, draw direct line
-                    g2.draw(new Line2D.Double(last, first));
-                }
-            }
-        }
-
-        private void drawHighlights(Graphics2D g2, int centerX, int centerY, int maxRadius) {
-            // Skip if there are no selected rows or if we're in density mode (highlights already handled there)
-            if (selectedRows.isEmpty() || currentDensityMode != DensityMode.NO_DENSITY) {
-                return;
-            }
-            
-            g2.setColor(Color.YELLOW);
-            g2.setStroke(new BasicStroke(2.0f));
-
-            for (int row : selectedRows) {
-                String classLabel = classLabels.get(row);
-                if (hiddenClasses.contains(classLabel)) {
-                    continue;
-                }
-
-                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
-
-                // Draw lines connecting the points
-                for (int i = 0; i < points.size() - 1; i++) {
-                    g2.draw(new Line2D.Double(points.get(i), points.get(i + 1)));
-                }
-                
-                // Draw closing line if needed
-                if (closeLoop && points.size() > 1) {
-                    g2.draw(new Line2D.Double(points.get(points.size() - 1), points.get(0)));
-                }
-
-                // Draw point shapes
-                for (Point2D.Double point : points) {
-                    g2.translate(point.x, point.y);
-                    Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-4.5, -4.5, 9, 9));
-                    g2.fill(shape);
-                    g2.translate(-point.x, -point.y);
-                }
-            }
-        }
-
-        private void drawAttributeLabels(Graphics2D g2, int centerX, int centerY, int maxRadius) {
-            g2.setFont(AXIS_LABEL_FONT);
-            g2.setColor(Color.BLACK);
-
-            int numAttributes = attributeNames.size();
-            for (int i = 0; i < numAttributes; i++) {
-                if (concentricMode) {
-                    // For each attribute circle, draw its label at the top of the circle
-                    int currentRadius = (i + 1) * (maxRadius / numAttributes);
-                    double radius = attributeRadii.get(attributeNames.get(i));
-                    int adjustedRadius = (int)(currentRadius * radius);
-                    
-                    // Place label at the top of each circle
-                    double labelAngle = (1.5 * Math.PI) + attributeRotations.get(attributeNames.get(i)) + piAdjustment;
-                    
-                    int x = centerX + (int)(adjustedRadius * Math.cos(labelAngle));
-                    int y = centerY + (int)(adjustedRadius * Math.sin(labelAngle));
-                    
-                    // Center the text
-                    FontMetrics fm = g2.getFontMetrics();
-                    int textWidth = fm.stringWidth(attributeNames.get(i));
-                    int textHeight = fm.getHeight();
-                    x -= textWidth / 2;
-                    y -= 5;
-                    
-                    g2.drawString(attributeNames.get(i), x, y);
-                } else {
-                    int spacing = maxRadius / (numAttributes + 1);
-                    Point pos = axisPositions.getOrDefault(attributeNames.get(i),
-                        new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
-                    g2.drawString(attributeNames.get(i), pos.x - 20, pos.y - spacing - 10);
-                }
-            }
-        }
-
-        private void drawWithDensity(Graphics2D g2, int centerX, int centerY, int maxRadius) {
-            // Create a map to store line segments and their counts
-            Map<LineSegment, Integer> lineSegmentCounts = new HashMap<>();
-            
-            // First pass: Count overlapping line segments
-            countLineSegments(lineSegmentCounts, false, centerX, centerY, maxRadius); // non-selected lines
-            countLineSegments(lineSegmentCounts, true, centerX, centerY, maxRadius);  // selected lines
-
-            // Find maximum density for normalization
-            int maxDensity = lineSegmentCounts.values().stream()
-                    .mapToInt(Integer::intValue)
-                    .max()
-                    .orElse(1);
-
-            // Draw the lines with appropriate density visualization
-            if (currentDensityMode == DensityMode.DENSITY_WITH_OPACITY) {
-                drawLinesWithOpacity(g2, lineSegmentCounts, maxDensity, false, centerX, centerY, maxRadius);
-                drawLinesWithOpacity(g2, lineSegmentCounts, maxDensity, true, centerX, centerY, maxRadius);
-            } else if (currentDensityMode == DensityMode.DENSITY_WITH_THICKNESS) {
-                drawLinesWithThickness(g2, lineSegmentCounts, maxDensity, false, centerX, centerY, maxRadius);
-                drawLinesWithThickness(g2, lineSegmentCounts, maxDensity, true, centerX, centerY, maxRadius);
-            }
-        }
-
-        private void countLineSegments(Map<LineSegment, Integer> lineSegmentCounts, boolean selectedOnly, int centerX, int centerY, int maxRadius) {
-            List<Integer> rowsToProcess;
-            if (selectedOnly) {
-                rowsToProcess = selectedRows;
-            } else {
-                rowsToProcess = new ArrayList<>();
-                for (int i = 0; i < data.get(0).size(); i++) {
-                    if (!selectedRows.contains(i) && !hiddenRows.contains(i)) {
-                        rowsToProcess.add(i);
-                    }
-                }
-            }
-
-            for (int row : rowsToProcess) {
-                String classLabel = classLabels.get(row);
-                if (hiddenClasses.contains(classLabel)) continue;
-
-                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
-                
-                // Count line segments
-                for (int i = 0; i < points.size() - 1; i++) {
-                    LineSegment segment = new LineSegment(points.get(i), points.get(i + 1));
-                    lineSegmentCounts.put(segment, lineSegmentCounts.getOrDefault(segment, 0) + 1);
-                }
-                
-                // Count the closing segment if needed
-                if (closeLoop && points.size() > 1) {
-                    LineSegment closingSegment = new LineSegment(points.get(points.size() - 1), points.get(0));
-                    lineSegmentCounts.put(closingSegment, lineSegmentCounts.getOrDefault(closingSegment, 0) + 1);
-                }
-            }
-        }
-
-        private void drawLinesWithOpacity(Graphics2D g2, Map<LineSegment, Integer> lineSegmentCounts, int maxDensity, 
-                                          boolean selectedOnly, int centerX, int centerY, int maxRadius) {
-            List<Integer> rowsToProcess;
-            if (selectedOnly) {
-                rowsToProcess = selectedRows;
-            } else {
-                rowsToProcess = new ArrayList<>();
-                for (int i = 0; i < data.get(0).size(); i++) {
-                    if (!selectedRows.contains(i) && !hiddenRows.contains(i)) {
-                        rowsToProcess.add(i);
-                    }
-                }
-            }
-            
-            // Sort rows to draw benign on top of malignant, and NN on top of all
-            List<Integer> malignantRows = new ArrayList<>();
-            List<Integer> benignRows = new ArrayList<>();
-            List<Integer> nnRows = new ArrayList<>();
-            List<Integer> otherRows = new ArrayList<>();
-            
-            for (int row : rowsToProcess) {
-                String classLabel = classLabels.get(row);
-                if (hiddenClasses.contains(classLabel)) continue;
-                
-                if (classLabel.equalsIgnoreCase("NN")) {
-                    nnRows.add(row);
-                } else if (classLabel.equalsIgnoreCase("benign")) {
-                    benignRows.add(row);
-                } else if (classLabel.equalsIgnoreCase("malignant")) {
-                    malignantRows.add(row);
-                } else {
-                    otherRows.add(row);
-                }
-            }
-            
-            // Draw in order: malignant, other, benign, NN (so NN appears on top of all)
-            drawRowsWithOpacity(g2, malignantRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
-            drawRowsWithOpacity(g2, otherRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
-            drawRowsWithOpacity(g2, benignRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
-            drawRowsWithOpacity(g2, nnRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
-        }
-        
-        private void drawRowsWithOpacity(Graphics2D g2, List<Integer> rows, Map<LineSegment, Integer> lineSegmentCounts,
-                                        int maxDensity, boolean selectedOnly, int centerX, int centerY, int maxRadius) {
-            for (int row : rows) {
-                String classLabel = classLabels.get(row);
-                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
-                Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
-                
-                // Draw lines with opacity based on density
-                for (int i = 0; i < points.size() - 1; i++) {
-                    Point2D.Double p1 = points.get(i);
-                    Point2D.Double p2 = points.get(i + 1);
-                    
-                    LineSegment segment = new LineSegment(p1, p2);
-                    int count = lineSegmentCounts.getOrDefault(segment, 1);
-                    
-                    // Calculate opacity based on density, ensure it's at least 30% opaque
-                    float normalizedDensity = (float) count / maxDensity;
-                    int alpha = Math.max(75, (int) (normalizedDensity * 255)); // Never fully transparent
-                    Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), 
-                                                  baseColor.getBlue(), alpha);
-                    
-                    g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
-                    g2.setColor(adjustedColor);
-                    g2.draw(new Line2D.Double(p1, p2));
-                }
-                
-                // Draw closing line if needed
-                if (closeLoop && points.size() > 1) {
-                    Point2D.Double first = points.get(0);
-                    Point2D.Double last = points.get(points.size() - 1);
-                    
-                    if (axisGap <= 0.0) {
-                        // No gap, draw direct line
-                        LineSegment segment = new LineSegment(last, first);
-                        int count = lineSegmentCounts.getOrDefault(segment, 1);
-                        
-                        float normalizedDensity = (float) count / maxDensity;
-                        int alpha = Math.max(75, (int) (normalizedDensity * 255));
-                        Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), 
-                                                       baseColor.getBlue(), alpha);
-                        
-                        g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
-                        g2.setColor(adjustedColor);
-                        g2.draw(new Line2D.Double(last, first));
+                    // If this row has any pure vertices and the feature is enabled, skip drawing lines
+                    boolean skipLines = highlightPureVertices && rowsWithPureVertices.contains(row);
+                    if (skipLines) {
+                        // Skip drawing any lines for this row
                     } else {
-                        // Calculate direction vector
-                        double dx = first.x - last.x;
-                        double dy = first.y - last.y;
-                        double length = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (length > 0) {
-                            // Normalize and scale by gap size
-                            dx /= length;
-                            dy /= length;
+                        // Draw lines with opacity based on density
+                        for (int i = 0; i < points.size() - 1; i++) {
+                            Point2D.Double p1 = points.get(i);
+                            Point2D.Double p2 = points.get(i + 1);
                             
-                            // Calculate new endpoints with gap
-                            Point2D.Double gapStart = new Point2D.Double(
-                                last.x + dx * length * axisGap / 2,
-                                last.y + dy * length * axisGap / 2
-                            );
+                            LineSegment segment = new LineSegment(p1, p2);
+                            int count = lineSegmentCounts.getOrDefault(segment, 1);
                             
-                            Point2D.Double gapEnd = new Point2D.Double(
-                                first.x - dx * length * axisGap / 2,
-                                first.y - dy * length * axisGap / 2
-                            );
-                            
-                            // Draw the two segments with appropriate opacity
-                            LineSegment segment1 = new LineSegment(last, gapStart);
-                            LineSegment segment2 = new LineSegment(gapEnd, first);
-                            
-                            int count1 = lineSegmentCounts.getOrDefault(segment1, 1);
-                            int count2 = lineSegmentCounts.getOrDefault(segment2, 1);
-                            
-                            float normalizedDensity1 = (float) count1 / maxDensity;
-                            float normalizedDensity2 = (float) count2 / maxDensity;
-                            
-                            int alpha1 = Math.max(75, (int) (normalizedDensity1 * 255));
-                            int alpha2 = Math.max(75, (int) (normalizedDensity2 * 255));
-                            
-                            Color adjustedColor1 = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 
-                                                         alpha1);
-                            Color adjustedColor2 = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 
-                                                         alpha2);
+                            // Calculate opacity based on density, ensure it's at least 30% opaque
+                            float normalizedDensity = (float) count / maxDensity;
+                            int alpha = Math.max(75, (int) (normalizedDensity * 255)); // Never fully transparent
+                            Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), 
+                                                        baseColor.getBlue(), alpha);
                             
                             g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
-                            g2.setColor(adjustedColor1);
-                            g2.draw(new Line2D.Double(last, gapStart));
-                            
-                            g2.setColor(adjustedColor2);
-                            g2.draw(new Line2D.Double(gapEnd, first));
+                            g2.setColor(adjustedColor);
+                            g2.draw(new Line2D.Double(p1, p2));
                         }
-                    }
-                }
-
-                // Draw the shapes at the points with full opacity
-                // Use the original base color (full opacity) for vertices
-                Color fullOpacityColor = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 255);
-                g2.setColor(fullOpacityColor);
-                for (Point2D.Double point : points) {
-                    Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
-                    g2.translate(point.x, point.y);
-                    g2.fill(shape);
-                    g2.translate(-point.x, -point.y);
-                }
-            }
-        }
-
-        private void drawLinesWithThickness(Graphics2D g2, Map<LineSegment, Integer> lineSegmentCounts, int maxDensity, 
-                                            boolean selectedOnly, int centerX, int centerY, int maxRadius) {
-            List<Integer> rowsToProcess;
-            if (selectedOnly) {
-                rowsToProcess = selectedRows;
-            } else {
-                rowsToProcess = new ArrayList<>();
-                for (int i = 0; i < data.get(0).size(); i++) {
-                    if (!selectedRows.contains(i) && !hiddenRows.contains(i)) {
-                        rowsToProcess.add(i);
-                    }
-                }
-            }
-
-            // Sort rows to draw benign on top of malignant, and NN on top of all
-            List<Integer> malignantRows = new ArrayList<>();
-            List<Integer> benignRows = new ArrayList<>();
-            List<Integer> nnRows = new ArrayList<>();
-            List<Integer> otherRows = new ArrayList<>();
-            
-            for (int row : rowsToProcess) {
-                String classLabel = classLabels.get(row);
-                if (hiddenClasses.contains(classLabel)) continue;
-                
-                if (classLabel.equalsIgnoreCase("NN")) {
-                    nnRows.add(row);
-                } else if (classLabel.equalsIgnoreCase("benign")) {
-                    benignRows.add(row);
-                } else if (classLabel.equalsIgnoreCase("malignant")) {
-                    malignantRows.add(row);
-                } else {
-                    otherRows.add(row);
-                }
-            }
-            
-            // Draw in order: malignant, other, benign, NN (so NN appears on top of all)
-            drawRowsWithThickness(g2, malignantRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
-            drawRowsWithThickness(g2, otherRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
-            drawRowsWithThickness(g2, benignRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
-            drawRowsWithThickness(g2, nnRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius);
-        }
-        
-        private void drawRowsWithThickness(Graphics2D g2, List<Integer> rows, Map<LineSegment, Integer> lineSegmentCounts,
-                                        int maxDensity, boolean selectedOnly, int centerX, int centerY, int maxRadius) {
-            for (int row : rows) {
-                String classLabel = classLabels.get(row);
-                List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
-                Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
-                
-                // Draw lines with thickness based on density
-                for (int i = 0; i < points.size() - 1; i++) {
-                    Point2D.Double p1 = points.get(i);
-                    Point2D.Double p2 = points.get(i + 1);
-                    
-                    LineSegment segment = new LineSegment(p1, p2);
-                    int count = lineSegmentCounts.getOrDefault(segment, 1);
-                    
-                    // Calculate thickness based on density, starting from a minimum thickness
-                    float normalizedDensity = (float) count / maxDensity;
-                    float thickness = 0.5f + (normalizedDensity * 5.5f); // Scale from 0.5 to 6.0 pixels
-                    if (selectedOnly) thickness += 1.0f; // Make selected lines slightly thicker
-                    
-                    g2.setStroke(new BasicStroke(thickness));
-                    g2.setColor(baseColor);
-                    g2.draw(new Line2D.Double(p1, p2));
-                }
-                
-                // Draw closing line if needed
-                if (closeLoop && points.size() > 1) {
-                    Point2D.Double first = points.get(0);
-                    Point2D.Double last = points.get(points.size() - 1);
-                    
-                    if (axisGap <= 0.0) {
-                        // No gap, draw direct line
-                        LineSegment segment = new LineSegment(last, first);
-                        int count = lineSegmentCounts.getOrDefault(segment, 1);
                         
-                        float normalizedDensity = (float) count / maxDensity;
-                        float thickness = 0.5f + (normalizedDensity * 5.5f);
-                        if (selectedOnly) thickness += 1.0f;
-                        
-                        g2.setStroke(new BasicStroke(thickness));
-                        g2.setColor(baseColor);
-                        g2.draw(new Line2D.Double(last, first));
-                    } else {
-                        // Calculate direction vector
-                        double dx = first.x - last.x;
-                        double dy = first.y - last.y;
-                        double length = Math.sqrt(dx * dx + dy * dy);
-                        
-                        if (length > 0) {
-                            // Normalize and scale by gap size
-                            dx /= length;
-                            dy /= length;
+                        // Draw closing line if needed
+                        if (closeLoop && points.size() > 1) {
+                            Point2D.Double first = points.get(0);
+                            Point2D.Double last = points.get(points.size() - 1);
                             
-                            // Calculate new endpoints with gap
-                            Point2D.Double gapStart = new Point2D.Double(
-                                last.x + dx * length * axisGap / 2,
-                                last.y + dy * length * axisGap / 2
-                            );
-                            
-                            Point2D.Double gapEnd = new Point2D.Double(
-                                first.x - dx * length * axisGap / 2,
-                                first.y - dy * length * axisGap / 2
-                            );
-                            
-                            // Draw the two segments with appropriate thickness
-                            LineSegment segment1 = new LineSegment(last, gapStart);
-                            LineSegment segment2 = new LineSegment(gapEnd, first);
-                            
-                            int count1 = lineSegmentCounts.getOrDefault(segment1, 1);
-                            int count2 = lineSegmentCounts.getOrDefault(segment2, 1);
-                            
-                            float normalizedDensity1 = (float) count1 / maxDensity;
-                            float normalizedDensity2 = (float) count2 / maxDensity;
-                            
-                            float thickness1 = 0.5f + (normalizedDensity1 * 5.5f);
-                            float thickness2 = 0.5f + (normalizedDensity2 * 5.5f);
-                            if (selectedOnly) {
-                                thickness1 += 1.0f;
-                                thickness2 += 1.0f;
+                            if (axisGap <= 0.0) {
+                                // No gap, draw direct line
+                                LineSegment segment = new LineSegment(last, first);
+                                int count = lineSegmentCounts.getOrDefault(segment, 1);
+                                
+                                float normalizedDensity = (float) count / maxDensity;
+                                int alpha = Math.max(75, (int) (normalizedDensity * 255));
+                                Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), 
+                                                            baseColor.getBlue(), alpha);
+                                
+                                g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                                g2.setColor(adjustedColor);
+                                g2.draw(new Line2D.Double(last, first));
+                            } else {
+                                // Calculate direction vector
+                                double dx = first.x - last.x;
+                                double dy = first.y - last.y;
+                                double length = Math.sqrt(dx * dx + dy * dy);
+                                
+                                if (length > 0) {
+                                    // Normalize and scale by gap size
+                                    dx /= length;
+                                    dy /= length;
+                                    
+                                    // Calculate new endpoints with gap
+                                    Point2D.Double gapStart = new Point2D.Double(
+                                        last.x + dx * length * axisGap / 2,
+                                        last.y + dy * length * axisGap / 2
+                                    );
+                                    
+                                    Point2D.Double gapEnd = new Point2D.Double(
+                                        first.x - dx * length * axisGap / 2,
+                                        first.y - dy * length * axisGap / 2
+                                    );
+                                    
+                                    // Draw the two segments with appropriate opacity
+                                    LineSegment segment1 = new LineSegment(last, gapStart);
+                                    LineSegment segment2 = new LineSegment(gapEnd, first);
+                                    
+                                    int count1 = lineSegmentCounts.getOrDefault(segment1, 1);
+                                    int count2 = lineSegmentCounts.getOrDefault(segment2, 1);
+                                    
+                                    float normalizedDensity1 = (float) count1 / maxDensity;
+                                    float normalizedDensity2 = (float) count2 / maxDensity;
+                                    
+                                    int alpha1 = Math.max(75, (int) (normalizedDensity1 * 255));
+                                    int alpha2 = Math.max(75, (int) (normalizedDensity2 * 255));
+                                    
+                                    Color adjustedColor1 = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 
+                                                                alpha1);
+                                    Color adjustedColor2 = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 
+                                                                alpha2);
+                                    
+                                    g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                                    g2.setColor(adjustedColor1);
+                                    g2.draw(new Line2D.Double(last, gapStart));
+                                    
+                                    g2.setColor(adjustedColor2);
+                                    g2.draw(new Line2D.Double(gapEnd, first));
+                                }
                             }
-                            
-                            g2.setColor(baseColor);
-                            g2.setStroke(new BasicStroke(thickness1));
-                            g2.draw(new Line2D.Double(last, gapStart));
-                            
-                            g2.setStroke(new BasicStroke(thickness2));
-                            g2.draw(new Line2D.Double(gapEnd, first));
+                        }
+                    }
+
+                    // Draw the shapes at the points with full opacity
+                    for (int i = 0; i < points.size(); i++) {
+                        Point2D.Double point = points.get(i);
+                        // Scale up pure vertices
+                        float scale = (highlightPureVertices && isPure != null && isPure[i]) ? pureVertexScaleFactor : 1.0f;
+                        
+                        // Get the correct color for this vertex
+                        Color vertexColor;
+                        if (selectedOnly) {
+                            vertexColor = Color.YELLOW;
+                        } else if (highlightPureVertices && isPure != null && isPure[i]) {
+                            // If it's a pure vertex, use the color of the class it belongs to
+                            String pureClass = getPureVertexClass(point, pureVertices);
+                            vertexColor = classColors.getOrDefault(pureClass, baseColor);
+                        } else {
+                            // Otherwise use this row's class color
+                            vertexColor = baseColor;
+                        }
+                        
+                        // Set the color with full opacity
+                        g2.setColor(new Color(vertexColor.getRed(), vertexColor.getGreen(), vertexColor.getBlue(), 255));
+                        
+                        Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
+                        
+                        // Scale the shape if it's a pure vertex
+                        if (scale > 1.0f) {
+                            shape = scaleShape(shape, scale);
+                        }
+                        
+                        g2.translate(point.x, point.y);
+                        g2.fill(shape);
+                        g2.translate(-point.x, -point.y);
+                    }
+                }
+            }
+
+            private void drawLinesWithThickness(Graphics2D g2, Map<LineSegment, Integer> lineSegmentCounts, int maxDensity, 
+                                                boolean selectedOnly, int centerX, int centerY, int maxRadius, Map<String, Set<Vertex>> pureVertices, Set<Integer> rowsWithPureVertices) {
+                List<Integer> rowsToProcess;
+                if (selectedOnly) {
+                    rowsToProcess = selectedRows;
+                } else {
+                    rowsToProcess = new ArrayList<>();
+                    for (int i = 0; i < data.get(0).size(); i++) {
+                        if (!selectedRows.contains(i) && !hiddenRows.contains(i)) {
+                            rowsToProcess.add(i);
                         }
                     }
                 }
 
-                // Draw the shapes at the points
-                g2.setColor(baseColor);
-                for (Point2D.Double point : points) {
-                    Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
-                    g2.translate(point.x, point.y);
-                    g2.fill(shape);
-                    g2.translate(-point.x, -point.y);
+                // Sort rows to draw benign on top of malignant, and NN on top of all
+                List<Integer> malignantRows = new ArrayList<>();
+                List<Integer> benignRows = new ArrayList<>();
+                List<Integer> nnRows = new ArrayList<>();
+                List<Integer> otherRows = new ArrayList<>();
+                
+                for (int row : rowsToProcess) {
+                    String classLabel = classLabels.get(row);
+                    if (hiddenClasses.contains(classLabel)) continue;
+                    
+                    if (classLabel.equalsIgnoreCase("NN")) {
+                        nnRows.add(row);
+                    } else if (classLabel.equalsIgnoreCase("benign")) {
+                        benignRows.add(row);
+                    } else if (classLabel.equalsIgnoreCase("malignant")) {
+                        malignantRows.add(row);
+                    } else {
+                        otherRows.add(row);
+                    }
+                }
+                
+                // Draw in order: malignant, other, benign, NN (so NN appears on top of all)
+                drawRowsWithThickness(g2, malignantRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                drawRowsWithThickness(g2, otherRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                drawRowsWithThickness(g2, benignRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+                drawRowsWithThickness(g2, nnRows, lineSegmentCounts, maxDensity, selectedOnly, centerX, centerY, maxRadius, pureVertices, rowsWithPureVertices);
+            }
+            
+            private void drawRowsWithThickness(Graphics2D g2, List<Integer> rows, Map<LineSegment, Integer> lineSegmentCounts,
+                                            int maxDensity, boolean selectedOnly, int centerX, int centerY, int maxRadius, Map<String, Set<Vertex>> pureVertices, Set<Integer> rowsWithPureVertices) {
+                for (int row : rows) {
+                    String classLabel = classLabels.get(row);
+                    List<Point2D.Double> points = getPolylinePoints(row, centerX, centerY, maxRadius);
+                    Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
+                    
+                    boolean[] isPure = null;
+                    // Check if any points are pure vertices
+                    if (highlightPureVertices && pureVertices != null) {
+                        isPure = new boolean[points.size()];
+                        for (int i = 0; i < points.size(); i++) {
+                            isPure[i] = isPureVertex(points.get(i), pureVertices);
+                        }
+                    }
+                    
+                    // If this row has any pure vertices and the feature is enabled, skip drawing lines
+                    boolean skipLines = highlightPureVertices && rowsWithPureVertices.contains(row);
+                    if (skipLines) {
+                        // Skip drawing any lines for this row
+                    } else {
+                        // Draw lines with thickness based on density
+                        for (int i = 0; i < points.size() - 1; i++) {
+                            Point2D.Double p1 = points.get(i);
+                            Point2D.Double p2 = points.get(i + 1);
+                            
+                            LineSegment segment = new LineSegment(p1, p2);
+                            int count = lineSegmentCounts.getOrDefault(segment, 1);
+                            
+                            // Calculate thickness based on density, starting from a minimum thickness
+                            float normalizedDensity = (float) count / maxDensity;
+                            float thickness = 0.5f + (normalizedDensity * 5.5f); // Scale from 0.5 to 6.0 pixels
+                            if (selectedOnly) thickness += 1.0f; // Make selected lines slightly thicker
+                            
+                            g2.setStroke(new BasicStroke(thickness));
+                            g2.setColor(baseColor);
+                            g2.draw(new Line2D.Double(p1, p2));
+                        }
+                        
+                        // Draw closing line if needed
+                        if (closeLoop && points.size() > 1) {
+                            Point2D.Double first = points.get(0);
+                            Point2D.Double last = points.get(points.size() - 1);
+                            
+                            if (axisGap <= 0.0) {
+                                // No gap, draw direct line
+                                LineSegment segment = new LineSegment(last, first);
+                                int count = lineSegmentCounts.getOrDefault(segment, 1);
+                                
+                                float normalizedDensity = (float) count / maxDensity;
+                                float thickness = 0.5f + (normalizedDensity * 5.5f);
+                                if (selectedOnly) thickness += 1.0f;
+                                
+                                g2.setStroke(new BasicStroke(thickness));
+                                g2.setColor(baseColor);
+                                g2.draw(new Line2D.Double(last, first));
+                            } else {
+                                // Calculate direction vector
+                                double dx = first.x - last.x;
+                                double dy = first.y - last.y;
+                                double length = Math.sqrt(dx * dx + dy * dy);
+                                
+                                if (length > 0) {
+                                    // Normalize and scale by gap size
+                                    dx /= length;
+                                    dy /= length;
+                                    
+                                    // Calculate new endpoints with gap
+                                    Point2D.Double gapStart = new Point2D.Double(
+                                        last.x + dx * length * axisGap / 2,
+                                        last.y + dy * length * axisGap / 2
+                                    );
+                                    
+                                    Point2D.Double gapEnd = new Point2D.Double(
+                                        first.x - dx * length * axisGap / 2,
+                                        first.y - dy * length * axisGap / 2
+                                    );
+                                    
+                                    // Draw the two segments with appropriate thickness
+                                    LineSegment segment1 = new LineSegment(last, gapStart);
+                                    LineSegment segment2 = new LineSegment(gapEnd, first);
+                                    
+                                    int count1 = lineSegmentCounts.getOrDefault(segment1, 1);
+                                    int count2 = lineSegmentCounts.getOrDefault(segment2, 1);
+                                    
+                                    float normalizedDensity1 = (float) count1 / maxDensity;
+                                    float normalizedDensity2 = (float) count2 / maxDensity;
+                                    
+                                    float thickness1 = 0.5f + (normalizedDensity1 * 5.5f);
+                                    float thickness2 = 0.5f + (normalizedDensity2 * 5.5f);
+                                    if (selectedOnly) {
+                                        thickness1 += 1.0f;
+                                        thickness2 += 1.0f;
+                                    }
+                                    
+                                    g2.setColor(baseColor);
+                                    g2.setStroke(new BasicStroke(thickness1));
+                                    g2.draw(new Line2D.Double(last, gapStart));
+                                    
+                                    g2.setStroke(new BasicStroke(thickness2));
+                                    g2.draw(new Line2D.Double(gapEnd, first));
+                                }
+                            }
+                        }
+                    }
+
+                    // Draw the shapes at the points
+                    for (int i = 0; i < points.size(); i++) {
+                        Point2D.Double point = points.get(i);
+                        // Scale up pure vertices
+                        float scale = (highlightPureVertices && isPure != null && isPure[i]) ? pureVertexScaleFactor : 1.0f;
+                        
+                        // Get the correct color for this vertex
+                        Color vertexColor;
+                        if (selectedOnly) {
+                            vertexColor = Color.YELLOW;
+                        } else if (highlightPureVertices && isPure != null && isPure[i]) {
+                            // If it's a pure vertex, use the color of the class it belongs to
+                            String pureClass = getPureVertexClass(point, pureVertices);
+                            vertexColor = classColors.getOrDefault(pureClass, baseColor);
+                        } else {
+                            // Otherwise use this row's class color
+                            vertexColor = baseColor;
+                        }
+                        
+                        // Set the color
+                        g2.setColor(vertexColor);
+                        
+                        Shape shape = classShapes.getOrDefault(classLabel, new Ellipse2D.Double(-3, -3, 6, 6));
+                        
+                        // Scale the shape if it's a pure vertex
+                        if (scale > 1.0f) {
+                            shape = scaleShape(shape, scale);
+                        }
+                        
+                        g2.translate(point.x, point.y);
+                        g2.fill(shape);
+                        g2.translate(-point.x, -point.y);
+                    }
+                }
+            }
+
+            private void drawAttributeLabels(Graphics2D g2, int centerX, int centerY, int maxRadius) {
+                g2.setFont(AXIS_LABEL_FONT);
+                g2.setColor(Color.BLACK);
+
+                int numAttributes = attributeNames.size();
+                for (int i = 0; i < numAttributes; i++) {
+                    if (concentricMode) {
+                        // For each attribute circle, draw its label at the top of the circle
+                        int currentRadius = (i + 1) * (maxRadius / numAttributes);
+                        double radius = attributeRadii.get(attributeNames.get(i));
+                        int adjustedRadius = (int)(currentRadius * radius);
+                        
+                        // Place label at the top of each circle
+                        double labelAngle = (1.5 * Math.PI) + attributeRotations.get(attributeNames.get(i)) + piAdjustment;
+                        
+                        int x = centerX + (int)(adjustedRadius * Math.cos(labelAngle));
+                        int y = centerY + (int)(adjustedRadius * Math.sin(labelAngle));
+                        
+                        // Center the text
+                        FontMetrics fm = g2.getFontMetrics();
+                        int textWidth = fm.stringWidth(attributeNames.get(i));
+                        int textHeight = fm.getHeight();
+                        x -= textWidth / 2;
+                        y -= 5;
+                        
+                        g2.drawString(attributeNames.get(i), x, y);
+                    } else {
+                        int spacing = maxRadius / (numAttributes + 1);
+                        Point pos = axisPositions.getOrDefault(attributeNames.get(i),
+                            new Point(centerX + (i - numAttributes/2) * spacing * 2, centerY));
+                        g2.drawString(attributeNames.get(i), pos.x - 20, pos.y - spacing - 10);
+                    }
                 }
             }
         }
     }
-}
