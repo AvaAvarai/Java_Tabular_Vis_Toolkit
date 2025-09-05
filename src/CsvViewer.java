@@ -343,6 +343,23 @@ public class CsvViewer extends JFrame {
     public void closeData() {
         clearTableAndState();
     }
+    
+    /**
+     * Gets the data type information for a column
+     * @param columnIndex Index of the column
+     * @return ColumnDataTypeInfo object, or null if not found
+     */
+    public utils.ColumnDataTypeInfo getColumnDataType(int columnIndex) {
+        return dataHandler.getColumnDataType(columnIndex);
+    }
+    
+    /**
+     * Gets all column data type information
+     * @return Map of column index to ColumnDataTypeInfo
+     */
+    public java.util.Map<Integer, utils.ColumnDataTypeInfo> getAllColumnDataTypes() {
+        return dataHandler.getAllColumnDataTypes();
+    }
 
     public void showCovarianceSortDialog() {
         if (tableModel.getColumnCount() == 0) {
@@ -764,7 +781,7 @@ public class CsvViewer extends JFrame {
         TableColumnModel columnModel = table.getColumnModel();
         for (int i = 0; i < columnModel.getColumnCount(); i++) {
             String columnName = columnModel.getColumn(i).getHeaderValue().toString();
-            if (columnName.equalsIgnoreCase("class")) {
+            if (columnName.equalsIgnoreCase("class") || columnName.equalsIgnoreCase("label")) {
                 return columnModel.getColumn(i).getModelIndex();
             }
         }

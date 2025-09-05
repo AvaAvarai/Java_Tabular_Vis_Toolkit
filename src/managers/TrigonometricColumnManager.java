@@ -155,7 +155,7 @@ public class TrigonometricColumnManager {
 
     private int getClassColumnIndex() {
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
-            if (tableModel.getColumnName(i).equalsIgnoreCase("class")) {
+            if (tableModel.getColumnName(i).equalsIgnoreCase("class") || tableModel.getColumnName(i).equalsIgnoreCase("label")) {
                 return i;
             }
         }
