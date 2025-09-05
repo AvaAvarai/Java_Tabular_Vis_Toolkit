@@ -55,6 +55,7 @@ public class ButtonPanelManager {
         fileMenu.setIcon(resizeIcon("/icons/file.png"));
         addMenuItem(fileMenu, "Open Data", "/icons/file.png", _ -> csvViewer.loadCsvFile());
         addMenuItem(fileMenu, "Save Data", "/icons/export.png", _ -> csvViewer.exportCsvFile());
+        addMenuItem(fileMenu, "Close Data", "/icons/delete.png", _ -> csvViewer.closeData());
 
         // View Menu (Visualizations)
         JMenu viewMenu = new JMenu("View Visualizations");

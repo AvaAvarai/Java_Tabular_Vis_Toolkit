@@ -340,6 +340,10 @@ public class CsvViewer extends JFrame {
         dataHandler.clearData();
     }
 
+    public void closeData() {
+        clearTableAndState();
+    }
+
     public void showCovarianceSortDialog() {
         if (tableModel.getColumnCount() == 0) {
             noDataLoadedError();
