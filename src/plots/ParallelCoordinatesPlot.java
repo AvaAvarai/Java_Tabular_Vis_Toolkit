@@ -123,7 +123,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         // Add a button to toggle the attribute labels
         JToggleButton attributeLabelToggle = new JToggleButton("Show Labels");
         attributeLabelToggle.setSelected(showAttributeLabels);
-        attributeLabelToggle.addActionListener(_ -> {
+        attributeLabelToggle.addActionListener(e -> {
             showAttributeLabels = attributeLabelToggle.isSelected();
             repaint();
         });
@@ -197,6 +197,21 @@ public class ParallelCoordinatesPlot extends JFrame {
             sliderLabel.setAlignmentX(Component.CENTER_ALIGNMENT); // Center align
             attributePanel.add(sliderLabel);
             attributePanel.add(axisScaleSlider);
+            
+            // Add a Y position slider
+            JSlider yPosSlider = new JSlider(JSlider.HORIZONTAL, 0, 600, 100);
+            yPosSlider.setBackground(Color.WHITE);
+            yPosSlider.setPreferredSize(new Dimension(100, 20));
+            yPosSlider.addChangeListener(e -> {
+                int value = yPosSlider.getValue();
+                axisPositions.get(attributeName).y = value;
+                repaint();
+            });
+            JLabel yPosLabel = new JLabel("Y Position");
+            yPosLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            yPosLabel.setAlignmentX(Component.CENTER_ALIGNMENT); // Center align
+            attributePanel.add(yPosLabel);
+            attributePanel.add(yPosSlider);
     
             // Add the attribute panel to the main control panel
             controlPanel.add(attributePanel);
