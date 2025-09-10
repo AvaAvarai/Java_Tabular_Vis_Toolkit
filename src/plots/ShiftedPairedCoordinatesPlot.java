@@ -106,31 +106,81 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         });
         controlPanel.add(attributeLabelsToggle);
 
-        // Add axis controls for each attribute
-        for (String attr : attributeNames) {
-            JPanel attrPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            attrPanel.setBorder(BorderFactory.createTitledBorder(attr));
+        // Add axis controls for each plot (pair of attributes)
+        for (int i = 0; i < (attributeNames.size() + 1) / 2; i++) {
+            final int plotIndex = i;
+            int attr1Index = i * 2;
+            int attr2Index = i * 2 + 1;
             
-            // Add scale slider
-            JSlider scaleSlider = new JSlider(JSlider.HORIZONTAL, 0, 200, 100);
-            scaleSlider.setPreferredSize(new Dimension(100, 20));
-            scaleSlider.addChangeListener(e -> {
-                axisScales.put(attr, scaleSlider.getValue() / 100.0);
+            String attr1Name = attributeNames.get(attr1Index);
+            String attr2Name = (attr2Index < attributeNames.size()) ? attributeNames.get(attr2Index) : attr1Name;
+            
+            JPanel plotPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            plotPanel.setBorder(BorderFactory.createTitledBorder("Plot " + (i + 1) + ": " + attr1Name + " / " + attr2Name));
+            
+            // Add scale slider for first attribute
+            JSlider scale1Slider = new JSlider(JSlider.HORIZONTAL, 0, 200, 100);
+            scale1Slider.setPreferredSize(new Dimension(100, 20));
+            scale1Slider.addChangeListener(e -> {
+                axisScales.put(attr1Name, scale1Slider.getValue() / 100.0);
                 plotPanel.repaint();
             });
-            attrPanel.add(new JLabel("Scale:"));
-            attrPanel.add(scaleSlider);
+            plotPanel.add(new JLabel(attr1Name + " Scale:"));
+            plotPanel.add(scale1Slider);
             
-            // Add direction toggle
-            JToggleButton directionToggle = new JToggleButton("\u2191");
-            directionToggle.addActionListener(e -> {
-                axisDirections.put(attr, !directionToggle.isSelected());
-                directionToggle.setText(directionToggle.isSelected() ? "\u2193" : "\u2191");
+            // Add direction toggle for first attribute
+            JToggleButton direction1Toggle = new JToggleButton("\u2191");
+            direction1Toggle.addActionListener(e -> {
+                axisDirections.put(attr1Name, !direction1Toggle.isSelected());
+                direction1Toggle.setText(direction1Toggle.isSelected() ? "\u2193" : "\u2191");
                 plotPanel.repaint();
             });
-            attrPanel.add(directionToggle);
+            plotPanel.add(direction1Toggle);
             
-            controlPanel.add(attrPanel);
+            // Add scale slider for second attribute (if different)
+            if (attr2Index < attributeNames.size()) {
+                JSlider scale2Slider = new JSlider(JSlider.HORIZONTAL, 0, 200, 100);
+                scale2Slider.setPreferredSize(new Dimension(100, 20));
+                scale2Slider.addChangeListener(e -> {
+                    axisScales.put(attr2Name, scale2Slider.getValue() / 100.0);
+                    plotPanel.repaint();
+                });
+                plotPanel.add(new JLabel(attr2Name + " Scale:"));
+                plotPanel.add(scale2Slider);
+                
+                // Add direction toggle for second attribute
+                JToggleButton direction2Toggle = new JToggleButton("\u2191");
+                direction2Toggle.addActionListener(e -> {
+                    axisDirections.put(attr2Name, !direction2Toggle.isSelected());
+                    direction2Toggle.setText(direction2Toggle.isSelected() ? "\u2193" : "\u2191");
+                    plotPanel.repaint();
+                });
+                plotPanel.add(direction2Toggle);
+            }
+            
+            // Add X position slider for this plot
+            JSlider xPosSlider = new JSlider(JSlider.HORIZONTAL, -3000, 3000, 0);
+            xPosSlider.setPreferredSize(new Dimension(100, 20));
+            xPosSlider.addChangeListener(e -> {
+                Point currentOffset = plotOffsets.getOrDefault(plotIndex, new Point(0, 0));
+                plotOffsets.put(plotIndex, new Point(xPosSlider.getValue(), currentOffset.y));
+                ShiftedPairedCoordinatesPlot.this.plotPanel.repaint();
+            });
+            plotPanel.add(new JLabel("X:"));
+            plotPanel.add(xPosSlider);
+            
+            // Add Y position slider for this plot
+            JSlider yPosSlider = new JSlider(JSlider.HORIZONTAL, -3000, 3000, 0);
+            yPosSlider.setPreferredSize(new Dimension(100, 20));
+            yPosSlider.addChangeListener(e -> {
+                Point currentOffset = plotOffsets.getOrDefault(plotIndex, new Point(0, 0));
+                plotOffsets.put(plotIndex, new Point(currentOffset.x, yPosSlider.getValue()));
+                ShiftedPairedCoordinatesPlot.this.plotPanel.repaint();
+            });
+            plotPanel.add(new JLabel("Y:"));
+            plotPanel.add(yPosSlider);
+            
+            controlPanel.add(plotPanel);
         }
 
         JScrollPane controlScroll = new JScrollPane(controlPanel);
