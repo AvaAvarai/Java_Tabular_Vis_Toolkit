@@ -297,12 +297,39 @@ public class ParallelCoordinatesPlot extends JFrame {
     
                 g2.drawLine((int) pos.x, (int) pos.y, (int) pos.x, (int) pos.y + scaledHeight);
     
-                // Draw attribute label
+                // Draw attribute label with subscript if '_' is found
                 if (showAttributeLabels) {
                     g2.setFont(AXIS_LABEL_FONT);
                     String label = attributeName;
-                    int labelWidth = g2.getFontMetrics().stringWidth(label);
-                    g2.drawString(label, (int) (pos.x - labelWidth / 2), (int) (pos.y + scaledHeight + 20));
+
+                    // Split label into main and subscript part
+                    int underscoreIdx = label.indexOf('_');
+                    if (underscoreIdx != -1 && underscoreIdx + 1 < label.length()) {
+                        String main = label.substring(0, underscoreIdx);
+                        String subscript = label.substring(underscoreIdx + 1);
+
+                        FontMetrics fm = g2.getFontMetrics();
+                        FontMetrics subMetrics = g2.getFontMetrics(AXIS_LABEL_FONT.deriveFont(AXIS_LABEL_FONT.getSize2D() * 0.75f));
+                        int mainWidth = fm.stringWidth(main);
+                        int subWidth = subMetrics.stringWidth(subscript);
+
+                        int totalWidth = mainWidth + subWidth;
+
+                        int xDraw = (int) (pos.x - totalWidth / 2);
+                        int yDraw = (int) (pos.y + scaledHeight + 20);
+
+                        g2.setFont(AXIS_LABEL_FONT);
+                        g2.drawString(main, xDraw, yDraw);
+
+                        g2.setFont(AXIS_LABEL_FONT.deriveFont(AXIS_LABEL_FONT.getSize2D() * 0.75f));
+                        // Move subscript a bit to the right and below the baseline
+                        g2.drawString(subscript, xDraw + mainWidth, yDraw + (int)(fm.getHeight() * 0.25));
+                    } else {
+                        // No subscript, just draw normally
+                        FontMetrics fm = g2.getFontMetrics();
+                        int labelWidth = fm.stringWidth(label);
+                        g2.drawString(label, (int) (pos.x - labelWidth / 2), (int) (pos.y + scaledHeight + 20));
+                    }
                 }
             }
         }
