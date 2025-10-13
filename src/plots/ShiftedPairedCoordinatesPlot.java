@@ -39,6 +39,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     private Map<Integer, Double> slopeValues; // Store calculated slopes for each line segment
     private JScrollPane mainScrollPane; // Store reference to main scroll pane
     private boolean showAttributeLabels = true; // Toggle for displaying attribute labels
+    private boolean showPolylines = true; // Toggle for displaying polylines
 
     public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table) {
         this.data = data;
@@ -105,6 +106,15 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             plotPanel.repaint();
         });
         controlPanel.add(attributeLabelsToggle);
+        
+        // Add polylines toggle
+        JToggleButton polylinesToggle = new JToggleButton("Show Polylines");
+        polylinesToggle.setSelected(true); // Default to showing polylines
+        polylinesToggle.addActionListener(e -> {
+            showPolylines = polylinesToggle.isSelected();
+            plotPanel.repaint();
+        });
+        controlPanel.add(polylinesToggle);
 
         // Add axis controls for each plot (pair of attributes)
         for (int i = 0; i < (attributeNames.size() + 1) / 2; i++) {
@@ -223,11 +233,18 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             }
         });
 
-        // Add optimize button
+        // Add optimize button and screenshot button
         JButton optimizeButton = new JButton("Optimize Axes");
         optimizeButton.addActionListener(e -> optimizeAxesPlacement());
+        
+        JButton screenshotButton = new JButton("Take Screenshot");
+        screenshotButton.addActionListener(e -> {
+            ScreenshotUtils.captureAndSaveScreenshot(mainScrollPane, "ShiftedPairedCoordinates", datasetName);
+        });
+        
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(optimizeButton);
+        buttonPanel.add(screenshotButton);
         controlPanel.add(buttonPanel);
 
         mainScrollPane = new JScrollPane(plotPanel);
@@ -575,17 +592,19 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                     int lineKey = row * numPlots + i;
                     slopeValues.put(lineKey, slope);
                     
-                    if (showSlopes) {
-                        // Map slope to color (red for positive, blue for negative)
-                        float hue = slope > 0 ? 0.0f : 0.6f; // Red or blue
-                        float saturation = Math.min(1.0f, Math.abs((float)slope) / 5.0f);
-                        Color slopeColor = Color.getHSBColor(hue, saturation, 1.0f);
-                        g2.setColor(slopeColor);
-                    } else {
-                        g2.setColor(color);
+                    if (showPolylines) {
+                        if (showSlopes) {
+                            // Map slope to color (red for positive, blue for negative)
+                            float hue = slope > 0 ? 0.0f : 0.6f; // Red or blue
+                            float saturation = Math.min(1.0f, Math.abs((float)slope) / 5.0f);
+                            Color slopeColor = Color.getHSBColor(hue, saturation, 1.0f);
+                            g2.setColor(slopeColor);
+                        } else {
+                            g2.setColor(color);
+                        }
+                        
+                        g2.drawLine(x1, y1, x2, y2);
                     }
-                    
-                    g2.drawLine(x1, y1, x2, y2);
                 }
             }
             g2.setStroke(originalStroke);
