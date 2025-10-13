@@ -30,6 +30,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private final double globalMinValue;
     private boolean showAttributeLabels = true;
     private boolean showDensity = true;
+    private boolean showPolylines = true; // Toggle for displaying polylines
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -128,6 +129,15 @@ public class ParallelCoordinatesPlot extends JFrame {
             repaint();
         });
         controlPanel.add(attributeLabelToggle);
+        
+        // Add polylines toggle
+        JToggleButton polylinesToggle = new JToggleButton("Show Polylines");
+        polylinesToggle.setSelected(true); // Default to showing polylines
+        polylinesToggle.addActionListener(e -> {
+            showPolylines = polylinesToggle.isSelected();
+            repaint();
+        });
+        controlPanel.add(polylinesToggle);
 
         // Add a button group for density modes
         ButtonGroup densityButtonGroup = new ButtonGroup();
@@ -427,13 +437,15 @@ public class ParallelCoordinatesPlot extends JFrame {
                 Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
                 
                 // Draw lines with a fixed thickness
-                for (int i = 0; i < points.size() - 1; i++) {
-                    Point2D.Double p1 = points.get(i);
-                    Point2D.Double p2 = points.get(i + 1);
-                    
-                    g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
-                    g2.setColor(baseColor);
-                    g2.draw(new Line2D.Double(p1, p2));
+                if (showPolylines) {
+                    for (int i = 0; i < points.size() - 1; i++) {
+                        Point2D.Double p1 = points.get(i);
+                        Point2D.Double p2 = points.get(i + 1);
+                        
+                        g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                        g2.setColor(baseColor);
+                        g2.draw(new Line2D.Double(p1, p2));
+                    }
                 }
 
                 // Draw class symbols as vertices
@@ -462,20 +474,22 @@ public class ParallelCoordinatesPlot extends JFrame {
                 Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
                 
                 // Draw lines with varying thickness based on density
-                for (int i = 0; i < points.size() - 1; i++) {
-                    Point2D.Double p1 = points.get(i);
-                    Point2D.Double p2 = points.get(i + 1);
-                    
-                    LineSegment segment = new LineSegment(p1, p2);
-                    int count = lineSegmentCounts.getOrDefault(segment, 1);
-                    
-                    // Calculate thickness based on density, starting from a minimum thickness
-                    float normalizedDensity = (float) count / maxDensity;
-                    float thickness = 0.5f + (normalizedDensity * 9.5f); // Scale from 0.5 to 10.0 pixels
-                    
-                    g2.setStroke(new BasicStroke(thickness)); // Set the stroke thickness
-                    g2.setColor(baseColor);
-                    g2.draw(new Line2D.Double(p1, p2));
+                if (showPolylines) {
+                    for (int i = 0; i < points.size() - 1; i++) {
+                        Point2D.Double p1 = points.get(i);
+                        Point2D.Double p2 = points.get(i + 1);
+                        
+                        LineSegment segment = new LineSegment(p1, p2);
+                        int count = lineSegmentCounts.getOrDefault(segment, 1);
+                        
+                        // Calculate thickness based on density, starting from a minimum thickness
+                        float normalizedDensity = (float) count / maxDensity;
+                        float thickness = 0.5f + (normalizedDensity * 9.5f); // Scale from 0.5 to 10.0 pixels
+                        
+                        g2.setStroke(new BasicStroke(thickness)); // Set the stroke thickness
+                        g2.setColor(baseColor);
+                        g2.draw(new Line2D.Double(p1, p2));
+                    }
                 }
 
                 // Draw class symbols as vertices
@@ -504,20 +518,22 @@ public class ParallelCoordinatesPlot extends JFrame {
                 Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
                 
                 // Draw lines with varying opacity based on density
-                for (int i = 0; i < points.size() - 1; i++) {
-                    Point2D.Double p1 = points.get(i);
-                    Point2D.Double p2 = points.get(i + 1);
-                    
-                    LineSegment segment = new LineSegment(p1, p2);
-                    int count = lineSegmentCounts.getOrDefault(segment, 1);
-                    
-                    // Calculate opacity based on density
-                    float normalizedDensity = (float) count / maxDensity;
-                    int alpha = (int) (normalizedDensity * 255); // Scale alpha from 0 to 255
-                    g2.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha));
-                    g2.setStroke(new BasicStroke(1.0f)); // Fixed thickness
-                    
-                    g2.draw(new Line2D.Double(p1, p2));
+                if (showPolylines) {
+                    for (int i = 0; i < points.size() - 1; i++) {
+                        Point2D.Double p1 = points.get(i);
+                        Point2D.Double p2 = points.get(i + 1);
+                        
+                        LineSegment segment = new LineSegment(p1, p2);
+                        int count = lineSegmentCounts.getOrDefault(segment, 1);
+                        
+                        // Calculate opacity based on density
+                        float normalizedDensity = (float) count / maxDensity;
+                        int alpha = (int) (normalizedDensity * 255); // Scale alpha from 0 to 255
+                        g2.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha));
+                        g2.setStroke(new BasicStroke(1.0f)); // Fixed thickness
+                        
+                        g2.draw(new Line2D.Double(p1, p2));
+                    }
                 }
 
                 // Draw class symbols as vertices
