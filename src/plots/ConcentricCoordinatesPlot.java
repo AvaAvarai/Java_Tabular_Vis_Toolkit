@@ -64,13 +64,14 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private double zoomLevel = 1.0;
     private JScrollPane plotScrollPane;
     private boolean showConvexHulls = false;
+    private Color backgroundColor;
     
         // Font settings
         private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
         private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
         private static final int TITLE_PADDING = 20;
     
-        public ConcentricCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, List<Integer> hiddenRows, String datasetName) {
+        public ConcentricCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, List<Integer> hiddenRows, String datasetName, Color backgroundColor) {
             this.data = data;
             this.attributeNames = attributeNames;
             this.classColors = classColors;
@@ -78,6 +79,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
             this.classLabels = classLabels;
             this.selectedRows = selectedRows;
             this.hiddenRows = hiddenRows;
+            this.backgroundColor = backgroundColor;
     
             // Initialize rotation values, directions, radii and normalization for each attribute
             for (String attribute : attributeNames) {
@@ -897,8 +899,8 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 g2.scale(zoomLevel, zoomLevel);
                 g2.translate(-centerX, -centerY);
 
-                // Set the background color for the entire panel to white
-                g2.setColor(Color.WHITE);
+                // Set the background color for the entire panel
+                g2.setColor(backgroundColor);
                 g2.fillRect(0, 0, getWidth(), getHeight());
 
                 // Draw the title

@@ -838,6 +838,44 @@ public class CsvViewer extends JFrame {
         }
     }
 
+    public void showBackgroundColorDialog() {
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+
+        JLabel colorLabel = new JLabel("Plot Background Color:");
+        panel.add(colorLabel);
+        JButton colorButton = new JButton("Choose Color");
+        colorButton.addActionListener(e -> {
+            Color newColor = JColorChooser.showDialog(this, "Choose Plot Background Color", stateManager.getPlotBackgroundColor());
+            if (newColor != null) {
+                stateManager.setPlotBackgroundColor(newColor);
+            }
+        });
+        panel.add(colorButton);
+
+        // Add a preview panel
+        JPanel previewPanel = new JPanel();
+        previewPanel.setBorder(BorderFactory.createTitledBorder("Preview"));
+        previewPanel.setBackground(stateManager.getPlotBackgroundColor());
+        previewPanel.setPreferredSize(new Dimension(100, 50));
+        panel.add(previewPanel);
+
+        // Update preview when color changes
+        colorButton.addActionListener(e -> {
+            Color newColor = JColorChooser.showDialog(this, "Choose Plot Background Color", stateManager.getPlotBackgroundColor());
+            if (newColor != null) {
+                stateManager.setPlotBackgroundColor(newColor);
+                previewPanel.setBackground(newColor);
+                previewPanel.repaint();
+            }
+        });
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Background Color Settings", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            // The color has already been set in the button action listener
+            // No additional action needed here
+        }
+    }
+
     public void insertRow() {
         int currentCaretPosition = statsTextArea.getCaretPosition();
 

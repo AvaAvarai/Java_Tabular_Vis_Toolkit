@@ -39,8 +39,9 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     private Map<Integer, Double> slopeValues; // Store calculated slopes for each line segment
     private JScrollPane mainScrollPane; // Store reference to main scroll pane
     private boolean showAttributeLabels = true; // Toggle for displaying attribute labels
+    private Color backgroundColor;
 
-    public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table) {
+    public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table, Color backgroundColor) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -48,6 +49,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.numPlots = numPlots;
         this.selectedRows = selectedRows;
+        this.backgroundColor = backgroundColor;
         this.table = table;
         this.plotOffsets = new HashMap<>();
         this.draggedPlot = null;
@@ -363,7 +365,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         private static final int TITLE_PADDING = 20;
 
         public ShiftedPairedCoordinatesPanel() {
-            setBackground(Color.WHITE);
+            setBackground(backgroundColor);
         }
 
         @Override

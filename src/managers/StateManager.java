@@ -20,6 +20,7 @@ public class StateManager {
     private Map<String, Color> classColors;
     private Map<String, Shape> classShapes;
     private Color cellTextColor;
+    private Color plotBackgroundColor;
     private boolean differenceColumnsVisible;
     private Set<Integer> classColumns;
     private List<List<String>> originalData = new ArrayList<>();
@@ -36,6 +37,7 @@ public class StateManager {
         this.classColors = new HashMap<>();
         this.classShapes = new HashMap<>();
         this.cellTextColor = Color.BLACK;
+        this.plotBackgroundColor = Color.WHITE;
         this.differenceColumnsVisible = false;
         this.classColumns = new HashSet<>();
     }
@@ -51,6 +53,7 @@ public class StateManager {
         classColors.clear();
         classShapes.clear();
         cellTextColor = Color.BLACK;
+        plotBackgroundColor = Color.WHITE;
         differenceColumnsVisible = false;
         classColumns.clear();
         // Don't reset decimal precision during state clear
@@ -126,6 +129,14 @@ public class StateManager {
 
     public void setCellTextColor(Color cellTextColor) {
         this.cellTextColor = cellTextColor;
+    }
+
+    public Color getPlotBackgroundColor() {
+        return plotBackgroundColor;
+    }
+
+    public void setPlotBackgroundColor(Color plotBackgroundColor) {
+        this.plotBackgroundColor = plotBackgroundColor;
     }
 
     public boolean areDifferenceColumnsVisible() {

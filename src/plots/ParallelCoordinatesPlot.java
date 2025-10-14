@@ -30,6 +30,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private final double globalMinValue;
     private boolean showAttributeLabels = true;
     private boolean showDensity = true;
+    private Color backgroundColor;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -47,13 +48,14 @@ public class ParallelCoordinatesPlot extends JFrame {
 
     public ParallelCoordinatesPlot(List<List<Double>> data, List<String> attributeNames,
                                    Map<String, Color> classColors, Map<String, Shape> classShapes,
-                                   List<String> classLabels, List<Integer> selectedRows, String datasetName) {
+                                   List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor) {
         this.data = data;
         this.attributeNames = new ArrayList<>(attributeNames);
         this.classColors = classColors;
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
+        this.backgroundColor = backgroundColor;
         this.hiddenClasses = new HashSet<>();
         this.axisDirections = new HashMap<>();
         this.axisPositions = new HashMap<>();
@@ -111,6 +113,27 @@ public class ParallelCoordinatesPlot extends JFrame {
         mainPanel.add(LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses), BorderLayout.SOUTH);
 
         setContentPane(mainPanel);
+        
+        // Add key listener to the main frame and ensure focus is on the plot panel
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyChar() == 'l' || e.getKeyChar() == 'L') {
+                    plotPanel.optimizeAxisPositionsForSelectedCases();
+                }
+            }
+        });
+        
+        // Ensure the frame can receive key events
+        setFocusable(true);
+        
+        // Add window listener to set focus when window becomes visible
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowOpened(WindowEvent e) {
+                requestFocusInWindow();
+            }
+        });
     }
 
     private JScrollPane createControlPanel() {
@@ -248,6 +271,124 @@ public class ParallelCoordinatesPlot extends JFrame {
                 }
             });
         }
+
+        /**
+         * Optimizes axis positions to make selected cases as straight as possible horizontally
+         */
+        public void optimizeAxisPositionsForSelectedCases() {
+            if (selectedRows.isEmpty()) {
+                return; // No selected cases to optimize for
+            }
+
+            // Special case: if only one case is selected, make it perfectly horizontal
+            if (selectedRows.size() == 1) {
+                int selectedRow = selectedRows.get(0);
+                String classLabel = classLabels.get(selectedRow);
+                if (hiddenClasses.contains(classLabel)) return;
+
+                // Calculate where the selected case appears on each axis
+                List<Double> caseYPositions = new ArrayList<>();
+                for (String attributeName : visualOrder) {
+                    int attributeIndex = attributeNames.indexOf(attributeName);
+                    double value = data.get(attributeIndex).get(selectedRow);
+                    double normalizedValue = (value - globalMinValue) / (globalMaxValue - globalMinValue);
+
+                    if (axisDirections.getOrDefault(attributeName, false)) {
+                        normalizedValue = 1 - normalizedValue;
+                    }
+
+                    Point2D.Double pos = axisPositions.get(attributeName);
+                    double scale = axisScales.getOrDefault(attributeName, 1.0);
+                    int scaledHeight = (int) (AXIS_HEIGHT * scale);
+                    double y = pos.y + scaledHeight - normalizedValue * scaledHeight;
+                    caseYPositions.add(y);
+                }
+
+                // Find the average Y position
+                double avgY = caseYPositions.stream().mapToDouble(Double::doubleValue).average().orElse(100.0);
+
+                // Move each axis so the case appears at the average Y position
+                for (int i = 0; i < visualOrder.size(); i++) {
+                    String attributeName = visualOrder.get(i);
+                    int attributeIndex = attributeNames.indexOf(attributeName);
+                    double value = data.get(attributeIndex).get(selectedRow);
+                    double normalizedValue = (value - globalMinValue) / (globalMaxValue - globalMinValue);
+
+                    if (axisDirections.getOrDefault(attributeName, false)) {
+                        normalizedValue = 1 - normalizedValue;
+                    }
+
+                    Point2D.Double pos = axisPositions.get(attributeName);
+                    double scale = axisScales.getOrDefault(attributeName, 1.0);
+                    int scaledHeight = (int) (AXIS_HEIGHT * scale);
+                    
+                    // Calculate where the case currently appears on this axis
+                    double currentY = pos.y + scaledHeight - normalizedValue * scaledHeight;
+                    
+                    // Move the axis so the case appears at the average Y position
+                    double adjustment = avgY - currentY;
+                    pos.y += adjustment;
+                    
+                    // Ensure the axis stays within reasonable bounds
+                    pos.y = Math.max(50, Math.min(pos.y, getHeight() - 100));
+                }
+            } else {
+                // Multiple cases selected - use the original algorithm
+                // Get the Y coordinates for selected cases on each axis
+                Map<String, List<Double>> axisYCoordinates = new HashMap<>();
+                
+                for (String attributeName : visualOrder) {
+                    List<Double> yCoords = new ArrayList<>();
+                    for (int row : selectedRows) {
+                        String classLabel = classLabels.get(row);
+                        if (hiddenClasses.contains(classLabel)) continue;
+                        
+                        int attributeIndex = attributeNames.indexOf(attributeName);
+                        double value = data.get(attributeIndex).get(row);
+                        double normalizedValue = (value - globalMinValue) / (globalMaxValue - globalMinValue);
+
+                        if (axisDirections.getOrDefault(attributeName, false)) {
+                            normalizedValue = 1 - normalizedValue;
+                        }
+
+                        Point2D.Double pos = axisPositions.get(attributeName);
+                        double scale = axisScales.getOrDefault(attributeName, 1.0);
+                        int scaledHeight = (int) (AXIS_HEIGHT * scale);
+                        double y = pos.y + scaledHeight - normalizedValue * scaledHeight;
+                        yCoords.add(y);
+                    }
+                    axisYCoordinates.put(attributeName, yCoords);
+                }
+
+                // Calculate the target Y coordinate (average of all selected cases)
+                double targetY = axisYCoordinates.values().stream()
+                        .flatMap(List::stream)
+                        .mapToDouble(Double::doubleValue)
+                        .average()
+                        .orElse(100.0);
+
+                // Adjust each axis position to minimize the variance of selected cases
+                for (String attributeName : visualOrder) {
+                    List<Double> yCoords = axisYCoordinates.get(attributeName);
+                    if (yCoords.isEmpty()) continue;
+
+                    // Calculate the current average Y for this axis
+                    double currentAvgY = yCoords.stream().mapToDouble(Double::doubleValue).average().orElse(targetY);
+                    
+                    // Calculate the adjustment needed
+                    double adjustment = targetY - currentAvgY;
+                    
+                    // Apply the adjustment to the axis position
+                    Point2D.Double pos = axisPositions.get(attributeName);
+                    pos.y += adjustment;
+                    
+                    // Ensure the axis stays within reasonable bounds
+                    pos.y = Math.max(50, Math.min(pos.y, getHeight() - 100));
+                }
+            }
+
+            repaint();
+        }
     
         @Override
         protected void paintComponent(Graphics g) {
@@ -265,8 +406,8 @@ public class ParallelCoordinatesPlot extends JFrame {
             g2.setColor(Color.BLACK); // Set text color to black
             g2.drawString("Parallel Coordinates Plot", (getWidth() - titleWidth) / 2, titleHeight);
             
-            // Draw the plot on c0c0c0 background
-            g2.setColor(new Color(0xC0C0C0));
+            // Draw the plot on the selected background color
+            g2.setColor(backgroundColor);
             g2.fillRect(0, 50, getWidth(), getHeight() - 50); // Adjusted to start from below the title
             drawAxes(g2);
             drawData(g2);

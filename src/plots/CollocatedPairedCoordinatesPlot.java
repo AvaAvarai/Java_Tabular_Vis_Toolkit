@@ -31,14 +31,16 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
     private CollocatedPairedCoordinatesPanel plotPanel;
     private JLabel multiplierLabel; // Label to show current multiplier value
     private JPanel sliderPanel; // Store reference to the slider panel
+    private Color backgroundColor;
 
-    public CollocatedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, JTable table) {
+    public CollocatedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, JTable table, Color backgroundColor) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
+        this.backgroundColor = backgroundColor;
         this.table = table;
         this.hiddenClasses = new HashSet<>();
 
@@ -132,7 +134,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
         private double maxVectorLength = Double.MIN_VALUE;
         
         public CollocatedPairedCoordinatesPanel() {
-            setBackground(new Color(0xC0C0C0));
+            setBackground(backgroundColor);
         }
 
         @Override

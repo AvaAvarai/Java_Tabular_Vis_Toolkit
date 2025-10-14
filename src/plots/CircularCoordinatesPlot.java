@@ -26,18 +26,20 @@ public class CircularCoordinatesPlot extends JFrame {
     private boolean dynamicMode = false; // Track if dynamic mode should be used
     private boolean connectEnds = true; // Track if the last and first vertices should be connected
     private Map<String, Double> maxSumPerClass = new HashMap<>(); // Track max sum of each class
+    private Color backgroundColor;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
-    public CircularCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName) {
+    public CircularCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
+        this.backgroundColor = backgroundColor;
         this.numAttributes = attributeNames.size();
         this.datasetName = datasetName;
         this.hiddenClasses = new HashSet<>();
@@ -185,7 +187,7 @@ public class CircularCoordinatesPlot extends JFrame {
             int plotAreaHeight = getHeight() - plotAreaY;
 
             // Set the background color for the plot area
-            g2.setColor(new Color(0xC0C0C0));
+            g2.setColor(backgroundColor);
             g2.fillRect(0, plotAreaY, getWidth(), plotAreaHeight);
 
             int radius = Math.min(getWidth() / 2, plotAreaHeight / 2) - 50;

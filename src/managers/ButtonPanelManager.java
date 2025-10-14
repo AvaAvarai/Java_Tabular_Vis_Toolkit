@@ -238,6 +238,7 @@ public class ButtonPanelManager {
         addMenuItem(visualizationMenu, "Toggle Highlight Blanks", "/icons/heatmap.png", _ -> csvViewer.highlightBlanks());
         addMenuItem(visualizationMenu, "Font Settings", "/icons/fontcolor.png", _ -> csvViewer.showFontSettingsDialog());
         addMenuItem(visualizationMenu, "Set Class Colors", "/icons/setcolor.png", _ -> csvViewer.showColorPickerDialog());
+        addMenuItem(visualizationMenu, "Background Color", "/icons/setcolor.png", _ -> csvViewer.showBackgroundColorDialog());
         
         // Add decimal precision submenu
         JMenu precisionMenu = new JMenu("Set Decimal Precision");

@@ -25,6 +25,7 @@ public class LineCoordinatesPlot extends JFrame {
     private Map<String, Integer> curveHeights; // Map to store individual curve heights for each attribute
     private String draggedAxis = null;
     private boolean showLabels = true;
+    private Color backgroundColor;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -34,13 +35,14 @@ public class LineCoordinatesPlot extends JFrame {
 
     public LineCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, 
             Map<String, Color> classColors, Map<String, Shape> classShapes, 
-            List<String> classLabels, List<Integer> selectedRows, String datasetName) {
+            List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
+        this.backgroundColor = backgroundColor;
         this.datasetName = datasetName;
         this.axisScales = new HashMap<>();
         this.axisDirections = new HashMap<>();
@@ -161,7 +163,7 @@ public class LineCoordinatesPlot extends JFrame {
 
     private class LineCoordinatesPanel extends JPanel {
         public LineCoordinatesPanel() {
-            setBackground(new Color(0xC0C0C0));
+            setBackground(backgroundColor);
 
             addMouseListener(new MouseAdapter() {
                 @Override

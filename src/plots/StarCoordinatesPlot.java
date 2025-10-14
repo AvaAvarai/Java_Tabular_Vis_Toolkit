@@ -26,18 +26,20 @@ public class StarCoordinatesPlot extends JFrame {
     private String datasetName;
     private Set<String> hiddenClasses; // Set to keep track of hidden classes
     private boolean showAttributeLabels = true; // Flag to toggle attribute labels
+    private Color backgroundColor;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
-    public StarCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName) {
+    public StarCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
+        this.backgroundColor = backgroundColor;
         this.datasetName = datasetName;
         this.hiddenClasses = new HashSet<>(); // Initialize hiddenClasses set
 
@@ -114,7 +116,7 @@ public class StarCoordinatesPlot extends JFrame {
             int plotAreaHeight = getHeight() - plotAreaY;
 
             // Set the background color for the plot area
-            g2.setColor(new Color(0xC0C0C0));
+            g2.setColor(backgroundColor);
             g2.fillRect(0, plotAreaY, getWidth(), plotAreaHeight);
 
             int plotSize = Math.min(getWidth(), plotAreaHeight) - 2 * 50;

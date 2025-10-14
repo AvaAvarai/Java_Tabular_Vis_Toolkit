@@ -23,6 +23,7 @@ public class MultiRowShiftedPairedCoordinatesPlot extends JFrame {
     private JTable table;
     private Set<String> hiddenClasses;
     private int numRows;
+    private Color backgroundColor;
     private int pairsPerRow;
 
     // Font and layout settings
@@ -37,13 +38,14 @@ public class MultiRowShiftedPairedCoordinatesPlot extends JFrame {
     public MultiRowShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames,
                                         Map<String, Color> classColors, Map<String, Shape> classShapes,
                                         List<String> classLabels, List<Integer> selectedRows, 
-                                        String datasetName, JTable table, int numRows) {
+                                        String datasetName, JTable table, int numRows, Color backgroundColor) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
+        this.backgroundColor = backgroundColor;
         this.table = table;
         this.hiddenClasses = new HashSet<>();
         this.numRows = numRows;
@@ -91,7 +93,7 @@ public class MultiRowShiftedPairedCoordinatesPlot extends JFrame {
     private class MultiRowShiftedPairedCoordinatesPanel extends JPanel {
         
         public MultiRowShiftedPairedCoordinatesPanel() {
-            setBackground(Color.WHITE);
+            setBackground(backgroundColor);
         }
     
         @Override

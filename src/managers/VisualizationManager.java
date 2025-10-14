@@ -76,7 +76,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
     
-        StarCoordinatesPlot starCoordinatesPlot = new StarCoordinatesPlot(numericalData, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName());
+        StarCoordinatesPlot starCoordinatesPlot = new StarCoordinatesPlot(numericalData, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName(), csvViewer.getStateManager().getPlotBackgroundColor());
         starCoordinatesPlot.setVisible(true);
     }
     
@@ -154,7 +154,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
 
-        ShiftedPairedCoordinatesPlot shiftedPairedCoordinates = new ShiftedPairedCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, numPlots, selectedRows, csvViewer.getDatasetName(), csvViewer.getTable());
+        ShiftedPairedCoordinatesPlot shiftedPairedCoordinates = new ShiftedPairedCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, numPlots, selectedRows, csvViewer.getDatasetName(), csvViewer.getTable(), csvViewer.getStateManager().getPlotBackgroundColor());
         shiftedPairedCoordinates.setVisible(true);
     }
 
@@ -207,7 +207,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
 
-        CollocatedPairedCoordinatesPlot collocatedPairedCoordinates = new CollocatedPairedCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName(), csvViewer.getTable());
+        CollocatedPairedCoordinatesPlot collocatedPairedCoordinates = new CollocatedPairedCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName(), csvViewer.getTable(), csvViewer.getStateManager().getPlotBackgroundColor());
         collocatedPairedCoordinates.setVisible(true);
     }
 
@@ -251,7 +251,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
 
-        CircularCoordinatesPlot plot = new CircularCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName());
+        CircularCoordinatesPlot plot = new CircularCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName(), csvViewer.getStateManager().getPlotBackgroundColor());
         plot.setVisible(true);
     }
 
@@ -357,7 +357,8 @@ public class VisualizationManager {
                 csvViewer.getClassShapes(),
                 classLabels,
                 selectedRows,
-                csvViewer.getDatasetName()
+                csvViewer.getDatasetName(),
+                csvViewer.getStateManager().getPlotBackgroundColor()
             );
             plot.setSize(800, 800);
             plot.setVisible(true);
@@ -483,7 +484,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
 
-        ConcentricCoordinatesPlot plot = new ConcentricCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, selectedRows, csvViewer.getDatasetName());
+        ConcentricCoordinatesPlot plot = new ConcentricCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, selectedRows, csvViewer.getDatasetName(), csvViewer.getStateManager().getPlotBackgroundColor());
         plot.setVisible(true);
     }
 
@@ -540,7 +541,8 @@ public class VisualizationManager {
             csvViewer.getClassShapes(),
             classLabels,
             selectedRows,
-            csvViewer.getDatasetName()
+            csvViewer.getDatasetName(),
+            csvViewer.getStateManager().getPlotBackgroundColor()
         );
         plot.setVisible(true);
     }
@@ -671,7 +673,8 @@ public class VisualizationManager {
                 classLabels,
                 selectedRows,
                 csvViewer.getDatasetName(),
-                numRows
+                numRows,
+                csvViewer.getStateManager().getPlotBackgroundColor()
             );
             plot.setSize(1024, Math.min(900, 200 + numRows * 300)); // Adjust size based on row count
             plot.setVisible(true);
@@ -810,7 +813,8 @@ public class VisualizationManager {
                 selectedRows,
                 csvViewer.getDatasetName(),
                 csvViewer.getTable(),
-                numRows
+                numRows,
+                csvViewer.getStateManager().getPlotBackgroundColor()
             );
             plot.setVisible(true);
         } else {

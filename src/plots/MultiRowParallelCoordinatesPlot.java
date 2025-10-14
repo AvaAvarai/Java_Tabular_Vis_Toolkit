@@ -26,6 +26,7 @@ public class MultiRowParallelCoordinatesPlot extends JFrame {
     private final double globalMinValue;
     private final int numRows;
     private final int attributesPerRow;
+    private Color backgroundColor;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -36,13 +37,14 @@ public class MultiRowParallelCoordinatesPlot extends JFrame {
     public MultiRowParallelCoordinatesPlot(List<List<Double>> data, List<String> attributeNames,
                                    Map<String, Color> classColors, Map<String, Shape> classShapes,
                                    List<String> classLabels, List<Integer> selectedRows, 
-                                   String datasetName, int numRows) {
+                                   String datasetName, int numRows, Color backgroundColor) {
         this.data = data;
         this.attributeNames = new ArrayList<>(attributeNames);
         this.classColors = classColors;
         this.classShapes = classShapes;
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
+        this.backgroundColor = backgroundColor;
         this.hiddenClasses = new HashSet<>();
         this.numRows = numRows;
         
@@ -99,7 +101,7 @@ public class MultiRowParallelCoordinatesPlot extends JFrame {
     private class MultiRowParallelCoordinatesPanel extends JPanel {
         
         public MultiRowParallelCoordinatesPanel() {
-            setBackground(new Color(0xC0C0C0));
+            setBackground(backgroundColor);
         }
     
         @Override
