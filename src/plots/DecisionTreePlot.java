@@ -27,16 +27,22 @@ public class DecisionTreePlot extends JPanel {
     private int treeHeight;
     private Point lastMousePos;
     private boolean isNormalized;
+    private Color backgroundColor;
 
     public DecisionTreePlot(DecisionTreeModel.TreeNode root, List<String> attributeNames, Map<String, Color> classColors) {
-        this(root, attributeNames, classColors, false);
+        this(root, attributeNames, classColors, false, Color.WHITE);
     }
     
     public DecisionTreePlot(DecisionTreeModel.TreeNode root, List<String> attributeNames, Map<String, Color> classColors, boolean isNormalized) {
+        this(root, attributeNames, classColors, isNormalized, Color.WHITE);
+    }
+    
+    public DecisionTreePlot(DecisionTreeModel.TreeNode root, List<String> attributeNames, Map<String, Color> classColors, boolean isNormalized, Color backgroundColor) {
         this.root = root;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
         this.isNormalized = isNormalized;
+        this.backgroundColor = backgroundColor;
         setPreferredSize(new Dimension(800, 600));  // Set a default size
         addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
@@ -87,6 +93,10 @@ public class DecisionTreePlot extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g.create();
+        
+        // Set the background color
+        g2d.setColor(backgroundColor);
+        g2d.fillRect(0, 0, getWidth(), getHeight());
         
         // Center the tree
         int centerX = getWidth() / 2 - (int)(treeWidth * zoomFactor / 2) + translateX;

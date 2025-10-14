@@ -120,8 +120,8 @@ public class MultiRowParallelCoordinatesPlot extends JFrame {
             g2.setColor(Color.BLACK);
             g2.drawString("Multi-Row Parallel Coordinates Plot", (getWidth() - titleWidth) / 2, titleHeight);
             
-            // Draw the plot on c0c0c0 background
-            g2.setColor(new Color(0xC0C0C0));
+            // Draw the plot on the selected background color
+            g2.setColor(backgroundColor);
             g2.fillRect(0, 50, getWidth(), getHeight() - 50);
             
             // Draw each row of parallel coordinates

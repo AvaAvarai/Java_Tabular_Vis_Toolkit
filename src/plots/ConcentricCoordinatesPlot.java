@@ -912,8 +912,8 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 g2.setColor(Color.BLACK);
                 g2.drawString(title, (getWidth() - titleWidth) / 2, titleHeight);
 
-                // Fill the plot area with light grey background
-                g2.setColor(new Color(0xC0C0C0));
+                // Fill the plot area with selected background color
+                g2.setColor(backgroundColor);
                 g2.fillRect(0, titleHeight + TITLE_PADDING, getWidth(), getHeight() - titleHeight - TITLE_PADDING);
 
                 // Calculate center and radius for the plot

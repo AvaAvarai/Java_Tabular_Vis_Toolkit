@@ -419,7 +419,7 @@ public class VisualizationManager {
         
         // Create and display the tree visualization
         JFrame frame = new JFrame("Decision Tree Visualization");
-        DecisionTreePlot treePanel = new DecisionTreePlot(root, attributeNames, csvViewer.getClassColors(), isDataNormalized);
+        DecisionTreePlot treePanel = new DecisionTreePlot(root, attributeNames, csvViewer.getClassColors(), isDataNormalized, csvViewer.getStateManager().getPlotBackgroundColor());
 
         JScrollPane scrollPane = new JScrollPane(treePanel);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
