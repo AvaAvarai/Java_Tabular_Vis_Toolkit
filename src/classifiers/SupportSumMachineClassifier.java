@@ -31,7 +31,7 @@ public class SupportSumMachineClassifier {
 
         for (int i = 0; i < tableModel.getColumnCount(); i++) {
             String columnName = tableModel.getColumnName(i);
-            if (!columnName.equalsIgnoreCase("class")) {
+            if (!columnName.equalsIgnoreCase("class") && !columnName.equalsIgnoreCase("label")) {
                 columnIndices.add(i);
                 JLabel label = new JLabel("Coefficient for " + columnName + ":");
                 JTextField coefficientField = new JTextField("1");

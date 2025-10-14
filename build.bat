@@ -1,6 +1,14 @@
 @echo off
 setlocal enabledelayedexpansion
 
+REM Check if Java is installed
+java -version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Java is not installed or not in PATH. Please install Java and try again.
+    pause
+    exit /b 1
+)
+
 REM Detect Java version (major only)
 for /f "tokens=3" %%i in ('java -version 2^>^&1 ^| findstr /i "version"') do (
     set "JAVA_VERSION=%%~i"

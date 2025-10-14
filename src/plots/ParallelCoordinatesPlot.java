@@ -31,6 +31,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private boolean showAttributeLabels = true;
     private boolean showDensity = true;
     private Color backgroundColor;
+    private boolean showPolylines = true; // Toggle for displaying polylines
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -146,11 +147,20 @@ public class ParallelCoordinatesPlot extends JFrame {
         // Add a button to toggle the attribute labels
         JToggleButton attributeLabelToggle = new JToggleButton("Show Labels");
         attributeLabelToggle.setSelected(showAttributeLabels);
-        attributeLabelToggle.addActionListener(_ -> {
+        attributeLabelToggle.addActionListener(e -> {
             showAttributeLabels = attributeLabelToggle.isSelected();
             repaint();
         });
         controlPanel.add(attributeLabelToggle);
+        
+        // Add polylines toggle
+        JToggleButton polylinesToggle = new JToggleButton("Show Polylines");
+        polylinesToggle.setSelected(true); // Default to showing polylines
+        polylinesToggle.addActionListener(e -> {
+            showPolylines = polylinesToggle.isSelected();
+            repaint();
+        });
+        controlPanel.add(polylinesToggle);
 
         // Add a button group for density modes
         ButtonGroup densityButtonGroup = new ButtonGroup();
@@ -220,6 +230,21 @@ public class ParallelCoordinatesPlot extends JFrame {
             sliderLabel.setAlignmentX(Component.CENTER_ALIGNMENT); // Center align
             attributePanel.add(sliderLabel);
             attributePanel.add(axisScaleSlider);
+            
+            // Add a Y position slider
+            JSlider yPosSlider = new JSlider(JSlider.HORIZONTAL, 0, 600, 100);
+            yPosSlider.setBackground(Color.WHITE);
+            yPosSlider.setPreferredSize(new Dimension(100, 20));
+            yPosSlider.addChangeListener(e -> {
+                int value = yPosSlider.getValue();
+                axisPositions.get(attributeName).y = value;
+                repaint();
+            });
+            JLabel yPosLabel = new JLabel("Y Position");
+            yPosLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+            yPosLabel.setAlignmentX(Component.CENTER_ALIGNMENT); // Center align
+            attributePanel.add(yPosLabel);
+            attributePanel.add(yPosSlider);
     
             // Add the attribute panel to the main control panel
             controlPanel.add(attributePanel);
@@ -423,12 +448,39 @@ public class ParallelCoordinatesPlot extends JFrame {
     
                 g2.drawLine((int) pos.x, (int) pos.y, (int) pos.x, (int) pos.y + scaledHeight);
     
-                // Draw attribute label
+                // Draw attribute label with subscript if '_' is found
                 if (showAttributeLabels) {
                     g2.setFont(AXIS_LABEL_FONT);
                     String label = attributeName;
-                    int labelWidth = g2.getFontMetrics().stringWidth(label);
-                    g2.drawString(label, (int) (pos.x - labelWidth / 2), (int) (pos.y + scaledHeight + 20));
+
+                    // Split label into main and subscript part
+                    int underscoreIdx = label.indexOf('_');
+                    if (underscoreIdx != -1 && underscoreIdx + 1 < label.length()) {
+                        String main = label.substring(0, underscoreIdx);
+                        String subscript = label.substring(underscoreIdx + 1);
+
+                        FontMetrics fm = g2.getFontMetrics();
+                        FontMetrics subMetrics = g2.getFontMetrics(AXIS_LABEL_FONT.deriveFont(AXIS_LABEL_FONT.getSize2D() * 0.75f));
+                        int mainWidth = fm.stringWidth(main);
+                        int subWidth = subMetrics.stringWidth(subscript);
+
+                        int totalWidth = mainWidth + subWidth;
+
+                        int xDraw = (int) (pos.x - totalWidth / 2);
+                        int yDraw = (int) (pos.y + scaledHeight + 20);
+
+                        g2.setFont(AXIS_LABEL_FONT);
+                        g2.drawString(main, xDraw, yDraw);
+
+                        g2.setFont(AXIS_LABEL_FONT.deriveFont(AXIS_LABEL_FONT.getSize2D() * 0.75f));
+                        // Move subscript a bit to the right and below the baseline
+                        g2.drawString(subscript, xDraw + mainWidth, yDraw + (int)(fm.getHeight() * 0.25));
+                    } else {
+                        // No subscript, just draw normally
+                        FontMetrics fm = g2.getFontMetrics();
+                        int labelWidth = fm.stringWidth(label);
+                        g2.drawString(label, (int) (pos.x - labelWidth / 2), (int) (pos.y + scaledHeight + 20));
+                    }
                 }
             }
         }
@@ -526,13 +578,15 @@ public class ParallelCoordinatesPlot extends JFrame {
                 Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
                 
                 // Draw lines with a fixed thickness
-                for (int i = 0; i < points.size() - 1; i++) {
-                    Point2D.Double p1 = points.get(i);
-                    Point2D.Double p2 = points.get(i + 1);
-                    
-                    g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
-                    g2.setColor(baseColor);
-                    g2.draw(new Line2D.Double(p1, p2));
+                if (showPolylines) {
+                    for (int i = 0; i < points.size() - 1; i++) {
+                        Point2D.Double p1 = points.get(i);
+                        Point2D.Double p2 = points.get(i + 1);
+                        
+                        g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                        g2.setColor(baseColor);
+                        g2.draw(new Line2D.Double(p1, p2));
+                    }
                 }
 
                 // Draw class symbols as vertices
@@ -561,20 +615,22 @@ public class ParallelCoordinatesPlot extends JFrame {
                 Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
                 
                 // Draw lines with varying thickness based on density
-                for (int i = 0; i < points.size() - 1; i++) {
-                    Point2D.Double p1 = points.get(i);
-                    Point2D.Double p2 = points.get(i + 1);
-                    
-                    LineSegment segment = new LineSegment(p1, p2);
-                    int count = lineSegmentCounts.getOrDefault(segment, 1);
-                    
-                    // Calculate thickness based on density, starting from a minimum thickness
-                    float normalizedDensity = (float) count / maxDensity;
-                    float thickness = 0.5f + (normalizedDensity * 9.5f); // Scale from 0.5 to 10.0 pixels
-                    
-                    g2.setStroke(new BasicStroke(thickness)); // Set the stroke thickness
-                    g2.setColor(baseColor);
-                    g2.draw(new Line2D.Double(p1, p2));
+                if (showPolylines) {
+                    for (int i = 0; i < points.size() - 1; i++) {
+                        Point2D.Double p1 = points.get(i);
+                        Point2D.Double p2 = points.get(i + 1);
+                        
+                        LineSegment segment = new LineSegment(p1, p2);
+                        int count = lineSegmentCounts.getOrDefault(segment, 1);
+                        
+                        // Calculate thickness based on density, starting from a minimum thickness
+                        float normalizedDensity = (float) count / maxDensity;
+                        float thickness = 0.5f + (normalizedDensity * 9.5f); // Scale from 0.5 to 10.0 pixels
+                        
+                        g2.setStroke(new BasicStroke(thickness)); // Set the stroke thickness
+                        g2.setColor(baseColor);
+                        g2.draw(new Line2D.Double(p1, p2));
+                    }
                 }
 
                 // Draw class symbols as vertices
@@ -603,20 +659,22 @@ public class ParallelCoordinatesPlot extends JFrame {
                 Color baseColor = selectedOnly ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
                 
                 // Draw lines with varying opacity based on density
-                for (int i = 0; i < points.size() - 1; i++) {
-                    Point2D.Double p1 = points.get(i);
-                    Point2D.Double p2 = points.get(i + 1);
-                    
-                    LineSegment segment = new LineSegment(p1, p2);
-                    int count = lineSegmentCounts.getOrDefault(segment, 1);
-                    
-                    // Calculate opacity based on density
-                    float normalizedDensity = (float) count / maxDensity;
-                    int alpha = (int) (normalizedDensity * 255); // Scale alpha from 0 to 255
-                    g2.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha));
-                    g2.setStroke(new BasicStroke(1.0f)); // Fixed thickness
-                    
-                    g2.draw(new Line2D.Double(p1, p2));
+                if (showPolylines) {
+                    for (int i = 0; i < points.size() - 1; i++) {
+                        Point2D.Double p1 = points.get(i);
+                        Point2D.Double p2 = points.get(i + 1);
+                        
+                        LineSegment segment = new LineSegment(p1, p2);
+                        int count = lineSegmentCounts.getOrDefault(segment, 1);
+                        
+                        // Calculate opacity based on density
+                        float normalizedDensity = (float) count / maxDensity;
+                        int alpha = (int) (normalizedDensity * 255); // Scale alpha from 0 to 255
+                        g2.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha));
+                        g2.setStroke(new BasicStroke(1.0f)); // Fixed thickness
+                        
+                        g2.draw(new Line2D.Double(p1, p2));
+                    }
                 }
 
                 // Draw class symbols as vertices

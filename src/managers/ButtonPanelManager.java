@@ -55,6 +55,9 @@ public class ButtonPanelManager {
         fileMenu.setIcon(resizeIcon("/icons/file.png"));
         addMenuItem(fileMenu, "Open Data", "/icons/file.png", _ -> csvViewer.loadCsvFile());
         addMenuItem(fileMenu, "Save Data", "/icons/export.png", _ -> csvViewer.exportCsvFile());
+        addMenuItem(fileMenu, "Close Data", "/icons/delete.png", _ -> csvViewer.closeData());
+        fileMenu.addSeparator();
+        addMenuItem(fileMenu, "Data Types", "/icons/function.png", _ -> showDataTypesDialog());
 
         // View Menu (Visualizations)
         JMenu viewMenu = new JMenu("View Visualizations");
@@ -798,7 +801,7 @@ public class ButtonPanelManager {
         // Add row for each numeric attribute
         for (int i = 0; i < csvViewer.tableModel.getColumnCount(); i++) {
             String colName = csvViewer.tableModel.getColumnName(i);
-            if (isNumericColumn(i) && !colName.equalsIgnoreCase("class")) {
+            if (isNumericColumn(i) && !colName.equalsIgnoreCase("class") && !colName.equalsIgnoreCase("label")) {
                 JPanel attrPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
                 
                 JCheckBox checkbox = new JCheckBox(colName, true);
@@ -945,5 +948,80 @@ public class ButtonPanelManager {
         dialog.pack();
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);
+    }
+    
+    private void showDataTypesDialog() {
+        if (csvViewer.tableModel.getColumnCount() == 0) {
+            JOptionPane.showMessageDialog(null, "No data loaded.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        JDialog dialog = new JDialog((java.awt.Frame) null, "Data Types Information", true);
+        dialog.setLayout(new BorderLayout());
+        
+        // Create table to display data type information
+        String[] columnNames = {"Column", "Data Type", "Description", "Transformed"};
+        java.util.Map<Integer, utils.ColumnDataTypeInfo> dataTypes = csvViewer.getAllColumnDataTypes();
+        
+        java.util.List<Object[]> data = new java.util.ArrayList<>();
+        for (int i = 0; i < csvViewer.tableModel.getColumnCount(); i++) {
+            String columnName = csvViewer.tableModel.getColumnName(i);
+            utils.ColumnDataTypeInfo typeInfo = dataTypes.get(i);
+            
+            if (typeInfo != null) {
+                data.add(new Object[]{
+                    columnName,
+                    utils.DataTypeDetector.getDataTypeDescription(typeInfo.getDataType()),
+                    getDataTypeDetails(typeInfo),
+                    typeInfo.isTransformed() ? "Yes" : "No"
+                });
+            } else {
+                data.add(new Object[]{
+                    columnName,
+                    "Unknown",
+                    "No data type detected",
+                    "No"
+                });
+            }
+        }
+        
+        Object[][] dataArray = data.toArray(new Object[0][]);
+        JTable table = new JTable(dataArray, columnNames);
+        table.setDefaultEditor(Object.class, null); // Make read-only
+        table.getColumnModel().getColumn(0).setPreferredWidth(150);
+        table.getColumnModel().getColumn(1).setPreferredWidth(120);
+        table.getColumnModel().getColumn(2).setPreferredWidth(200);
+        table.getColumnModel().getColumn(3).setPreferredWidth(80);
+        
+        JScrollPane scrollPane = new JScrollPane(table);
+        dialog.add(scrollPane, BorderLayout.CENTER);
+        
+        // Add close button
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        JButton closeButton = new JButton("Close");
+        closeButton.addActionListener(e -> dialog.dispose());
+        buttonPanel.add(closeButton);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+        
+        dialog.setSize(600, 400);
+        dialog.setLocationRelativeTo(null);
+        dialog.setVisible(true);
+    }
+    
+    private String getDataTypeDetails(utils.ColumnDataTypeInfo typeInfo) {
+        return switch (typeInfo.getDataType()) {
+            case CATEGORICAL -> {
+                if (typeInfo.getCategoricalMapping() != null) {
+                    yield "Categories: " + typeInfo.getCategoricalMapping().size() + " unique values";
+                }
+                yield "Categorical data";
+            }
+            case BINARY -> "Binary values (0/1, true/false)";
+            case TIMESTAMP -> "Date/time values converted to milliseconds";
+            case NOMINAL -> "Text/ID values converted to hash codes";
+            case NUMERICAL -> "Integer or float values";
+            case LABEL -> "Class/label column for classification";
+            case UNKNOWN -> "Unknown data type";
+        };
     }
 }

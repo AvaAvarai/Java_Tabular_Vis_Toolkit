@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
+import utils.DataTypeDetector;
+import utils.ColumnDataTypeInfo;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
@@ -39,6 +41,7 @@ public class CsvDataHandler {
     private Map<Integer, Double> originalStd = new HashMap<>();
     private Set<String> selectedClasses = new HashSet<>();
     private Map<String, Set<String>> classGroups;
+    private Map<Integer, ColumnDataTypeInfo> columnDataTypes = new HashMap<>();
 
     private static class ClassGrouping {
         JCheckBox checkBox;
@@ -262,7 +265,7 @@ public class CsvDataHandler {
                 if (isFirstLine) {
                     headers = Arrays.asList(values);
                     for (int i = 0; i < values.length; i++) {
-                        if (values[i].equalsIgnoreCase("class")) {
+                        if (values[i].equalsIgnoreCase("class") || values[i].equalsIgnoreCase("label")) {
                             classColIndex = i;
                             break;
                         }
@@ -318,6 +321,9 @@ public class CsvDataHandler {
                 }
             }
 
+            // Detect data types and transform data
+            detectAndTransformDataTypes(tableModel, classColIndex);
+
             updateStats(tableModel, statsTextArea);
         } catch (IOException e) {
             JOptionPane.showMessageDialog(null, "Error loading CSV file: " + e.getMessage(), 
@@ -333,7 +339,7 @@ public class CsvDataHandler {
         // Find the class column index
         int classColumnIndex = -1;
         for (int col = 0; col < colCount; col++) {
-            if (model.getColumnName(col).equalsIgnoreCase("class")) {
+            if (model.getColumnName(col).equalsIgnoreCase("class") || model.getColumnName(col).equalsIgnoreCase("label")) {
                 classColumnIndex = col;
                 break;
             }
@@ -491,7 +497,7 @@ public class CsvDataHandler {
         // Find the class column index by checking various case-insensitive possibilities
         for (int col = 0; col < numColumns; col++) {
             String columnName = tableModel.getColumnName(col).toLowerCase();
-            if (columnName.equals("class")) {
+            if (columnName.equals("class") || columnName.equals("label")) {
                 classColumnIndex = col;
                 break;
             }
@@ -544,6 +550,7 @@ public class CsvDataHandler {
         originalData.clear();
         normalizedData.clear();
         isNormalized = false;
+        columnDataTypes.clear();
     }
 
     public void setNormalizationType(String type) {
@@ -570,5 +577,109 @@ public class CsvDataHandler {
 
     public Map<String, Set<String>> getClassGroups() {
         return classGroups;
+    }
+    
+    /**
+     * Detects data types for each column and transforms the data accordingly.
+     * @param tableModel The table model containing the data
+     * @param classColIndex Index of the class column (to skip it)
+     */
+    private void detectAndTransformDataTypes(DefaultTableModel tableModel, int classColIndex) {
+        int rowCount = tableModel.getRowCount();
+        int colCount = tableModel.getColumnCount();
+        
+        // Clear previous column data types
+        columnDataTypes.clear();
+        
+        for (int col = 0; col < colCount; col++) {
+            String columnName = tableModel.getColumnName(col);
+            
+            // Handle the class/label column specially
+            if (col == classColIndex) {
+                columnDataTypes.put(col, new ColumnDataTypeInfo(DataTypeDetector.DataType.LABEL, columnName));
+                continue;
+            }
+            
+            // Collect all values for this column
+            String[] columnValues = new String[rowCount];
+            for (int row = 0; row < rowCount; row++) {
+                Object value = tableModel.getValueAt(row, col);
+                columnValues[row] = value != null ? value.toString() : "";
+            }
+            
+            // Detect data type
+            DataTypeDetector.DataType detectedType = DataTypeDetector.detectDataType(columnValues);
+            
+            // Transform data based on type
+            switch (detectedType) {
+                case CATEGORICAL -> {
+                    // Create mapping and transform to integers
+                    Map<String, Integer> mapping = DataTypeDetector.createCategoricalMapping(columnValues);
+                    columnDataTypes.put(col, new ColumnDataTypeInfo(detectedType, columnName, mapping));
+                    
+                    // Transform values to integers
+                    for (int row = 0; row < rowCount; row++) {
+                        String value = columnValues[row];
+                        if (mapping.containsKey(value)) {
+                            tableModel.setValueAt(mapping.get(value), row, col);
+                        }
+                    }
+                }
+                case BINARY -> {
+                    // Transform to 0/1
+                    columnDataTypes.put(col, new ColumnDataTypeInfo(detectedType, columnName));
+                    for (int row = 0; row < rowCount; row++) {
+                        String value = columnValues[row];
+                        int binaryValue = DataTypeDetector.convertBinaryToInt(value);
+                        tableModel.setValueAt(binaryValue, row, col);
+                    }
+                }
+                case TIMESTAMP -> {
+                    // Transform to milliseconds since epoch
+                    columnDataTypes.put(col, new ColumnDataTypeInfo(detectedType, columnName));
+                    for (int row = 0; row < rowCount; row++) {
+                        String value = columnValues[row];
+                        long timestamp = DataTypeDetector.convertTimestampToLong(value);
+                        tableModel.setValueAt(timestamp, row, col);
+                    }
+                }
+                case NOMINAL -> {
+                    // Store as hash values for visualization
+                    columnDataTypes.put(col, new ColumnDataTypeInfo(detectedType, columnName));
+                    for (int row = 0; row < rowCount; row++) {
+                        String value = columnValues[row];
+                        if (!value.isEmpty()) {
+                            int hashValue = Math.abs(value.hashCode()) % 1000;
+                            tableModel.setValueAt(hashValue, row, col);
+                        }
+                    }
+                }
+                case NUMERICAL -> {
+                    // Keep as is, but store type info
+                    columnDataTypes.put(col, new ColumnDataTypeInfo(detectedType, columnName));
+                }
+                default -> {
+                    // Unknown type - keep as is
+                    columnDataTypes.put(col, new ColumnDataTypeInfo(detectedType, columnName));
+                }
+            }
+        }
+    }
+    
+    /**
+     * Gets the data type information for a column
+     * @param columnIndex Index of the column
+     * @return ColumnDataTypeInfo object, or null if not found
+     */
+    public ColumnDataTypeInfo getColumnDataType(int columnIndex) {
+        return columnDataTypes.get(columnIndex);
+    }
+    
+    /**
+     * Gets all column data type information
+     * @return Map of column index to ColumnDataTypeInfo
+     */
+    public Map<Integer, ColumnDataTypeInfo> getAllColumnDataTypes() {
+        return new HashMap<>(columnDataTypes);
     }
 }
