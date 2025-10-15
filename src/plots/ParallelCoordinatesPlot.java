@@ -112,15 +112,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-        JScrollPane controlPanel = createControlPanel();
-
-        // Add a button to take a screenshot
-        JButton screenshotButton = new JButton("Take Screenshot");
-        screenshotButton.addActionListener(e -> {
-            ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "ParallelCoordinates", datasetName);
-        });
-
-        controlPanel.add(screenshotButton);
+        JScrollPane controlPanel = createControlPanel(scrollPane, datasetName);
         
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         mainPanel.add(controlPanel, BorderLayout.NORTH);
@@ -134,6 +126,9 @@ public class ParallelCoordinatesPlot extends JFrame {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyChar() == 'l' || e.getKeyChar() == 'L') {
                     plotPanel.optimizeAxisPositionsForSelectedCases();
+                } else if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                    // Take screenshot on space key
+                    ScreenshotUtils.captureAndSaveScreenshot(scrollPane, "ParallelCoordinates", datasetName);
                 }
             }
         });
@@ -205,12 +200,19 @@ public class ParallelCoordinatesPlot extends JFrame {
         }
     }
 
-    private JScrollPane createControlPanel() {
+    private JScrollPane createControlPanel(JScrollPane plotScrollPane, String datasetName) {
         // Create a panel to hold the controls for each attribute
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
         controlPanel.setBackground(new Color(0xC0C0C0)); // Set background color to c0c0c0
         controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Add a button to take a screenshot
+        JButton screenshotButton = new JButton("Take Screenshot");
+        screenshotButton.addActionListener(e -> {
+            ScreenshotUtils.captureAndSaveScreenshot(plotScrollPane, "ParallelCoordinates", datasetName);
+        });
+        controlPanel.add(screenshotButton);
         
         // Add a button to toggle the attribute labels
         JToggleButton attributeLabelToggle = new JToggleButton("Show Labels");
@@ -844,13 +846,16 @@ public class ParallelCoordinatesPlot extends JFrame {
                     double normalizedPosition = (double) positionInConsecutiveBlock / Math.max(1, consecutiveBlockSize - 1);
                     y = pos.y + scaledHeight - blockHeight + normalizedPosition * blockHeight;
                 } else {
-                    // Normal value processing - adjust for empty block space
+                    // Normal value processing - adjust for empty block space and gap
                     double frequency = emptyEntryFrequencies.getOrDefault(attributeName, 0.0);
                     int blockHeight = (int) (frequency * scaledHeight);
                     if (blockHeight < 5) blockHeight = 5;
                     
-                    // Available height for numerical data (excluding empty block)
-                    int availableHeight = scaledHeight - blockHeight;
+                    // Gap size is the size of one point (assuming point size of 8 pixels)
+                    int gapSize = 8;
+                    
+                    // Available height for numerical data (excluding empty block and gap)
+                    int availableHeight = scaledHeight - blockHeight - gapSize;
                     
                     double normalizedValue = (value - globalMinValue) / (globalMaxValue - globalMinValue);
                     if (axisDirections.getOrDefault(attributeName, false)) {
