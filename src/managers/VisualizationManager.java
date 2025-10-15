@@ -76,7 +76,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
     
-        StarCoordinatesPlot starCoordinatesPlot = new StarCoordinatesPlot(numericalData, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName(), csvViewer.getStateManager().getPlotBackgroundColor());
+        StarCoordinatesPlot starCoordinatesPlot = new StarCoordinatesPlot(numericalData, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName(), csvViewer.getStateManager().getPlotBackgroundColor(), csvViewer.getStateManager().getPolylineThickness());
         starCoordinatesPlot.setVisible(true);
     }
     
@@ -154,7 +154,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
 
-        ShiftedPairedCoordinatesPlot shiftedPairedCoordinates = new ShiftedPairedCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, numPlots, selectedRows, csvViewer.getDatasetName(), csvViewer.getTable(), csvViewer.getStateManager().getPlotBackgroundColor());
+        ShiftedPairedCoordinatesPlot shiftedPairedCoordinates = new ShiftedPairedCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, numPlots, selectedRows, csvViewer.getDatasetName(), csvViewer.getTable(), csvViewer.getStateManager().getPlotBackgroundColor(), csvViewer.getStateManager().getPolylineThickness());
         shiftedPairedCoordinates.setVisible(true);
     }
 
@@ -207,7 +207,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
 
-        CollocatedPairedCoordinatesPlot collocatedPairedCoordinates = new CollocatedPairedCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName(), csvViewer.getTable(), csvViewer.getStateManager().getPlotBackgroundColor());
+        CollocatedPairedCoordinatesPlot collocatedPairedCoordinates = new CollocatedPairedCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName(), csvViewer.getTable(), csvViewer.getStateManager().getPlotBackgroundColor(), csvViewer.getStateManager().getPolylineThickness());
         collocatedPairedCoordinates.setVisible(true);
     }
 
@@ -251,7 +251,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
 
-        CircularCoordinatesPlot plot = new CircularCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName(), csvViewer.getStateManager().getPlotBackgroundColor());
+        CircularCoordinatesPlot plot = new CircularCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, csvViewer.getDatasetName(), csvViewer.getStateManager().getPlotBackgroundColor(), csvViewer.getStateManager().getPolylineThickness());
         plot.setVisible(true);
     }
 
@@ -358,7 +358,8 @@ public class VisualizationManager {
                 classLabels,
                 selectedRows,
                 csvViewer.getDatasetName(),
-                csvViewer.getStateManager().getPlotBackgroundColor()
+                csvViewer.getStateManager().getPlotBackgroundColor(),
+                csvViewer.getStateManager().getPolylineThickness()
             );
             plot.setSize(800, 800);
             plot.setVisible(true);
@@ -484,7 +485,7 @@ public class VisualizationManager {
         List<Integer> selectedRows = csvViewer.getSelectedRowsIndices();
         selectedRows.removeIf(csvViewer.getHiddenRows()::contains);
 
-        ConcentricCoordinatesPlot plot = new ConcentricCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, selectedRows, csvViewer.getDatasetName(), csvViewer.getStateManager().getPlotBackgroundColor());
+        ConcentricCoordinatesPlot plot = new ConcentricCoordinatesPlot(data, attributeNames, csvViewer.getClassColors(), csvViewer.getClassShapes(), classLabels, selectedRows, selectedRows, csvViewer.getDatasetName(), csvViewer.getStateManager().getPlotBackgroundColor(), csvViewer.getStateManager().getPolylineThickness());
         plot.setVisible(true);
     }
 
@@ -542,7 +543,8 @@ public class VisualizationManager {
             classLabels,
             selectedRows,
             csvViewer.getDatasetName(),
-            csvViewer.getStateManager().getPlotBackgroundColor()
+            csvViewer.getStateManager().getPlotBackgroundColor(),
+            csvViewer.getStateManager().getPolylineThickness()
         );
         plot.setVisible(true);
     }
@@ -674,7 +676,8 @@ public class VisualizationManager {
                 selectedRows,
                 csvViewer.getDatasetName(),
                 numRows,
-                csvViewer.getStateManager().getPlotBackgroundColor()
+                csvViewer.getStateManager().getPlotBackgroundColor(),
+                csvViewer.getStateManager().getPolylineThickness()
             );
             plot.setSize(1024, Math.min(900, 200 + numRows * 300)); // Adjust size based on row count
             plot.setVisible(true);
@@ -814,7 +817,8 @@ public class VisualizationManager {
                 csvViewer.getDatasetName(),
                 csvViewer.getTable(),
                 numRows,
-                csvViewer.getStateManager().getPlotBackgroundColor()
+                csvViewer.getStateManager().getPlotBackgroundColor(),
+                csvViewer.getStateManager().getPolylineThickness()
             );
             plot.setVisible(true);
         } else {

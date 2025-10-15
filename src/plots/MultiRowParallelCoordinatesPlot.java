@@ -27,6 +27,7 @@ public class MultiRowParallelCoordinatesPlot extends JFrame {
     private final int numRows;
     private final int attributesPerRow;
     private Color backgroundColor;
+    private float polylineThickness;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -37,7 +38,7 @@ public class MultiRowParallelCoordinatesPlot extends JFrame {
     public MultiRowParallelCoordinatesPlot(List<List<Double>> data, List<String> attributeNames,
                                    Map<String, Color> classColors, Map<String, Shape> classShapes,
                                    List<String> classLabels, List<Integer> selectedRows, 
-                                   String datasetName, int numRows, Color backgroundColor) {
+                                   String datasetName, int numRows, Color backgroundColor, float polylineThickness) {
         this.data = data;
         this.attributeNames = new ArrayList<>(attributeNames);
         this.classColors = classColors;
@@ -45,6 +46,7 @@ public class MultiRowParallelCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
         this.backgroundColor = backgroundColor;
+        this.polylineThickness = polylineThickness;
         this.hiddenClasses = new HashSet<>();
         this.numRows = numRows;
         
@@ -186,7 +188,7 @@ public class MultiRowParallelCoordinatesPlot extends JFrame {
                 
                 Color color = classColors.getOrDefault(classLabel, Color.BLACK);
                 g2.setColor(color);
-                g2.setStroke(new BasicStroke(1.0f));
+                g2.setStroke(new BasicStroke(polylineThickness));
                 
                 List<Point> points = new ArrayList<>();
                 
@@ -215,7 +217,7 @@ public class MultiRowParallelCoordinatesPlot extends JFrame {
                 if (hiddenClasses.contains(classLabel)) continue;
                 
                 g2.setColor(Color.YELLOW);
-                g2.setStroke(new BasicStroke(2.0f));
+                g2.setStroke(new BasicStroke(polylineThickness * 2.0f));
                 
                 List<Point> points = new ArrayList<>();
                 

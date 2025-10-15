@@ -41,8 +41,9 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     private boolean showAttributeLabels = true; // Toggle for displaying attribute labels
     private Color backgroundColor;
     private boolean showPolylines = true; // Toggle for displaying polylines
+    private float polylineThickness;
 
-    public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table, Color backgroundColor) {
+    public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table, Color backgroundColor, float polylineThickness) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -51,6 +52,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         this.numPlots = numPlots;
         this.selectedRows = selectedRows;
         this.backgroundColor = backgroundColor;
+        this.polylineThickness = polylineThickness;
         this.table = table;
         this.plotOffsets = new HashMap<>();
         this.draggedPlot = null;
@@ -534,7 +536,7 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             String classLabel = classLabels.get(row);
             Color color = isHighlighted ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
             Stroke originalStroke = g2.getStroke();
-            g2.setStroke(isHighlighted ? new BasicStroke(2) : originalStroke);
+            g2.setStroke(isHighlighted ? new BasicStroke(polylineThickness * 2.0f) : new BasicStroke(polylineThickness));
         
             for (int i = 0; i < numPlots; i++) {
                 Point offset = plotOffsets.get(i);

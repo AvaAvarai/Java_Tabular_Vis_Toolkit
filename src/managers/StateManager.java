@@ -21,6 +21,7 @@ public class StateManager {
     private Map<String, Shape> classShapes;
     private Color cellTextColor;
     private Color plotBackgroundColor;
+    private float polylineThickness;
     private boolean differenceColumnsVisible;
     private Set<Integer> classColumns;
     private List<List<String>> originalData = new ArrayList<>();
@@ -38,6 +39,7 @@ public class StateManager {
         this.classShapes = new HashMap<>();
         this.cellTextColor = Color.BLACK;
         this.plotBackgroundColor = Color.WHITE;
+        this.polylineThickness = 1.0f;
         this.differenceColumnsVisible = false;
         this.classColumns = new HashSet<>();
     }
@@ -54,6 +56,7 @@ public class StateManager {
         classShapes.clear();
         cellTextColor = Color.BLACK;
         plotBackgroundColor = Color.WHITE;
+        polylineThickness = 1.0f;
         differenceColumnsVisible = false;
         classColumns.clear();
         // Don't reset decimal precision during state clear
@@ -137,6 +140,14 @@ public class StateManager {
 
     public void setPlotBackgroundColor(Color plotBackgroundColor) {
         this.plotBackgroundColor = plotBackgroundColor;
+    }
+
+    public float getPolylineThickness() {
+        return polylineThickness;
+    }
+
+    public void setPolylineThickness(float polylineThickness) {
+        this.polylineThickness = polylineThickness;
     }
 
     public boolean areDifferenceColumnsVisible() {

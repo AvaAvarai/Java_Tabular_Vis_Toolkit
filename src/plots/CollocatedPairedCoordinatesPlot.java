@@ -32,8 +32,9 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
     private JLabel multiplierLabel; // Label to show current multiplier value
     private JPanel sliderPanel; // Store reference to the slider panel
     private Color backgroundColor;
+    private float polylineThickness;
 
-    public CollocatedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, JTable table, Color backgroundColor) {
+    public CollocatedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, JTable table, Color backgroundColor, float polylineThickness) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -41,6 +42,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
         this.backgroundColor = backgroundColor;
+        this.polylineThickness = polylineThickness;
         this.table = table;
         this.hiddenClasses = new HashSet<>();
 
@@ -252,7 +254,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             String classLabel = classLabels.get(row);
             Color color = isSelected ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
             g2.setColor(color);
-            g2.setStroke(new BasicStroke(1.5f));
+            g2.setStroke(new BasicStroke(polylineThickness));
             
             if (normalizeVectors) {
                 // For normalized vectors, create a connected chain

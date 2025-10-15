@@ -27,12 +27,13 @@ public class CircularCoordinatesPlot extends JFrame {
     private boolean connectEnds = true; // Track if the last and first vertices should be connected
     private Map<String, Double> maxSumPerClass = new HashMap<>(); // Track max sum of each class
     private Color backgroundColor;
+    private float polylineThickness;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
-    public CircularCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor) {
+    public CircularCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor, float polylineThickness) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -40,6 +41,7 @@ public class CircularCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
         this.backgroundColor = backgroundColor;
+        this.polylineThickness = polylineThickness;
         this.numAttributes = attributeNames.size();
         this.datasetName = datasetName;
         this.hiddenClasses = new HashSet<>();
@@ -342,6 +344,7 @@ public class CircularCoordinatesPlot extends JFrame {
         
             // Connect points with Bezier curves
             g2.setColor(color);
+            g2.setStroke(new BasicStroke(polylineThickness));
             for (int i = 0; i < numAttributes - 1; i++) {
                 Point2D.Double p1 = points[i];
                 Point2D.Double p2 = points[i + 1];

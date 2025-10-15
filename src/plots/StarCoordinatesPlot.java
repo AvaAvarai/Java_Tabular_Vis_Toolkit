@@ -27,12 +27,13 @@ public class StarCoordinatesPlot extends JFrame {
     private Set<String> hiddenClasses; // Set to keep track of hidden classes
     private boolean showAttributeLabels = true; // Flag to toggle attribute labels
     private Color backgroundColor;
+    private float polylineThickness;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
     private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
 
-    public StarCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor) {
+    public StarCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor, float polylineThickness) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -41,6 +42,7 @@ public class StarCoordinatesPlot extends JFrame {
         this.selectedRows = selectedRows;
         this.backgroundColor = backgroundColor;
         this.datasetName = datasetName;
+        this.polylineThickness = polylineThickness;
         this.hiddenClasses = new HashSet<>(); // Initialize hiddenClasses set
 
         setTitle("Star Coordinates Plot");
@@ -181,10 +183,10 @@ public class StarCoordinatesPlot extends JFrame {
 
             if (highlight) {
                 g2.setPaint(Color.YELLOW);
-                g2.setStroke(new BasicStroke(2));
+                g2.setStroke(new BasicStroke(polylineThickness * 2.0f));
             } else {
                 g2.setPaint(classColors.get(classLabels.get(row)));
-                g2.setStroke(new BasicStroke(1));
+                g2.setStroke(new BasicStroke(polylineThickness));
             }
 
             g2.draw(starPath);

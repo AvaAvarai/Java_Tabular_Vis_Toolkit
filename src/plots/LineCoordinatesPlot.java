@@ -26,6 +26,7 @@ public class LineCoordinatesPlot extends JFrame {
     private String draggedAxis = null;
     private boolean showLabels = true;
     private Color backgroundColor;
+    private float polylineThickness;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -35,7 +36,7 @@ public class LineCoordinatesPlot extends JFrame {
 
     public LineCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, 
             Map<String, Color> classColors, Map<String, Shape> classShapes, 
-            List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor) {
+            List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor, float polylineThickness) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -222,8 +223,8 @@ public class LineCoordinatesPlot extends JFrame {
                 if (showLabels) {
                     g2.drawString(attr, pos.x + scaledAxisLength / 2, pos.y + 20);
                 }
-            }            
-
+            }
+            
             // Draw data points and connections
             for (int row = 0; row < data.get(0).size(); row++) {
                 if (hiddenClasses.contains(classLabels.get(row))) {
@@ -253,6 +254,7 @@ public class LineCoordinatesPlot extends JFrame {
 
                 // Draw connections between points using Bezier curves
                 if (showConnections) {
+                    g2.setStroke(new BasicStroke(Math.max(1.0f, polylineThickness))); // Set stroke before drawing curves
                     for (int i = 0; i < points.size() - 1; i++) {
                         Point2D.Double p1 = points.get(i);
                         Point2D.Double p2 = points.get(i + 1);
@@ -296,8 +298,6 @@ public class LineCoordinatesPlot extends JFrame {
 
                 Color classColor = Color.YELLOW; // Highlight selected cases in yellow
                 g2.setColor(classColor);
-                g2.setStroke(new BasicStroke(2.0f)); // Thicker line for selected cases
-
                 List<Point2D.Double> points = new ArrayList<>();
                 for (int i = 0; i < attributeNames.size(); i++) {
                     String attr = attributeNames.get(i);
@@ -318,6 +318,7 @@ public class LineCoordinatesPlot extends JFrame {
 
                 // Draw connections between points using Bezier curves
                 if (showConnections) {
+                    g2.setStroke(new BasicStroke(polylineThickness)); // Set stroke for selected curves
                     for (int i = 0; i < points.size() - 1; i++) {
                         Point2D.Double p1 = points.get(i);
                         Point2D.Double p2 = points.get(i + 1);
@@ -336,6 +337,7 @@ public class LineCoordinatesPlot extends JFrame {
                             p1.x, p1.y, ctrl1.x, ctrl1.y,
                             ctrl2.x, ctrl2.y, p2.x, p2.y
                         );
+                        g2.setStroke(new BasicStroke(polylineThickness));
                         g2.draw(curve);
                     }
                 }

@@ -65,13 +65,14 @@ public class ConcentricCoordinatesPlot extends JFrame {
     private JScrollPane plotScrollPane;
     private boolean showConvexHulls = false;
     private Color backgroundColor;
+    private float polylineThickness;
     
         // Font settings
         private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
         private static final Font AXIS_LABEL_FONT = new Font("SansSerif", Font.PLAIN, 16);
         private static final int TITLE_PADDING = 20;
     
-        public ConcentricCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, List<Integer> hiddenRows, String datasetName, Color backgroundColor) {
+        public ConcentricCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, List<Integer> hiddenRows, String datasetName, Color backgroundColor, float polylineThickness) {
             this.data = data;
             this.attributeNames = attributeNames;
             this.classColors = classColors;
@@ -80,6 +81,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
             this.selectedRows = selectedRows;
             this.hiddenRows = hiddenRows;
             this.backgroundColor = backgroundColor;
+            this.polylineThickness = polylineThickness;
     
             // Initialize rotation values, directions, radii and normalization for each attribute
             for (String attribute : attributeNames) {
@@ -1145,7 +1147,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
             
             private void drawStandardLines(Graphics2D g2, Point2D.Double[] points, Color color, int numAttributes, boolean[] isPure) {
                 g2.setColor(color);
-                g2.setStroke(new BasicStroke(1.0f));
+                g2.setStroke(new BasicStroke(polylineThickness));
 
                 // Draw lines connecting the points across the circles
                 for (int i = 0; i < numAttributes - 1; i++) {
@@ -1197,7 +1199,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 }
                 
                 g2.setColor(Color.YELLOW);
-                g2.setStroke(new BasicStroke(2.0f));
+                g2.setStroke(new BasicStroke(polylineThickness * 2.0f));
 
                 for (int row : selectedRows) {
                     String classLabel = classLabels.get(row);
@@ -1394,7 +1396,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                             Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), 
                                                         baseColor.getBlue(), alpha);
                             
-                            g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                            g2.setStroke(new BasicStroke(selectedOnly ? polylineThickness * 2.0f : polylineThickness));
                             g2.setColor(adjustedColor);
                             g2.draw(new Line2D.Double(p1, p2));
                         }
@@ -1414,7 +1416,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                                 Color adjustedColor = new Color(baseColor.getRed(), baseColor.getGreen(), 
                                                             baseColor.getBlue(), alpha);
                                 
-                                g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                                g2.setStroke(new BasicStroke(selectedOnly ? polylineThickness * 2.0f : polylineThickness));
                                 g2.setColor(adjustedColor);
                                 g2.draw(new Line2D.Double(last, first));
                             } else {
@@ -1457,7 +1459,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                                     Color adjustedColor2 = new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), 
                                                                 alpha2);
                                     
-                                    g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                                    g2.setStroke(new BasicStroke(selectedOnly ? polylineThickness * 2.0f : polylineThickness));
                                     g2.setColor(adjustedColor1);
                                     g2.draw(new Line2D.Double(last, gapStart));
                                     
@@ -1580,7 +1582,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                             float thickness = 0.5f + (normalizedDensity * 5.5f); // Scale from 0.5 to 6.0 pixels
                             if (selectedOnly) thickness += 1.0f; // Make selected lines slightly thicker
                             
-                            g2.setStroke(new BasicStroke(thickness));
+                            g2.setStroke(new BasicStroke(thickness * polylineThickness));
                             g2.setColor(baseColor);
                             g2.draw(new Line2D.Double(p1, p2));
                         }
@@ -1599,7 +1601,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                                 float thickness = 0.5f + (normalizedDensity * 5.5f);
                                 if (selectedOnly) thickness += 1.0f;
                                 
-                                g2.setStroke(new BasicStroke(thickness));
+                                g2.setStroke(new BasicStroke(thickness * polylineThickness));
                                 g2.setColor(baseColor);
                                 g2.draw(new Line2D.Double(last, first));
                             } else {
@@ -1642,10 +1644,10 @@ public class ConcentricCoordinatesPlot extends JFrame {
                                     }
                                     
                                     g2.setColor(baseColor);
-                                    g2.setStroke(new BasicStroke(thickness1));
+                                    g2.setStroke(new BasicStroke(thickness1 * polylineThickness));
                                     g2.draw(new Line2D.Double(last, gapStart));
                                     
-                                    g2.setStroke(new BasicStroke(thickness2));
+                                    g2.setStroke(new BasicStroke(thickness2 * polylineThickness));
                                     g2.draw(new Line2D.Double(gapEnd, first));
                                 }
                             }

@@ -24,6 +24,7 @@ public class MultiRowShiftedPairedCoordinatesPlot extends JFrame {
     private Set<String> hiddenClasses;
     private int numRows;
     private Color backgroundColor;
+    private float polylineThickness;
     private int pairsPerRow;
 
     // Font and layout settings
@@ -38,7 +39,7 @@ public class MultiRowShiftedPairedCoordinatesPlot extends JFrame {
     public MultiRowShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames,
                                         Map<String, Color> classColors, Map<String, Shape> classShapes,
                                         List<String> classLabels, List<Integer> selectedRows, 
-                                        String datasetName, JTable table, int numRows, Color backgroundColor) {
+                                        String datasetName, JTable table, int numRows, Color backgroundColor, float polylineThickness) {
         this.data = data;
         this.attributeNames = attributeNames;
         this.classColors = classColors;
@@ -46,6 +47,7 @@ public class MultiRowShiftedPairedCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
         this.backgroundColor = backgroundColor;
+        this.polylineThickness = polylineThickness;
         this.table = table;
         this.hiddenClasses = new HashSet<>();
         this.numRows = numRows;
@@ -238,10 +240,10 @@ public class MultiRowShiftedPairedCoordinatesPlot extends JFrame {
                 // Set color based on selection
                 if (selectedRows.contains(row)) {
                     g2.setColor(Color.YELLOW);
-                    g2.setStroke(new BasicStroke(2.0f));
+                    g2.setStroke(new BasicStroke(polylineThickness * 2.0f));
                 } else {
                     g2.setColor(classColors.getOrDefault(classLabel, Color.BLACK));
-                    g2.setStroke(new BasicStroke(1.0f));
+                    g2.setStroke(new BasicStroke(polylineThickness));
                 }
                 
                 // Connect points across plots in this row
@@ -277,7 +279,7 @@ public class MultiRowShiftedPairedCoordinatesPlot extends JFrame {
             }
             
             // Reset stroke
-            g2.setStroke(new BasicStroke(1.0f));
+            g2.setStroke(new BasicStroke(polylineThickness));
         }
         
         private double normalize(double value, int attributeIndex) {

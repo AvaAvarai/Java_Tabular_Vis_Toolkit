@@ -32,6 +32,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private boolean showDensity = true;
     private Color backgroundColor;
     private boolean showPolylines = true; // Toggle for displaying polylines
+    private float polylineThickness;
 
     // Font settings
     private static final Font TITLE_FONT = new Font("SansSerif", Font.BOLD, 24);
@@ -49,7 +50,7 @@ public class ParallelCoordinatesPlot extends JFrame {
 
     public ParallelCoordinatesPlot(List<List<Double>> data, List<String> attributeNames,
                                    Map<String, Color> classColors, Map<String, Shape> classShapes,
-                                   List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor) {
+                                   List<String> classLabels, List<Integer> selectedRows, String datasetName, Color backgroundColor, float polylineThickness) {
         this.data = data;
         this.attributeNames = new ArrayList<>(attributeNames);
         this.classColors = classColors;
@@ -57,6 +58,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         this.classLabels = classLabels;
         this.selectedRows = selectedRows;
         this.backgroundColor = backgroundColor;
+        this.polylineThickness = polylineThickness;
         this.hiddenClasses = new HashSet<>();
         this.axisDirections = new HashMap<>();
         this.axisPositions = new HashMap<>();
@@ -583,7 +585,7 @@ public class ParallelCoordinatesPlot extends JFrame {
                         Point2D.Double p1 = points.get(i);
                         Point2D.Double p2 = points.get(i + 1);
                         
-                        g2.setStroke(new BasicStroke(selectedOnly ? 2.0f : 1.0f));
+                        g2.setStroke(new BasicStroke(polylineThickness));
                         g2.setColor(baseColor);
                         g2.draw(new Line2D.Double(p1, p2));
                     }
@@ -627,7 +629,7 @@ public class ParallelCoordinatesPlot extends JFrame {
                         float normalizedDensity = (float) count / maxDensity;
                         float thickness = 0.5f + (normalizedDensity * 9.5f); // Scale from 0.5 to 10.0 pixels
                         
-                        g2.setStroke(new BasicStroke(thickness)); // Set the stroke thickness
+                        g2.setStroke(new BasicStroke(thickness * polylineThickness)); // Set the stroke thickness
                         g2.setColor(baseColor);
                         g2.draw(new Line2D.Double(p1, p2));
                     }
@@ -671,7 +673,7 @@ public class ParallelCoordinatesPlot extends JFrame {
                         float normalizedDensity = (float) count / maxDensity;
                         int alpha = (int) (normalizedDensity * 255); // Scale alpha from 0 to 255
                         g2.setColor(new Color(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), alpha));
-                        g2.setStroke(new BasicStroke(1.0f)); // Fixed thickness
+                        g2.setStroke(new BasicStroke(polylineThickness)); // Use configurable thickness
                         
                         g2.draw(new Line2D.Double(p1, p2));
                     }

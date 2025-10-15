@@ -242,6 +242,7 @@ public class ButtonPanelManager {
         addMenuItem(visualizationMenu, "Font Settings", "/icons/fontcolor.png", _ -> csvViewer.showFontSettingsDialog());
         addMenuItem(visualizationMenu, "Set Class Colors", "/icons/setcolor.png", _ -> csvViewer.showColorPickerDialog());
         addMenuItem(visualizationMenu, "Background Color", "/icons/setcolor.png", _ -> csvViewer.showBackgroundColorDialog());
+        addMenuItem(visualizationMenu, "Polyline Thickness", "/icons/setcolor.png", _ -> csvViewer.showPolylineThicknessDialog());
         
         // Add decimal precision submenu
         JMenu precisionMenu = new JMenu("Set Decimal Precision");

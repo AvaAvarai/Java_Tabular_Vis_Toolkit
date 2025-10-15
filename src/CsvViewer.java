@@ -897,6 +897,59 @@ public class CsvViewer extends JFrame {
         }
     }
 
+    public void showPolylineThicknessDialog() {
+        JPanel panel = new JPanel(new GridLayout(0, 1));
+
+        JLabel thicknessLabel = new JLabel("Polyline Thickness:");
+        panel.add(thicknessLabel);
+        
+        // Create slider for thickness
+        JSlider thicknessSlider = new JSlider(JSlider.HORIZONTAL, 1, 100, (int)(stateManager.getPolylineThickness() * 10));
+        thicknessSlider.setMajorTickSpacing(5);
+        thicknessSlider.setMinorTickSpacing(1);
+        thicknessSlider.setPaintTicks(true);
+        thicknessSlider.setPaintLabels(true);
+        thicknessSlider.setLabelTable(thicknessSlider.createStandardLabels(5));
+        panel.add(thicknessSlider);
+
+        // Add current value label
+        JLabel currentValueLabel = new JLabel("Current: " + String.format("%.1f", stateManager.getPolylineThickness()));
+        panel.add(currentValueLabel);
+
+        // Add preview panel
+        JPanel previewPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
+                float currentThickness = thicknessSlider.getValue() / 10.0f;
+                g2.setStroke(new BasicStroke(currentThickness));
+                g2.setColor(Color.BLACK);
+                
+                int centerY = getHeight() / 2;
+                g2.drawLine(20, centerY, getWidth() - 20, centerY);
+            }
+        };
+        previewPanel.setBorder(BorderFactory.createTitledBorder("Preview"));
+        previewPanel.setPreferredSize(new Dimension(200, 50));
+        panel.add(previewPanel);
+
+        // Update preview when slider changes
+        thicknessSlider.addChangeListener(e -> {
+            float newThickness = thicknessSlider.getValue() / 10.0f;
+            currentValueLabel.setText("Current: " + String.format("%.1f", newThickness));
+            previewPanel.repaint();
+        });
+
+        int result = JOptionPane.showConfirmDialog(this, panel, "Polyline Thickness Settings", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        if (result == JOptionPane.OK_OPTION) {
+            float newThickness = thicknessSlider.getValue() / 10.0f;
+            stateManager.setPolylineThickness(newThickness);
+        }
+    }
+
     public void insertRow() {
         int currentCaretPosition = statsTextArea.getCaretPosition();
 
