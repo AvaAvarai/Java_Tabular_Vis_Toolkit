@@ -61,7 +61,7 @@ public class StarCoordinatesPlot extends JFrame {
         add(scrollPane, BorderLayout.CENTER);
 
         // Replace the existing legend creation with the standardized version
-        JPanel legendPanel = LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses);
+        JComponent legendPanel = LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses);
         add(legendPanel, BorderLayout.SOUTH);
 
         // Add a button to toggle attribute labels

@@ -1,6 +1,7 @@
 package src.utils;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicScrollBarUI;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.util.Map;
@@ -12,11 +13,11 @@ public class LegendUtils {
     private static final int PADDING = 5;
     private static final int SHAPE_SCALE = 3; // Scale factor for the shapes
 
-    public static JPanel createLegendPanel(Map<String, Color> classColors, Map<String, Shape> classShapes, Set<String> hiddenClasses) {
+    public static JComponent createLegendPanel(Map<String, Color> classColors, Map<String, Shape> classShapes, Set<String> hiddenClasses) {
+        // Create the inner panel that will hold the legend items
         JPanel legendPanel = new JPanel();
         legendPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
         legendPanel.setBackground(Color.WHITE);
-        legendPanel.setBorder(BorderFactory.createTitledBorder("Legend"));
 
         for (Map.Entry<String, Color> entry : classColors.entrySet()) {
             String className = entry.getKey();
@@ -44,7 +45,24 @@ public class LegendUtils {
             legendPanel.add(legendItem);
         }
 
-        return legendPanel;
+        // Create a scroll pane for the legend
+        JScrollPane legendScrollPane = new JScrollPane(legendPanel);
+        legendScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        legendScrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
+        legendScrollPane.setBorder(BorderFactory.createTitledBorder("Legend"));
+        legendScrollPane.setPreferredSize(new Dimension(800, 90));
+        legendScrollPane.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90)); // Limit height
+        
+        // Customize the scrollbar appearance
+        legendScrollPane.getHorizontalScrollBar().setUI(new BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = new Color(100, 100, 100);
+                this.trackColor = new Color(200, 200, 200);
+            }
+        });
+
+        return legendScrollPane;
     }
 
     private static JToggleButton createLegendItem(String className, Color color, Shape shape) {
