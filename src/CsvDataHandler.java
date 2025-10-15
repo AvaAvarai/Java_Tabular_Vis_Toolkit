@@ -250,6 +250,52 @@ public class CsvDataHandler {
         });
     }
 
+    /**
+     * Parse a CSV line properly handling empty entries between commas
+     * @param line The CSV line to parse
+     * @return Array of values, including empty strings for missing values
+     */
+    private String[] parseCsvLine(String line) {
+        List<String> values = new ArrayList<>();
+        boolean inQuotes = false;
+        StringBuilder currentValue = new StringBuilder();
+        
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            
+            if (c == '"') {
+                inQuotes = !inQuotes;
+            } else if (c == ',' && !inQuotes) {
+                values.add(currentValue.toString().trim());
+                currentValue = new StringBuilder();
+            } else {
+                currentValue.append(c);
+            }
+        }
+        
+        // Add the last value
+        values.add(currentValue.toString().trim());
+        
+        return values.toArray(new String[0]);
+    }
+    
+    /**
+     * Process empty entries by converting empty strings to "NaN" for proper visualization
+     * @param values Array of string values from CSV
+     * @return Array with empty entries converted to "NaN"
+     */
+    private String[] processEmptyEntries(String[] values) {
+        String[] processed = new String[values.length];
+        for (int i = 0; i < values.length; i++) {
+            if (values[i] == null || values[i].trim().isEmpty()) {
+                processed[i] = "NaN";
+            } else {
+                processed[i] = values[i];
+            }
+        }
+        return processed;
+    }
+
     public void loadCsvData(String filePath, DefaultTableModel tableModel, JTextArea statsTextArea) {
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
@@ -261,7 +307,7 @@ public class CsvDataHandler {
 
             // First pass to collect classes and headers
             while ((line = br.readLine()) != null) {
-                String[] values = line.split(",");
+                String[] values = parseCsvLine(line);
                 if (isFirstLine) {
                     headers = Arrays.asList(values);
                     for (int i = 0; i < values.length; i++) {
@@ -308,16 +354,17 @@ public class CsvDataHandler {
                             .findFirst()
                             .orElse(originalClass);
                         
-                        // Create new row with transformed class label
-                        String[] newValues = values.clone();
+                        // Create new row with transformed class label and handle empty entries
+                        String[] newValues = processEmptyEntries(values);
                         newValues[classColIndex] = newClassName;
                         
                         originalData.add(newValues);
                         tableModel.addRow(newValues);
                     }
                 } else {
-                    originalData.add(values);
-                    tableModel.addRow(values);
+                    String[] processedValues = processEmptyEntries(values);
+                    originalData.add(processedValues);
+                    tableModel.addRow(processedValues);
                 }
             }
 
@@ -353,29 +400,41 @@ public class CsvDataHandler {
             
             if (isColumnNumeric(col, model)) {
                 double[] values = new double[rowCount];
-                boolean hasNulls = false;
+                boolean[] isEmpty = new boolean[rowCount];
+                boolean hasEmptyValues = false;
 
-                // First pass - collect values and check for nulls
+                // First pass - collect values and identify empty entries
                 for (int row = 0; row < rowCount; row++) {
                     Object value = model.getValueAt(row, col);
-                    if (value == null || value.toString().trim().isEmpty()) {
-                        hasNulls = true;
-                        values[row] = 0.0; // Default value for nulls
+                    if (value == null || value.toString().trim().isEmpty() || "NaN".equals(value.toString())) {
+                        isEmpty[row] = true;
+                        hasEmptyValues = true;
+                        values[row] = Double.NaN; // Mark as empty
                     } else {
                         try {
                             values[row] = Double.parseDouble(value.toString());
+                            isEmpty[row] = false;
                         } catch (NumberFormatException e) {
-                            values[row] = 0.0;
+                            isEmpty[row] = true;
+                            hasEmptyValues = true;
+                            values[row] = Double.NaN;
                         }
                     }
                 }
 
-                if (!hasNulls) {
-                    // Calculate min and max
-                    double min = Arrays.stream(values).min().orElse(0.0);
-                    double max = Arrays.stream(values).max().orElse(1.0);
-                    double mean = Arrays.stream(values).average().orElse(0.0);
-                    double std = calculateStd(values, mean);
+                // Calculate min, max, mean, std only from non-empty values
+                List<Double> nonEmptyValues = new ArrayList<>();
+                for (int row = 0; row < rowCount; row++) {
+                    if (!isEmpty[row] && !Double.isNaN(values[row])) {
+                        nonEmptyValues.add(values[row]);
+                    }
+                }
+
+                if (!nonEmptyValues.isEmpty()) {
+                    double min = nonEmptyValues.stream().mapToDouble(Double::doubleValue).min().orElse(0.0);
+                    double max = nonEmptyValues.stream().mapToDouble(Double::doubleValue).max().orElse(1.0);
+                    double mean = nonEmptyValues.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+                    double std = calculateStd(nonEmptyValues.stream().mapToDouble(Double::doubleValue).toArray(), mean);
 
                     // Store original values for denormalization
                     originalValues.put(col, values.clone());
@@ -384,19 +443,24 @@ public class CsvDataHandler {
                     originalMean.put(col, mean);
                     originalStd.put(col, std);
 
-                    // Normalize values
+                    // Normalize only non-empty values
                     for (int row = 0; row < rowCount; row++) {
-                        double normalizedValue;
-                        if (normalizationType.equals("minmax")) {
-                            normalizedValue = (values[row] - min) / (max - min);
-                        } else { // zscore
-                            normalizedValue = (values[row] - mean) / std;
+                        if (!isEmpty[row] && !Double.isNaN(values[row])) {
+                            double normalizedValue;
+                            if (normalizationType.equals("minmax")) {
+                                normalizedValue = (values[row] - min) / (max - min);
+                            } else { // zscore
+                                normalizedValue = (values[row] - mean) / std;
+                            }
+                            // Ensure NaN is not returned
+                            if (Double.isNaN(normalizedValue)) {
+                                normalizedValue = 0.0;
+                            }
+                            model.setValueAt(String.format("%.4f", normalizedValue), row, col);
+                        } else {
+                            // Keep empty values as NaN
+                            model.setValueAt("NaN", row, col);
                         }
-                        // Ensure NaN is not returned
-                        if (Double.isNaN(normalizedValue)) {
-                            normalizedValue = 0.0; // Default value for NaN
-                        }
-                        model.setValueAt(String.format("%.4f", normalizedValue), row, col);
                     }
                 }
             }
@@ -604,7 +668,7 @@ public class CsvDataHandler {
             String[] columnValues = new String[rowCount];
             for (int row = 0; row < rowCount; row++) {
                 Object value = tableModel.getValueAt(row, col);
-                columnValues[row] = value != null ? value.toString() : "";
+                columnValues[row] = value != null ? value.toString() : "NaN";
             }
             
             // Detect data type
@@ -655,8 +719,21 @@ public class CsvDataHandler {
                     }
                 }
                 case NUMERICAL -> {
-                    // Keep as is, but store type info
+                    // Transform NaN strings to actual NaN values for numerical columns
                     columnDataTypes.put(col, new ColumnDataTypeInfo(detectedType, columnName));
+                    for (int row = 0; row < rowCount; row++) {
+                        String value = columnValues[row];
+                        if ("NaN".equals(value)) {
+                            tableModel.setValueAt(Double.NaN, row, col);
+                        } else {
+                            try {
+                                double numValue = Double.parseDouble(value);
+                                tableModel.setValueAt(numValue, row, col);
+                            } catch (NumberFormatException e) {
+                                tableModel.setValueAt(Double.NaN, row, col);
+                            }
+                        }
+                    }
                 }
                 default -> {
                     // Unknown type - keep as is
