@@ -2,18 +2,14 @@ package src.plots;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.geom.Ellipse2D;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Hashtable;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import src.utils.ScreenshotUtils;
 import src.utils.LegendUtils;
 
 public class CollocatedPairedCoordinatesPlot extends JFrame {
@@ -26,7 +22,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
     private List<Integer> selectedRows;
     private JTable table;
     private Set<String> hiddenClasses;
-    private boolean normalizeVectors = false;
+    private boolean normalizeVectors = true;
     private double unitVectorMultiplier = 1.0; // Default multiplier
     private CollocatedPairedCoordinatesPanel plotPanel;
     private JLabel multiplierLabel; // Label to show current multiplier value
@@ -56,21 +52,6 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
 
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
-        
-        JPanel normalizePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        
-        // Add vector normalization toggle
-        JCheckBox normalizeVectorsCheckbox = new JCheckBox("Normalize Vectors");
-        normalizeVectorsCheckbox.setSelected(normalizeVectors);
-        normalizeVectorsCheckbox.addActionListener(e -> {
-            normalizeVectors = normalizeVectorsCheckbox.isSelected();
-            updateSliderVisibility(normalizeVectors);
-            if (plotPanel != null) {
-                plotPanel.repaint();
-            }
-        });
-        normalizePanel.add(normalizeVectorsCheckbox);
-        controlPanel.add(normalizePanel);
         
         // Add slider panel for unit vector length control
         sliderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -109,9 +90,6 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
         sliderPanel.add(unitVectorSlider);
         sliderPanel.add(multiplierLabel);
         controlPanel.add(sliderPanel);
-        
-        // Initially hide slider if normalization is off
-        sliderPanel.setVisible(normalizeVectors);
 
         mainPanel.add(controlPanel, BorderLayout.NORTH);
         
@@ -121,13 +99,6 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
 
         mainPanel.add(LegendUtils.createLegendPanel(classColors, classShapes, hiddenClasses), BorderLayout.SOUTH);
         setContentPane(mainPanel);
-    }
-    
-    // Helper method to update slider visibility
-    private void updateSliderVisibility(boolean visible) {
-        if (sliderPanel != null) {
-            sliderPanel.setVisible(visible);
-        }
     }
 
     private class CollocatedPairedCoordinatesPanel extends JPanel {

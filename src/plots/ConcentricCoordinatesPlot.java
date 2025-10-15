@@ -107,7 +107,7 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 .max(Double::compare)
                 .orElse(1.0);
     
-            setTitle("Circle Coordinates Plot (" + datasetName + ")");
+            setTitle("Concentric Coordinates Plot (" + datasetName + ")");
             setSize(800, 800); // Increased height to accommodate sliders
             setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             setLocationRelativeTo(null);
