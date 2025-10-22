@@ -91,19 +91,26 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 attributeRadii.put(attribute, 1.0); // Initialize all radii to 1.0
             }
     
-            // Calculate min and max values for each attribute
+            // Calculate min and max values for each attribute (excluding NaN values)
             for (int i = 0; i < attributeNames.size(); i++) {
                 String attribute = attributeNames.get(i);
                 List<Double> attributeValues = data.get(i);
-                double min = attributeValues.stream().min(Double::compare).orElse(0.0);
-                double max = attributeValues.stream().max(Double::compare).orElse(1.0);
+                double min = attributeValues.stream()
+                    .filter(val -> !Double.isNaN(val))
+                    .min(Double::compare)
+                    .orElse(0.0);
+                double max = attributeValues.stream()
+                    .filter(val -> !Double.isNaN(val))
+                    .max(Double::compare)
+                    .orElse(1.0);
                 attributeMinValues.put(attribute, min);
                 attributeMaxValues.put(attribute, max);
             }
     
-            // Calculate the global maximum value across all attributes
+            // Calculate the global maximum value across all attributes (excluding NaN values)
             this.globalMaxValue = data.stream()
                 .flatMap(List::stream)
+                .filter(val -> !Double.isNaN(val))
                 .max(Double::compare)
                 .orElse(1.0);
     
@@ -544,9 +551,17 @@ public class ConcentricCoordinatesPlot extends JFrame {
             for (int i = 0; i < numAttributes; i++) {
                 String attribute = attributeNames.get(i);
                 double value = data.get(i).get(row);
-                double normalizedValue = normalizeAttributes.get(attribute)
-                        ? (value - attributeMinValues.get(attribute)) / (attributeMaxValues.get(attribute) - attributeMinValues.get(attribute))
-                        : value / globalMaxValue;
+                double normalizedValue;
+                
+                // Handle NaN values by setting them to 0 (zero position)
+                if (Double.isNaN(value)) {
+                    normalizedValue = 0.0;
+                } else {
+                    normalizedValue = normalizeAttributes.get(attribute)
+                            ? (value - attributeMinValues.get(attribute)) / (attributeMaxValues.get(attribute) - attributeMinValues.get(attribute))
+                            : value / globalMaxValue;
+                }
+                
                 if (!attributeDirections.get(attribute)) {
                     normalizedValue = 1.0 - normalizedValue;
                 }
@@ -840,22 +855,31 @@ public class ConcentricCoordinatesPlot extends JFrame {
                 List<Double> meanValues = new ArrayList<>();
                 for (int i = 0; i < attributeNames.size(); i++) {
                     double sum = 0;
+                    int validCount = 0;
                     for (int row : selectedRows) {
                         double value = data.get(i).get(row);
                         String attribute = attributeNames.get(i);
-                        if (normalizeAttributes.get(attribute)) {
-                            double min = attributeMinValues.get(attribute);
-                            double max = attributeMaxValues.get(attribute);
-                            value = (value - min) / (max - min);
+                        
+                        // Handle NaN values by setting them to 0 (zero position)
+                        if (Double.isNaN(value)) {
+                            value = 0.0;
                         } else {
-                            value = value / globalMaxValue;
+                            if (normalizeAttributes.get(attribute)) {
+                                double min = attributeMinValues.get(attribute);
+                                double max = attributeMaxValues.get(attribute);
+                                value = (value - min) / (max - min);
+                            } else {
+                                value = value / globalMaxValue;
+                            }
                         }
+                        
                         if (!attributeDirections.get(attribute)) {
                             value = 1.0 - value;
                         }
                         sum += value;
+                        validCount++;
                     }
-                    meanValues.add(sum / selectedRows.size());
+                    meanValues.add(validCount > 0 ? sum / validCount : 0.0);
                 }
 
                 // Calculate required rotations to align means vertically
@@ -1054,12 +1078,18 @@ public class ConcentricCoordinatesPlot extends JFrame {
                     double normalizedValue;
                     
                     String attribute = attributeNames.get(i);
-                    if (normalizeAttributes.get(attribute)) {
-                        double min = attributeMinValues.get(attribute);
-                        double max = attributeMaxValues.get(attribute);
-                        normalizedValue = (value - min) / (max - min);
+                    
+                    // Handle NaN values by setting them to 0 (zero position)
+                    if (Double.isNaN(value)) {
+                        normalizedValue = 0.0;
                     } else {
-                        normalizedValue = value / globalMaxValue;
+                        if (normalizeAttributes.get(attribute)) {
+                            double min = attributeMinValues.get(attribute);
+                            double max = attributeMaxValues.get(attribute);
+                            normalizedValue = (value - min) / (max - min);
+                        } else {
+                            normalizedValue = value / globalMaxValue;
+                        }
                     }
                     
                     // Apply direction toggle
