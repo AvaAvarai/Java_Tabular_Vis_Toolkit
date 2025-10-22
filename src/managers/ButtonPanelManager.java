@@ -12,6 +12,8 @@ import src.classifiers.RandomForestClassifier;
 import src.utils.SequentialSlopeFeatures;
 import src.utils.SequentialDistanceFeatures;
 import src.utils.SlopeAndDistanceFeatures;
+import utils.ColumnDataTypeInfo;
+import utils.DataTypeDetector;
 import javax.swing.table.DefaultTableModel;
 
 import javax.swing.*;
@@ -343,6 +345,7 @@ public class ButtonPanelManager {
         addMenuItem(analysisMenu, "Toggle Easy Cases", "/icons/easy.png", _ -> csvViewer.toggleEasyCases());
         addMenuItem(analysisMenu, "Show Covariance Matrix", "/icons/variance.png", _ -> csvViewer.showCovarianceMatrix());
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", _ -> csvViewer.showCovarianceSortDialog());
+        addMenuItem(analysisMenu, "Sort Columns by Frequency", "/icons/sort.png", _ -> csvViewer.showFrequencySortDialog());
         addMenuItem(analysisMenu, "Rule Tester", "/icons/rule.png", _ -> csvViewer.showRuleTesterDialog());
 
         addMenuItem(analysisMenu, "Add Mean Case", "/icons/clone.png", _ -> csvViewer.addMeanCase());

@@ -34,6 +34,7 @@ import src.utils.CovariancePairUtils;
 import src.classifiers.SupportSumMachineClassifier;
 import src.classifiers.KNearestNeighborsClassifier;
 import src.utils.PureRegionUtils;
+import utils.ColumnDataTypeInfo;
 
 public class CsvViewer extends JFrame {
     public JTable table;
@@ -420,6 +421,109 @@ public class CsvViewer extends JFrame {
         } else if (choice == 1) {
             sortColumnsByHamiltonianPath();
         }
+    }
+
+    public void showFrequencySortDialog() {
+        if (tableModel.getColumnCount() == 0) {
+            noDataLoadedError();
+            return;
+        }
+
+        // Calculate frequency of empty entries for each column
+        java.util.List<ColumnFrequencyPair> frequencyPairs = new ArrayList<>();
+        int classColumnIndex = getClassColumnIndex();
+        
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            if (i != classColumnIndex) {
+                int emptyCount = 0;
+                int totalCount = tableModel.getRowCount();
+                
+                // Count empty entries in this column (including NaN values)
+                for (int row = 0; row < totalCount; row++) {
+                    Object value = tableModel.getValueAt(row, i);
+                    if (value == null || value.toString().trim().isEmpty()) {
+                        emptyCount++;
+                    } else {
+                        // Check if the value is NaN
+                        try {
+                            double numValue = Double.parseDouble(value.toString());
+                            if (Double.isNaN(numValue)) {
+                                emptyCount++;
+                            }
+                        } catch (NumberFormatException e) {
+                            // If it's not a number, it's not considered empty
+                        }
+                    }
+                }
+                
+                // Calculate frequency as percentage of empty entries
+                double emptyFrequency = totalCount > 0 ? (double) emptyCount / totalCount : 0.0;
+                frequencyPairs.add(new ColumnFrequencyPair(i, emptyFrequency, emptyCount, totalCount));
+            }
+        }
+        
+        // Sort by frequency of empty entries in decreasing order (most empty first)
+        frequencyPairs.sort((p1, p2) -> Double.compare(p2.getEmptyFrequency(), p1.getEmptyFrequency()));
+        
+        // Show summary information before reordering
+        StringBuilder summary = new StringBuilder();
+        summary.append("Columns sorted by frequency of empty entries (decreasing):\n\n");
+        for (ColumnFrequencyPair pair : frequencyPairs) {
+            String columnName = tableModel.getColumnName(pair.getColumnIndex());
+            summary.append(String.format("%s: %.1f%% empty (%d/%d entries)\n", 
+                columnName, pair.getEmptyFrequency() * 100, pair.getEmptyCount(), pair.getTotalCount()));
+        }
+        
+        // Reorder columns based on the sorted frequency
+        TableColumnModel columnModel = table.getColumnModel();
+        
+        // Create a list to track the new order
+        java.util.List<String> newColumnOrder = new ArrayList<>();
+        
+        // Add class column first if it exists
+        if (classColumnIndex != -1) {
+            newColumnOrder.add(tableModel.getColumnName(classColumnIndex));
+        }
+        
+        // Add columns in sorted order (most empty first)
+        for (ColumnFrequencyPair pair : frequencyPairs) {
+            newColumnOrder.add(tableModel.getColumnName(pair.getColumnIndex()));
+        }
+        
+        // Reorder columns by moving them to their new positions
+        for (int i = 0; i < newColumnOrder.size(); i++) {
+            String columnName = newColumnOrder.get(i);
+            int currentIndex = columnModel.getColumnIndex(columnName);
+            if (currentIndex != i) {
+                columnModel.moveColumn(currentIndex, i);
+            }
+        }
+        
+        // Update display
+        table.getTableHeader().repaint();
+        table.repaint();
+        
+        statsTextArea.append("\n" + summary.toString());
+    }
+    
+    // Helper class to store column frequency information
+    private static class ColumnFrequencyPair {
+        private final int columnIndex;
+        private final double emptyFrequency;
+        private final int emptyCount;
+        private final int totalCount;
+        
+        public ColumnFrequencyPair(int columnIndex, double emptyFrequency, int emptyCount, int totalCount) {
+            this.columnIndex = columnIndex;
+            this.emptyFrequency = emptyFrequency;
+            this.emptyCount = emptyCount;
+            this.totalCount = totalCount;
+        }
+        
+        public int getColumnIndex() { return columnIndex; }
+        public double getEmptyFrequency() { return emptyFrequency; }
+        public int getEmptyCount() { return emptyCount; }
+        public int getTotalCount() { return totalCount; }
     }
 
     private void sortColumnsByHamiltonianPath() {
