@@ -2072,5 +2072,142 @@ public class CsvViewer extends JFrame {
         
         return sum / values.size();
     }
+
+    /**
+     * Calculates and displays the n-dimensional Area Under Curve (AUC) for selected rows.
+     * Each row's attributes are treated as a curve in n-dimensional space.
+     */
+    public void calculateSelectedRowsPolylineArea() {
+        int[] selectedRows = table.getSelectedRows();
+        
+        if (selectedRows.length == 0) {
+            JOptionPane.showMessageDialog(this, 
+                "Please select at least one row to calculate AUC.", 
+                "Selection Error", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Get all numeric columns (exclude class column)
+        int classColumnIndex = getClassColumnIndex();
+        List<Integer> numericColumnIndices = new ArrayList<>();
+        
+        for (int col = 0; col < tableModel.getColumnCount(); col++) {
+            if (col != classColumnIndex) {
+                try {
+                    // Check if the column is numeric by trying to parse the first value
+                    Double.parseDouble(tableModel.getValueAt(0, col).toString());
+                    numericColumnIndices.add(col);
+                } catch (NumberFormatException e) {
+                    // Skip non-numeric columns
+                }
+            }
+        }
+        
+        if (numericColumnIndices.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "No numeric columns found to calculate AUC.", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Convert selected rows to model indices
+        List<Integer> selectedModelRows = new ArrayList<>();
+        for (int viewRow : selectedRows) {
+            selectedModelRows.add(table.convertRowIndexToModel(viewRow));
+        }
+        
+        // Calculate n-D AUC for each selected row
+        StringBuilder aucReport = new StringBuilder();
+        aucReport.append("\n=== N-DIMENSIONAL AUC ANALYSIS ===\n");
+        aucReport.append("Selected rows: ").append(selectedRows.length).append("\n");
+        aucReport.append("Dimensions: ").append(numericColumnIndices.size()).append("\n\n");
+        
+        List<Double> rowAUCs = new ArrayList<>();
+        
+        for (int i = 0; i < selectedModelRows.size(); i++) {
+            int modelRow = selectedModelRows.get(i);
+            int viewRow = selectedRows[i];
+            
+            // Collect all numeric values for this row
+            List<Double> rowValues = new ArrayList<>();
+            for (int col : numericColumnIndices) {
+                try {
+                    double value = Double.parseDouble(tableModel.getValueAt(modelRow, col).toString());
+                    // Only add valid numeric values (not NaN or infinite)
+                    if (!Double.isNaN(value) && !Double.isInfinite(value)) {
+                        rowValues.add(value);
+                    }
+                } catch (NumberFormatException e) {
+                    // Skip invalid values
+                }
+            }
+            
+            if (rowValues.size() >= 2) {
+                // Calculate n-D AUC using trapezoidal rule
+                double auc = calculateNDAUC(rowValues);
+                rowAUCs.add(auc);
+                
+                aucReport.append(String.format("Row %d: AUC = %.6f (valid dims: %d/%d)\n", 
+                    modelRow + 1, auc, rowValues.size(), numericColumnIndices.size()));
+            } else {
+                aucReport.append(String.format("Row %d: Insufficient valid dimensions\n", modelRow + 1));
+            }
+        }
+        
+        // Calculate overall statistics
+        if (!rowAUCs.isEmpty()) {
+            // Filter out NaN values
+            List<Double> validAUCs = new ArrayList<>();
+            for (double auc : rowAUCs) {
+                if (!Double.isNaN(auc) && !Double.isInfinite(auc)) {
+                    validAUCs.add(auc);
+                }
+            }
+            
+            if (!validAUCs.isEmpty()) {
+                double avgAUC = calculateMean(validAUCs);
+                double totalAUC = validAUCs.stream().mapToDouble(Double::doubleValue).sum();
+                double aucVariance = calculateVariance(validAUCs);
+                double aucStdDev = Math.sqrt(aucVariance);
+                
+                aucReport.append("\n=== OVERALL STATISTICS ===\n");
+                aucReport.append(String.format("Average AUC: %.6f\n", avgAUC));
+                aucReport.append(String.format("Total AUC: %.6f\n", totalAUC));
+                aucReport.append(String.format("AUC Variance: %.6f\n", aucVariance));
+                aucReport.append(String.format("AUC Std Dev: %.6f\n", aucStdDev));
+                aucReport.append(String.format("Valid rows: %d/%d\n", validAUCs.size(), selectedRows.length));
+            }
+        }
+        
+        aucReport.append("=====================================\n");
+        
+        // Display the results
+        statsTextArea.append(aucReport.toString());
+        statsTextArea.setCaretPosition(statsTextArea.getText().length());
+    }
+    
+    /**
+     * Calculates the n-dimensional Area Under Curve (AUC) using trapezoidal rule.
+     * @param values List of numeric values representing the curve points
+     * @return n-D AUC value
+     */
+    private double calculateNDAUC(List<Double> values) {
+        if (values.size() < 2) {
+            return 0.0;
+        }
+        
+        double auc = 0.0;
+        
+        // Use trapezoidal rule for n-D AUC
+        for (int i = 0; i < values.size() - 1; i++) {
+            double y1 = values.get(i);
+            double y2 = values.get(i + 1);
+            auc += (y1 + y2) / 2.0;
+        }
+        
+        return auc;
+    }
 }
 
