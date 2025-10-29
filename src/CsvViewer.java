@@ -1882,5 +1882,195 @@ public class CsvViewer extends JFrame {
         dataHandler.updateStats(tableModel, statsTextArea);
         statsTextArea.append("\nDecimal precision set to " + precision + " places.\n");
     }
+
+    /**
+     * Calculates and displays the variance of selected rows as a group of datapoints.
+     * Each row is treated as a complete datapoint, and variance is calculated across all selected rows.
+     */
+    public void calculateSelectedRowsVariance() {
+        int[] selectedRows = table.getSelectedRows();
+        
+        if (selectedRows.length == 0) {
+            JOptionPane.showMessageDialog(this, 
+                "Please select at least one row to calculate variance.", 
+                "Selection Error", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        if (selectedRows.length < 2) {
+            JOptionPane.showMessageDialog(this, 
+                "Please select at least two rows to calculate variance.", 
+                "Selection Error", 
+                JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Get all numeric columns (exclude class column)
+        int classColumnIndex = getClassColumnIndex();
+        List<Integer> numericColumnIndices = new ArrayList<>();
+        List<String> numericColumnNames = new ArrayList<>();
+        
+        for (int col = 0; col < tableModel.getColumnCount(); col++) {
+            if (col != classColumnIndex) {
+                try {
+                    // Check if the column is numeric by trying to parse the first value
+                    Double.parseDouble(tableModel.getValueAt(0, col).toString());
+                    numericColumnIndices.add(col);
+                    numericColumnNames.add(tableModel.getColumnName(col));
+                } catch (NumberFormatException e) {
+                    // Skip non-numeric columns
+                }
+            }
+        }
+        
+        if (numericColumnIndices.isEmpty()) {
+            JOptionPane.showMessageDialog(this, 
+                "No numeric columns found to calculate variance.", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Convert selected rows to model indices
+        List<Integer> selectedModelRows = new ArrayList<>();
+        for (int viewRow : selectedRows) {
+            selectedModelRows.add(table.convertRowIndexToModel(viewRow));
+        }
+        
+        // Calculate variance for each row as a complete datapoint
+        StringBuilder varianceReport = new StringBuilder();
+        varianceReport.append("\n=== VARIANCE ANALYSIS OF SELECTED ROWS ===\n");
+        varianceReport.append("Selected rows: ").append(selectedRows.length).append("\n");
+        varianceReport.append("Numeric columns per row: ").append(numericColumnIndices.size()).append("\n\n");
+        
+        // Calculate variance for each row individually
+        List<Double> rowVariances = new ArrayList<>();
+        List<Double> rowMeans = new ArrayList<>();
+        
+        for (int i = 0; i < selectedModelRows.size(); i++) {
+            int modelRow = selectedModelRows.get(i);
+            int viewRow = selectedRows[i];
+            
+            // Collect all numeric values for this row
+            List<Double> rowValues = new ArrayList<>();
+            for (int col : numericColumnIndices) {
+                try {
+                    double value = Double.parseDouble(tableModel.getValueAt(modelRow, col).toString());
+                    // Only add valid numeric values (not NaN or infinite)
+                    if (!Double.isNaN(value) && !Double.isInfinite(value)) {
+                        rowValues.add(value);
+                    }
+                } catch (NumberFormatException e) {
+                    // Skip invalid values
+                }
+            }
+            
+            if (rowValues.size() >= 2) {
+                double rowMean = calculateMean(rowValues);
+                double rowVariance = calculateVariance(rowValues);
+                double rowStdDev = Math.sqrt(rowVariance);
+                
+                rowMeans.add(rowMean);
+                rowVariances.add(rowVariance);
+                
+                varianceReport.append(String.format("Row %d (View %d):\n", modelRow + 1, viewRow + 1));
+                varianceReport.append(String.format("  Mean: %.6f\n", rowMean));
+                varianceReport.append(String.format("  Variance: %.6f\n", rowVariance));
+                varianceReport.append(String.format("  Standard Deviation: %.6f\n", rowStdDev));
+                varianceReport.append(String.format("  Valid attributes: %d/%d\n\n", rowValues.size(), numericColumnIndices.size()));
+            } else if (rowValues.size() == 1) {
+                varianceReport.append(String.format("Row %d (View %d): Only 1 valid attribute (need at least 2 for variance)\n\n", modelRow + 1, viewRow + 1));
+            } else {
+                varianceReport.append(String.format("Row %d (View %d): No valid numeric attributes found\n\n", modelRow + 1, viewRow + 1));
+            }
+        }
+        
+        // Calculate overall statistics across all selected rows
+        if (!rowVariances.isEmpty()) {
+            // Filter out NaN values from rowMeans and rowVariances
+            List<Double> validRowMeans = new ArrayList<>();
+            List<Double> validRowVariances = new ArrayList<>();
+            
+            for (int i = 0; i < rowMeans.size(); i++) {
+                if (!Double.isNaN(rowMeans.get(i)) && !Double.isInfinite(rowMeans.get(i))) {
+                    validRowMeans.add(rowMeans.get(i));
+                }
+                if (!Double.isNaN(rowVariances.get(i)) && !Double.isInfinite(rowVariances.get(i))) {
+                    validRowVariances.add(rowVariances.get(i));
+                }
+            }
+            
+            if (!validRowMeans.isEmpty()) {
+                double overallMean = calculateMean(validRowMeans);
+                double overallVariance = calculateVariance(validRowMeans);
+                double overallStdDev = Math.sqrt(overallVariance);
+                
+                varianceReport.append("=== OVERALL STATISTICS ===\n");
+                varianceReport.append(String.format("Average of row means: %.6f\n", overallMean));
+                varianceReport.append(String.format("Variance of row means: %.6f\n", overallVariance));
+                varianceReport.append(String.format("Standard deviation of row means: %.6f\n", overallStdDev));
+                
+                if (!validRowVariances.isEmpty()) {
+                    double avgRowVariance = calculateMean(validRowVariances);
+                    double avgRowStdDev = Math.sqrt(avgRowVariance);
+                    varianceReport.append(String.format("Average row variance: %.6f\n", avgRowVariance));
+                    varianceReport.append(String.format("Average row standard deviation: %.6f\n", avgRowStdDev));
+                }
+                
+                varianceReport.append(String.format("Valid rows analyzed: %d/%d\n", validRowMeans.size(), selectedRows.length));
+            } else {
+                varianceReport.append("=== OVERALL STATISTICS ===\n");
+                varianceReport.append("No valid row means found for overall statistics\n");
+                varianceReport.append(String.format("Valid rows analyzed: 0/%d\n", selectedRows.length));
+            }
+        }
+        
+        varianceReport.append("==========================================\n");
+        
+        // Display the results
+        statsTextArea.append(varianceReport.toString());
+        statsTextArea.setCaretPosition(statsTextArea.getText().length());
+    }
+    
+    /**
+     * Calculates the sample variance of a list of values
+     * @param values List of numeric values
+     * @return Sample variance
+     */
+    private double calculateVariance(List<Double> values) {
+        if (values.size() < 2) {
+            return 0.0;
+        }
+        
+        double mean = calculateMean(values);
+        double sumSquaredDiffs = 0.0;
+        
+        for (double value : values) {
+            double diff = value - mean;
+            sumSquaredDiffs += diff * diff;
+        }
+        
+        // Sample variance (divide by n-1)
+        return sumSquaredDiffs / (values.size() - 1);
+    }
+    
+    /**
+     * Calculates the mean of a list of values
+     * @param values List of numeric values
+     * @return Mean value
+     */
+    private double calculateMean(List<Double> values) {
+        if (values.isEmpty()) {
+            return 0.0;
+        }
+        
+        double sum = 0.0;
+        for (double value : values) {
+            sum += value;
+        }
+        
+        return sum / values.size();
+    }
 }
 

@@ -349,6 +349,7 @@ public class ButtonPanelManager {
         addMenuItem(analysisMenu, "Rule Tester", "/icons/rule.png", _ -> csvViewer.showRuleTesterDialog());
 
         addMenuItem(analysisMenu, "Add Mean Case", "/icons/clone.png", _ -> csvViewer.addMeanCase());
+        addMenuItem(analysisMenu, "Calculate Selected Rows Variance", "/icons/variance.png", _ -> csvViewer.calculateSelectedRowsVariance());
 
         addMenuItem(analysisMenu, "Select Nearest Neighbors", "/icons/knn.png", _ -> {
             if (csvViewer.dataHandler.isDataEmpty()) {
