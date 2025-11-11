@@ -225,7 +225,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             String classLabel = classLabels.get(row);
             Color color = isSelected ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
             g2.setColor(color);
-            g2.setStroke(new BasicStroke(polylineThickness));
+            g2.setStroke(new BasicStroke(polylineThickness, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
             
             if (normalizeVectors) {
                 // For normalized vectors, create a connected chain
@@ -255,19 +255,31 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     nx = Math.max(padding, Math.min(padding + plotSize, nx));
                     ny = Math.max(padding, Math.min(padding + plotSize, ny));
                     
-                    // Draw the normalized line segment
-                    g2.drawLine(currentStartPoint.x, currentStartPoint.y, (int)nx, (int)ny);
+                    // Calculate arrow base point (arrowSize back from the end) to hide line end cap
+                    double arrowSize = Math.max(6.0, polylineThickness * 5.0);
+                    double lineAngle = Math.atan2(ny - currentStartPoint.y, nx - currentStartPoint.x);
+                    // Use 0.7x arrowSize to move arrow closer to the polyline
+                    double arrowBaseX = nx - arrowSize * 0.7 * Math.cos(lineAngle);
+                    double arrowBaseY = ny - arrowSize * 0.7 * Math.sin(lineAngle);
+                    
+                    // Draw the normalized line segment to the arrow base (so arrow covers the end cap)
+                    g2.drawLine(currentStartPoint.x, currentStartPoint.y, (int)arrowBaseX, (int)arrowBaseY);
                     
                     // Draw arrow at the end of the normalized line
                     // If multiplier is 0, use a small fixed length for the arrow to show direction
                     if (unitVectorMultiplier == 0) {
                         // Use a small fixed length (5 pixels) to show direction
                         double arrowLength = 5.0;
+                        double arrowAngle = Math.atan2(dy, dx);
                         double arrowX = currentStartPoint.x + (dx / vectorLength) * arrowLength;
                         double arrowY = currentStartPoint.y + (dy / vectorLength) * arrowLength;
-                        drawArrow(g2, currentStartPoint.x, currentStartPoint.y, (int)arrowX, (int)arrowY);
+                        // Use 0.7x arrowSize to move arrow closer to the polyline
+                        double arrowBaseX0 = arrowX - arrowSize * 0.7 * Math.cos(arrowAngle);
+                        double arrowBaseY0 = arrowY - arrowSize * 0.7 * Math.sin(arrowAngle);
+                        g2.drawLine(currentStartPoint.x, currentStartPoint.y, (int)arrowBaseX0, (int)arrowBaseY0);
+                        drawArrow(g2, (int)arrowBaseX0, (int)arrowBaseY0, (int)arrowX, (int)arrowY);
                     } else {
-                        drawArrow(g2, currentStartPoint.x, currentStartPoint.y, (int)nx, (int)ny);
+                        drawArrow(g2, (int)arrowBaseX, (int)arrowBaseY, (int)nx, (int)ny);
                     }
                     
                     // Update the start point for the next vector
@@ -279,22 +291,30 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     Point p1 = points.get(i);
                     Point p2 = points.get(i + 1);
                     
-                    // Draw the regular line segment
-                    g2.drawLine(p1.x, p1.y, p2.x, p2.y);
+                    // Calculate arrow base point (arrowSize back from the end) to hide line end cap
+                    double arrowSize = Math.max(6.0, polylineThickness * 5.0);
+                    double lineAngle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                    // Use 0.7x arrowSize to move arrow closer to the polyline
+                    double arrowBaseX = p2.x - arrowSize * 0.7 * Math.cos(lineAngle);
+                    double arrowBaseY = p2.y - arrowSize * 0.7 * Math.sin(lineAngle);
+                    
+                    // Draw the regular line segment to the arrow base (so arrow covers the end cap)
+                    g2.drawLine(p1.x, p1.y, (int)arrowBaseX, (int)arrowBaseY);
                     
                     // Draw arrow at the end of the line
-                    drawArrow(g2, p1.x, p1.y, p2.x, p2.y);
+                    drawArrow(g2, (int)arrowBaseX, (int)arrowBaseY, p2.x, p2.y);
                 }
             }
         }
         
-        private void drawArrow(Graphics2D g2, int x1, int y1, int x2, int y2) {
-            // Arrow head size
-            int arrowSize = 8;
+        private void drawArrow(Graphics2D g2, int baseX, int baseY, int tipX, int tipY) {
+            // Arrow head size - scale with polyline thickness, with minimum size for visibility
+            // Use a larger multiplier to ensure arrows are proportional to thicker lines
+            double arrowSize = Math.max(6.0, polylineThickness * 5.0);
             
-            // Calculate the angle of the line
-            double dx = x2 - x1;
-            double dy = y2 - y1;
+            // Calculate the angle of the line from base to tip
+            double dx = tipX - baseX;
+            double dy = tipY - baseY;
             double angle = Math.atan2(dy, dx);
             
             // Create the arrow head
@@ -302,16 +322,16 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             int[] yPoints = new int[3];
             
             // Arrow tip at the end point
-            xPoints[0] = x2;
-            yPoints[0] = y2;
+            xPoints[0] = tipX;
+            yPoints[0] = tipY;
             
             // First arrow wing
-            xPoints[1] = (int) (x2 - arrowSize * Math.cos(angle - Math.PI/6));
-            yPoints[1] = (int) (y2 - arrowSize * Math.sin(angle - Math.PI/6));
+            xPoints[1] = (int) (tipX - arrowSize * Math.cos(angle - Math.PI/6));
+            yPoints[1] = (int) (tipY - arrowSize * Math.sin(angle - Math.PI/6));
             
             // Second arrow wing
-            xPoints[2] = (int) (x2 - arrowSize * Math.cos(angle + Math.PI/6));
-            yPoints[2] = (int) (y2 - arrowSize * Math.sin(angle + Math.PI/6));
+            xPoints[2] = (int) (tipX - arrowSize * Math.cos(angle + Math.PI/6));
+            yPoints[2] = (int) (tipY - arrowSize * Math.sin(angle + Math.PI/6));
             
             // Draw the arrow head
             g2.fillPolygon(xPoints, yPoints, 3);
