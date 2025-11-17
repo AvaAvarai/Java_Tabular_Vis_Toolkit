@@ -29,6 +29,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
     private JPanel sliderPanel; // Store reference to the slider panel
     private Color backgroundColor;
     private float polylineThickness;
+    private boolean drawBoxes = false;
 
     public CollocatedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, JTable table, Color backgroundColor, float polylineThickness) {
         this.data = data;
@@ -90,6 +91,19 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
         sliderPanel.add(unitVectorSlider);
         sliderPanel.add(multiplierLabel);
         controlPanel.add(sliderPanel);
+        
+        // Add "Draw Boxes" button
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JButton drawBoxesButton = new JButton("Draw Boxes");
+        drawBoxesButton.addActionListener(e -> {
+            drawBoxes = !drawBoxes;
+            drawBoxesButton.setText(drawBoxes ? "Hide Boxes" : "Draw Boxes");
+            if (plotPanel != null) {
+                plotPanel.repaint();
+            }
+        });
+        buttonPanel.add(drawBoxesButton);
+        controlPanel.add(buttonPanel);
 
         mainPanel.add(controlPanel, BorderLayout.NORTH);
         
@@ -150,6 +164,11 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     drawPolyline(g2, row, padding, plotSize, true);
                 }
             }
+            
+            // Draw boxes if enabled
+            if (drawBoxes) {
+                drawBoundingBoxes(g2, padding, plotSize);
+            }
         }
         
         private void calculateVectorLengthRange() {
@@ -198,6 +217,12 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
         }
 
         private void drawPolyline(Graphics2D g2, int row, int padding, int plotSize, boolean isSelected) {
+            List<Point> arrowStarts = new ArrayList<>();
+            List<Point> arrowEnds = new ArrayList<>();
+            drawPolylineWithPoints(g2, row, padding, plotSize, isSelected, arrowStarts, arrowEnds);
+        }
+        
+        private void drawPolylineWithPoints(Graphics2D g2, int row, int padding, int plotSize, boolean isSelected, List<Point> arrowStarts, List<Point> arrowEnds) {
             List<Point> points = new ArrayList<>();
             int numAttributes = attributeNames.size();
 
@@ -243,6 +268,9 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     // Skip drawing if vector is too small
                     if (vectorLength < 0.001) continue;
                     
+                    // Track arrow start point
+                    arrowStarts.add(new Point(currentStartPoint.x, currentStartPoint.y));
+                    
                     // Use original direction but scale by the multiplier directly
                     // We're not using min/max normalization anymore, just direct scaling
                     double scaledLength = vectorLength * unitVectorMultiplier;
@@ -278,8 +306,12 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                         double arrowBaseY0 = arrowY - arrowSize * 0.7 * Math.sin(arrowAngle);
                         g2.drawLine(currentStartPoint.x, currentStartPoint.y, (int)arrowBaseX0, (int)arrowBaseY0);
                         drawArrow(g2, (int)arrowBaseX0, (int)arrowBaseY0, (int)arrowX, (int)arrowY);
+                        // Track arrow end point
+                        arrowEnds.add(new Point((int)arrowX, (int)arrowY));
                     } else {
                         drawArrow(g2, (int)arrowBaseX, (int)arrowBaseY, (int)nx, (int)ny);
+                        // Track arrow end point
+                        arrowEnds.add(new Point((int)nx, (int)ny));
                     }
                     
                     // Update the start point for the next vector
@@ -290,6 +322,9 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 for (int i = 0; i < points.size() - 1; i++) {
                     Point p1 = points.get(i);
                     Point p2 = points.get(i + 1);
+                    
+                    // Track arrow start point
+                    arrowStarts.add(new Point(p1.x, p1.y));
                     
                     // Calculate arrow base point (arrowSize back from the end) to hide line end cap
                     double arrowSize = Math.max(6.0, polylineThickness * 5.0);
@@ -303,6 +338,183 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     
                     // Draw arrow at the end of the line
                     drawArrow(g2, (int)arrowBaseX, (int)arrowBaseY, p2.x, p2.y);
+                    
+                    // Track arrow end point
+                    arrowEnds.add(new Point(p2.x, p2.y));
+                }
+            }
+        }
+        
+        private void collectArrowPoints(int row, int padding, int plotSize, List<Point> arrowStarts, List<Point> arrowEnds) {
+            List<Point> points = new ArrayList<>();
+            int numAttributes = attributeNames.size();
+
+            // Loop over attributes in pairs, but handle odd number of attributes
+            for (int i = 0; i < numAttributes; i += 2) {
+                double xValue = normalize(data.get(i).get(row), i);
+                
+                // If this is the last attribute and it's odd, duplicate the value for y
+                double yValue;
+                if (i == numAttributes - 1) {
+                    // Odd number of attributes, duplicate the last one
+                    yValue = xValue;
+                } else {
+                    // Normal case, use the next attribute
+                    yValue = normalize(data.get(i + 1).get(row), i + 1);
+                }
+                
+                int x = padding + (int) (xValue * plotSize);
+                int y = padding + (int) ((1 - yValue) * plotSize);
+                points.add(new Point(x, y));
+            }
+
+            if (points.size() < 2) return;
+            
+            if (normalizeVectors) {
+                // For normalized vectors, create a connected chain
+                Point currentStartPoint = points.get(0);
+                
+                for (int i = 0; i < points.size() - 1; i++) {
+                    Point p1 = points.get(i);
+                    Point p2 = points.get(i + 1);
+                    
+                    // Calculate the vector direction and length
+                    double dx = p2.x - p1.x;
+                    double dy = p2.y - p1.y;
+                    double vectorLength = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Skip if vector is too small
+                    if (vectorLength < 0.001) continue;
+                    
+                    // Track arrow start point
+                    arrowStarts.add(new Point(currentStartPoint.x, currentStartPoint.y));
+                    
+                    // Calculate the new endpoint using the scaled length
+                    double scaledLength = vectorLength * unitVectorMultiplier;
+                    double nx = currentStartPoint.x + (dx / vectorLength) * scaledLength;
+                    double ny = currentStartPoint.y + (dy / vectorLength) * scaledLength;
+                    
+                    // Ensure the endpoint stays within the plot boundaries
+                    nx = Math.max(padding, Math.min(padding + plotSize, nx));
+                    ny = Math.max(padding, Math.min(padding + plotSize, ny));
+                    
+                    // Track arrow end point
+                    if (unitVectorMultiplier == 0) {
+                        double arrowLength = 5.0;
+                        double arrowX = currentStartPoint.x + (dx / vectorLength) * arrowLength;
+                        double arrowY = currentStartPoint.y + (dy / vectorLength) * arrowLength;
+                        arrowEnds.add(new Point((int)arrowX, (int)arrowY));
+                    } else {
+                        arrowEnds.add(new Point((int)nx, (int)ny));
+                    }
+                    
+                    // Update the start point for the next vector
+                    currentStartPoint = new Point((int)nx, (int)ny);
+                }
+            } else {
+                // For non-normalized vectors
+                for (int i = 0; i < points.size() - 1; i++) {
+                    Point p1 = points.get(i);
+                    Point p2 = points.get(i + 1);
+                    
+                    // Track arrow start and end points
+                    arrowStarts.add(new Point(p1.x, p1.y));
+                    arrowEnds.add(new Point(p2.x, p2.y));
+                }
+            }
+        }
+        
+        private void drawBoundingBoxes(Graphics2D g2, int padding, int plotSize) {
+            // Map to store arrow start and end points for each class
+            Map<String, List<Point>> classArrowStarts = new java.util.HashMap<>();
+            Map<String, List<Point>> classArrowEnds = new java.util.HashMap<>();
+            
+            // Collect arrow points for each class
+            for (int i = 0; i < table.getRowCount(); i++) {
+                int row = table.convertRowIndexToModel(i);
+                String classLabel = classLabels.get(row);
+                
+                if (hiddenClasses.contains(classLabel)) continue;
+                
+                List<Point> arrowStarts = new ArrayList<>();
+                List<Point> arrowEnds = new ArrayList<>();
+                
+                // Collect points without drawing
+                collectArrowPoints(row, padding, plotSize, arrowStarts, arrowEnds);
+                
+                if (!arrowStarts.isEmpty()) {
+                    classArrowStarts.computeIfAbsent(classLabel, k -> new ArrayList<>()).addAll(arrowStarts);
+                }
+                if (!arrowEnds.isEmpty()) {
+                    classArrowEnds.computeIfAbsent(classLabel, k -> new ArrayList<>()).addAll(arrowEnds);
+                }
+            }
+            
+            // Get all unique class labels
+            Set<String> allClasses = new HashSet<>(classArrowStarts.keySet());
+            allClasses.addAll(classArrowEnds.keySet());
+            List<String> classList = new ArrayList<>(allClasses);
+            java.util.Collections.sort(classList); // Sort for consistent pairing
+            
+            // Draw boxes for each class pair (i, j) where i < j
+            g2.setStroke(new BasicStroke(3.0f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+            
+            for (int i = 0; i < classList.size(); i++) {
+                for (int j = i + 1; j < classList.size(); j++) {
+                    String class1 = classList.get(i);
+                    String class2 = classList.get(j);
+                    
+                    // Combine arrow starts from both classes in this pair
+                    List<Point> pairStarts = new ArrayList<>();
+                    if (classArrowStarts.containsKey(class1)) {
+                        pairStarts.addAll(classArrowStarts.get(class1));
+                    }
+                    if (classArrowStarts.containsKey(class2)) {
+                        pairStarts.addAll(classArrowStarts.get(class2));
+                    }
+                    
+                    // Combine arrow ends from both classes in this pair
+                    List<Point> pairEnds = new ArrayList<>();
+                    if (classArrowEnds.containsKey(class1)) {
+                        pairEnds.addAll(classArrowEnds.get(class1));
+                    }
+                    if (classArrowEnds.containsKey(class2)) {
+                        pairEnds.addAll(classArrowEnds.get(class2));
+                    }
+                    
+                    // Draw box for arrow starts of this class pair
+                    if (!pairStarts.isEmpty()) {
+                        int minXStart = pairStarts.stream().mapToInt(p -> p.x).min().orElse(0);
+                        int maxXStart = pairStarts.stream().mapToInt(p -> p.x).max().orElse(0);
+                        int minYStart = pairStarts.stream().mapToInt(p -> p.y).min().orElse(0);
+                        int maxYStart = pairStarts.stream().mapToInt(p -> p.y).max().orElse(0);
+                        
+                        // Use a color that represents the pair (blend of both class colors)
+                        Color color1 = classColors.getOrDefault(class1, Color.BLACK);
+                        Color color2 = classColors.getOrDefault(class2, Color.BLACK);
+                        int r = (color1.getRed() + color2.getRed()) / 2;
+                        int g = (color1.getGreen() + color2.getGreen()) / 2;
+                        int b = (color1.getBlue() + color2.getBlue()) / 2;
+                        g2.setColor(new Color(r, g, b, 150));
+                        g2.drawRect(minXStart, minYStart, maxXStart - minXStart, maxYStart - minYStart);
+                    }
+                    
+                    // Draw box for arrow ends of this class pair
+                    if (!pairEnds.isEmpty()) {
+                        int minXEnd = pairEnds.stream().mapToInt(p -> p.x).min().orElse(0);
+                        int maxXEnd = pairEnds.stream().mapToInt(p -> p.x).max().orElse(0);
+                        int minYEnd = pairEnds.stream().mapToInt(p -> p.y).min().orElse(0);
+                        int maxYEnd = pairEnds.stream().mapToInt(p -> p.y).max().orElse(0);
+                        
+                        // Use a color that represents the pair (blend of both class colors)
+                        Color color1 = classColors.getOrDefault(class1, Color.BLACK);
+                        Color color2 = classColors.getOrDefault(class2, Color.BLACK);
+                        int r = (color1.getRed() + color2.getRed()) / 2;
+                        int g = (color1.getGreen() + color2.getGreen()) / 2;
+                        int b = (color1.getBlue() + color2.getBlue()) / 2;
+                        g2.setColor(new Color(r, g, b, 150));
+                        g2.drawRect(minXEnd, minYEnd, maxXEnd - minXEnd, maxYEnd - minYEnd);
+                    }
                 }
             }
         }
