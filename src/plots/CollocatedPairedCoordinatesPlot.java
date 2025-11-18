@@ -30,6 +30,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
     private Color backgroundColor;
     private float polylineThickness;
     private boolean drawBoxes = false;
+    private boolean hideContainedCases = false;
 
     public CollocatedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, JTable table, Color backgroundColor, float polylineThickness) {
         this.data = data;
@@ -103,6 +104,17 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             }
         });
         buttonPanel.add(drawBoxesButton);
+        
+        // Add "Hide Contained Cases" button
+        JButton hideContainedButton = new JButton("Hide Contained Cases");
+        hideContainedButton.addActionListener(e -> {
+            hideContainedCases = !hideContainedCases;
+            hideContainedButton.setText(hideContainedCases ? "Show Contained Cases" : "Hide Contained Cases");
+            if (plotPanel != null) {
+                plotPanel.repaint();
+            }
+        });
+        buttonPanel.add(hideContainedButton);
         controlPanel.add(buttonPanel);
 
         mainPanel.add(controlPanel, BorderLayout.NORTH);
@@ -147,11 +159,17 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 calculateVectorLengthRange();
             }
 
+            // Get set of rows that should be hidden if hideContainedCases is enabled
+            Set<Integer> hiddenRows = new HashSet<>();
+            if (hideContainedCases && drawBoxes) {
+                hiddenRows = getContainedRows(padding, plotSize);
+            }
+
             // Draw non-selected lines first
             for (int i = 0; i < table.getRowCount(); i++) {
                 int row = table.convertRowIndexToModel(i);
                 String classLabel = classLabels.get(row);
-                if (!hiddenClasses.contains(classLabel) && !selectedRows.contains(row)) {
+                if (!hiddenClasses.contains(classLabel) && !selectedRows.contains(row) && !hiddenRows.contains(row)) {
                     drawPolyline(g2, row, padding, plotSize, false);
                 }
             }
@@ -160,7 +178,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             for (int i = 0; i < table.getRowCount(); i++) {
                 int row = table.convertRowIndexToModel(i);
                 String classLabel = classLabels.get(row);
-                if (!hiddenClasses.contains(classLabel) && selectedRows.contains(row)) {
+                if (!hiddenClasses.contains(classLabel) && selectedRows.contains(row) && !hiddenRows.contains(row)) {
                     drawPolyline(g2, row, padding, plotSize, true);
                 }
             }
@@ -435,34 +453,71 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             }
         }
         
-        // Helper class to represent a bounding box
-        private static class BoundingBox {
-            int minX, minY, maxX, maxY;
-            String class1, class2;
-            boolean isArrowStart; // true for arrow starts, false for arrow ends
-            Color bottomLeftColor; // Color for bottom and left edges
-            Color topRightColor; // Color for top and right edges
+        private Set<Integer> getContainedRows(int padding, int plotSize) {
+            Set<Integer> hiddenRows = new HashSet<>();
             
-            BoundingBox(int minX, int minY, int maxX, int maxY, String class1, String class2, boolean isArrowStart, Color bottomLeftColor, Color topRightColor) {
-                this.minX = minX;
-                this.minY = minY;
-                this.maxX = maxX;
-                this.maxY = maxY;
-                this.class1 = class1;
-                this.class2 = class2;
-                this.isArrowStart = isArrowStart;
-                this.bottomLeftColor = bottomLeftColor;
-                this.topRightColor = topRightColor;
+            // First, get all outermost boxes (same logic as drawBoundingBoxes)
+            List<BoundingBox> outerBoxes = getAllOutermostBoxes(padding, plotSize);
+            
+            if (outerBoxes.isEmpty()) {
+                return hiddenRows;
             }
             
-            // Check if this box is completely contained within another box
-            boolean isContainedIn(BoundingBox other) {
-                return this.minX >= other.minX && this.maxX <= other.maxX &&
-                       this.minY >= other.minY && this.maxY <= other.maxY;
+            // For each row, check if it should be hidden
+            for (int i = 0; i < table.getRowCount(); i++) {
+                int row = table.convertRowIndexToModel(i);
+                String rowClass = classLabels.get(row);
+                
+                if (hiddenClasses.contains(rowClass)) {
+                    continue; // Already hidden by class
+                }
+                
+                // Collect all arrow points for this row
+                List<Point> rowArrowStarts = new ArrayList<>();
+                List<Point> rowArrowEnds = new ArrayList<>();
+                collectArrowPoints(row, padding, plotSize, rowArrowStarts, rowArrowEnds);
+                
+                if (rowArrowStarts.isEmpty() && rowArrowEnds.isEmpty()) {
+                    continue; // No points to check
+                }
+                
+                // Check if all arrow points are contained within any box
+                for (BoundingBox box : outerBoxes) {
+                    // Skip if this row's class is the same as the box's class (boxes are now per-class)
+                    if (rowClass.equals(box.class1)) {
+                        continue; // Don't hide rows that form the boxes
+                    }
+                    
+                    // Check if all arrow starts are contained
+                    boolean allStartsContained = true;
+                    for (Point p : rowArrowStarts) {
+                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
+                            allStartsContained = false;
+                            break;
+                        }
+                    }
+                    
+                    // Check if all arrow ends are contained
+                    boolean allEndsContained = true;
+                    for (Point p : rowArrowEnds) {
+                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
+                            allEndsContained = false;
+                            break;
+                        }
+                    }
+                    
+                    // If all points are contained, hide this row
+                    if (allStartsContained && allEndsContained && (!rowArrowStarts.isEmpty() || !rowArrowEnds.isEmpty())) {
+                        hiddenRows.add(row);
+                        break; // Found a box that contains it, no need to check others
+                    }
+                }
             }
+            
+            return hiddenRows;
         }
         
-        private void drawBoundingBoxes(Graphics2D g2, int padding, int plotSize) {
+        private List<BoundingBox> getAllOutermostBoxes(int padding, int plotSize) {
             // Map to store arrow start and end points with their classes for each class
             Map<String, List<PointWithClass>> classArrowStarts = new java.util.HashMap<>();
             Map<String, List<PointWithClass>> classArrowEnds = new java.util.HashMap<>();
@@ -494,139 +549,73 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 }
             }
             
-            // Get all unique class labels
+            // Count cases per class to determine which classes have more than one case
+            Map<String, Integer> classCounts = new java.util.HashMap<>();
+            for (int i = 0; i < table.getRowCount(); i++) {
+                int row = table.convertRowIndexToModel(i);
+                String classLabel = classLabels.get(row);
+                if (!hiddenClasses.contains(classLabel)) {
+                    classCounts.put(classLabel, classCounts.getOrDefault(classLabel, 0) + 1);
+                }
+            }
+            
+            // Get all unique class labels that have more than one case
             Set<String> allClasses = new HashSet<>(classArrowStarts.keySet());
             allClasses.addAll(classArrowEnds.keySet());
-            List<String> classList = new ArrayList<>(allClasses);
-            java.util.Collections.sort(classList); // Sort for consistent pairing
+            List<String> classList = new ArrayList<>();
+            for (String className : allClasses) {
+                if (classCounts.getOrDefault(className, 0) > 1) {
+                    classList.add(className);
+                }
+            }
+            java.util.Collections.sort(classList); // Sort for consistency
             
-            // Collect all boxes first
+            // Collect all boxes first - one box per class (not per class pair)
             List<BoundingBox> allBoxes = new ArrayList<>();
             
-            for (int i = 0; i < classList.size(); i++) {
-                for (int j = i + 1; j < classList.size(); j++) {
-                    String class1 = classList.get(i);
-                    String class2 = classList.get(j);
+            for (String className : classList) {
+                // Get arrow starts for this class only
+                List<PointWithClass> classStarts = classArrowStarts.getOrDefault(className, new ArrayList<>());
+                
+                // Get arrow ends for this class only
+                List<PointWithClass> classEnds = classArrowEnds.getOrDefault(className, new ArrayList<>());
+                
+                // Create box for arrow starts of this class
+                if (!classStarts.isEmpty()) {
+                    int minXStart = classStarts.stream().mapToInt(p -> p.point.x).min().orElse(0);
+                    int maxXStart = classStarts.stream().mapToInt(p -> p.point.x).max().orElse(0);
+                    int minYStart = classStarts.stream().mapToInt(p -> p.point.y).min().orElse(0);
+                    int maxYStart = classStarts.stream().mapToInt(p -> p.point.y).max().orElse(0);
                     
-                    // Combine arrow starts from both classes in this pair
-                    List<PointWithClass> pairStarts = new ArrayList<>();
-                    if (classArrowStarts.containsKey(class1)) {
-                        pairStarts.addAll(classArrowStarts.get(class1));
-                    }
-                    if (classArrowStarts.containsKey(class2)) {
-                        pairStarts.addAll(classArrowStarts.get(class2));
-                    }
+                    // Find bottom-left most and top-right most points
+                    PointWithClass bottomLeft = findBottomLeftPoint(classStarts, minXStart, maxYStart);
+                    PointWithClass topRight = findTopRightPoint(classStarts, maxXStart, minYStart);
                     
-                    // Combine arrow ends from both classes in this pair
-                    List<PointWithClass> pairEnds = new ArrayList<>();
-                    if (classArrowEnds.containsKey(class1)) {
-                        pairEnds.addAll(classArrowEnds.get(class1));
-                    }
-                    if (classArrowEnds.containsKey(class2)) {
-                        pairEnds.addAll(classArrowEnds.get(class2));
-                    }
+                    Color bottomLeftColor = classColors.getOrDefault(bottomLeft != null ? bottomLeft.className : className, Color.BLACK);
+                    Color topRightColor = classColors.getOrDefault(topRight != null ? topRight.className : className, Color.BLACK);
                     
-                    // Create box for arrow starts of this class pair
-                    if (!pairStarts.isEmpty()) {
-                        int minXStart = pairStarts.stream().mapToInt(p -> p.point.x).min().orElse(0);
-                        int maxXStart = pairStarts.stream().mapToInt(p -> p.point.x).max().orElse(0);
-                        int minYStart = pairStarts.stream().mapToInt(p -> p.point.y).min().orElse(0);
-                        int maxYStart = pairStarts.stream().mapToInt(p -> p.point.y).max().orElse(0);
-                        
-                        // Find bottom-left most point (minX, maxY) and top-right most point (maxX, minY)
-                        PointWithClass bottomLeft = null;
-                        PointWithClass topRight = null;
-                        
-                        for (PointWithClass pwc : pairStarts) {
-                            if (pwc.point.x == minXStart && pwc.point.y == maxYStart) {
-                                bottomLeft = pwc;
-                            }
-                            if (pwc.point.x == maxXStart && pwc.point.y == minYStart) {
-                                topRight = pwc;
-                            }
-                        }
-                        
-                        // If exact matches not found, find closest
-                        if (bottomLeft == null) {
-                            double minDist = Double.MAX_VALUE;
-                            for (PointWithClass pwc : pairStarts) {
-                                double dist = Math.sqrt(Math.pow(pwc.point.x - minXStart, 2) + Math.pow(pwc.point.y - maxYStart, 2));
-                                if (dist < minDist) {
-                                    minDist = dist;
-                                    bottomLeft = pwc;
-                                }
-                            }
-                        }
-                        
-                        if (topRight == null) {
-                            double minDist = Double.MAX_VALUE;
-                            for (PointWithClass pwc : pairStarts) {
-                                double dist = Math.sqrt(Math.pow(pwc.point.x - maxXStart, 2) + Math.pow(pwc.point.y - minYStart, 2));
-                                if (dist < minDist) {
-                                    minDist = dist;
-                                    topRight = pwc;
-                                }
-                            }
-                        }
-                        
-                        Color bottomLeftColor = classColors.getOrDefault(bottomLeft != null ? bottomLeft.className : class1, Color.BLACK);
-                        Color topRightColor = classColors.getOrDefault(topRight != null ? topRight.className : class2, Color.BLACK);
-                        
-                        allBoxes.add(new BoundingBox(minXStart, minYStart, maxXStart, maxYStart, class1, class2, true, 
-                            new Color(bottomLeftColor.getRed(), bottomLeftColor.getGreen(), bottomLeftColor.getBlue(), 150),
-                            new Color(topRightColor.getRed(), topRightColor.getGreen(), topRightColor.getBlue(), 150)));
-                    }
+                    allBoxes.add(new BoundingBox(minXStart, minYStart, maxXStart, maxYStart, className, className, true, 
+                        new Color(bottomLeftColor.getRed(), bottomLeftColor.getGreen(), bottomLeftColor.getBlue(), 150),
+                        new Color(topRightColor.getRed(), topRightColor.getGreen(), topRightColor.getBlue(), 150)));
+                }
+                
+                // Create box for arrow ends of this class
+                if (!classEnds.isEmpty()) {
+                    int minXEnd = classEnds.stream().mapToInt(p -> p.point.x).min().orElse(0);
+                    int maxXEnd = classEnds.stream().mapToInt(p -> p.point.x).max().orElse(0);
+                    int minYEnd = classEnds.stream().mapToInt(p -> p.point.y).min().orElse(0);
+                    int maxYEnd = classEnds.stream().mapToInt(p -> p.point.y).max().orElse(0);
                     
-                    // Create box for arrow ends of this class pair
-                    if (!pairEnds.isEmpty()) {
-                        int minXEnd = pairEnds.stream().mapToInt(p -> p.point.x).min().orElse(0);
-                        int maxXEnd = pairEnds.stream().mapToInt(p -> p.point.x).max().orElse(0);
-                        int minYEnd = pairEnds.stream().mapToInt(p -> p.point.y).min().orElse(0);
-                        int maxYEnd = pairEnds.stream().mapToInt(p -> p.point.y).max().orElse(0);
-                        
-                        // Find bottom-left most point (minX, maxY) and top-right most point (maxX, minY)
-                        PointWithClass bottomLeft = null;
-                        PointWithClass topRight = null;
-                        
-                        for (PointWithClass pwc : pairEnds) {
-                            if (pwc.point.x == minXEnd && pwc.point.y == maxYEnd) {
-                                bottomLeft = pwc;
-                            }
-                            if (pwc.point.x == maxXEnd && pwc.point.y == minYEnd) {
-                                topRight = pwc;
-                            }
-                        }
-                        
-                        // If exact matches not found, find closest
-                        if (bottomLeft == null) {
-                            double minDist = Double.MAX_VALUE;
-                            for (PointWithClass pwc : pairEnds) {
-                                double dist = Math.sqrt(Math.pow(pwc.point.x - minXEnd, 2) + Math.pow(pwc.point.y - maxYEnd, 2));
-                                if (dist < minDist) {
-                                    minDist = dist;
-                                    bottomLeft = pwc;
-                                }
-                            }
-                        }
-                        
-                        if (topRight == null) {
-                            double minDist = Double.MAX_VALUE;
-                            for (PointWithClass pwc : pairEnds) {
-                                double dist = Math.sqrt(Math.pow(pwc.point.x - maxXEnd, 2) + Math.pow(pwc.point.y - minYEnd, 2));
-                                if (dist < minDist) {
-                                    minDist = dist;
-                                    topRight = pwc;
-                                }
-                            }
-                        }
-                        
-                        Color bottomLeftColor = classColors.getOrDefault(bottomLeft != null ? bottomLeft.className : class1, Color.BLACK);
-                        Color topRightColor = classColors.getOrDefault(topRight != null ? topRight.className : class2, Color.BLACK);
-                        
-                        allBoxes.add(new BoundingBox(minXEnd, minYEnd, maxXEnd, maxYEnd, class1, class2, false,
-                            new Color(bottomLeftColor.getRed(), bottomLeftColor.getGreen(), bottomLeftColor.getBlue(), 150),
-                            new Color(topRightColor.getRed(), topRightColor.getGreen(), topRightColor.getBlue(), 150)));
-                    }
+                    // Find bottom-left most and top-right most points
+                    PointWithClass bottomLeft = findBottomLeftPoint(classEnds, minXEnd, maxYEnd);
+                    PointWithClass topRight = findTopRightPoint(classEnds, maxXEnd, minYEnd);
+                    
+                    Color bottomLeftColor = classColors.getOrDefault(bottomLeft != null ? bottomLeft.className : className, Color.BLACK);
+                    Color topRightColor = classColors.getOrDefault(topRight != null ? topRight.className : className, Color.BLACK);
+                    
+                    allBoxes.add(new BoundingBox(minXEnd, minYEnd, maxXEnd, maxYEnd, className, className, false,
+                        new Color(bottomLeftColor.getRed(), bottomLeftColor.getGreen(), bottomLeftColor.getBlue(), 150),
+                        new Color(topRightColor.getRed(), topRightColor.getGreen(), topRightColor.getBlue(), 150)));
                 }
             }
             
@@ -644,6 +633,82 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     outerBoxes.add(box);
                 }
             }
+            
+            return outerBoxes;
+        }
+        
+        private PointWithClass findBottomLeftPoint(List<PointWithClass> points, int minX, int maxY) {
+            // Try to find exact match first
+            for (PointWithClass pwc : points) {
+                if (pwc.point.x == minX && pwc.point.y == maxY) {
+                    return pwc;
+                }
+            }
+            
+            // If not found, find closest
+            double minDist = Double.MAX_VALUE;
+            PointWithClass closest = null;
+            for (PointWithClass pwc : points) {
+                double dist = Math.sqrt(Math.pow(pwc.point.x - minX, 2) + Math.pow(pwc.point.y - maxY, 2));
+                if (dist < minDist) {
+                    minDist = dist;
+                    closest = pwc;
+                }
+            }
+            return closest;
+        }
+        
+        private PointWithClass findTopRightPoint(List<PointWithClass> points, int maxX, int minY) {
+            // Try to find exact match first
+            for (PointWithClass pwc : points) {
+                if (pwc.point.x == maxX && pwc.point.y == minY) {
+                    return pwc;
+                }
+            }
+            
+            // If not found, find closest
+            double minDist = Double.MAX_VALUE;
+            PointWithClass closest = null;
+            for (PointWithClass pwc : points) {
+                double dist = Math.sqrt(Math.pow(pwc.point.x - maxX, 2) + Math.pow(pwc.point.y - minY, 2));
+                if (dist < minDist) {
+                    minDist = dist;
+                    closest = pwc;
+                }
+            }
+            return closest;
+        }
+        
+        // Helper class to represent a bounding box
+        private static class BoundingBox {
+            int minX, minY, maxX, maxY;
+            String class1, class2;
+            boolean isArrowStart; // true for arrow starts, false for arrow ends
+            Color bottomLeftColor; // Color for bottom and left edges
+            Color topRightColor; // Color for top and right edges
+            
+            BoundingBox(int minX, int minY, int maxX, int maxY, String class1, String class2, boolean isArrowStart, Color bottomLeftColor, Color topRightColor) {
+                this.minX = minX;
+                this.minY = minY;
+                this.maxX = maxX;
+                this.maxY = maxY;
+                this.class1 = class1;
+                this.class2 = class2;
+                this.isArrowStart = isArrowStart;
+                this.bottomLeftColor = bottomLeftColor;
+                this.topRightColor = topRightColor;
+            }
+            
+            // Check if this box is completely contained within another box
+            boolean isContainedIn(BoundingBox other) {
+                return this.minX >= other.minX && this.maxX <= other.maxX &&
+                       this.minY >= other.minY && this.maxY <= other.maxY;
+            }
+        }
+        
+        private void drawBoundingBoxes(Graphics2D g2, int padding, int plotSize) {
+            // Get all outermost boxes using the shared method
+            List<BoundingBox> outerBoxes = getAllOutermostBoxes(padding, plotSize);
             
             // Draw only the outermost boxes with different colored edges
             g2.setStroke(new BasicStroke(3.0f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
