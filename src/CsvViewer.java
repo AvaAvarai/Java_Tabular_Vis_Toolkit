@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.Collections;
+import java.util.Random;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -647,6 +648,296 @@ public class CsvViewer extends JFrame {
 
         table.getTableHeader().repaint();
         table.repaint();
+    }
+
+    public void sortColumnsByLDACoefficients() {
+        if (tableModel.getColumnCount() == 0) {
+            noDataLoadedError();
+            return;
+        }
+
+        int classColumnIndex = getClassColumnIndex();
+        if (classColumnIndex == -1) {
+            JOptionPane.showMessageDialog(this, "No class column found.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Calculate LDA coefficients
+        double[] ldaCoefficients = calculateLDACoefficients(classColumnIndex);
+        if (ldaCoefficients == null) {
+            return; // Error already shown
+        }
+
+        // Create list of column index and coefficient pairs
+        java.util.List<LDACoefficientPair> coefficientPairs = new ArrayList<>();
+        int featureIndex = 0;
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            if (i != classColumnIndex) {
+                coefficientPairs.add(new LDACoefficientPair(i, ldaCoefficients[featureIndex++]));
+            }
+        }
+
+        // Sort by absolute value of coefficients (descending - most important first)
+        coefficientPairs.sort((p1, p2) -> Double.compare(Math.abs(p2.getCoefficient()), Math.abs(p1.getCoefficient())));
+
+        // Reorder columns
+        TableColumnModel columnModel = table.getColumnModel();
+        int currentPosition = 0;
+        
+        // Keep class column at its position (usually first)
+        if (classColumnIndex == 0) {
+            currentPosition = 1;
+        }
+        
+        for (LDACoefficientPair pair : coefficientPairs) {
+            int fromIndex = columnModel.getColumnIndex(tableModel.getColumnName(pair.getColumnIndex()));
+            if (fromIndex != currentPosition) {
+                columnModel.moveColumn(fromIndex, currentPosition);
+            }
+            currentPosition++;
+        }
+
+        table.getTableHeader().repaint();
+        table.repaint();
+        
+        // Show summary
+        StringBuilder summary = new StringBuilder();
+        summary.append("\nColumns sorted by LDA coefficients (absolute value, descending):\n\n");
+        for (LDACoefficientPair pair : coefficientPairs) {
+            String columnName = tableModel.getColumnName(pair.getColumnIndex());
+            summary.append(String.format("%s: %.6f\n", columnName, pair.getCoefficient()));
+        }
+        statsTextArea.append(summary.toString());
+    }
+
+    // Helper class to store column index and LDA coefficient
+    private static class LDACoefficientPair {
+        private final int columnIndex;
+        private final double coefficient;
+        
+        public LDACoefficientPair(int columnIndex, double coefficient) {
+            this.columnIndex = columnIndex;
+            this.coefficient = coefficient;
+        }
+        
+        public int getColumnIndex() { return columnIndex; }
+        public double getCoefficient() { return coefficient; }
+    }
+
+    private double[] calculateLDACoefficients(int classColumnIndex) {
+        try {
+            // Get unique classes and their counts
+            Map<String, List<double[]>> classData = new HashMap<>();
+            Set<String> uniqueClasses = new HashSet<>();
+            int numFeatures = tableModel.getColumnCount() - 1;
+
+            // Collect data by class
+            for (int row = 0; row < tableModel.getRowCount(); row++) {
+                String className = tableModel.getValueAt(row, classColumnIndex).toString();
+                uniqueClasses.add(className);
+                
+                double[] features = new double[numFeatures];
+                int featureIndex = 0;
+                for (int col = 0; col < tableModel.getColumnCount(); col++) {
+                    if (col != classColumnIndex) {
+                        features[featureIndex++] = Double.parseDouble(tableModel.getValueAt(row, col).toString());
+                    }
+                }
+                
+                classData.computeIfAbsent(className, k -> new ArrayList<>()).add(features);
+            }
+
+            if (uniqueClasses.size() < 2) {
+                JOptionPane.showMessageDialog(this, "Need at least 2 classes for LDA.", "Error", JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
+
+            // Calculate class means
+            Map<String, double[]> classMeans = new HashMap<>();
+            for (Map.Entry<String, List<double[]>> entry : classData.entrySet()) {
+                double[] mean = new double[numFeatures];
+                List<double[]> samples = entry.getValue();
+                
+                for (double[] sample : samples) {
+                    for (int i = 0; i < numFeatures; i++) {
+                        mean[i] += sample[i];
+                    }
+                }
+                
+                for (int i = 0; i < numFeatures; i++) {
+                    mean[i] /= samples.size();
+                }
+                
+                classMeans.put(entry.getKey(), mean);
+            }
+
+            // Calculate global mean
+            double[] globalMean = new double[numFeatures];
+            int totalSamples = 0;
+            for (Map.Entry<String, List<double[]>> entry : classData.entrySet()) {
+                double[] classMean = classMeans.get(entry.getKey());
+                int classSize = entry.getValue().size();
+                totalSamples += classSize;
+                
+                for (int i = 0; i < numFeatures; i++) {
+                    globalMean[i] += classMean[i] * classSize;
+                }
+            }
+            for (int i = 0; i < numFeatures; i++) {
+                globalMean[i] /= totalSamples;
+            }
+
+            // Calculate within-class scatter matrix
+            double[][] Sw = new double[numFeatures][numFeatures];
+            for (List<double[]> samples : classData.values()) {
+                for (double[] sample : samples) {
+                    for (int i = 0; i < numFeatures; i++) {
+                        for (int j = 0; j < numFeatures; j++) {
+                            Sw[i][j] += (sample[i] - globalMean[i]) * (sample[j] - globalMean[j]);
+                        }
+                    }
+                }
+            }
+
+            // Calculate between-class scatter matrix
+            double[][] Sb = new double[numFeatures][numFeatures];
+            for (Map.Entry<String, List<double[]>> entry : classData.entrySet()) {
+                double[] classMean = classMeans.get(entry.getKey());
+                int classSize = entry.getValue().size();
+                
+                for (int i = 0; i < numFeatures; i++) {
+                    for (int j = 0; j < numFeatures; j++) {
+                        Sb[i][j] += classSize * (classMean[i] - globalMean[i]) * (classMean[j] - globalMean[j]);
+                    }
+                }
+            }
+
+            // Add small regularization to Sw to ensure it's invertible
+            double epsilon = 1e-10;
+            for (int i = 0; i < numFeatures; i++) {
+                Sw[i][i] += epsilon;
+            }
+
+            // Calculate Sw inverse
+            double[][] SwInv = matrixInverse(Sw);
+            
+            // Calculate SwInv * Sb
+            double[][] M = matrixMultiply(SwInv, Sb);
+
+            // Find first eigenvector using power iteration
+            double[] eigenvector = powerIterationFirst(M);
+
+            return eigenvector;
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Error calculating LDA coefficients: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            return null;
+        }
+    }
+
+    private double[][] matrixInverse(double[][] matrix) {
+        int n = matrix.length;
+        double[][] augmented = new double[n][2*n];
+        
+        // Create augmented matrix
+        for (int i = 0; i < n; i++) {
+            System.arraycopy(matrix[i], 0, augmented[i], 0, n);
+            augmented[i][n + i] = 1.0;
+        }
+        
+        // Gaussian elimination
+        for (int i = 0; i < n; i++) {
+            double pivot = augmented[i][i];
+            if (Math.abs(pivot) < 1e-10) {
+                // Handle near-zero pivot
+                for (int k = i + 1; k < n; k++) {
+                    if (Math.abs(augmented[k][i]) > 1e-10) {
+                        double[] temp = augmented[i];
+                        augmented[i] = augmented[k];
+                        augmented[k] = temp;
+                        pivot = augmented[i][i];
+                        break;
+                    }
+                }
+            }
+            
+            for (int j = 0; j < 2*n; j++) {
+                augmented[i][j] /= pivot;
+            }
+            
+            for (int k = 0; k < n; k++) {
+                if (k != i) {
+                    double factor = augmented[k][i];
+                    for (int j = 0; j < 2*n; j++) {
+                        augmented[k][j] -= factor * augmented[i][j];
+                    }
+                }
+            }
+        }
+        
+        // Extract inverse matrix
+        double[][] inverse = new double[n][n];
+        for (int i = 0; i < n; i++) {
+            System.arraycopy(augmented[i], n, inverse[i], 0, n);
+        }
+        
+        return inverse;
+    }
+
+    private double[][] matrixMultiply(double[][] A, double[][] B) {
+        int m = A.length;
+        int n = B[0].length;
+        int p = A[0].length;
+        double[][] result = new double[m][n];
+        
+        for (int i = 0; i < m; i++) {
+            for (int j = 0; j < n; j++) {
+                for (int k = 0; k < p; k++) {
+                    result[i][j] += A[i][k] * B[k][j];
+                }
+            }
+        }
+        
+        return result;
+    }
+
+    private double[] powerIterationFirst(double[][] matrix) {
+        int n = matrix.length;
+        Random rand = new Random(42); // Fixed seed for reproducibility
+        
+        // Initialize random vector
+        double[] vector = new double[n];
+        for (int i = 0; i < n; i++) {
+            vector[i] = rand.nextDouble();
+        }
+        
+        // Power iteration
+        for (int iter = 0; iter < 100; iter++) {
+            double[] newVector = new double[n];
+            
+            // Matrix-vector multiplication
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    newVector[i] += matrix[i][j] * vector[j];
+                }
+            }
+            
+            // Normalize
+            double norm = 0;
+            for (int i = 0; i < n; i++) {
+                norm += newVector[i] * newVector[i];
+            }
+            norm = Math.sqrt(norm);
+            
+            if (norm < 1e-10) {
+                break; // Vector became zero
+            }
+            
+            for (int i = 0; i < n; i++) {
+                vector[i] = newVector[i] / norm;
+            }
+        }
+        
+        return vector;
     }
 
     private double calculateCovarianceBetweenColumns(int col1, int col2) {

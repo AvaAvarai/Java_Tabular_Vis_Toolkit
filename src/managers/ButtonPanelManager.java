@@ -346,6 +346,7 @@ public class ButtonPanelManager {
         addMenuItem(analysisMenu, "Show Covariance Matrix", "/icons/variance.png", _ -> csvViewer.showCovarianceMatrix());
         addMenuItem(analysisMenu, "Sort Columns by Covariance", "/icons/sort.png", _ -> csvViewer.showCovarianceSortDialog());
         addMenuItem(analysisMenu, "Sort Columns by Frequency", "/icons/sort.png", _ -> csvViewer.showFrequencySortDialog());
+        addMenuItem(analysisMenu, "Sort Columns by LDA Coefficients", "/icons/lda.png", _ -> csvViewer.sortColumnsByLDACoefficients());
         addMenuItem(analysisMenu, "Rule Tester", "/icons/rule.png", _ -> csvViewer.showRuleTesterDialog());
 
         addMenuItem(analysisMenu, "Add Mean Case", "/icons/clone.png", _ -> csvViewer.addMeanCase());
