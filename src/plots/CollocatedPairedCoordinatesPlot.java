@@ -57,7 +57,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
         
         // Add slider panel for unit vector length control
         sliderPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        sliderPanel.add(new JLabel("Unit Vector Length: "));
+        sliderPanel.add(new JLabel("Case Scaling: "));
         
         // Create slider for controlling unit vector length in a more focused range (0-0.25)
         JSlider unitVectorSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 100);
@@ -619,7 +619,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 }
             }
             
-            // Filter out boxes that are contained within other boxes
+            // First, identify outermost boxes (not contained in any other box)
             List<BoundingBox> outerBoxes = new ArrayList<>();
             for (BoundingBox box : allBoxes) {
                 boolean isContained = false;
@@ -631,6 +631,109 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 }
                 if (!isContained) {
                     outerBoxes.add(box);
+                }
+            }
+            
+            // Now ensure all cases are contained within at least one box
+            // Check each row to see if its arrow points are contained by any box
+            Set<Integer> rowsNeedingBoxes = new HashSet<>();
+            for (int i = 0; i < table.getRowCount(); i++) {
+                int row = table.convertRowIndexToModel(i);
+                String rowClass = classLabels.get(row);
+                
+                if (hiddenClasses.contains(rowClass)) {
+                    continue;
+                }
+                
+                // Collect arrow points for this row
+                List<Point> rowArrowStarts = new ArrayList<>();
+                List<Point> rowArrowEnds = new ArrayList<>();
+                collectArrowPoints(row, padding, plotSize, rowArrowStarts, rowArrowEnds);
+                
+                if (rowArrowStarts.isEmpty() && rowArrowEnds.isEmpty()) {
+                    continue;
+                }
+                
+                // Check if this row's points are contained by any outer box
+                boolean isContained = false;
+                for (BoundingBox box : outerBoxes) {
+                    // Skip if this row's class is the same as the box's class
+                    if (rowClass.equals(box.class1)) {
+                        continue;
+                    }
+                    
+                    // Check if all arrow starts are contained
+                    boolean allStartsContained = true;
+                    for (Point p : rowArrowStarts) {
+                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
+                            allStartsContained = false;
+                            break;
+                        }
+                    }
+                    
+                    // Check if all arrow ends are contained
+                    boolean allEndsContained = true;
+                    for (Point p : rowArrowEnds) {
+                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
+                            allEndsContained = false;
+                            break;
+                        }
+                    }
+                    
+                    if (allStartsContained && allEndsContained && (!rowArrowStarts.isEmpty() || !rowArrowEnds.isEmpty())) {
+                        isContained = true;
+                        break;
+                    }
+                }
+                
+                if (!isContained) {
+                    rowsNeedingBoxes.add(row);
+                }
+            }
+            
+            // For rows that aren't contained, find boxes that can contain them
+            // and add those boxes if they're not already in outerBoxes
+            for (Integer row : rowsNeedingBoxes) {
+                String rowClass = classLabels.get(row);
+                
+                // Collect arrow points for this row
+                List<Point> rowArrowStarts = new ArrayList<>();
+                List<Point> rowArrowEnds = new ArrayList<>();
+                collectArrowPoints(row, padding, plotSize, rowArrowStarts, rowArrowEnds);
+                
+                // Find boxes that contain this row's points
+                for (BoundingBox box : allBoxes) {
+                    if (outerBoxes.contains(box)) {
+                        continue; // Already included
+                    }
+                    
+                    // Skip if this row's class is the same as the box's class
+                    if (rowClass.equals(box.class1)) {
+                        continue;
+                    }
+                    
+                    // Check if all arrow starts are contained
+                    boolean allStartsContained = true;
+                    for (Point p : rowArrowStarts) {
+                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
+                            allStartsContained = false;
+                            break;
+                        }
+                    }
+                    
+                    // Check if all arrow ends are contained
+                    boolean allEndsContained = true;
+                    for (Point p : rowArrowEnds) {
+                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
+                            allEndsContained = false;
+                            break;
+                        }
+                    }
+                    
+                    if (allStartsContained && allEndsContained && (!rowArrowStarts.isEmpty() || !rowArrowEnds.isEmpty())) {
+                        outerBoxes.add(box);
+                        break; // Found a box for this row, move to next row
+                    }
                 }
             }
             
