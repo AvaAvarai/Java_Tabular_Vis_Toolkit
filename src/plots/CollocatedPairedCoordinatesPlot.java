@@ -27,10 +27,12 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
     private CollocatedPairedCoordinatesPanel plotPanel;
     private JLabel multiplierLabel; // Label to show current multiplier value
     private JPanel sliderPanel; // Store reference to the slider panel
+    private JButton showCenterPointsButton; // Store reference to the center points button
     private Color backgroundColor;
     private float polylineThickness;
     private boolean drawBoxes = false;
     private boolean hideContainedCases = false;
+    private boolean showCenterPoints = false;
 
     public CollocatedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, JTable table, Color backgroundColor, float polylineThickness) {
         this.data = data;
@@ -95,10 +97,28 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
         
         // Add "Draw Boxes" button
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        
+        // Add "Show Center Points" button (declare first so it can be referenced)
+        showCenterPointsButton = new JButton("Show Center Points");
+        showCenterPointsButton.setEnabled(false); // Disabled by default until boxes are drawn
+        showCenterPointsButton.addActionListener(e -> {
+            showCenterPoints = !showCenterPoints;
+            showCenterPointsButton.setText(showCenterPoints ? "Hide Center Points" : "Show Center Points");
+            if (plotPanel != null) {
+                plotPanel.repaint();
+            }
+        });
+        
         JButton drawBoxesButton = new JButton("Draw Boxes");
         drawBoxesButton.addActionListener(e -> {
             drawBoxes = !drawBoxes;
             drawBoxesButton.setText(drawBoxes ? "Hide Boxes" : "Draw Boxes");
+            // Enable/disable center points button based on boxes visibility
+            showCenterPointsButton.setEnabled(drawBoxes);
+            if (!drawBoxes) {
+                showCenterPoints = false;
+                showCenterPointsButton.setText("Show Center Points");
+            }
             if (plotPanel != null) {
                 plotPanel.repaint();
             }
@@ -115,6 +135,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             }
         });
         buttonPanel.add(hideContainedButton);
+        buttonPanel.add(showCenterPointsButton);
         controlPanel.add(buttonPanel);
 
         mainPanel.add(controlPanel, BorderLayout.NORTH);
@@ -186,6 +207,10 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             // Draw boxes if enabled
             if (drawBoxes) {
                 drawBoundingBoxes(g2, padding, plotSize);
+                // Draw center points if enabled
+                if (showCenterPoints) {
+                    drawCenterPoints(g2, padding, plotSize);
+                }
             }
         }
         
@@ -831,6 +856,31 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 // Draw right edge (bottom to top) with top-right color
                 g2.setColor(box.topRightColor);
                 g2.drawLine(box.maxX, box.maxY, box.maxX, box.minY);
+            }
+        }
+        
+        private void drawCenterPoints(Graphics2D g2, int padding, int plotSize) {
+            // Get all outermost boxes using the shared method
+            List<BoundingBox> outerBoxes = getAllOutermostBoxes(padding, plotSize);
+            
+            // Draw center points for each box
+            g2.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            for (BoundingBox box : outerBoxes) {
+                // Calculate center point
+                int centerX = (box.minX + box.maxX) / 2;
+                int centerY = (box.minY + box.maxY) / 2;
+                
+                // Use the class color for the center point
+                Color classColor = classColors.getOrDefault(box.class1, Color.BLACK);
+                g2.setColor(classColor);
+                
+                // Draw a filled circle for the center point
+                int pointSize = 8;
+                g2.fillOval(centerX - pointSize / 2, centerY - pointSize / 2, pointSize, pointSize);
+                
+                // Draw a white outline for better visibility
+                g2.setColor(Color.WHITE);
+                g2.drawOval(centerX - pointSize / 2, centerY - pointSize / 2, pointSize, pointSize);
             }
         }
         
