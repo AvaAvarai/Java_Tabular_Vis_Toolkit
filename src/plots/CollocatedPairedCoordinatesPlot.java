@@ -424,6 +424,31 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             }
         }
         
+        // Helper class to represent a bounding box
+        private static class BoundingBox {
+            int minX, minY, maxX, maxY;
+            String class1, class2;
+            boolean isArrowStart; // true for arrow starts, false for arrow ends
+            Color color;
+            
+            BoundingBox(int minX, int minY, int maxX, int maxY, String class1, String class2, boolean isArrowStart, Color color) {
+                this.minX = minX;
+                this.minY = minY;
+                this.maxX = maxX;
+                this.maxY = maxY;
+                this.class1 = class1;
+                this.class2 = class2;
+                this.isArrowStart = isArrowStart;
+                this.color = color;
+            }
+            
+            // Check if this box is completely contained within another box
+            boolean isContainedIn(BoundingBox other) {
+                return this.minX >= other.minX && this.maxX <= other.maxX &&
+                       this.minY >= other.minY && this.maxY <= other.maxY;
+            }
+        }
+        
         private void drawBoundingBoxes(Graphics2D g2, int padding, int plotSize) {
             // Map to store arrow start and end points for each class
             Map<String, List<Point>> classArrowStarts = new java.util.HashMap<>();
@@ -456,8 +481,8 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             List<String> classList = new ArrayList<>(allClasses);
             java.util.Collections.sort(classList); // Sort for consistent pairing
             
-            // Draw boxes for each class pair (i, j) where i < j
-            g2.setStroke(new BasicStroke(3.0f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+            // Collect all boxes first
+            List<BoundingBox> allBoxes = new ArrayList<>();
             
             for (int i = 0; i < classList.size(); i++) {
                 for (int j = i + 1; j < classList.size(); j++) {
@@ -482,7 +507,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                         pairEnds.addAll(classArrowEnds.get(class2));
                     }
                     
-                    // Draw box for arrow starts of this class pair
+                    // Create box for arrow starts of this class pair
                     if (!pairStarts.isEmpty()) {
                         int minXStart = pairStarts.stream().mapToInt(p -> p.x).min().orElse(0);
                         int maxXStart = pairStarts.stream().mapToInt(p -> p.x).max().orElse(0);
@@ -495,11 +520,12 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                         int r = (color1.getRed() + color2.getRed()) / 2;
                         int g = (color1.getGreen() + color2.getGreen()) / 2;
                         int b = (color1.getBlue() + color2.getBlue()) / 2;
-                        g2.setColor(new Color(r, g, b, 150));
-                        g2.drawRect(minXStart, minYStart, maxXStart - minXStart, maxYStart - minYStart);
+                        Color pairColor = new Color(r, g, b, 150);
+                        
+                        allBoxes.add(new BoundingBox(minXStart, minYStart, maxXStart, maxYStart, class1, class2, true, pairColor));
                     }
                     
-                    // Draw box for arrow ends of this class pair
+                    // Create box for arrow ends of this class pair
                     if (!pairEnds.isEmpty()) {
                         int minXEnd = pairEnds.stream().mapToInt(p -> p.x).min().orElse(0);
                         int maxXEnd = pairEnds.stream().mapToInt(p -> p.x).max().orElse(0);
@@ -512,10 +538,33 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                         int r = (color1.getRed() + color2.getRed()) / 2;
                         int g = (color1.getGreen() + color2.getGreen()) / 2;
                         int b = (color1.getBlue() + color2.getBlue()) / 2;
-                        g2.setColor(new Color(r, g, b, 150));
-                        g2.drawRect(minXEnd, minYEnd, maxXEnd - minXEnd, maxYEnd - minYEnd);
+                        Color pairColor = new Color(r, g, b, 150);
+                        
+                        allBoxes.add(new BoundingBox(minXEnd, minYEnd, maxXEnd, maxYEnd, class1, class2, false, pairColor));
                     }
                 }
+            }
+            
+            // Filter out boxes that are contained within other boxes
+            List<BoundingBox> outerBoxes = new ArrayList<>();
+            for (BoundingBox box : allBoxes) {
+                boolean isContained = false;
+                for (BoundingBox other : allBoxes) {
+                    if (box != other && box.isContainedIn(other)) {
+                        isContained = true;
+                        break;
+                    }
+                }
+                if (!isContained) {
+                    outerBoxes.add(box);
+                }
+            }
+            
+            // Draw only the outermost boxes
+            g2.setStroke(new BasicStroke(3.0f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+            for (BoundingBox box : outerBoxes) {
+                g2.setColor(box.color);
+                g2.drawRect(box.minX, box.minY, box.maxX - box.minX, box.maxY - box.minY);
             }
         }
         
