@@ -388,6 +388,32 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             }
         }
         
+        private List<Point> collectAllDataPoints(int row, int padding, int plotSize) {
+            List<Point> points = new ArrayList<>();
+            int numAttributes = attributeNames.size();
+
+            // Loop over attributes in pairs, but handle odd number of attributes
+            for (int i = 0; i < numAttributes; i += 2) {
+                double xValue = normalize(data.get(i).get(row), i);
+                
+                // If this is the last attribute and it's odd, duplicate the value for y
+                double yValue;
+                if (i == numAttributes - 1) {
+                    // Odd number of attributes, duplicate the last one
+                    yValue = xValue;
+                } else {
+                    // Normal case, use the next attribute
+                    yValue = normalize(data.get(i + 1).get(row), i + 1);
+                }
+                
+                int x = padding + (int) (xValue * plotSize);
+                int y = padding + (int) ((1 - yValue) * plotSize);
+                points.add(new Point(x, y));
+            }
+            
+            return points;
+        }
+        
         private void collectArrowPoints(int row, int padding, int plotSize, List<Point> arrowStarts, List<Point> arrowEnds) {
             List<Point> points = new ArrayList<>();
             int numAttributes = attributeNames.size();
@@ -488,6 +514,18 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 return hiddenRows;
             }
             
+            // Build a map of base class name to hyperblock boxes
+            // e.g., "Setosa" -> boxes for "Setosa_hyperblock"
+            Map<String, List<BoundingBox>> baseClassToHyperblockBoxes = new java.util.HashMap<>();
+            for (BoundingBox box : outerBoxes) {
+                String boxClass = box.class1;
+                // Extract base class name by removing "_hyperblock" suffix (case-insensitive)
+                String baseClass = extractBaseClassName(boxClass);
+                if (baseClass != null) {
+                    baseClassToHyperblockBoxes.computeIfAbsent(baseClass, k -> new ArrayList<>()).add(box);
+                }
+            }
+            
             // For each row, check if it should be hidden
             for (int i = 0; i < table.getRowCount(); i++) {
                 int row = table.convertRowIndexToModel(i);
@@ -497,49 +535,85 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     continue; // Already hidden by class
                 }
                 
-                // Collect all arrow points for this row
-                List<Point> rowArrowStarts = new ArrayList<>();
-                List<Point> rowArrowEnds = new ArrayList<>();
-                collectArrowPoints(row, padding, plotSize, rowArrowStarts, rowArrowEnds);
+                // Never hide classes with "hyperblock" in their name
+                if (rowClass.toLowerCase().contains("hyperblock")) {
+                    continue;
+                }
                 
-                if (rowArrowStarts.isEmpty() && rowArrowEnds.isEmpty()) {
+                // Collect all data points for this row (n/2 points for n attributes)
+                List<Point> allDataPoints = collectAllDataPoints(row, padding, plotSize);
+                
+                if (allDataPoints.isEmpty()) {
                     continue; // No points to check
                 }
                 
-                // Check if all arrow points are contained within any box
-                for (BoundingBox box : outerBoxes) {
-                    // Skip if this row's class is the same as the box's class (boxes are now per-class)
-                    if (rowClass.equals(box.class1)) {
-                        continue; // Don't hide rows that form the boxes
-                    }
-                    
-                    // Check if all arrow starts are contained
-                    boolean allStartsContained = true;
-                    for (Point p : rowArrowStarts) {
-                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
-                            allStartsContained = false;
+                // Find the corresponding hyperblock boxes for this class
+                List<BoundingBox> hyperblockBoxes = baseClassToHyperblockBoxes.get(rowClass);
+                if (hyperblockBoxes == null || hyperblockBoxes.isEmpty()) {
+                    continue; // No hyperblock boxes for this class
+                }
+                
+                // Check if all n/2 points are contained within the hyperblock boxes
+                boolean allPointsContained = true;
+                for (Point dataPoint : allDataPoints) {
+                    boolean pointInBox = false;
+                    for (BoundingBox box : hyperblockBoxes) {
+                        if (dataPoint.x >= box.minX && dataPoint.x <= box.maxX && 
+                            dataPoint.y >= box.minY && dataPoint.y <= box.maxY) {
+                            pointInBox = true;
                             break;
                         }
                     }
                     
-                    // Check if all arrow ends are contained
-                    boolean allEndsContained = true;
-                    for (Point p : rowArrowEnds) {
-                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
-                            allEndsContained = false;
-                            break;
-                        }
+                    // If any point is not contained, the case should not be hidden
+                    if (!pointInBox) {
+                        allPointsContained = false;
+                        break;
                     }
-                    
-                    // If all points are contained, hide this row
-                    if (allStartsContained && allEndsContained && (!rowArrowStarts.isEmpty() || !rowArrowEnds.isEmpty())) {
-                        hiddenRows.add(row);
-                        break; // Found a box that contains it, no need to check others
-                    }
+                }
+                
+                // If all points are contained, hide this row
+                if (allPointsContained) {
+                    hiddenRows.add(row);
                 }
             }
             
             return hiddenRows;
+        }
+        
+        // Helper method to extract base class name from hyperblock class name
+        // e.g., "Setosa_hyperblock" -> "Setosa", "Iris_hyperblock" -> "Iris"
+        private String extractBaseClassName(String hyperblockClassName) {
+            String lowerName = hyperblockClassName.toLowerCase();
+            if (!lowerName.contains("hyperblock")) {
+                return null; // Not a hyperblock class
+            }
+            
+            // Try to find and remove "_hyperblock" suffix (case-insensitive)
+            int index = lowerName.indexOf("_hyperblock");
+            if (index > 0) {
+                return hyperblockClassName.substring(0, index);
+            }
+            
+            // Try "hyperblock_" prefix
+            index = lowerName.indexOf("hyperblock_");
+            if (index >= 0 && index < hyperblockClassName.length() - 11) {
+                return hyperblockClassName.substring(index + 11);
+            }
+            
+            // Try just "hyperblock" as a word boundary
+            // This is a fallback - try to extract the part before "hyperblock"
+            String[] parts = hyperblockClassName.split("(?i)hyperblock");
+            if (parts.length > 0 && parts[0].length() > 0) {
+                // Remove trailing underscore or dash if present
+                String base = parts[0];
+                if (base.endsWith("_") || base.endsWith("-")) {
+                    base = base.substring(0, base.length() - 1);
+                }
+                return base.length() > 0 ? base : null;
+            }
+            
+            return null;
         }
         
         private List<BoundingBox> getAllOutermostBoxes(int padding, int plotSize) {
@@ -553,6 +627,9 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 String classLabel = classLabels.get(row);
                 
                 if (hiddenClasses.contains(classLabel)) continue;
+                
+                // Only process classes with 'hyperblock' in their name
+                if (!classLabel.toLowerCase().contains("hyperblock")) continue;
                 
                 List<Point> arrowStarts = new ArrayList<>();
                 List<Point> arrowEnds = new ArrayList<>();
@@ -584,12 +661,12 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 }
             }
             
-            // Get all unique class labels that have more than one case
+            // Get all unique class labels that have more than one case and contain 'hyperblock'
             Set<String> allClasses = new HashSet<>(classArrowStarts.keySet());
             allClasses.addAll(classArrowEnds.keySet());
             List<String> classList = new ArrayList<>();
             for (String className : allClasses) {
-                if (classCounts.getOrDefault(className, 0) > 1) {
+                if (classCounts.getOrDefault(className, 0) > 1 && className.toLowerCase().contains("hyperblock")) {
                     classList.add(className);
                 }
             }
