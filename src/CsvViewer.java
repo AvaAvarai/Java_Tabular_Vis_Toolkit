@@ -1004,32 +1004,78 @@ public class CsvViewer extends JFrame {
         if (classColumnIndex == -1) {
             return;
         }
-        Map<String, Integer> classMap = new HashMap<>();
-        int colorIndex = 0;
+        
+        // Collect all unique class names
+        Set<String> allClasses = new HashSet<>();
         java.util.List<String> classNames = new ArrayList<>();
+        
         for (int row = 0; row < tableModel.getRowCount(); row++) {
             String className = (String) tableModel.getValueAt(row, classColumnIndex);
-
+            if (className != null) {
+                allClasses.add(className);
+            }
+        }
+        
+        // Separate base classes from hyperblock classes
+        Set<String> baseClasses = new HashSet<>();
+        Map<String, String> hyperblockToBase = new HashMap<>(); // hyperblock -> base class
+        
+        for (String className : allClasses) {
+            String lowerName = className.toLowerCase();
+            if (lowerName.endsWith("_hyperblock")) {
+                // Extract base class name by removing "_hyperblock" suffix
+                String baseClass = className.substring(0, className.length() - "_hyperblock".length());
+                hyperblockToBase.put(className, baseClass);
+                // Add base class to set if it exists in the data
+                if (allClasses.contains(baseClass)) {
+                    baseClasses.add(baseClass);
+                }
+            } else {
+                // Check if this is a base class (not a hyperblock)
+                baseClasses.add(className);
+            }
+        }
+        
+        // Handle special cases (malignant/positive, benign/negative)
+        for (String className : allClasses) {
             if (className.equalsIgnoreCase("malignant") || className.equalsIgnoreCase("positive")) {
                 stateManager.getClassColors().put(className, Color.RED);
                 classNames.add(className);
+                baseClasses.remove(className);
             } else if (className.equalsIgnoreCase("benign") || className.equalsIgnoreCase("negative")) {
                 stateManager.getClassColors().put(className, Color.GREEN);
                 classNames.add(className);
+                baseClasses.remove(className);
             }
         }
-
-        for (int row = 0; row < tableModel.getRowCount(); row++) {
-            String className = (String) tableModel.getValueAt(row, classColumnIndex);
-            if (!classMap.containsKey(className) && !classNames.contains(className)) {
-                classMap.put(className, colorIndex++);
-            }
+        
+        // Generate unique colors for base classes only
+        List<String> baseClassList = new ArrayList<>(baseClasses);
+        for (int i = 0; i < baseClassList.size(); i++) {
+            String baseClass = baseClassList.get(i);
+            float hue = i / (float) Math.max(1, baseClassList.size());
+            Color color = new Color(Color.HSBtoRGB(hue, 1.0f, 1.0f));
+            stateManager.getClassColors().put(baseClass, color);
         }
-
-        for (Map.Entry<String, Integer> entry : classMap.entrySet()) {
-            int value = entry.getValue();
-            Color color = new Color(Color.HSBtoRGB(value / (float) classMap.size(), 1.0f, 1.0f));
-            stateManager.getClassColors().put(entry.getKey(), color);
+        
+        // Generate darkened colors for hyperblock classes
+        for (Map.Entry<String, String> entry : hyperblockToBase.entrySet()) {
+            String hyperblockClass = entry.getKey();
+            String baseClass = entry.getValue();
+            
+            Color baseColor = stateManager.getClassColors().get(baseClass);
+            if (baseColor != null) {
+                // Darken the base color by reducing brightness
+                float[] hsb = Color.RGBtoHSB(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), null);
+                Color darkenedColor = Color.getHSBColor(hsb[0], hsb[1], hsb[2] * 0.5f); // Reduce brightness to 50%
+                stateManager.getClassColors().put(hyperblockClass, darkenedColor);
+            } else {
+                // If base class doesn't have a color yet, generate one
+                // This shouldn't happen, but handle it gracefully
+                float hue = (stateManager.getClassColors().size() * 0.618034f) % 1f;
+                Color color = Color.getHSBColor(hue, 1.0f, 1.0f);
+                stateManager.getClassColors().put(hyperblockClass, color);
+            }
         }
     }
 
@@ -1537,9 +1583,35 @@ public class CsvViewer extends JFrame {
 
     public void handleNewClass(String newClass) {
         if (!getClassColors().containsKey(newClass)) {
-            // Generate a new color for this class using golden ratio for good distribution
-            float hue = (getClassColors().size() * 0.618034f) % 1f;
-            Color newColor = Color.getHSBColor(hue, 0.8f, 0.9f);
+            String lowerName = newClass.toLowerCase();
+            Color newColor;
+            
+            // Check if this is a hyperblock class
+            if (lowerName.endsWith("_hyperblock")) {
+                // Extract base class name
+                String baseClass = newClass.substring(0, newClass.length() - "_hyperblock".length());
+                Color baseColor = getClassColors().get(baseClass);
+                
+                if (baseColor != null) {
+                    // Darken the base color
+                    float[] hsb = Color.RGBtoHSB(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), null);
+                    newColor = Color.getHSBColor(hsb[0], hsb[1], hsb[2] * 0.5f); // Reduce brightness to 50%
+                } else {
+                    // Base class doesn't exist yet, generate a color for it first
+                    float hue = (getClassColors().size() * 0.618034f) % 1f;
+                    baseColor = Color.getHSBColor(hue, 0.8f, 0.9f);
+                    getClassColors().put(baseClass, baseColor);
+                    
+                    // Then darken it for the hyperblock
+                    float[] hsb = Color.RGBtoHSB(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), null);
+                    newColor = Color.getHSBColor(hsb[0], hsb[1], hsb[2] * 0.5f);
+                }
+            } else {
+                // Regular class - generate a new color using golden ratio for good distribution
+                float hue = (getClassColors().size() * 0.618034f) % 1f;
+                newColor = Color.getHSBColor(hue, 0.8f, 0.9f);
+            }
+            
             getClassColors().put(newClass, newColor);
             
             // Generate a new shape for this class
