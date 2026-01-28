@@ -288,12 +288,35 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 points.add(new Point(x, y));
             }
 
-            if (points.size() < 2) return;
+            if (points.isEmpty()) return;
 
             String classLabel = classLabels.get(row);
             Color color = isSelected ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
             g2.setColor(color);
             g2.setStroke(new BasicStroke(polylineThickness, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+            
+            // Check if all points are at the same location (single point case)
+            // This handles cases like (0.7, 0.5, 0.7, 0.5) where multiple attribute pairs
+            // result in the same point location
+            boolean allPointsSame = true;
+            Point firstPoint = points.get(0);
+            for (int i = 1; i < points.size(); i++) {
+                if (points.get(i).x != firstPoint.x || points.get(i).y != firstPoint.y) {
+                    allPointsSame = false;
+                    break;
+                }
+            }
+            
+            // Handle single point case (either one point or all points at same location)
+            if (points.size() == 1 || allPointsSame) {
+                Point singlePoint = firstPoint;
+                int pointSize = Math.max(3, (int)polylineThickness * 2);
+                g2.fillOval(singlePoint.x - pointSize/2, singlePoint.y - pointSize/2, pointSize, pointSize);
+                // Also track it for arrow points if needed
+                arrowStarts.add(new Point(singlePoint.x, singlePoint.y));
+                arrowEnds.add(new Point(singlePoint.x, singlePoint.y));
+                return;
+            }
             
             if (normalizeVectors) {
                 // For normalized vectors, create a connected chain
@@ -437,7 +460,25 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 points.add(new Point(x, y));
             }
 
-            if (points.size() < 2) return;
+            if (points.isEmpty()) return;
+            
+            // Check if all points are at the same location (single point case)
+            boolean allPointsSame = true;
+            Point firstPoint = points.get(0);
+            for (int i = 1; i < points.size(); i++) {
+                if (points.get(i).x != firstPoint.x || points.get(i).y != firstPoint.y) {
+                    allPointsSame = false;
+                    break;
+                }
+            }
+            
+            // Handle single point case (either one point or all points at same location)
+            if (points.size() == 1 || allPointsSame) {
+                Point singlePoint = firstPoint;
+                arrowStarts.add(new Point(singlePoint.x, singlePoint.y));
+                arrowEnds.add(new Point(singlePoint.x, singlePoint.y));
+                return;
+            }
             
             if (normalizeVectors) {
                 // For normalized vectors, create a connected chain
@@ -547,17 +588,34 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     continue; // No points to check
                 }
                 
-                // Find the corresponding hyperblock boxes for this class
+                // Find the corresponding hyperblock boxes for this class ONLY
+                // Only check hyperblocks that match this row's class, ignore all other classes
                 List<BoundingBox> hyperblockBoxes = baseClassToHyperblockBoxes.get(rowClass);
                 if (hyperblockBoxes == null || hyperblockBoxes.isEmpty()) {
                     continue; // No hyperblock boxes for this class
                 }
                 
-                // Check if all n/2 points are contained within the hyperblock boxes
+                // Verify that all boxes are indeed for this class (safety check)
+                // Filter to ensure we only use boxes for this specific class
+                List<BoundingBox> filteredBoxes = new ArrayList<>();
+                for (BoundingBox box : hyperblockBoxes) {
+                    String boxBaseClass = extractBaseClassName(box.class1);
+                    // Only include boxes that match this row's class
+                    if (boxBaseClass != null && boxBaseClass.equals(rowClass)) {
+                        filteredBoxes.add(box);
+                    }
+                }
+                
+                if (filteredBoxes.isEmpty()) {
+                    continue; // No valid hyperblock boxes for this class
+                }
+                
+                // Check if all n/2 points are contained within the hyperblock boxes for THIS class only
                 boolean allPointsContained = true;
                 for (Point dataPoint : allDataPoints) {
                     boolean pointInBox = false;
-                    for (BoundingBox box : hyperblockBoxes) {
+                    // Only check against hyperblocks for this row's class
+                    for (BoundingBox box : filteredBoxes) {
                         if (dataPoint.x >= box.minX && dataPoint.x <= box.maxX && 
                             dataPoint.y >= box.minY && dataPoint.y <= box.maxY) {
                             pointInBox = true;
