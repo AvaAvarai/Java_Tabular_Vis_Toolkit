@@ -42,6 +42,12 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
     private Color backgroundColor;
     private boolean showPolylines = true; // Toggle for displaying polylines
     private float polylineThickness;
+    
+    // Empty entry tracking
+    private final Map<String, Integer> emptyEntryCounts = new HashMap<>();
+    private final Map<String, Double> emptyEntryFrequencies = new HashMap<>();
+    private final Map<String, Boolean> hasEmptyEntries = new HashMap<>();
+    private final Map<String, Map<Integer, Integer>> emptyBlockSizes = new HashMap<>(); // Track block size for each empty entry
 
     public ShiftedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, int numPlots, List<Integer> selectedRows, String datasetName, JTable table, Color backgroundColor, float polylineThickness) {
         this.data = data;
@@ -70,6 +76,9 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             axisScales.put(attr, 1.0);
             axisDirections.put(attr, true);
         }
+        
+        // Calculate empty entry frequencies for each attribute
+        calculateEmptyEntryFrequencies();
 
         setTitle("Shifted Paired Coordinates");
         setSize(1000, 800);
@@ -273,6 +282,61 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
 
         setContentPane(mainPanel);
     }
+    
+    /**
+     * Calculate empty entry frequencies for each attribute
+     */
+    private void calculateEmptyEntryFrequencies() {
+        int totalRows = data.get(0).size();
+        
+        for (int i = 0; i < attributeNames.size(); i++) {
+            String attributeName = attributeNames.get(i);
+            int emptyCount = 0;
+            Map<Integer, Integer> blockSizes = new HashMap<>();
+            
+            // Detect consecutive empty entry blocks
+            int currentBlockStart = -1;
+            int currentBlockSize = 0;
+            
+            for (int row = 0; row < totalRows; row++) {
+                double value = data.get(i).get(row);
+                if (Double.isNaN(value)) {
+                    emptyCount++;
+                    if (currentBlockStart == -1) {
+                        // Start of a new block
+                        currentBlockStart = row;
+                        currentBlockSize = 1;
+                    } else {
+                        // Continue current block
+                        currentBlockSize++;
+                    }
+                } else {
+                    // End of current block (if any)
+                    if (currentBlockStart != -1) {
+                        // Record block size for all rows in this block
+                        for (int blockRow = currentBlockStart; blockRow < currentBlockStart + currentBlockSize; blockRow++) {
+                            blockSizes.put(blockRow, currentBlockSize);
+                        }
+                        currentBlockStart = -1;
+                        currentBlockSize = 0;
+                    }
+                }
+            }
+            
+            // Handle block that extends to the end
+            if (currentBlockStart != -1) {
+                for (int blockRow = currentBlockStart; blockRow < currentBlockStart + currentBlockSize; blockRow++) {
+                    blockSizes.put(blockRow, currentBlockSize);
+                }
+            }
+            
+            emptyEntryCounts.put(attributeName, emptyCount);
+            emptyBlockSizes.put(attributeName, blockSizes);
+            double frequency = (double) emptyCount / totalRows;
+            emptyEntryFrequencies.put(attributeName, frequency);
+            hasEmptyEntries.put(attributeName, emptyCount > 0);
+        }
+    }
 
     private void optimizeAxesPlacement() {
         // Calculate correlations and class separations between all pairs of attributes
@@ -462,12 +526,43 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             g2.setColor(backgroundColor);
             g2.fillRect(0, titleHeight + TITLE_PADDING, (int)(getWidth()/zoomLevel), (int)((getHeight() - titleHeight - TITLE_PADDING)/zoomLevel));
 
-            int plotWidth = getWidth() / numPlots;
+            // Calculate maximum empty block sizes to spread out plots
+            int maxXEmptyBlockWidth = 0;
+            int maxYEmptyBlockHeight = 0;
+            int basePlotSize = Math.min(getWidth() / numPlots, getHeight() - titleHeight - TITLE_PADDING - 50) - 40;
+            
+            for (int i = 0; i < numPlots; i++) {
+                int attrIndex1 = i * 2;
+                int attrIndex2 = (i * 2) + 1;
+                if (attrIndex2 >= attributeNames.size()) {
+                    attrIndex2 = attrIndex1;
+                }
+                String attr1 = attributeNames.get(attrIndex1);
+                String attr2 = attributeNames.get(attrIndex2);
+                
+                if (hasEmptyEntries.getOrDefault(attr1, false)) {
+                    double xFrequency = emptyEntryFrequencies.getOrDefault(attr1, 0.0);
+                    int xEmptyBlockWidth = (int) (xFrequency * basePlotSize);
+                    if (xEmptyBlockWidth < 5) xEmptyBlockWidth = 5;
+                    maxXEmptyBlockWidth = Math.max(maxXEmptyBlockWidth, xEmptyBlockWidth);
+                }
+                
+                if (hasEmptyEntries.getOrDefault(attr2, false)) {
+                    double yFrequency = emptyEntryFrequencies.getOrDefault(attr2, 0.0);
+                    int yEmptyBlockHeight = (int) (yFrequency * basePlotSize);
+                    if (yEmptyBlockHeight < 5) yEmptyBlockHeight = 5;
+                    maxYEmptyBlockHeight = Math.max(maxYEmptyBlockHeight, yEmptyBlockHeight);
+                }
+            }
+            
+            // Adjust plot width to account for empty blocks (add space for X axis empty blocks)
+            int plotWidth = (getWidth() + maxXEmptyBlockWidth * numPlots) / numPlots;
             int plotHeight = getHeight() - titleHeight - TITLE_PADDING - 50;
 
             // Draw axes first
             for (int i = 0; i < numPlots; i++) {
                 Point offset = plotOffsets.get(i);
+                // Add spacing for empty blocks - each plot needs space for its left empty block
                 int x = i * plotWidth + offset.x;
                 int y = titleHeight + TITLE_PADDING + 10 + offset.y;
                 int attrIndex1 = i * 2;
@@ -501,8 +596,25 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
 
         private void drawAxesAndLabels(Graphics2D g2, int x, int y, int width, int height, String xLabel, String yLabel) {
             int plotSize = Math.min(width, height) - 40;
+            
+            // Calculate empty block sizes for both axes
+            double xFrequency = emptyEntryFrequencies.getOrDefault(xLabel, 0.0);
+            double yFrequency = emptyEntryFrequencies.getOrDefault(yLabel, 0.0);
+            int xEmptyBlockWidth = (int) (xFrequency * plotSize);
+            int yEmptyBlockHeight = (int) (yFrequency * plotSize);
+            if (xEmptyBlockWidth < 5 && hasEmptyEntries.getOrDefault(xLabel, false)) xEmptyBlockWidth = 5;
+            if (yEmptyBlockHeight < 5 && hasEmptyEntries.getOrDefault(yLabel, false)) yEmptyBlockHeight = 5;
+            
+            // Adjust plot position to make space for empty blocks
+            // Shift plot to the RIGHT if X axis has empty entries (to make space on LEFT)
+            // Y axis empty blocks are drawn BELOW, so no shift needed
             int plotX = x + 40;
             int plotY = y + 20;
+            
+            // If X axis has empty entries, shift plot to the right to make space on the left
+            if (hasEmptyEntries.getOrDefault(xLabel, false)) {
+                plotX += xEmptyBlockWidth;
+            }
 
             double xScale = axisScales.get(xLabel);
             double yScale = axisScales.get(yLabel);
@@ -514,13 +626,107 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
             g2.drawLine(plotX, plotY + plotSize, plotX + (int)(plotSize * xScale), plotY + plotSize);
             g2.drawLine(plotX, plotY, plotX + plotSize, plotY);
             g2.drawLine(plotX + plotSize, plotY, plotX + plotSize, plotY + plotSize);
+            
+            // Draw empty entry blocks
+            // X axis empty block: to the LEFT of the plot
+            if (hasEmptyEntries.getOrDefault(xLabel, false)) {
+                drawEmptyEntryBlockX(g2, xLabel, plotX - xEmptyBlockWidth, plotY, plotSize, xEmptyBlockWidth);
+            }
+            
+            // Y axis empty block: BELOW the plot
+            if (hasEmptyEntries.getOrDefault(yLabel, false)) {
+                drawEmptyEntryBlockY(g2, yLabel, plotX, plotY + plotSize, plotSize, yEmptyBlockHeight);
+            }
 
             if (showAttributeLabels) {
                 g2.setFont(new Font("SansSerif", Font.PLAIN, 16));
                 g2.setColor(Color.BLACK);
-                g2.drawString(xLabel + (xDirection ? " \u2191" : " \u2193"), plotX + plotSize / 2, plotY + plotSize + 20);
-                g2.drawString(yLabel + (yDirection ? " \u2191" : " \u2193"), plotX - g2.getFontMetrics().stringWidth(yLabel) / 2, plotY - 10);
+                // Adjust label positions to account for empty blocks
+                int xLabelY = plotY + plotSize + 20;
+                if (hasEmptyEntries.getOrDefault(yLabel, false)) {
+                    xLabelY += yEmptyBlockHeight;
+                }
+                g2.drawString(xLabel + (xDirection ? " \u2191" : " \u2193"), plotX + plotSize / 2, xLabelY);
+                
+                int yLabelX = plotX - g2.getFontMetrics().stringWidth(yLabel) / 2;
+                if (hasEmptyEntries.getOrDefault(xLabel, false)) {
+                    yLabelX -= xEmptyBlockWidth / 2;
+                }
+                int yLabelY = plotY - 10;
+                g2.drawString(yLabel + (yDirection ? " \u2191" : " \u2193"), yLabelX, yLabelY);
             }
+        }
+        
+        /**
+         * Draw empty entry block for X axis (to the LEFT of the plot)
+         */
+        private void drawEmptyEntryBlockX(Graphics2D g2, String attributeName, int blockLeftX, int plotY, int plotSize, int blockWidth) {
+            double frequency = emptyEntryFrequencies.getOrDefault(attributeName, 0.0);
+            int emptyCount = emptyEntryCounts.getOrDefault(attributeName, 0);
+            
+            // Draw the empty entry block to the left of the plot
+            int blockX = blockLeftX;
+            int blockY = plotY;
+            int blockHeight = plotSize;
+            
+            // Draw the empty entry block
+            g2.setColor(new Color(200, 200, 200, 150)); // Light gray with transparency
+            g2.fillRect(blockX, blockY, blockWidth, blockHeight);
+            g2.setColor(Color.DARK_GRAY);
+            g2.drawRect(blockX, blockY, blockWidth, blockHeight);
+            
+            // Draw frequency text
+            g2.setColor(Color.BLACK);
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 10));
+            String frequencyText = String.format("%.1f%%", frequency * 100);
+            FontMetrics fm = g2.getFontMetrics();
+            int textWidth = fm.stringWidth(frequencyText);
+            int textX = blockX + (blockWidth - textWidth) / 2;
+            int textY = blockY + blockHeight / 2 + fm.getHeight() / 4;
+            g2.drawString(frequencyText, textX, textY);
+            
+            // Draw count text below
+            String countText = "(" + emptyCount + ")";
+            int countTextWidth = fm.stringWidth(countText);
+            int countTextX = blockX + (blockWidth - countTextWidth) / 2;
+            int countTextY = textY + fm.getHeight();
+            g2.drawString(countText, countTextX, countTextY);
+        }
+        
+        /**
+         * Draw empty entry block for Y axis (BELOW the plot)
+         */
+        private void drawEmptyEntryBlockY(Graphics2D g2, String attributeName, int plotX, int plotBottomY, int plotSize, int blockHeight) {
+            double frequency = emptyEntryFrequencies.getOrDefault(attributeName, 0.0);
+            int emptyCount = emptyEntryCounts.getOrDefault(attributeName, 0);
+            
+            // Draw the empty entry block below the plot
+            int blockX = plotX;
+            int blockY = plotBottomY;
+            int blockWidth = plotSize;
+            
+            // Draw the empty entry block
+            g2.setColor(new Color(200, 200, 200, 150)); // Light gray with transparency
+            g2.fillRect(blockX, blockY, blockWidth, blockHeight);
+            g2.setColor(Color.DARK_GRAY);
+            g2.drawRect(blockX, blockY, blockWidth, blockHeight);
+            
+            // Draw frequency text
+            g2.setColor(Color.BLACK);
+            g2.setFont(new Font("SansSerif", Font.PLAIN, 10));
+            String frequencyText = String.format("%.1f%%", frequency * 100);
+            FontMetrics fm = g2.getFontMetrics();
+            int textWidth = fm.stringWidth(frequencyText);
+            int textX = blockX + (blockWidth - textWidth) / 2;
+            int textY = blockY + blockHeight / 2 + fm.getHeight() / 4;
+            g2.drawString(frequencyText, textX, textY);
+            
+            // Draw count text below
+            String countText = "(" + emptyCount + ")";
+            int countTextWidth = fm.stringWidth(countText);
+            int countTextX = blockX + (blockWidth - countTextWidth) / 2;
+            int countTextY = textY + fm.getHeight();
+            g2.drawString(countText, countTextX, countTextY);
         }
 
         private void drawRow(Graphics2D g2, int row, int plotY, int plotWidth, int plotHeight) {
@@ -555,15 +761,81 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         
                 int plotX1 = i * plotWidth + 40 + offset.x;
                 int plotSize = Math.min(plotWidth, plotHeight) - 40;
-        
-                double normX1 = (data.get(attrIndex1).get(row) - getMin(data.get(attrIndex1))) / (getMax(data.get(attrIndex1)) - getMin(data.get(attrIndex1)));
-                double normY1 = (data.get(attrIndex2).get(row) - getMin(data.get(attrIndex2))) / (getMax(data.get(attrIndex2)) - getMin(data.get(attrIndex2)));
                 
-                if (!dir1) normX1 = 1 - normX1;
-                if (!dir2) normY1 = 1 - normY1;
+                // Calculate empty block sizes and adjust plot position
+                double xFrequency1 = emptyEntryFrequencies.getOrDefault(attr1, 0.0);
+                double yFrequency1 = emptyEntryFrequencies.getOrDefault(attr2, 0.0);
+                int xEmptyBlockWidth1 = (int) (xFrequency1 * plotSize);
+                int yEmptyBlockHeight1 = (int) (yFrequency1 * plotSize);
+                if (xEmptyBlockWidth1 < 5 && hasEmptyEntries.getOrDefault(attr1, false)) xEmptyBlockWidth1 = 5;
+                if (yEmptyBlockHeight1 < 5 && hasEmptyEntries.getOrDefault(attr2, false)) yEmptyBlockHeight1 = 5;
+                
+                // Adjust plot position for empty blocks
+                int adjustedPlotX1 = plotX1;
+                int adjustedPlotY1 = plotY;
+                if (hasEmptyEntries.getOrDefault(attr1, false)) {
+                    adjustedPlotX1 += xEmptyBlockWidth1;
+                }
+                // Y empty blocks are below, so no Y adjustment needed
         
-                int x1 = plotX1 + (int) (plotSize * normX1 * scale1);
-                int y1 = plotY + plotSize - (int) (plotSize * normY1 * scale2) + offset.y + 20;
+                double valueX1 = data.get(attrIndex1).get(row);
+                double valueY1 = data.get(attrIndex2).get(row);
+                double normX1, normY1;
+                int x1, y1;
+                
+                // Handle NaN values for X axis
+                if (Double.isNaN(valueX1)) {
+                    // Position in empty block to the LEFT
+                    double frequency = emptyEntryFrequencies.getOrDefault(attr1, 0.0);
+                    int blockWidth = (int) (frequency * plotSize);
+                    if (blockWidth < 5 && hasEmptyEntries.getOrDefault(attr1, false)) blockWidth = 5;
+                    
+                    Map<Integer, Integer> blockSizes = emptyBlockSizes.getOrDefault(attr1, new HashMap<>());
+                    int consecutiveBlockSize = blockSizes.getOrDefault(row, 1);
+                    
+                    int positionInConsecutiveBlock = 0;
+                    for (int checkRow = 0; checkRow < row; checkRow++) {
+                        if (Double.isNaN(data.get(attrIndex1).get(checkRow))) {
+                            positionInConsecutiveBlock++;
+                        } else {
+                            positionInConsecutiveBlock = 0;
+                        }
+                    }
+                    
+                    double normalizedPosition = (double) positionInConsecutiveBlock / Math.max(1, consecutiveBlockSize - 1);
+                    x1 = adjustedPlotX1 - blockWidth + (int) (normalizedPosition * blockWidth);
+                } else {
+                    normX1 = (valueX1 - getMin(data.get(attrIndex1))) / (getMax(data.get(attrIndex1)) - getMin(data.get(attrIndex1)));
+                    if (!dir1) normX1 = 1 - normX1;
+                    x1 = adjustedPlotX1 + (int) (plotSize * normX1 * scale1);
+                }
+                
+                // Handle NaN values for Y axis
+                if (Double.isNaN(valueY1)) {
+                    // Position in empty block BELOW
+                    double frequency = emptyEntryFrequencies.getOrDefault(attr2, 0.0);
+                    int blockHeight = (int) (frequency * plotSize);
+                    if (blockHeight < 5 && hasEmptyEntries.getOrDefault(attr2, false)) blockHeight = 5;
+                    
+                    Map<Integer, Integer> blockSizes = emptyBlockSizes.getOrDefault(attr2, new HashMap<>());
+                    int consecutiveBlockSize = blockSizes.getOrDefault(row, 1);
+                    
+                    int positionInConsecutiveBlock = 0;
+                    for (int checkRow = 0; checkRow < row; checkRow++) {
+                        if (Double.isNaN(data.get(attrIndex2).get(checkRow))) {
+                            positionInConsecutiveBlock++;
+                        } else {
+                            positionInConsecutiveBlock = 0;
+                        }
+                    }
+                    
+                    double normalizedPosition = (double) positionInConsecutiveBlock / Math.max(1, consecutiveBlockSize - 1);
+                    y1 = adjustedPlotY1 + plotSize + (int) (normalizedPosition * blockHeight) + offset.y + 20;
+                } else {
+                    normY1 = (valueY1 - getMin(data.get(attrIndex2))) / (getMax(data.get(attrIndex2)) - getMin(data.get(attrIndex2)));
+                    if (!dir2) normY1 = 1 - normY1;
+                    y1 = adjustedPlotY1 + plotSize - (int) (plotSize * normY1 * scale2) + offset.y + 20;
+                }
         
                 if (i + 1 < numPlots) {
                     Point nextOffset = plotOffsets.get(i + 1);
@@ -581,15 +853,81 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
                     boolean nextDir2 = axisDirections.get(nextAttr2);
         
                     int plotX2 = (i + 1) * plotWidth + 40 + nextOffset.x;
-        
-                    double normX2 = (data.get(nextAttrIndex1).get(row) - getMin(data.get(nextAttrIndex1))) / (getMax(data.get(nextAttrIndex1)) - getMin(data.get(nextAttrIndex1)));
-                    double normY2 = (data.get(nextAttrIndex2).get(row) - getMin(data.get(nextAttrIndex2))) / (getMax(data.get(nextAttrIndex2)) - getMin(data.get(nextAttrIndex2)));
                     
-                    if (!nextDir1) normX2 = 1 - normX2;
-                    if (!nextDir2) normY2 = 1 - normY2;
+                    // Calculate empty block sizes and adjust plot position for next plot
+                    double xFrequency2 = emptyEntryFrequencies.getOrDefault(nextAttr1, 0.0);
+                    double yFrequency2 = emptyEntryFrequencies.getOrDefault(nextAttr2, 0.0);
+                    int xEmptyBlockWidth2 = (int) (xFrequency2 * plotSize);
+                    int yEmptyBlockHeight2 = (int) (yFrequency2 * plotSize);
+                    if (xEmptyBlockWidth2 < 5 && hasEmptyEntries.getOrDefault(nextAttr1, false)) xEmptyBlockWidth2 = 5;
+                    if (yEmptyBlockHeight2 < 5 && hasEmptyEntries.getOrDefault(nextAttr2, false)) yEmptyBlockHeight2 = 5;
+                    
+                    // Adjust plot position for empty blocks
+                    int adjustedPlotX2 = plotX2;
+                    int adjustedPlotY2 = plotY;
+                    if (hasEmptyEntries.getOrDefault(nextAttr1, false)) {
+                        adjustedPlotX2 += xEmptyBlockWidth2;
+                    }
+                    // Y empty blocks are below, so no Y adjustment needed
         
-                    int x2 = plotX2 + (int) (plotSize * normX2 * nextScale1);
-                    int y2 = plotY + plotSize - (int) (plotSize * normY2 * nextScale2) + nextOffset.y + 20;
+                    double valueX2 = data.get(nextAttrIndex1).get(row);
+                    double valueY2 = data.get(nextAttrIndex2).get(row);
+                    double normX2, normY2;
+                    int x2, y2;
+                    
+                    // Handle NaN values for X axis
+                    if (Double.isNaN(valueX2)) {
+                        // Position in empty block to the LEFT
+                        double frequency = emptyEntryFrequencies.getOrDefault(nextAttr1, 0.0);
+                        int blockWidth = (int) (frequency * plotSize);
+                        if (blockWidth < 5 && hasEmptyEntries.getOrDefault(nextAttr1, false)) blockWidth = 5;
+                        
+                        Map<Integer, Integer> blockSizes = emptyBlockSizes.getOrDefault(nextAttr1, new HashMap<>());
+                        int consecutiveBlockSize = blockSizes.getOrDefault(row, 1);
+                        
+                        int positionInConsecutiveBlock = 0;
+                        for (int checkRow = 0; checkRow < row; checkRow++) {
+                            if (Double.isNaN(data.get(nextAttrIndex1).get(checkRow))) {
+                                positionInConsecutiveBlock++;
+                            } else {
+                                positionInConsecutiveBlock = 0;
+                            }
+                        }
+                        
+                        double normalizedPosition = (double) positionInConsecutiveBlock / Math.max(1, consecutiveBlockSize - 1);
+                        x2 = adjustedPlotX2 - blockWidth + (int) (normalizedPosition * blockWidth);
+                    } else {
+                        normX2 = (valueX2 - getMin(data.get(nextAttrIndex1))) / (getMax(data.get(nextAttrIndex1)) - getMin(data.get(nextAttrIndex1)));
+                        if (!nextDir1) normX2 = 1 - normX2;
+                        x2 = adjustedPlotX2 + (int) (plotSize * normX2 * nextScale1);
+                    }
+                    
+                    // Handle NaN values for Y axis
+                    if (Double.isNaN(valueY2)) {
+                        // Position in empty block BELOW
+                        double frequency = emptyEntryFrequencies.getOrDefault(nextAttr2, 0.0);
+                        int blockHeight = (int) (frequency * plotSize);
+                        if (blockHeight < 5 && hasEmptyEntries.getOrDefault(nextAttr2, false)) blockHeight = 5;
+                        
+                        Map<Integer, Integer> blockSizes = emptyBlockSizes.getOrDefault(nextAttr2, new HashMap<>());
+                        int consecutiveBlockSize = blockSizes.getOrDefault(row, 1);
+                        
+                        int positionInConsecutiveBlock = 0;
+                        for (int checkRow = 0; checkRow < row; checkRow++) {
+                            if (Double.isNaN(data.get(nextAttrIndex2).get(checkRow))) {
+                                positionInConsecutiveBlock++;
+                            } else {
+                                positionInConsecutiveBlock = 0;
+                            }
+                        }
+                        
+                        double normalizedPosition = (double) positionInConsecutiveBlock / Math.max(1, consecutiveBlockSize - 1);
+                        y2 = adjustedPlotY2 + plotSize + (int) (normalizedPosition * blockHeight) + nextOffset.y + 20;
+                    } else {
+                        normY2 = (valueY2 - getMin(data.get(nextAttrIndex2))) / (getMax(data.get(nextAttrIndex2)) - getMin(data.get(nextAttrIndex2)));
+                        if (!nextDir2) normY2 = 1 - normY2;
+                        y2 = adjustedPlotY2 + plotSize - (int) (plotSize * normY2 * nextScale2) + nextOffset.y + 20;
+                    }
                     
                     // Calculate slope between points
                     double slope = (y2 - y1) / (double)(x2 - x1);
@@ -632,15 +970,81 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
 
                 int plotX = i * plotWidth + 40 + offset.x;
                 int plotSize = Math.min(plotWidth, plotHeight) - 40;
-
-                double normX = (data.get(attrIndex1).get(row) - getMin(data.get(attrIndex1))) / (getMax(data.get(attrIndex1)) - getMin(data.get(attrIndex1)));
-                double normY = (data.get(attrIndex2).get(row) - getMin(data.get(attrIndex2))) / (getMax(data.get(attrIndex2)) - getMin(data.get(attrIndex2)));
                 
-                if (!dir1) normX = 1 - normX;
-                if (!dir2) normY = 1 - normY;
+                // Calculate empty block sizes and adjust plot position
+                double xFrequency = emptyEntryFrequencies.getOrDefault(attr1, 0.0);
+                double yFrequency = emptyEntryFrequencies.getOrDefault(attr2, 0.0);
+                int xEmptyBlockWidth = (int) (xFrequency * plotSize);
+                int yEmptyBlockHeight = (int) (yFrequency * plotSize);
+                if (xEmptyBlockWidth < 5 && hasEmptyEntries.getOrDefault(attr1, false)) xEmptyBlockWidth = 5;
+                if (yEmptyBlockHeight < 5 && hasEmptyEntries.getOrDefault(attr2, false)) yEmptyBlockHeight = 5;
+                
+                // Adjust plot position for empty blocks
+                int adjustedPlotX = plotX;
+                int adjustedPlotY = plotY;
+                if (hasEmptyEntries.getOrDefault(attr1, false)) {
+                    adjustedPlotX += xEmptyBlockWidth;
+                }
+                // Y empty blocks are below, so no Y adjustment needed
 
-                int px = plotX + (int) (plotSize * normX * scale1);
-                int py = plotY + plotSize - (int) (plotSize * normY * scale2) + offset.y + 20;
+                double valueX = data.get(attrIndex1).get(row);
+                double valueY = data.get(attrIndex2).get(row);
+                double normX, normY;
+                int px, py;
+                
+                // Handle NaN values for X axis
+                if (Double.isNaN(valueX)) {
+                    // Position in empty block to the LEFT
+                    double frequency = emptyEntryFrequencies.getOrDefault(attr1, 0.0);
+                    int blockWidth = (int) (frequency * plotSize);
+                    if (blockWidth < 5 && hasEmptyEntries.getOrDefault(attr1, false)) blockWidth = 5;
+                    
+                    Map<Integer, Integer> blockSizes = emptyBlockSizes.getOrDefault(attr1, new HashMap<>());
+                    int consecutiveBlockSize = blockSizes.getOrDefault(row, 1);
+                    
+                    int positionInConsecutiveBlock = 0;
+                    for (int checkRow = 0; checkRow < row; checkRow++) {
+                        if (Double.isNaN(data.get(attrIndex1).get(checkRow))) {
+                            positionInConsecutiveBlock++;
+                        } else {
+                            positionInConsecutiveBlock = 0;
+                        }
+                    }
+                    
+                    double normalizedPosition = (double) positionInConsecutiveBlock / Math.max(1, consecutiveBlockSize - 1);
+                    px = adjustedPlotX - blockWidth + (int) (normalizedPosition * blockWidth);
+                } else {
+                    normX = (valueX - getMin(data.get(attrIndex1))) / (getMax(data.get(attrIndex1)) - getMin(data.get(attrIndex1)));
+                    if (!dir1) normX = 1 - normX;
+                    px = adjustedPlotX + (int) (plotSize * normX * scale1);
+                }
+                
+                // Handle NaN values for Y axis
+                if (Double.isNaN(valueY)) {
+                    // Position in empty block BELOW
+                    double frequency = emptyEntryFrequencies.getOrDefault(attr2, 0.0);
+                    int blockHeight = (int) (frequency * plotSize);
+                    if (blockHeight < 5 && hasEmptyEntries.getOrDefault(attr2, false)) blockHeight = 5;
+                    
+                    Map<Integer, Integer> blockSizes = emptyBlockSizes.getOrDefault(attr2, new HashMap<>());
+                    int consecutiveBlockSize = blockSizes.getOrDefault(row, 1);
+                    
+                    int positionInConsecutiveBlock = 0;
+                    for (int checkRow = 0; checkRow < row; checkRow++) {
+                        if (Double.isNaN(data.get(attrIndex2).get(checkRow))) {
+                            positionInConsecutiveBlock++;
+                        } else {
+                            positionInConsecutiveBlock = 0;
+                        }
+                    }
+                    
+                    double normalizedPosition = (double) positionInConsecutiveBlock / Math.max(1, consecutiveBlockSize - 1);
+                    py = adjustedPlotY + plotSize + (int) (normalizedPosition * blockHeight) + offset.y + 20;
+                } else {
+                    normY = (valueY - getMin(data.get(attrIndex2))) / (getMax(data.get(attrIndex2)) - getMin(data.get(attrIndex2)));
+                    if (!dir2) normY = 1 - normY;
+                    py = adjustedPlotY + plotSize - (int) (plotSize * normY * scale2) + offset.y + 20;
+                }
 
                 String classLabel = classLabels.get(row);
                 Color color = selectedRows.contains(row) ? Color.YELLOW : classColors.getOrDefault(classLabel, Color.BLACK);
@@ -654,11 +1058,17 @@ public class ShiftedPairedCoordinatesPlot extends JFrame {
         }
 
         private double getMin(List<Double> data) {
-            return data.stream().min(Double::compare).orElse(Double.NaN);
+            return data.stream()
+                    .filter(d -> !Double.isNaN(d))
+                    .min(Double::compare)
+                    .orElse(0.0);
         }
 
         private double getMax(List<Double> data) {
-            return data.stream().max(Double::compare).orElse(Double.NaN);
+            return data.stream()
+                    .filter(d -> !Double.isNaN(d))
+                    .max(Double::compare)
+                    .orElse(1.0);
         }
     }
 }
