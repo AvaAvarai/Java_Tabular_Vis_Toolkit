@@ -38,8 +38,8 @@ public class StateManager {
         this.classColors = new HashMap<>();
         this.classShapes = new HashMap<>();
         this.cellTextColor = Color.BLACK;
-        this.plotBackgroundColor = Color.WHITE;
-        this.polylineThickness = 1.0f;
+        this.plotBackgroundColor = new Color(0xCC, 0xCC, 0xCC); // #CCCCCC default
+        this.polylineThickness = 3.0f;
         this.differenceColumnsVisible = false;
         this.classColumns = new HashSet<>();
     }
@@ -55,8 +55,8 @@ public class StateManager {
         classColors.clear();
         classShapes.clear();
         cellTextColor = Color.BLACK;
-        plotBackgroundColor = Color.WHITE;
-        polylineThickness = 1.0f;
+        plotBackgroundColor = new Color(0xCC, 0xCC, 0xCC); // #CCCCCC default
+        polylineThickness = 3.0f;
         differenceColumnsVisible = false;
         classColumns.clear();
         // Don't reset decimal precision during state clear
