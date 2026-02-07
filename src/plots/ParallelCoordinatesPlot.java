@@ -103,9 +103,24 @@ public class ParallelCoordinatesPlot extends JFrame {
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.setBackground(Color.WHITE);
 
+        // Calculate maximum empty block height to ensure screenshots capture all content
+        int maxEmptyBlockHeight = 0;
+        for (String attributeName : attributeNames) {
+            double frequency = emptyEntryFrequencies.getOrDefault(attributeName, 0.0);
+            int blockHeight = (int) (frequency * AXIS_HEIGHT);
+            if (blockHeight < 5) blockHeight = 5;
+            maxEmptyBlockHeight = Math.max(maxEmptyBlockHeight, blockHeight);
+        }
+        // Add padding for text below empty blocks (2 lines of text + spacing)
+        int textPadding = 50;
+        // Calculate total height: title (50) + axis start position (100) + axis height (400) + empty blocks + text padding
+        int axisStartY = 100;
+        int totalExtraHeight = maxEmptyBlockHeight + textPadding;
+        int panelHeight = 50 + axisStartY + AXIS_HEIGHT + totalExtraHeight;
+
         // Add the plot panel
         ParallelCoordinatesPanel plotPanel = new ParallelCoordinatesPanel();
-        plotPanel.setPreferredSize(new Dimension(attributeNames.size() * 150, 600));
+        plotPanel.setPreferredSize(new Dimension(attributeNames.size() * 150, panelHeight));
 
         JScrollPane scrollPane = new JScrollPane(plotPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -366,6 +381,35 @@ public class ParallelCoordinatesPlot extends JFrame {
                 }
             });
         }
+        
+        @Override
+        public Dimension getPreferredSize() {
+            // Calculate the maximum extent needed to capture all content including empty blocks
+            int maxY = 0;
+            int maxEmptyBlockExtent = 0;
+            
+            for (String attributeName : visualOrder) {
+                Point2D.Double pos = axisPositions.get(attributeName);
+                double scale = axisScales.getOrDefault(attributeName, 1.0);
+                int scaledHeight = (int) (AXIS_HEIGHT * scale);
+                int axisBottom = (int) (pos.y + scaledHeight);
+                maxY = Math.max(maxY, axisBottom);
+                
+                // Calculate empty block height for this attribute
+                if (hasEmptyEntries.getOrDefault(attributeName, false)) {
+                    double frequency = emptyEntryFrequencies.getOrDefault(attributeName, 0.0);
+                    int blockHeight = (int) (frequency * scaledHeight);
+                    if (blockHeight < 5) blockHeight = 5;
+                    int blockExtent = axisBottom + blockHeight + 50; // 50 for text padding
+                    maxEmptyBlockExtent = Math.max(maxEmptyBlockExtent, blockExtent);
+                }
+            }
+            
+            // Title height (50) + maximum extent of content
+            int height = 50 + Math.max(maxY, maxEmptyBlockExtent);
+            int width = attributeNames.size() * 150;
+            return new Dimension(width, height);
+        }
 
         /**
          * Optimizes axis positions to make selected cases as straight as possible horizontally
@@ -561,7 +605,7 @@ public class ParallelCoordinatesPlot extends JFrame {
         }
         
         /**
-         * Draw empty entry block on the axis
+         * Draw empty entry block below the axis (below the 0 point)
          */
         private void drawEmptyEntryBlock(Graphics2D g2, String attributeName, Point2D.Double pos, int scaledHeight) {
             double frequency = emptyEntryFrequencies.getOrDefault(attributeName, 0.0);
@@ -571,8 +615,8 @@ public class ParallelCoordinatesPlot extends JFrame {
             int blockHeight = (int) (frequency * scaledHeight);
             if (blockHeight < 5) blockHeight = 5; // Minimum visible size
             
-            // Position the block at the bottom of the axis
-            int blockY = (int) (pos.y + scaledHeight - blockHeight);
+            // Position the block below the axis (below the 0 point at pos.y + scaledHeight)
+            int blockY = (int) (pos.y + scaledHeight);
             int blockX = (int) pos.x - 10; // Offset from axis line
             int blockWidth = 20;
             
@@ -823,7 +867,7 @@ public class ParallelCoordinatesPlot extends JFrame {
                 
                 // Check if this is an empty entry (NaN only, not 0.0)
                 if (Double.isNaN(value)) {
-                    // For empty entries, position them within the empty entry block at the bottom
+                    // For empty entries, position them within the empty entry block below the axis (below the 0 point)
                     double frequency = emptyEntryFrequencies.getOrDefault(attributeName, 0.0);
                     int blockHeight = (int) (frequency * scaledHeight);
                     if (blockHeight < 5) blockHeight = 5;
@@ -844,24 +888,15 @@ public class ParallelCoordinatesPlot extends JFrame {
                     
                     // Normalize position within the consecutive block
                     double normalizedPosition = (double) positionInConsecutiveBlock / Math.max(1, consecutiveBlockSize - 1);
-                    y = pos.y + scaledHeight - blockHeight + normalizedPosition * blockHeight;
+                    // Position below the axis (below pos.y + scaledHeight, which is the 0 point)
+                    y = pos.y + scaledHeight + normalizedPosition * blockHeight;
                 } else {
-                    // Normal value processing - adjust for empty block space and gap
-                    double frequency = emptyEntryFrequencies.getOrDefault(attributeName, 0.0);
-                    int blockHeight = (int) (frequency * scaledHeight);
-                    if (blockHeight < 5) blockHeight = 5;
-                    
-                    // Gap size is the size of one point (assuming point size of 8 pixels)
-                    int gapSize = 8;
-                    
-                    // Available height for numerical data (excluding empty block and gap)
-                    int availableHeight = scaledHeight - blockHeight - gapSize;
-                    
+                    // Normal value processing - use full axis height since empty entries are below
                     double normalizedValue = (value - globalMinValue) / (globalMaxValue - globalMinValue);
                     if (axisDirections.getOrDefault(attributeName, false)) {
                         normalizedValue = 1 - normalizedValue;
                     }
-                    y = pos.y + availableHeight - normalizedValue * availableHeight;
+                    y = pos.y + scaledHeight - normalizedValue * scaledHeight;
                 }
                 
                 points.add(new Point2D.Double(pos.x, y));
