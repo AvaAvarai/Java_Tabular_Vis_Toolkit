@@ -555,15 +555,22 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 return hiddenRows;
             }
             
-            // Build a map of base class name to hyperblock boxes
-            // e.g., "Setosa" -> boxes for "Setosa_hyperblock"
+            // Build a map of class name to boxes (for containment checks)
+            // Combined boxes are registered under both class1 and class2
+            // Use base class name for hyperblock classes (A_hyperblock -> A), or class name as-is for regular classes (A -> A)
             Map<String, List<BoundingBox>> baseClassToHyperblockBoxes = new java.util.HashMap<>();
             for (BoundingBox box : outerBoxes) {
-                String boxClass = box.class1;
-                // Extract base class name by removing "_hyperblock" suffix (case-insensitive)
-                String baseClass = extractBaseClassName(boxClass);
-                if (baseClass != null) {
-                    baseClassToHyperblockBoxes.computeIfAbsent(baseClass, k -> new ArrayList<>()).add(box);
+                String key1 = extractBaseClassName(box.class1);
+                if (key1 == null) key1 = box.class1;
+                if (key1 != null && !key1.isEmpty()) {
+                    baseClassToHyperblockBoxes.computeIfAbsent(key1, k -> new ArrayList<>()).add(box);
+                }
+                if (box.class2 != null && !box.class2.equals(box.class1)) {
+                    String key2 = extractBaseClassName(box.class2);
+                    if (key2 == null) key2 = box.class2;
+                    if (key2 != null && !key2.isEmpty()) {
+                        baseClassToHyperblockBoxes.computeIfAbsent(key2, k -> new ArrayList<>()).add(box);
+                    }
                 }
             }
             
@@ -595,13 +602,15 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     continue; // No hyperblock boxes for this class
                 }
                 
-                // Verify that all boxes are indeed for this class (safety check)
-                // Filter to ensure we only use boxes for this specific class
+                // Combined boxes (A+B) are registered under both classes; include boxes that match this row's class
                 List<BoundingBox> filteredBoxes = new ArrayList<>();
                 for (BoundingBox box : hyperblockBoxes) {
-                    String boxBaseClass = extractBaseClassName(box.class1);
-                    // Only include boxes that match this row's class
-                    if (boxBaseClass != null && boxBaseClass.equals(rowClass)) {
+                    String key1 = extractBaseClassName(box.class1);
+                    if (key1 == null) key1 = box.class1;
+                    String key2 = box.class2 != null ? extractBaseClassName(box.class2) : null;
+                    if (key2 == null && box.class2 != null) key2 = box.class2;
+                    // Include box if this row's class is class1 or class2 (for combined A+B boxes)
+                    if ((key1 != null && key1.equals(rowClass)) || (key2 != null && key2.equals(rowClass))) {
                         filteredBoxes.add(box);
                     }
                 }
@@ -679,15 +688,13 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             Map<String, List<PointWithClass>> classArrowStarts = new java.util.HashMap<>();
             Map<String, List<PointWithClass>> classArrowEnds = new java.util.HashMap<>();
             
-            // Collect arrow points for each class
+            // Collect arrow points for each class (all classes, not just hyperblock)
             for (int i = 0; i < table.getRowCount(); i++) {
                 int row = table.convertRowIndexToModel(i);
                 String classLabel = classLabels.get(row);
                 
                 if (hiddenClasses.contains(classLabel)) continue;
-                
-                // Only process classes with 'hyperblock' in their name
-                if (!classLabel.toLowerCase().contains("hyperblock")) continue;
+                if (classLabel == null || classLabel.trim().isEmpty()) continue;
                 
                 List<Point> arrowStarts = new ArrayList<>();
                 List<Point> arrowEnds = new ArrayList<>();
@@ -709,74 +716,73 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 }
             }
             
-            // Count cases per class to determine which classes have more than one case
-            Map<String, Integer> classCounts = new java.util.HashMap<>();
-            for (int i = 0; i < table.getRowCount(); i++) {
-                int row = table.convertRowIndexToModel(i);
-                String classLabel = classLabels.get(row);
-                if (!hiddenClasses.contains(classLabel)) {
-                    classCounts.put(classLabel, classCounts.getOrDefault(classLabel, 0) + 1);
-                }
-            }
-            
-            // Get all unique class labels that have more than one case and contain 'hyperblock'
-            Set<String> allClasses = new HashSet<>(classArrowStarts.keySet());
-            allClasses.addAll(classArrowEnds.keySet());
+            // Only draw boxes for class A and class B (case-insensitive)
+            Set<String> allClassesWithPoints = new HashSet<>(classArrowStarts.keySet());
+            allClassesWithPoints.addAll(classArrowEnds.keySet());
             List<String> classList = new ArrayList<>();
-            for (String className : allClasses) {
-                if (classCounts.getOrDefault(className, 0) > 1 && className.toLowerCase().contains("hyperblock")) {
+            for (String className : allClassesWithPoints) {
+                if ("A".equalsIgnoreCase(className) || "B".equalsIgnoreCase(className)) {
                     classList.add(className);
                 }
             }
-            java.util.Collections.sort(classList); // Sort for consistency
+            java.util.Collections.sort(classList); // Sort for consistency (A, B)
             
-            // Collect all boxes first - one box per class (not per class pair)
+            // Need at least one of A or B with points to draw boxes
+            if (classList.isEmpty()) {
+                return new ArrayList<>();
+            }
+            
+            // Combine start points from class A and B only
+            List<PointWithClass> allStarts = new ArrayList<>();
+            for (String className : classList) {
+                allStarts.addAll(classArrowStarts.getOrDefault(className, new ArrayList<>()));
+            }
+            
+            // Combine end points from class A and B only
+            List<PointWithClass> allEnds = new ArrayList<>();
+            for (String className : classList) {
+                allEnds.addAll(classArrowEnds.getOrDefault(className, new ArrayList<>()));
+            }
+            
+            // One box connecting all classes' start points; one box connecting all classes' end points
             List<BoundingBox> allBoxes = new ArrayList<>();
             
-            for (String className : classList) {
-                // Get arrow starts for this class only
-                List<PointWithClass> classStarts = classArrowStarts.getOrDefault(className, new ArrayList<>());
+            // Create box for all start points (class A and B start points combined)
+            if (!allStarts.isEmpty()) {
+                int minXStart = allStarts.stream().mapToInt(p -> p.point.x).min().orElse(0);
+                int maxXStart = allStarts.stream().mapToInt(p -> p.point.x).max().orElse(0);
+                int minYStart = allStarts.stream().mapToInt(p -> p.point.y).min().orElse(0);
+                int maxYStart = allStarts.stream().mapToInt(p -> p.point.y).max().orElse(0);
                 
-                // Get arrow ends for this class only
-                List<PointWithClass> classEnds = classArrowEnds.getOrDefault(className, new ArrayList<>());
+                PointWithClass bottomLeft = findBottomLeftPoint(allStarts, minXStart, maxYStart);
+                PointWithClass topRight = findTopRightPoint(allStarts, maxXStart, minYStart);
+                String classA = classList.isEmpty() ? "" : classList.get(0);
+                String classB = classList.size() < 2 ? classA : classList.get(1);
+                Color bottomLeftColor = classColors.getOrDefault(bottomLeft != null ? bottomLeft.className : classA, Color.BLACK);
+                Color topRightColor = classColors.getOrDefault(topRight != null ? topRight.className : classB, Color.BLACK);
                 
-                // Create box for arrow starts of this class
-                if (!classStarts.isEmpty()) {
-                    int minXStart = classStarts.stream().mapToInt(p -> p.point.x).min().orElse(0);
-                    int maxXStart = classStarts.stream().mapToInt(p -> p.point.x).max().orElse(0);
-                    int minYStart = classStarts.stream().mapToInt(p -> p.point.y).min().orElse(0);
-                    int maxYStart = classStarts.stream().mapToInt(p -> p.point.y).max().orElse(0);
-                    
-                    // Find bottom-left most and top-right most points
-                    PointWithClass bottomLeft = findBottomLeftPoint(classStarts, minXStart, maxYStart);
-                    PointWithClass topRight = findTopRightPoint(classStarts, maxXStart, minYStart);
-                    
-                    Color bottomLeftColor = classColors.getOrDefault(bottomLeft != null ? bottomLeft.className : className, Color.BLACK);
-                    Color topRightColor = classColors.getOrDefault(topRight != null ? topRight.className : className, Color.BLACK);
-                    
-                    allBoxes.add(new BoundingBox(minXStart, minYStart, maxXStart, maxYStart, className, className, true, 
-                        new Color(bottomLeftColor.getRed(), bottomLeftColor.getGreen(), bottomLeftColor.getBlue(), 150),
-                        new Color(topRightColor.getRed(), topRightColor.getGreen(), topRightColor.getBlue(), 150)));
-                }
+                allBoxes.add(new BoundingBox(minXStart, minYStart, maxXStart, maxYStart, classA, classB, true,
+                    new Color(bottomLeftColor.getRed(), bottomLeftColor.getGreen(), bottomLeftColor.getBlue(), 150),
+                    new Color(topRightColor.getRed(), topRightColor.getGreen(), topRightColor.getBlue(), 150)));
+            }
+            
+            // Create box for all end points (class A and B end points combined)
+            if (!allEnds.isEmpty()) {
+                int minXEnd = allEnds.stream().mapToInt(p -> p.point.x).min().orElse(0);
+                int maxXEnd = allEnds.stream().mapToInt(p -> p.point.x).max().orElse(0);
+                int minYEnd = allEnds.stream().mapToInt(p -> p.point.y).min().orElse(0);
+                int maxYEnd = allEnds.stream().mapToInt(p -> p.point.y).max().orElse(0);
                 
-                // Create box for arrow ends of this class
-                if (!classEnds.isEmpty()) {
-                    int minXEnd = classEnds.stream().mapToInt(p -> p.point.x).min().orElse(0);
-                    int maxXEnd = classEnds.stream().mapToInt(p -> p.point.x).max().orElse(0);
-                    int minYEnd = classEnds.stream().mapToInt(p -> p.point.y).min().orElse(0);
-                    int maxYEnd = classEnds.stream().mapToInt(p -> p.point.y).max().orElse(0);
-                    
-                    // Find bottom-left most and top-right most points
-                    PointWithClass bottomLeft = findBottomLeftPoint(classEnds, minXEnd, maxYEnd);
-                    PointWithClass topRight = findTopRightPoint(classEnds, maxXEnd, minYEnd);
-                    
-                    Color bottomLeftColor = classColors.getOrDefault(bottomLeft != null ? bottomLeft.className : className, Color.BLACK);
-                    Color topRightColor = classColors.getOrDefault(topRight != null ? topRight.className : className, Color.BLACK);
-                    
-                    allBoxes.add(new BoundingBox(minXEnd, minYEnd, maxXEnd, maxYEnd, className, className, false,
-                        new Color(bottomLeftColor.getRed(), bottomLeftColor.getGreen(), bottomLeftColor.getBlue(), 150),
-                        new Color(topRightColor.getRed(), topRightColor.getGreen(), topRightColor.getBlue(), 150)));
-                }
+                PointWithClass bottomLeft = findBottomLeftPoint(allEnds, minXEnd, maxYEnd);
+                PointWithClass topRight = findTopRightPoint(allEnds, maxXEnd, minYEnd);
+                String classA = classList.isEmpty() ? "" : classList.get(0);
+                String classB = classList.size() < 2 ? classA : classList.get(1);
+                Color bottomLeftColor = classColors.getOrDefault(bottomLeft != null ? bottomLeft.className : classA, Color.BLACK);
+                Color topRightColor = classColors.getOrDefault(topRight != null ? topRight.className : classB, Color.BLACK);
+                
+                allBoxes.add(new BoundingBox(minXEnd, minYEnd, maxXEnd, maxYEnd, classA, classB, false,
+                    new Color(bottomLeftColor.getRed(), bottomLeftColor.getGreen(), bottomLeftColor.getBlue(), 150),
+                    new Color(topRightColor.getRed(), topRightColor.getGreen(), topRightColor.getBlue(), 150)));
             }
             
             // First, identify outermost boxes (not contained in any other box)
@@ -973,8 +979,9 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             // Get all outermost boxes using the shared method
             List<BoundingBox> outerBoxes = getAllOutermostBoxes(padding, plotSize);
             
-            // Draw only the outermost boxes with different colored edges
-            g2.setStroke(new BasicStroke(3.0f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_MITER));
+            // Draw only the outermost boxes with dashed lines and different colored edges
+            float[] dash = new float[] { 8f, 4f };
+            g2.setStroke(new BasicStroke(3.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, dash, 0f));
             for (BoundingBox box : outerBoxes) {
                 // Draw bottom edge (left to right) with bottom-left color
                 g2.setColor(box.bottomLeftColor);
