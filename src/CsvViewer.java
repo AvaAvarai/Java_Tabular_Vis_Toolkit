@@ -1036,9 +1036,29 @@ public class CsvViewer extends JFrame {
             }
         }
         
-        // Handle special cases (malignant/positive, benign/negative)
+        // Handle special cases: A, B, X, malignant/positive, benign/negative
         for (String className : allClasses) {
-            if (className.equalsIgnoreCase("malignant") || className.equalsIgnoreCase("positive")) {
+            if (className.equalsIgnoreCase("A")) {
+                stateManager.getClassColors().put(className, new Color(0x00, 0x00, 0xFF)); // #0000FF blue
+                classNames.add(className);
+                baseClasses.remove(className);
+            } else if (className.equalsIgnoreCase("B")) {
+                stateManager.getClassColors().put(className, new Color(0xFF, 0x00, 0x00)); // #FF0000 red
+                classNames.add(className);
+                baseClasses.remove(className);
+            } else if (className.equalsIgnoreCase("X")) {
+                stateManager.getClassColors().put(className, new Color(0x00, 0xFF, 0x00)); // #00FF00 green
+                classNames.add(className);
+                baseClasses.remove(className);
+            } else if (className.equalsIgnoreCase("Q")) {
+                stateManager.getClassColors().put(className, new Color(0xFF, 0x99, 0x00)); // #FF9900 orange
+                classNames.add(className);
+                baseClasses.remove(className);
+            } else if (className.equalsIgnoreCase("EDGE")) {
+                stateManager.getClassColors().put(className, new Color(0xCC, 0xCC, 0xCC)); // #CCCCCC grey (same as background)
+                classNames.add(className);
+                baseClasses.remove(className);
+            } else if (className.equalsIgnoreCase("malignant") || className.equalsIgnoreCase("positive")) {
                 stateManager.getClassColors().put(className, Color.RED);
                 classNames.add(className);
                 baseClasses.remove(className);
@@ -1606,6 +1626,16 @@ public class CsvViewer extends JFrame {
                     float[] hsb = Color.RGBtoHSB(baseColor.getRed(), baseColor.getGreen(), baseColor.getBlue(), null);
                     newColor = Color.getHSBColor(hsb[0], hsb[1], hsb[2] * 0.5f);
                 }
+            } else if (newClass.equalsIgnoreCase("A")) {
+                newColor = new Color(0x00, 0x00, 0xFF); // #0000FF blue
+            } else if (newClass.equalsIgnoreCase("B")) {
+                newColor = new Color(0xFF, 0x00, 0x00); // #FF0000 red
+            } else if (newClass.equalsIgnoreCase("X")) {
+                newColor = new Color(0x00, 0xFF, 0x00); // #00FF00 green
+            } else if (newClass.equalsIgnoreCase("Q")) {
+                newColor = new Color(0xFF, 0x99, 0x00); // #FF9900 orange
+            } else if (newClass.equalsIgnoreCase("EDGE")) {
+                newColor = new Color(0xCC, 0xCC, 0xCC); // #CCCCCC grey (same as background)
             } else {
                 // Regular class - generate a new color using golden ratio for good distribution
                 float hue = (getClassColors().size() * 0.618034f) % 1f;
