@@ -33,6 +33,7 @@ public class ParallelCoordinatesPlot extends JFrame {
     private Color backgroundColor;
     private boolean showPolylines = true; // Toggle for displaying polylines
     private float polylineThickness;
+    private int axisSpacing = 200; // Spacing between parallel axes (slider-controlled)
     
     // Empty entry tracking
     private final Map<String, Integer> emptyEntryCounts = new HashMap<>();
@@ -89,9 +90,8 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         // Initialize axis positions
         int startX = 100;
-        int spacing = 150;
         for (int i = 0; i < attributeNames.size(); i++) {
-            axisPositions.put(attributeNames.get(i), new Point2D.Double(startX + i * spacing, 100));
+            axisPositions.put(attributeNames.get(i), new Point2D.Double(startX + i * axisSpacing, 100));
             axisScales.put(attributeNames.get(i), 1.0);
         }
 
@@ -120,14 +120,14 @@ public class ParallelCoordinatesPlot extends JFrame {
 
         // Add the plot panel
         ParallelCoordinatesPanel plotPanel = new ParallelCoordinatesPanel();
-        plotPanel.setPreferredSize(new Dimension(attributeNames.size() * 150, panelHeight));
+        plotPanel.setPreferredSize(new Dimension(attributeNames.size() * axisSpacing, panelHeight));
 
         JScrollPane scrollPane = new JScrollPane(plotPanel);
         scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-        JScrollPane controlPanel = createControlPanel(scrollPane, datasetName);
+        JScrollPane controlPanel = createControlPanel(scrollPane, datasetName, plotPanel);
         
         mainPanel.add(scrollPane, BorderLayout.CENTER);
         mainPanel.add(controlPanel, BorderLayout.NORTH);
@@ -215,12 +215,33 @@ public class ParallelCoordinatesPlot extends JFrame {
         }
     }
 
-    private JScrollPane createControlPanel(JScrollPane plotScrollPane, String datasetName) {
+    private JScrollPane createControlPanel(JScrollPane plotScrollPane, String datasetName, ParallelCoordinatesPanel plotPanel) {
         // Create a panel to hold the controls for each attribute
         JPanel controlPanel = new JPanel();
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.X_AXIS));
         controlPanel.setBackground(new Color(0xC0C0C0)); // Set background color to c0c0c0
         controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        // Axis spacing slider
+        JPanel spacingPanel = new JPanel();
+        spacingPanel.setLayout(new BoxLayout(spacingPanel, BoxLayout.Y_AXIS));
+        spacingPanel.setBackground(new Color(0xC0C0C0));
+        JLabel spacingLabel = new JLabel("Axis spacing");
+        spacingLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        JSlider axisSpacingSlider = new JSlider(JSlider.HORIZONTAL, 80, 280, axisSpacing);
+        axisSpacingSlider.setBackground(new Color(0xC0C0C0));
+        axisSpacingSlider.setPreferredSize(new Dimension(120, 40));
+        axisSpacingSlider.addChangeListener(e -> {
+            axisSpacing = axisSpacingSlider.getValue();
+            plotPanel.applyAxisSpacing();
+            plotPanel.revalidate();
+            plotPanel.repaint();
+            plotScrollPane.revalidate();
+        });
+        spacingPanel.add(spacingLabel);
+        spacingPanel.add(axisSpacingSlider);
+        controlPanel.add(spacingPanel);
+        controlPanel.add(Box.createHorizontalStrut(10));
         
         // Add a button to take a screenshot
         JButton screenshotButton = new JButton("Take Screenshot");
@@ -382,6 +403,14 @@ public class ParallelCoordinatesPlot extends JFrame {
             });
         }
         
+        /** Updates axis X positions from current visual order and axisSpacing. */
+        void applyAxisSpacing() {
+            int startX = 100;
+            for (int i = 0; i < visualOrder.size(); i++) {
+                axisPositions.get(visualOrder.get(i)).x = startX + i * axisSpacing;
+            }
+        }
+        
         @Override
         public Dimension getPreferredSize() {
             // Calculate the maximum extent needed to capture all content including empty blocks
@@ -407,7 +436,7 @@ public class ParallelCoordinatesPlot extends JFrame {
             
             // Title height (50) + maximum extent of content
             int height = 50 + Math.max(maxY, maxEmptyBlockExtent);
-            int width = attributeNames.size() * 150;
+            int width = attributeNames.size() * axisSpacing;
             return new Dimension(width, height);
         }
 
@@ -567,16 +596,21 @@ public class ParallelCoordinatesPlot extends JFrame {
                     drawEmptyEntryBlock(g2, attributeName, pos, scaledHeight);
                 }
     
-                // Draw attribute label with subscript if '_' is found
+                // Draw attribute label with subscript only if pattern is _{class} and class is from class column
                 if (showAttributeLabels) {
                     g2.setFont(AXIS_LABEL_FONT);
                     String label = attributeName;
 
-                    // Split label into main and subscript part
                     int underscoreIdx = label.indexOf('_');
-                    if (underscoreIdx != -1 && underscoreIdx + 1 < label.length()) {
+                    String afterUnderscore = (underscoreIdx != -1 && underscoreIdx + 1 < label.length())
+                            ? label.substring(underscoreIdx + 1) : "";
+                    boolean isClassSubscript = afterUnderscore.length() >= 2
+                            && afterUnderscore.startsWith("{") && afterUnderscore.endsWith("}")
+                            && classColors.containsKey(afterUnderscore.substring(1, afterUnderscore.length() - 1));
+
+                    if (isClassSubscript) {
                         String main = label.substring(0, underscoreIdx);
-                        String subscript = label.substring(underscoreIdx + 1);
+                        String subscript = afterUnderscore.substring(1, afterUnderscore.length() - 1);
 
                         FontMetrics fm = g2.getFontMetrics();
                         FontMetrics subMetrics = g2.getFontMetrics(AXIS_LABEL_FONT.deriveFont(AXIS_LABEL_FONT.getSize2D() * 0.75f));
@@ -592,10 +626,8 @@ public class ParallelCoordinatesPlot extends JFrame {
                         g2.drawString(main, xDraw, yDraw);
 
                         g2.setFont(AXIS_LABEL_FONT.deriveFont(AXIS_LABEL_FONT.getSize2D() * 0.75f));
-                        // Move subscript a bit to the right and below the baseline
                         g2.drawString(subscript, xDraw + mainWidth, yDraw + (int)(fm.getHeight() * 0.25));
                     } else {
-                        // No subscript, just draw normally
                         FontMetrics fm = g2.getFontMetrics();
                         int labelWidth = fm.stringWidth(label);
                         g2.drawString(label, (int) (pos.x - labelWidth / 2), (int) (pos.y + scaledHeight + 20));
