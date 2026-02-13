@@ -33,6 +33,7 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
     private boolean drawBoxes = false;
     private boolean hideContainedCases = false;
     private boolean showCenterPoints = false;
+    private boolean hidePolylines = false; // When true, show only arrows and vertices
 
     public CollocatedPairedCoordinatesPlot(List<List<Double>> data, List<String> attributeNames, Map<String, Color> classColors, Map<String, Shape> classShapes, List<String> classLabels, List<Integer> selectedRows, String datasetName, JTable table, Color backgroundColor, float polylineThickness) {
         this.data = data;
@@ -135,6 +136,15 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
             }
         });
         buttonPanel.add(hideContainedButton);
+        JButton hidePolylinesButton = new JButton("Hide Polylines");
+        hidePolylinesButton.addActionListener(e -> {
+            hidePolylines = !hidePolylines;
+            hidePolylinesButton.setText(hidePolylines ? "Show Polylines" : "Hide Polylines");
+            if (plotPanel != null) {
+                plotPanel.repaint();
+            }
+        });
+        buttonPanel.add(hidePolylinesButton);
         buttonPanel.add(showCenterPointsButton);
         controlPanel.add(buttonPanel);
 
@@ -312,10 +322,17 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 Point singlePoint = firstPoint;
                 int pointSize = Math.max(3, (int)polylineThickness * 2);
                 g2.fillOval(singlePoint.x - pointSize/2, singlePoint.y - pointSize/2, pointSize, pointSize);
-                // Also track it for arrow points if needed
                 arrowStarts.add(new Point(singlePoint.x, singlePoint.y));
                 arrowEnds.add(new Point(singlePoint.x, singlePoint.y));
                 return;
+            }
+            
+            // When hiding polylines, draw vertices (circles) at each point first
+            int pointSize = Math.max(3, (int)polylineThickness * 2);
+            if (hidePolylines) {
+                for (Point p : points) {
+                    g2.fillOval(p.x - pointSize/2, p.y - pointSize/2, pointSize, pointSize);
+                }
             }
             
             if (normalizeVectors) {
@@ -356,8 +373,10 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     double arrowBaseX = nx - arrowSize * 0.7 * Math.cos(lineAngle);
                     double arrowBaseY = ny - arrowSize * 0.7 * Math.sin(lineAngle);
                     
-                    // Draw the normalized line segment to the arrow base (so arrow covers the end cap)
-                    g2.drawLine(currentStartPoint.x, currentStartPoint.y, (int)arrowBaseX, (int)arrowBaseY);
+                    // Draw the normalized line segment to the arrow base (unless hiding polylines)
+                    if (!hidePolylines) {
+                        g2.drawLine(currentStartPoint.x, currentStartPoint.y, (int)arrowBaseX, (int)arrowBaseY);
+                    }
                     
                     // Draw arrow at the end of the normalized line
                     // If multiplier is 0, use a small fixed length for the arrow to show direction
@@ -370,7 +389,9 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                         // Use 0.7x arrowSize to move arrow closer to the polyline
                         double arrowBaseX0 = arrowX - arrowSize * 0.7 * Math.cos(arrowAngle);
                         double arrowBaseY0 = arrowY - arrowSize * 0.7 * Math.sin(arrowAngle);
-                        g2.drawLine(currentStartPoint.x, currentStartPoint.y, (int)arrowBaseX0, (int)arrowBaseY0);
+                        if (!hidePolylines) {
+                            g2.drawLine(currentStartPoint.x, currentStartPoint.y, (int)arrowBaseX0, (int)arrowBaseY0);
+                        }
                         drawArrow(g2, (int)arrowBaseX0, (int)arrowBaseY0, (int)arrowX, (int)arrowY);
                         // Track arrow end point
                         arrowEnds.add(new Point((int)arrowX, (int)arrowY));
@@ -399,8 +420,10 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                     double arrowBaseX = p2.x - arrowSize * 0.7 * Math.cos(lineAngle);
                     double arrowBaseY = p2.y - arrowSize * 0.7 * Math.sin(lineAngle);
                     
-                    // Draw the regular line segment to the arrow base (so arrow covers the end cap)
-                    g2.drawLine(p1.x, p1.y, (int)arrowBaseX, (int)arrowBaseY);
+                    // Draw the regular line segment to the arrow base (unless hiding polylines)
+                    if (!hidePolylines) {
+                        g2.drawLine(p1.x, p1.y, (int)arrowBaseX, (int)arrowBaseY);
+                    }
                     
                     // Draw arrow at the end of the line
                     drawArrow(g2, (int)arrowBaseX, (int)arrowBaseY, p2.x, p2.y);
@@ -732,178 +755,31 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 return new ArrayList<>();
             }
             
-            // Combine start points from class A and B only
-            List<PointWithClass> allStarts = new ArrayList<>();
-            for (String className : classList) {
-                allStarts.addAll(classArrowStarts.getOrDefault(className, new ArrayList<>()));
-            }
-            
-            // Combine end points from class A and B only
-            List<PointWithClass> allEnds = new ArrayList<>();
-            for (String className : classList) {
-                allEnds.addAll(classArrowEnds.getOrDefault(className, new ArrayList<>()));
-            }
-            
-            // One box connecting all classes' start points; one box connecting all classes' end points
+            // Create separate box per class: start-to-start and end-to-end within same class only (no mixing A and B)
             List<BoundingBox> allBoxes = new ArrayList<>();
-            
-            // Create box for all start points (class A and B start points combined)
-            if (!allStarts.isEmpty()) {
-                int minXStart = allStarts.stream().mapToInt(p -> p.point.x).min().orElse(0);
-                int maxXStart = allStarts.stream().mapToInt(p -> p.point.x).max().orElse(0);
-                int minYStart = allStarts.stream().mapToInt(p -> p.point.y).min().orElse(0);
-                int maxYStart = allStarts.stream().mapToInt(p -> p.point.y).max().orElse(0);
+            for (String className : classList) {
+                List<PointWithClass> classStarts = classArrowStarts.getOrDefault(className, new ArrayList<>());
+                List<PointWithClass> classEnds = classArrowEnds.getOrDefault(className, new ArrayList<>());
+                Color classColor = classColors.getOrDefault(className, Color.BLACK);
+                Color semiColor = new Color(classColor.getRed(), classColor.getGreen(), classColor.getBlue(), 150);
                 
-                PointWithClass bottomLeft = findBottomLeftPoint(allStarts, minXStart, maxYStart);
-                PointWithClass topRight = findTopRightPoint(allStarts, maxXStart, minYStart);
-                String classA = classList.isEmpty() ? "" : classList.get(0);
-                String classB = classList.size() < 2 ? classA : classList.get(1);
-                Color bottomLeftColor = classColors.getOrDefault(bottomLeft != null ? bottomLeft.className : classA, Color.BLACK);
-                Color topRightColor = classColors.getOrDefault(topRight != null ? topRight.className : classB, Color.BLACK);
-                
-                allBoxes.add(new BoundingBox(minXStart, minYStart, maxXStart, maxYStart, classA, classB, true,
-                    new Color(bottomLeftColor.getRed(), bottomLeftColor.getGreen(), bottomLeftColor.getBlue(), 150),
-                    new Color(topRightColor.getRed(), topRightColor.getGreen(), topRightColor.getBlue(), 150)));
-            }
-            
-            // Create box for all end points (class A and B end points combined)
-            if (!allEnds.isEmpty()) {
-                int minXEnd = allEnds.stream().mapToInt(p -> p.point.x).min().orElse(0);
-                int maxXEnd = allEnds.stream().mapToInt(p -> p.point.x).max().orElse(0);
-                int minYEnd = allEnds.stream().mapToInt(p -> p.point.y).min().orElse(0);
-                int maxYEnd = allEnds.stream().mapToInt(p -> p.point.y).max().orElse(0);
-                
-                PointWithClass bottomLeft = findBottomLeftPoint(allEnds, minXEnd, maxYEnd);
-                PointWithClass topRight = findTopRightPoint(allEnds, maxXEnd, minYEnd);
-                String classA = classList.isEmpty() ? "" : classList.get(0);
-                String classB = classList.size() < 2 ? classA : classList.get(1);
-                Color bottomLeftColor = classColors.getOrDefault(bottomLeft != null ? bottomLeft.className : classA, Color.BLACK);
-                Color topRightColor = classColors.getOrDefault(topRight != null ? topRight.className : classB, Color.BLACK);
-                
-                allBoxes.add(new BoundingBox(minXEnd, minYEnd, maxXEnd, maxYEnd, classA, classB, false,
-                    new Color(bottomLeftColor.getRed(), bottomLeftColor.getGreen(), bottomLeftColor.getBlue(), 150),
-                    new Color(topRightColor.getRed(), topRightColor.getGreen(), topRightColor.getBlue(), 150)));
-            }
-            
-            // First, identify outermost boxes (not contained in any other box)
-            List<BoundingBox> outerBoxes = new ArrayList<>();
-            for (BoundingBox box : allBoxes) {
-                boolean isContained = false;
-                for (BoundingBox other : allBoxes) {
-                    if (box != other && box.isContainedIn(other)) {
-                        isContained = true;
-                        break;
-                    }
+                if (!classStarts.isEmpty()) {
+                    int minX = classStarts.stream().mapToInt(p -> p.point.x).min().orElse(0);
+                    int maxX = classStarts.stream().mapToInt(p -> p.point.x).max().orElse(0);
+                    int minY = classStarts.stream().mapToInt(p -> p.point.y).min().orElse(0);
+                    int maxY = classStarts.stream().mapToInt(p -> p.point.y).max().orElse(0);
+                    allBoxes.add(new BoundingBox(minX, minY, maxX, maxY, className, className, true, semiColor, semiColor));
                 }
-                if (!isContained) {
-                    outerBoxes.add(box);
+                if (!classEnds.isEmpty()) {
+                    int minX = classEnds.stream().mapToInt(p -> p.point.x).min().orElse(0);
+                    int maxX = classEnds.stream().mapToInt(p -> p.point.x).max().orElse(0);
+                    int minY = classEnds.stream().mapToInt(p -> p.point.y).min().orElse(0);
+                    int maxY = classEnds.stream().mapToInt(p -> p.point.y).max().orElse(0);
+                    allBoxes.add(new BoundingBox(minX, minY, maxX, maxY, className, className, false, semiColor, semiColor));
                 }
             }
             
-            // Now ensure all cases are contained within at least one box
-            // Check each row to see if its arrow points are contained by any box
-            Set<Integer> rowsNeedingBoxes = new HashSet<>();
-            for (int i = 0; i < table.getRowCount(); i++) {
-                int row = table.convertRowIndexToModel(i);
-                String rowClass = classLabels.get(row);
-                
-                if (hiddenClasses.contains(rowClass)) {
-                    continue;
-                }
-                
-                // Collect arrow points for this row
-                List<Point> rowArrowStarts = new ArrayList<>();
-                List<Point> rowArrowEnds = new ArrayList<>();
-                collectArrowPoints(row, padding, plotSize, rowArrowStarts, rowArrowEnds);
-                
-                if (rowArrowStarts.isEmpty() && rowArrowEnds.isEmpty()) {
-                    continue;
-                }
-                
-                // Check if this row's points are contained by any outer box
-                boolean isContained = false;
-                for (BoundingBox box : outerBoxes) {
-                    // Skip if this row's class is the same as the box's class
-                    if (rowClass.equals(box.class1)) {
-                        continue;
-                    }
-                    
-                    // Check if all arrow starts are contained
-                    boolean allStartsContained = true;
-                    for (Point p : rowArrowStarts) {
-                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
-                            allStartsContained = false;
-                            break;
-                        }
-                    }
-                    
-                    // Check if all arrow ends are contained
-                    boolean allEndsContained = true;
-                    for (Point p : rowArrowEnds) {
-                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
-                            allEndsContained = false;
-                            break;
-                        }
-                    }
-                    
-                    if (allStartsContained && allEndsContained && (!rowArrowStarts.isEmpty() || !rowArrowEnds.isEmpty())) {
-                        isContained = true;
-                        break;
-                    }
-                }
-                
-                if (!isContained) {
-                    rowsNeedingBoxes.add(row);
-                }
-            }
-            
-            // For rows that aren't contained, find boxes that can contain them
-            // and add those boxes if they're not already in outerBoxes
-            for (Integer row : rowsNeedingBoxes) {
-                String rowClass = classLabels.get(row);
-                
-                // Collect arrow points for this row
-                List<Point> rowArrowStarts = new ArrayList<>();
-                List<Point> rowArrowEnds = new ArrayList<>();
-                collectArrowPoints(row, padding, plotSize, rowArrowStarts, rowArrowEnds);
-                
-                // Find boxes that contain this row's points
-                for (BoundingBox box : allBoxes) {
-                    if (outerBoxes.contains(box)) {
-                        continue; // Already included
-                    }
-                    
-                    // Skip if this row's class is the same as the box's class
-                    if (rowClass.equals(box.class1)) {
-                        continue;
-                    }
-                    
-                    // Check if all arrow starts are contained
-                    boolean allStartsContained = true;
-                    for (Point p : rowArrowStarts) {
-                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
-                            allStartsContained = false;
-                            break;
-                        }
-                    }
-                    
-                    // Check if all arrow ends are contained
-                    boolean allEndsContained = true;
-                    for (Point p : rowArrowEnds) {
-                        if (p.x < box.minX || p.x > box.maxX || p.y < box.minY || p.y > box.maxY) {
-                            allEndsContained = false;
-                            break;
-                        }
-                    }
-                    
-                    if (allStartsContained && allEndsContained && (!rowArrowStarts.isEmpty() || !rowArrowEnds.isEmpty())) {
-                        outerBoxes.add(box);
-                        break; // Found a box for this row, move to next row
-                    }
-                }
-            }
-            
-            return outerBoxes;
+            return allBoxes;
         }
         
         private PointWithClass findBottomLeftPoint(List<PointWithClass> points, int minX, int maxY) {
