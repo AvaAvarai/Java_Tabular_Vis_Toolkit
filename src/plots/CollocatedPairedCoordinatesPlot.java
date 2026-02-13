@@ -327,10 +327,11 @@ public class CollocatedPairedCoordinatesPlot extends JFrame {
                 return;
             }
             
-            // When hiding polylines, draw vertices (circles) at each point first
+            // When hiding polylines: start and interior points = vertices; last point = arrow only (no vertex)
             int pointSize = Math.max(3, (int)polylineThickness * 2);
             if (hidePolylines) {
-                for (Point p : points) {
+                for (int k = 0; k < points.size() - 1; k++) {
+                    Point p = points.get(k);
                     g2.fillOval(p.x - pointSize/2, p.y - pointSize/2, pointSize, pointSize);
                 }
             }
