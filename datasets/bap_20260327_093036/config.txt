@@ -1,0 +1,16 @@
+BAP Configuration
+========================================
+train: ../../machine learning datasets/default/fisher_iris.csv
+testing: cv
+folds: 5
+classifier: hb_dv
+parameters: {}
+distance: euclidean
+t: 0.95
+direction: forward
+splits: 5
+n: 10
+m: 5
+sampling: stratified
+seed: 42
+output_dir: results

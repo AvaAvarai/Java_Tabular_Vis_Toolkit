@@ -1,0 +1,2 @@
+total_runs,converged,convergence_rate,mean_cases,std_cases,min_cases,min_cases_class_dist,max_cases,max_cases_class_dist,min_cases_pct,max_cases_pct,mean_accuracy,mean_sureness
+10,6,0.6,25.833333333333332,20.699570580623703,5,"Setosa:2, Versicolor:2, Virginica:1",60,"Setosa:20, Versicolor:20, Virginica:20",4.166666666666666,50.0,0.9666666666666667,0.7847222222222222
